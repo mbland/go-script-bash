@@ -1,9 +1,68 @@
 #! /bin/bash
 #
 # Run automated tests
+#
+# Usage:
+#
+#   {{go}} {{cmd}}
+#   {{go}} {{cmd}} <glob> [<glob>...]
+#
+# Without arguments, runs all tests. With one or more <glob> arguments, only
+# runs tests matching 'test/<glob>.bats'.
+#
+# If a <glob> doesn't match any test files, the command will return an error
+# without running any tests.
+#
+# NOTE: If the <glob> produces errors, or generally doesn't do as you expect,
+# you may need to include it in quotes so it isn't expanded by the shell
+# _before_ executing the test command.
+
+# Tab completions
+_tab_completions() {
+  local completions=()
+
+  shopt -s nullglob
+  for test_file in test/*.bats; do
+    test_file="${test_file#test/}"
+    completions+=("${test_file%.bats}")
+  done
+  shopt -u nullglob
+
+  echo "${completions[@]}"
+}
 
 _test() {
-  test/bats/bin/bats test/*.bats
+  local arg
+  local test_file
+  local tests=()
+
+  while [[ $# -ne 0 ]]; do
+    arg="$1"
+    shift
+
+    case "$arg" in
+    --complete)
+      _tab_completions
+      return
+      ;;
+    *)
+      shopt -s nullglob
+      local matches=(test/$arg.bats)
+      shopt -u nullglob
+
+      if [[ ${#matches[@]} -eq 0 ]]; then
+        @go.printf "\"$arg\" does not match any test files.\n" >&2
+        return 1
+      fi
+      tests+=("${matches[@]}")
+    esac
+  done
+
+  if [[ ${#tests[@]} -eq 0 ]]; then
+    tests=(test/*.bats)
+  fi
+
+  test/bats/bin/bats "${tests[@]}"
 }
 
 _test "$@"
