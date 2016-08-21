@@ -1,0 +1,80 @@
+#! /bin/bash
+#
+# List shell command aliases or execute an alias in the project root
+#
+# Usage:
+#
+#   {{go}} {{cmd}}
+#   {{go}} {{cmd}} <alias> [...]
+#
+# Where <alias> is one of the following system programs:
+#
+#   {{_GO_ALIAS_CMDS}}
+#
+# Each command alias runs the command in {{root}}. Automatic file name
+# completion within this directory is available via the "{{go}} env" command.
+#
+# Note that "cd" and "pushd" are only available after you've used "{{go}} env"
+# to set up your shell environment.
+
+declare -r _GO_ALIAS_CMDS=('awk' 'cat' 'cd' 'find' 'grep' 'ls' 'pushd' 'sed')
+
+_@go.aliases() {
+  local c
+
+  if [[ $# -eq 0 ]]; then
+    for c in "${_GO_ALIAS_CMDS[@]}"; do
+      echo $c
+    done
+    return
+  fi
+
+  local flag
+
+  case "$1" in
+  --complete)
+    # Tab completions
+    echo "--exists"
+    return
+    ;;
+  --exists|--help)
+    flag="${1#--}"
+    shift
+    ;;
+  --help-filter)
+    # Help filter
+    echo "${2//\{\{_GO_ALIAS_CMDS\}\}/${_GO_ALIAS_CMDS[@]}}"
+    return
+    ;;
+  -*)
+    echo "ERROR: unknown flag: $1"
+    return 1
+    ;;
+  esac
+
+  if [[ -n $flag && -z $1 ]]; then
+    echo "ERROR: no argument given after --$flag flag"
+    return 1
+  fi
+
+  for c in "${_GO_ALIAS_CMDS[@]}"; do
+    if [[ $1 != $c ]]; then
+      continue
+    elif [[ $flag = help ]]; then
+      @go.printf "$_GO_CMD $c - %s\n\n%s\n\n" \
+        "Shell alias that will execute in $_GO_ROOTDIR" \
+        "Filename completion is available via the \"$_GO_CMD env\" command."
+
+      if [[ ($1 = cd || $1 = pushd) && $_GO_CMD = $0 ]]; then
+        @go.printf "%s%s\n\n" \
+          "NOTE: The \"$1\" alias will only be available after using "\
+          "\"$_GO_CMD env\" to set up your shell environment."
+      fi
+    fi
+    return
+  done
+
+  return 1
+}
+
+_@go.aliases "$@"

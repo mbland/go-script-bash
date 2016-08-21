@@ -1,0 +1,87 @@
+#! /bin/bash
+#
+# Lists tab completions for <command> <word> within <project-root>
+
+_@go.command_completions() {
+  exec 2>/dev/null
+
+  local __go_cmd_path
+  local __go_argv
+  if ! _@go.set_command_path_and_argv "$@"; then
+    return 1
+  fi
+
+  shopt -s nullglob
+  for c in "${__go_cmd_path}.d"/*; do
+    if [[ -f $c && -x $c ]]; then
+      echo "${c##*/}"
+    fi
+  done
+  shopt -u nullglob
+
+  local tab_completions_pattern='# [Tt]ab [Cc]ompletions'$'\n'
+
+  if [[ $(< "$__go_cmd_path") =~ $tab_completions_pattern ]]; then
+    _@go.run_command_script "$__go_cmd_path" --complete "${__go_argv[@]}"
+  fi
+}
+
+_@go.all_commands() {
+  _@go.source_builtin 'aliases'
+  _@go.source_builtin 'builtins'
+  _@go.source_builtin 'commands'
+}
+
+_@go.tab_completions() {
+  local args=("$@")
+
+  _@go.source_builtin 'path'
+
+  if [[ $# -le 1 ]]; then
+    compgen -W "$(_@go.all_commands)" -- "$1"
+    return
+  fi
+
+  local cmd_name="${args[0]}"
+  local word_pos=$((${#args[@]}-1))
+  local word="${args[$word_pos]}"
+
+  unset 'args[0]' "args[$word_pos]"
+
+  case "$cmd_name" in
+  cd|pushd)
+    compgen -d -- "$word"
+    return
+    ;;
+  edit|fullpath|run)
+    compgen -f -- "$word"
+    return
+    ;;
+  plugins)
+    if [[ ${#args[@]} -eq 0 ]]; then
+      compgen -W "--paths --summaries" -- "$word"
+    fi
+    return
+    ;;
+  -h|-help|--help|help|-i|--interactive|path)
+    if [[ ${#args[@]} -eq 0 ]]; then
+      compgen -W "$(_@go.all_commands)" -- "$word"
+      return
+    fi
+    cmd_name="${args[1]}"
+    unset 'args[1]'
+    ;;
+  -*)
+    return
+    ;;
+  esac
+
+  if _@go.source_builtin 'aliases' --exists "$cmd_name"; then
+    compgen -f -- "$word"
+    return
+  fi
+
+  compgen -W "$(_@go.command_completions "$cmd_name" "${args[@]}")" -- "$word"
+}
+
+_@go.tab_completions "$@"

@@ -1,0 +1,21 @@
+#! /bin/bash
+#
+# Prints its arguments
+#
+# Usage: {{go}} {{cmd}} [...arguments...]
+#
+# Does what it says. Runs inside of {{root}}.
+
+# Tab completions
+if [[ $1 = "--complete" ]]; then
+  echo xyzzy plugh
+  exit
+fi
+
+@go.printf 'PWD: %s\nROOTDIR: %s\nARGC: %d\nARGV: %s\n' \
+  "$PWD" "$(@go rootdir)" "$#" "$*"
+
+end_args=$(($# + 1))
+for ((i=1; i != $end_args; ++i)); do
+  echo "ARG $i: '${!i}'"
+done

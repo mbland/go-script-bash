@@ -1,0 +1,61 @@
+#! /bin/bash
+#
+# Print the full help message, or help for a specific command
+
+_@go.usage() {
+  @go.printf "%s\n\n%s\n\n%s\n\n%s %s\n\n%s %s\n\n" \
+    "Usage: $_GO_CMD <command> [arguments...]" \
+    "Where <command> is one of:" \
+    "$(_@go.source_builtin 'commands' --summaries "$_GO_SCRIPTS_DIR" \
+      "$_GO_CORE_DIR/plugins"/*/bin)" \
+    "Use \"$_GO_CMD help <command>\" for more information about that command," \
+    "if available." \
+    "Use \"$_GO_CMD help builtins\" for help on builtin commands," \
+    "and \"$_GO_CMD help aliases\" for information on shell alias commands."
+}
+
+_@go.help_message_for_command() {
+  if _@go.source_builtin 'aliases' --help "$@"; then
+    return
+  fi
+
+  local __go_cmd_path
+  local __go_argv
+
+  if ! _@go.set_command_path_and_argv "$@"; then
+    return 1
+  fi
+
+  local cmd_name="${__go_cmd_path//.d\// }"
+  cmd_name="${cmd_name##*/}"
+
+  . "$_GO_CORE_DIR/lib/command_descriptions"
+  local __go_cmd_desc
+
+  if ! _@go.command_description "$__go_cmd_path"; then
+    return 1
+  fi
+
+  local filter_pattern='# [Hh]elp [Ff]ilter'$'\n'
+
+  if [[ $(< "$__go_cmd_path") =~ $filter_pattern ]]; then
+    __go_cmd_desc="$(_@go.run_command_script "$__go_cmd_path" --help-filter \
+      "$__go_cmd_desc")"
+  fi
+
+  if [[ -d ${__go_cmd_path}.d ]]; then
+    __go_cmd_desc+="$(printf '\n\nSubcommands:\n\n'; \
+      _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d")"
+  fi
+  @go.printf "$_GO_CMD $cmd_name - $__go_cmd_desc\n\n"
+}
+
+_@go.help() {
+  if [[ $# -eq 0 ]]; then
+    _@go.usage
+  else
+    _@go.help_message_for_command "$@"
+  fi
+}
+
+_@go.help "$@"

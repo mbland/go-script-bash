@@ -1,0 +1,104 @@
+#! /bin/bash
+#
+# List commands built directly into the core ./go script library
+#
+# Usage: {{go}} <builtin> arguments
+#
+# Where <builtin> is one of the following built-in commands:
+#
+# {{_GO_BUILTIN_SUMMARIES}}
+#
+# and where the following are defined as:
+#
+#   <project-root>  the project root dir: {{root}}
+#   <command>       a string of command arguments to this script
+#   <word>          a command line argument being tab-completed
+#   <file-paths>    zero or more file paths relative to <project root>
+#
+# Each command runs within {{root}}. Automatic file and command name completion
+# within this directory is available via the "{{go}} env" command.
+#
+# Note that "unenv" is only available after you've used "{{go}} env" to set up
+# your shell environment.
+
+declare __go_builtin_cmds=()
+function __go_glob_builtin_scripts {
+  local c
+  for c in "$_GO_CORE_DIR/libexec/"*; do
+    if [[ -f $c && -x $c ]]; then
+      __go_builtin_cmds+=("${c##*/}")
+    fi
+  done
+}
+__go_glob_builtin_scripts
+
+declare -r _GO_BUILTIN_CMDS=("${__go_builtin_cmds[@]}")
+
+_@go.builtin_summaries() {
+  local cmd_name
+  local longest_name_len=0
+
+  for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
+    if [[ $longest_name_len -lt ${#cmd_name} ]]; then
+      longest_name_len="${#cmd_name}"
+    fi
+  done
+
+  . "$_GO_CORE_DIR/lib/command_descriptions"
+  local __go_cmd_desc
+
+  for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
+    if ! _@go.command_summary "$_GO_CORE_DIR/libexec/$cmd_name"; then
+      return 1
+    fi
+    _@go.format_summary "$cmd_name" "$__go_cmd_desc" $longest_name_len
+  done
+}
+
+_@go.builtins() {
+  case "$1" in
+  --complete)
+    # Tab completions
+    if [[ ${2:0:1} != - ]]; then
+      echo "--exists --summaries"
+    fi
+    return
+    ;;
+  --summaries)
+    _@go.builtin_summaries
+    return
+    ;;
+  --exists)
+    if [[ -z $2 ]]; then
+      @go.printf "ERROR: no command name given" >&2
+      return 1
+    fi
+    for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
+      if [[ $cmd_name = $2 ]]; then
+        return
+      fi
+    done
+    return 1
+    shift
+    ;;
+  --help-filter)
+    # Help filter
+    echo "${2//\{\{_GO_BUILTIN_SUMMARIES\}\}/$(_@go.builtin_summaries)}"
+    return
+    ;;
+  -*)
+    echo "ERROR: unknown flag: $1"
+    return 1
+    ;;
+  esac
+
+  if [[ $# -ne 0 ]]; then
+    @go.printf "ERROR: invalid argument(s): $@" >&2
+    return 1
+  fi
+
+  IFS=$'\n'
+  echo "${_GO_BUILTIN_CMDS[*]}"
+}
+
+_@go.builtins "$@"

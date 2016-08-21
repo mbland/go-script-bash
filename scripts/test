@@ -1,0 +1,9 @@
+#! /bin/bash
+#
+# Run automated tests
+
+_test() {
+  test/bats/bin/bats test/*.bats
+}
+
+_test "$@"

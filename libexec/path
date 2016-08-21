@@ -1,0 +1,93 @@
+#! /bin/bash
+#
+# Prints the path to the <command> script, [alias] or [builtin]
+
+_@go.set_search_paths() {
+  local plugins_dir="$_GO_CORE_DIR/plugins"
+
+  shopt -s nullglob
+  __go_search_paths=("$_GO_CORE_DIR/libexec")
+  __go_search_paths+=("${plugins_dir%/}"/*/bin)
+  __go_search_paths+=("$_GO_SCRIPTS_DIR")
+  shopt -u nullglob
+}
+
+_@go.list_available_commands() {
+  echo "Available commands are:"
+
+  local line
+
+  while read -r line; do
+    echo "  $line"
+  done <<< "$(. "$_GO_CORE_DIR/libexec/commands")"
+}
+
+_@go.set_command_path_and_argv() {
+  if [[ $# -eq 0 || -z $* ]]; then
+    return 1
+  fi
+
+  local cmd_args=("$@")
+  local cmd_name="${cmd_args[0]}"
+  local cmd_path
+  local try_path
+  local __go_search_paths
+
+  unset 'cmd_args[0]'
+  _@go.set_search_paths
+
+  for try_path in "${__go_search_paths[@]}"; do
+    try_path="$try_path/$cmd_name"
+
+    if [[ -f $try_path && -x $try_path ]]; then
+      cmd_path="$try_path"
+      break
+    fi
+  done
+
+  if [[ -z $cmd_path ]]; then
+    printf "Unknown command: ${cmd_name}\n\n" >&2
+    _@go.list_available_commands >&2
+    return 1
+  fi
+
+  local cmd_arg_index=1
+
+  for arg in "${cmd_args[@]}"; do
+    try_path="${cmd_path}.d/$arg"
+
+    if [[ ! -e $try_path ]]; then
+      break
+    elif [[ ! (-f $try_path && -x $try_path) ]]; then
+      @go.printf "$try_path is not an executable script\n" >&2
+      return 1
+    fi
+
+    cmd_path="$try_path"
+    unset "cmd_args[$((cmd_arg_index++))]"
+  done
+
+  __go_cmd_path="$cmd_path"
+  __go_argv=("${cmd_args[@]}")
+}
+
+_@go.path() {
+  if [[ $# -ne 0 ]]; then
+    if _@go.source_builtin 'aliases' --exists "$1"; then
+      echo '[alias]'
+      return
+    elif _@go.source_builtin 'builtins' --exists "$1"; then
+      echo -n '[builtin] '
+    fi
+
+    local __go_cmd_path
+
+    if _@go.set_command_path_and_argv "$@"; then
+      echo "${__go_cmd_path#$_GO_ROOTDIR/}"
+    else
+      return 1
+    fi
+  fi
+}
+
+_@go.path "$@"

@@ -1,0 +1,37 @@
+#! /bin/bash
+#
+# eval "$(%s env -)"
+
+__go_func() {
+  local word="${COMP_WORDS[$COMP_CWORD]}"
+  local script="$_GO_SCRIPT"
+
+  if [[ $COMP_CWORD -eq 1 ]]; then
+    COMPREPLY=($("$script" 'complete' "$word"))
+  else
+    local words=("${COMP_WORDS[@]}")
+    unset 'words[0]'
+    unset "words[$COMP_CWORD]"
+    COMPREPLY=($("$script" 'complete' "${words[@]}" "$word"))
+    cd "$_GO_ROOTDIR"
+  fi
+}
+
+_go_func() {
+  local cmd="$1"
+  shift
+
+  case "$cmd" in
+  unenv)
+    complete -r '_go_func'
+    unset -f '_go_func' '__go_func'
+    ;;
+  cd|pushd)
+    "$cmd" "$_GO_ROOTDIR/$@"
+    ;;
+  *)
+    _GO_CMD='_go_func' "$_GO_SCRIPT" "$cmd" "$@"
+  esac
+}
+
+complete -o filenames -F __go_func _go_func
