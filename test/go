@@ -1,0 +1,6 @@
+#! /bin/bash
+#
+# This ./go script is used for the test suite.
+
+. "${0%/*}/../go-core.bash" "scripts"
+@go "$@"
