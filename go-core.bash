@@ -135,7 +135,7 @@ _@go.run_command_script() {
   interpreter="${interpreter##*/}"
   interpreter="${interpreter%% *}"
 
-  if [[ $interpreter = bash ]]; then
+  if [[ $interpreter = bash || $interpreter = sh ]]; then
     . "$cmd_path" "$@"
   elif [[ -n $interpreter ]]; then
     "$interpreter" "$cmd_path" "$@"
