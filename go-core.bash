@@ -173,7 +173,7 @@ if [[ -z $COLUMNS ]]; then
   if command -v 'tput' >/dev/null; then
     COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then
-    COLUMNS="$(mode.com)"
+    COLUMNS="$(mode.com) con:"
     shopt -s extglob
     COLUMNS="${COLUMNS#*Columns:+( )}"
     shopt -u extglob
