@@ -94,7 +94,6 @@ setup () {
   __go_func
   [[ "$status" -eq '0' ]]
   [[ "${#COMPREPLY[@]}" -eq '1' ]]
-  echo "COMPREPLY $COMPREPLY" >&2
   [[ "${COMPREPLY[0]}" = 'scripts' ]]
 
   [[ "$PWD" = "$_GO_ROOTDIR" ]]
