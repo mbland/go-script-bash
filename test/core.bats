@@ -46,6 +46,8 @@
 
   run test/go 'pushd'
   [[ "$status" -eq '1' ]]
+  echo "EXPECTED: '$expected'" >&2
+  echo "ACTUAL:   '$output'" >&2
   [[ "$output" = "$expected" ]]
 }
 
@@ -55,6 +57,8 @@
 
   run test/go 'unenv'
   [[ "$status" -eq '1' ]]
+  echo "EXPECTED: '$expected'" >&2
+  echo "ACTUAL:   '$output'" >&2
   [[ "$output" = "$expected" ]]
 }
 
