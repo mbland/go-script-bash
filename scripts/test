@@ -59,7 +59,7 @@ _test() {
   done
 
   if [[ "${#tests[@]}" -eq '0' ]]; then
-    tests=(test/*.bats)
+    tests=('test')
   fi
 
   test/bats/bin/bats "${tests[@]}"
