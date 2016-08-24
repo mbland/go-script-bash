@@ -131,6 +131,14 @@ _@go.run_command_script() {
 
   local interpreter
   read -r interpreter < "$cmd_path"
+
+  if [[ ${interpreter:0:2} != '#!' ]]; then
+    @go.printf "The first line of %s does not contain #!/path/to/interpreter." \
+      "$cmd_path" >&2
+    return 1
+  fi
+
+  interpreter="${interpreter:2}"
   interpreter="${interpreter#*/env }"
   interpreter="${interpreter##*/}"
   interpreter="${interpreter%% *}"
@@ -140,8 +148,7 @@ _@go.run_command_script() {
   elif [[ -n $interpreter ]]; then
     "$interpreter" "$cmd_path" "$@"
   else
-    @go.printf "The first line of %s does not contain #!/path/to/interpreter." \
-      "$cmd_path" >&2
+    @go.printf "Could not parse interpreter from first line of $cmd_path.\n"
     return 1
   fi
 }
