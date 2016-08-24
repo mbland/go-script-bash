@@ -25,7 +25,7 @@ declare __go_builtin_cmds=()
 function __go_glob_builtin_scripts {
   local c
   for c in "$_GO_CORE_DIR/libexec/"*; do
-    if [[ -f $c && -x $c ]]; then
+    if [[ -f "$c" && -x "$c" ]]; then
       __go_builtin_cmds+=("${c##*/}")
     fi
   done
@@ -39,7 +39,7 @@ _@go.builtin_summaries() {
   local longest_name_len=0
 
   for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
-    if [[ $longest_name_len -lt ${#cmd_name} ]]; then
+    if [[ "$longest_name_len" -lt "${#cmd_name}" ]]; then
       longest_name_len="${#cmd_name}"
     fi
   done
@@ -59,7 +59,7 @@ _@go.builtins() {
   case "$1" in
   --complete)
     # Tab completions
-    if [[ ${2:0:1} != - ]]; then
+    if [[ "${2:0:1}" != '-' ]]; then
       echo "--exists --summaries"
     fi
     return
@@ -69,12 +69,12 @@ _@go.builtins() {
     return
     ;;
   --exists)
-    if [[ -z $2 ]]; then
+    if [[ -z "$2" ]]; then
       @go.printf "ERROR: no command name given" >&2
       return 1
     fi
     for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
-      if [[ $cmd_name = $2 ]]; then
+      if [[ "$cmd_name" = "$2" ]]; then
         return
       fi
     done
@@ -92,7 +92,7 @@ _@go.builtins() {
     ;;
   esac
 
-  if [[ $# -ne 0 ]]; then
+  if [[ "$#" -ne '0' ]]; then
     @go.printf "ERROR: invalid argument(s): $@" >&2
     return 1
   fi

@@ -22,7 +22,7 @@ declare -r _GO_ALIAS_CMDS=('awk' 'cat' 'cd' 'find' 'grep' 'ls' 'pushd' 'sed')
 _@go.aliases() {
   local c
 
-  if [[ $# -eq 0 ]]; then
+  if [[ "$#" -eq '0' ]]; then
     for c in "${_GO_ALIAS_CMDS[@]}"; do
       echo $c
     done
@@ -52,20 +52,20 @@ _@go.aliases() {
     ;;
   esac
 
-  if [[ -n $flag && -z $1 ]]; then
+  if [[ -n "$flag" && -z "$1" ]]; then
     echo "ERROR: no argument given after --$flag flag"
     return 1
   fi
 
   for c in "${_GO_ALIAS_CMDS[@]}"; do
-    if [[ $1 != $c ]]; then
+    if [[ "$1" != "$c" ]]; then
       continue
-    elif [[ $flag = help ]]; then
+    elif [[ "$flag" = 'help' ]]; then
       @go.printf "$_GO_CMD $c - %s\n\n%s\n\n" \
         "Shell alias that will execute in $_GO_ROOTDIR" \
         "Filename completion is available via the \"$_GO_CMD env\" command."
 
-      if [[ ($1 = cd || $1 = pushd) && $_GO_CMD = $0 ]]; then
+      if [[ ("$1" = 'cd' || "$1" = 'pushd') && "$_GO_CMD" = "$0" ]]; then
         @go.printf "%s%s\n\n" \
           "NOTE: The \"$1\" alias will only be available after using "\
           "\"$_GO_CMD env\" to set up your shell environment."

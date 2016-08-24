@@ -26,7 +26,7 @@
 #           https://mike-bland.com/
 #           https://github.com/mbland
 
-if [[ ${BASH_VERSINFO[0]} -lt 3 || ${BASH_VERSINFO[1]} -lt 1 ]]; then
+if [[ "${BASH_VERSINFO[0]}" -lt '3' || "${BASH_VERSINFO[1]}" -lt '1' ]]; then
   printf "This module requires bash version 3.1 or greater:\n  %s %s\n" \
     $BASH $BASH_VERSION
   exit 1
@@ -132,7 +132,7 @@ _@go.run_command_script() {
   local interpreter
   read -r interpreter < "$cmd_path"
 
-  if [[ ${interpreter:0:2} != '#!' ]]; then
+  if [[ "${interpreter:0:2}" != '#!' ]]; then
     @go.printf "The first line of %s does not contain #!/path/to/interpreter." \
       "$cmd_path" >&2
     return 1
@@ -143,9 +143,9 @@ _@go.run_command_script() {
   interpreter="${interpreter##*/}"
   interpreter="${interpreter%% *}"
 
-  if [[ $interpreter = bash || $interpreter = sh ]]; then
+  if [[ "$interpreter" = 'bash' || "$interpreter" = 'sh' ]]; then
     . "$cmd_path" "$@"
-  elif [[ -n $interpreter ]]; then
+  elif [[ -n "$interpreter" ]]; then
     "$interpreter" "$cmd_path" "$@"
   else
     @go.printf "Could not parse interpreter from first line of $cmd_path.\n"
@@ -156,16 +156,16 @@ _@go.run_command_script() {
 _@go.check_scripts_dir() {
   local scripts_dir="$_GO_ROOTDIR/$1"
 
-  if [[ $# -ne 1 ]]; then
+  if [[ "$#" -ne '1' ]]; then
     echo "ERROR: there should be exactly one command script dir specified" >&2
     return 1
-  elif [[ ! -e $scripts_dir ]]; then
+  elif [[ ! -e "$scripts_dir" ]]; then
     echo "ERROR: command script directory $scripts_dir does not exist" >&2
     return 1
-  elif [[ ! -d $scripts_dir ]]; then
+  elif [[ ! -d "$scripts_dir" ]]; then
     echo "ERROR: $scripts_dir is not a directory" >&2
     return 1
-  elif [[ ! -r $scripts_dir || ! -x $scripts_dir ]]; then
+  elif [[ ! -r "$scripts_dir" || ! -x "$scripts_dir" ]]; then
     echo "ERROR: you do not have permission to access the $scripts_dir" \
       "directory" >&2
     return 1
@@ -176,7 +176,7 @@ if ! _@go.check_scripts_dir "$@"; then
   exit 1
 fi
 
-if [[ -z $COLUMNS ]]; then
+if [[ -z "$COLUMNS" ]]; then
   if command -v 'tput' >/dev/null; then
     COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then

@@ -14,8 +14,8 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
-  [[ $status -eq 0 ]]
-  [[ $output = 'Can use @go.printf' ]]
+  [[ "$status" -eq '0' ]]
+  [[ "$output" = 'Can use @go.printf' ]]
 }
 
 @test "run sh script by sourcing" {
@@ -24,8 +24,8 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
-  [[ $status -eq 0 ]]
-  [[ $output = 'Can use @go.printf' ]]
+  [[ "$status" -eq '0' ]]
+  [[ "$output" = 'Can use @go.printf' ]]
 }
 
 @test "run perl script" {
@@ -38,8 +38,8 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can run perl
-  [[ $status -eq 0 ]]
-  [[ $output = 'Can run perl' ]]
+  [[ "$status" -eq '0' ]]
+  [[ "$output" = 'Can run perl' ]]
 }
 
 @test "produce error if script doesn't contain an interpreter line" {
@@ -47,11 +47,11 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
-  [[ $status -eq 1 ]]
+  [[ "$status" -eq '1' ]]
 
   local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "
   expected+='#!/path/to/interpreter.'
-  [[ $output = $expected ]]
+  [[ "$output" = "$expected" ]]
 }
 
 @test "produce error if shebang line not parseable" {
@@ -60,11 +60,11 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Shebang line not complete
-  [[ $status -eq 1 ]]
+  [[ "$status" -eq '1' ]]
 
   local expected='Could not parse interpreter from first line of '
   expected+="$TEST_COMMAND_SCRIPT."
-  [[ $output = $expected ]]
+  [[ "$output" = "$expected" ]]
 }
 
 @test "parse space after shebang" {
@@ -73,8 +73,8 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Space after shebang OK
-  [[ $status -eq 0 ]]
-  [[ $output = 'Space after shebang OK' ]]
+  [[ "$status" -eq '0' ]]
+  [[ "$output" = 'Space after shebang OK' ]]
 }
 
 @test "parse /path/to/env bash" {
@@ -83,8 +83,8 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command '/path/to/env' OK
-  [[ $status -eq 0 ]]
-  [[ $output = '/path/to/env OK' ]]
+  [[ "$status" -eq '0' ]]
+  [[ "$output" = '/path/to/env OK' ]]
 }
 
 @test "ignore flags and arguments after shell name" {
@@ -93,12 +93,12 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Flags after interpreter ignored
-  [[ $status -eq 0 ]]
-  [[ $output = 'Flags after interpreter ignored' ]]
+  [[ "$status" -eq '0' ]]
+  [[ "$output" = 'Flags after interpreter ignored' ]]
 }
 
 teardown() {
-  if [[ -f $TEST_COMMAND_SCRIPT ]]; then
+  if [[ -f "$TEST_COMMAND_SCRIPT" ]]; then
     rm "$TEST_COMMAND_SCRIPT"
   fi
   rm "$TEST_GO_SCRIPT"

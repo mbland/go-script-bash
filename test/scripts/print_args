@@ -7,7 +7,7 @@
 # Does what it says. Runs inside of {{root}}.
 
 # Tab completions
-if [[ $1 = "--complete" ]]; then
+if [[ "$1" = '--complete' ]]; then
   echo xyzzy plugh
   exit
 fi

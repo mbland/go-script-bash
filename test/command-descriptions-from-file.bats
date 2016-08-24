@@ -49,17 +49,17 @@ echo "This script has no description"
 
   local __go_cmd_desc=''
   _@go.command_summary "$TEST_CMD_SCRIPT"
-  [[ $__go_cmd_desc = 'No description available' ]]
+  [[ "$__go_cmd_desc" = 'No description available' ]]
 
   __go_cmd_desc=''
   _@go.command_description "$TEST_CMD_SCRIPT"
-  [[ $__go_cmd_desc = 'No description available' ]]
+  [[ "$__go_cmd_desc" = 'No description available' ]]
 }
 
 @test "parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
   _@go.command_summary "$TEST_CMD_SCRIPT"
-  [[ $__go_cmd_desc = "Command that does something in /foo/bar" ]]
+  [[ "$__go_cmd_desc" = "Command that does something in /foo/bar" ]]
 }
 
 @test "parse description from command script" {

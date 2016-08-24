@@ -6,7 +6,7 @@ __go_func() {
   local word="${COMP_WORDS[$COMP_CWORD]}"
   local script="$_GO_SCRIPT"
 
-  if [[ $COMP_CWORD -eq 1 ]]; then
+  if [[ "$COMP_CWORD" -eq '1' ]]; then
     COMPREPLY=($("$script" 'complete' "$word"))
   else
     local words=("${COMP_WORDS[@]}")

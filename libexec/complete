@@ -13,7 +13,7 @@ _@go.command_completions() {
 
   shopt -s nullglob
   for c in "${__go_cmd_path}.d"/*; do
-    if [[ -f $c && -x $c ]]; then
+    if [[ -f "$c" && -x "$c" ]]; then
       echo "${c##*/}"
     fi
   done
@@ -21,7 +21,7 @@ _@go.command_completions() {
 
   local tab_completions_pattern='# [Tt]ab [Cc]ompletions'$'\n'
 
-  if [[ $(< "$__go_cmd_path") =~ $tab_completions_pattern ]]; then
+  if [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
     _@go.run_command_script "$__go_cmd_path" --complete "${__go_argv[@]}"
   fi
 }
@@ -37,7 +37,7 @@ _@go.tab_completions() {
 
   _@go.source_builtin 'path'
 
-  if [[ $# -le 1 ]]; then
+  if [[ "$#" -le '1' ]]; then
     compgen -W "$(_@go.all_commands)" -- "$1"
     return
   fi
@@ -58,13 +58,13 @@ _@go.tab_completions() {
     return
     ;;
   plugins)
-    if [[ ${#args[@]} -eq 0 ]]; then
+    if [[ "${#args[@]}" -eq '0' ]]; then
       compgen -W "--paths --summaries" -- "$word"
     fi
     return
     ;;
   -h|-help|--help|help|-i|--interactive|path)
-    if [[ ${#args[@]} -eq 0 ]]; then
+    if [[ "${#args[@]}" -eq '0' ]]; then
       compgen -W "$(_@go.all_commands)" -- "$word"
       return
     fi

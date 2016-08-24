@@ -19,11 +19,11 @@ _@go.insert_name_and_script() {
     current_name="${__go_command_names[$((i-1))]}"
     current_script="${__go_command_scripts[$((i-1))]}"
 
-    if [[ $cmd_name = $current_name ]]; then
+    if [[ "$cmd_name" = "$current_name" ]]; then
       printf "WARNING: duplicate command $cmd_name:\n\n  %s\n  %s\n" \
         "$current_script" "$cmd_script" >&2
       return 1
-    elif [[ $cmd_name < $current_name ]]; then
+    elif [[ "$cmd_name" < "$current_name" ]]; then
       __go_command_names[$i]="$current_name"
       __go_command_scripts[$i]="$current_script"
     else
@@ -48,14 +48,14 @@ _@go.find_commands() {
 
   for scripts_dir in "$@"; do
     for cmd_script in "$scripts_dir"/*; do
-      if [[ ! (-f $cmd_script && -x $cmd_script) ]]; then
+      if [[ ! (-f "$cmd_script" && -x "$cmd_script") ]]; then
         continue
       fi
 
       cmd="${cmd_script##*/}"
       _@go.insert_name_and_script "$cmd" "${cmd_script#$_GO_ROOTDIR/}"
 
-      if [[ ${#cmd} -gt $__go_longest_name_len ]]; then
+      if [[ "${#cmd}" -gt "$__go_longest_name_len" ]]; then
         __go_longest_name_len="${#cmd}"
       fi
     done
@@ -63,7 +63,7 @@ _@go.find_commands() {
 
   shopt -u nullglob
 
-  if [[ ${#__go_command_names[@]} -eq 0 ]]; then
+  if [[ "${#__go_command_names[@]}" -eq 0 ]]; then
     return 1
   fi
 }
@@ -128,9 +128,9 @@ _@go.commands() {
   case "$1" in
   --complete)  # Tab completions
     shift
-    if [[ ${1:0:1} = - ]]; then
+    if [[ "${1:0:1}" = '-' ]]; then
       shift
-    elif [[ $# -eq 0 ]]; then
+    elif [[ "$#" -eq '0' ]]; then
       echo '--summaries --paths'
     fi
     ;;
@@ -140,12 +140,12 @@ _@go.commands() {
     ;;
   esac
 
-  if [[ -z $* ]]; then
+  if [[ -z "$*" ]]; then
     local __go_search_paths
     _@go.set_search_paths
     set "${__go_search_paths[@]}"
 
-  elif [[ ! -e $1 ]]; then
+  elif [[ ! -e "$1" ]]; then
     if _@go.source_builtin 'aliases' --exists "$1"; then
       return 1
     fi

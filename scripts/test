@@ -36,7 +36,7 @@ _test() {
   local test_file
   local tests=()
 
-  while [[ $# -ne 0 ]]; do
+  while [[ "$#" -ne '0' ]]; do
     arg="$1"
     shift
 
@@ -50,7 +50,7 @@ _test() {
       local matches=(test/$arg.bats)
       shopt -u nullglob
 
-      if [[ ${#matches[@]} -eq 0 ]]; then
+      if [[ "${#matches[@]}" -eq '0' ]]; then
         @go.printf "\"$arg\" does not match any test files.\n" >&2
         return 1
       fi
@@ -58,7 +58,7 @@ _test() {
     esac
   done
 
-  if [[ ${#tests[@]} -eq 0 ]]; then
+  if [[ "${#tests[@]}" -eq '0' ]]; then
     tests=(test/*.bats)
   fi
 

@@ -6,6 +6,6 @@ shopt -s nullglob
 plugins_paths=("$_GO_CORE_DIR/plugins"/*/bin)
 shopt -u nullglob
 
-if [[ ${#plugins_paths[@]} -ne 0 ]]; then
+if [[ "${#plugins_paths[@]}" -ne '0' ]]; then
   _@go.source_builtin 'commands' "$@" "${plugins_paths[@]}"
 fi

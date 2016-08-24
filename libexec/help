@@ -38,12 +38,12 @@ _@go.help_message_for_command() {
 
   local filter_pattern='# [Hh]elp [Ff]ilter'$'\n'
 
-  if [[ $(< "$__go_cmd_path") =~ $filter_pattern ]]; then
+  if [[ "$(< "$__go_cmd_path")" =~ $filter_pattern ]]; then
     __go_cmd_desc="$(_@go.run_command_script "$__go_cmd_path" --help-filter \
       "$__go_cmd_desc")"
   fi
 
-  if [[ -d ${__go_cmd_path}.d ]]; then
+  if [[ -d "${__go_cmd_path}.d" ]]; then
     __go_cmd_desc+="$(printf '\n\nSubcommands:\n\n'; \
       _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d")"
   fi
@@ -51,7 +51,7 @@ _@go.help_message_for_command() {
 }
 
 _@go.help() {
-  if [[ $# -eq 0 ]]; then
+  if [[ "$#" -eq '0' ]]; then
     _@go.usage
   else
     _@go.help_message_for_command "$@"

@@ -3,13 +3,13 @@
 # Print shell commands to set up your environment for this project
 
 _@go.has_spaces() {
-  [[ $1 != ${1//[[:space:]]/} ]]
+  [[ "$1" != "${1//[[:space:]]/}" ]]
 }
 
 _@go.env() {
   # Tab completions
-  if [[ $1 = --complete ]]; then
-    if [[ -z $2 ]]; then
+  if [[ "$1" = '--complete' ]]; then
+    if [[ -z "$2" ]]; then
       echo -
     fi
     return
@@ -20,7 +20,7 @@ _@go.env() {
   local shell="${SHELL##*/}"
   local shell_impl="$_GO_CORE_DIR/lib/env/$shell"
 
-  if [[ ! -e $shell_impl ]]; then
+  if [[ ! -e "$shell_impl" ]]; then
     @go.printf "%s\n\n" "The $shell shell currently isn't supported." >&2
     @go.printf "%s%s\n" \
       "Check $_GO_CORE_URL/tree/master/lib/env to see if an implementation " \
@@ -36,20 +36,20 @@ _@go.env() {
     return 1
   fi
 
-  if [[ -z $go_func ]]; then
+  if [[ -z "$go_func" ]]; then
     local help_msg
     local line
     local eval_cmd
     local eval_pattern='# .*%s env -'
 
     while read -r line; do
-      if [[ $line =~ $eval_pattern ]]; then
+      if [[ "$line" =~ $eval_pattern ]]; then
         eval_cmd="${line#\# }"
         break
       fi
     done < "$shell_impl"
 
-    if [[ -z $eval_cmd ]]; then
+    if [[ -z "$eval_cmd" ]]; then
       @go.printf 'ERROR: %s must contain a line of the form "%s" %s%s\n' \
         "$shell_impl" "$eval_pattern" "illustrating the command used to " \
         "evaluate the generated shell commands." >&2
@@ -64,7 +64,7 @@ ${eval_cmd//%s/$0}
 END_OF_HELP
     @go.printf "$help_msg\n"
     return
-  elif [[ $go_func = - ]]; then
+  elif [[ "$go_func" = '-' ]]; then
     go_func="$default_name"
   fi
 
