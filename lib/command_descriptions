@@ -82,14 +82,13 @@ _@go.command_summary() {
 
   while read -r line; do
     if [[ $line =~ $summary_pattern ]]; then
+      _@go.filter_description_line
       __go_cmd_desc="${line:2}"
       break
     elif [[ ${line:0:1} != '#' ]]; then
       break
     fi
   done < "$cmd_path"
-
-  _@go.filter_description_line
 
   if [[ -z $__go_cmd_desc ]]; then
     __go_cmd_desc='No description available'

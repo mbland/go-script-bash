@@ -129,7 +129,8 @@ No bug fixes or new features will be accepted without accompanying tests.
 - Indent using two spaces.
 - Enclose all variables in double-quotes when used, to avoid having them
   interpreted as glob patterns (unless the variable contains a glob pattern).
-  - Exception: Do not quote them within `[[` and `]]` condition tests.
+  - Quote them even within `[[` and `]]` condition tests, as strings that
+    contain '[' or ']' characters may fail to compare equally when they should.
 
 The following are intended to prevent too-compact code:
 
