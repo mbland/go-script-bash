@@ -31,21 +31,31 @@
   [[ "$output" = 'run command invoked' ]]
 }
 
-@test "produce error on cd, pushd, and unenv" {
-  local err_suffix='is only available after using "test/go env" to set up '
-  err_suffix+='your shell environment.'
+@test "produce error on cd" {
+  local expected='cd is only available after using "test/go env" to set up '
+  expected+='your shell environment.'
 
-  run test/go cd
+  run test/go 'cd'
   [[ "$status" -eq '1' ]]
-  [[ "$output" = "cd $err_suffix" ]]
+  [[ "$output" = "$expected" ]]
+}
 
-  run test/go pushd
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = "pushd $err_suffix" ]]
+@test "produce error on pushd" {
+  local expected='pushd is only available after using "test/go env" to set up '
+  expected+='your shell environment.'
 
-  run test/go unenv
+  run test/go 'pushd'
   [[ "$status" -eq '1' ]]
-  [[ "$output" = "unenv $err_suffix" ]]
+  [[ "$output" = "$expected" ]]
+}
+
+@test "produce error on unenv" {
+  local expected='unenv is only available after using "test/go env" to set up '
+  expected+='your shell environment.'
+
+  run test/go 'unenv'
+  [[ "$status" -eq '1' ]]
+  [[ "$output" = "$expected" ]]
 }
 
 @test "run shell alias command" {
