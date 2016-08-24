@@ -127,10 +127,17 @@ No bug fixes or new features will be accepted without accompanying tests.
 - Keep all files 80 characters wide. (Yes, the maintainer is a dinosaur who
   likes viewing files side-by-side in a 161-column terminal window.)
 - Indent using two spaces.
-- Enclose all variables in double-quotes when used, to avoid having them
+- Enclose all variables in double quotes when used, to avoid having them
   interpreted as glob patterns (unless the variable contains a glob pattern).
-  - Quote them even within `[[` and `]]` condition tests, as strings that
-    contain '[' or ']' characters may fail to compare equally when they should.
+- Enclose all string literals in single quotes.
+  - Exception: If the string contains an apostrophe, use double quotes.
+- Use quotes around variables and literals even inside of `[[ ]]` conditions.
+  - This is because strings that contain '[' or ']' characters may fail to
+    compare equally when they should.
+  - Exception: Do not quote variables that contain regular expression patterns
+    appearing on the right side of the `=~` operator.
+- _Only_ quote arguments to the right of `=~` if the expression is a literal
+  match without any metacharacters.
 
 The following are intended to prevent too-compact code:
 
