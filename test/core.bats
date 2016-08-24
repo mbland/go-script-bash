@@ -32,33 +32,35 @@
 }
 
 @test "produce error on cd" {
-  local expected='cd is only available after using "test/go env" to set up '
+  local expected
+  expected+='cd is only available after using "test/go env" to set up '$'\n'
   expected+='your shell environment.'
 
+  COLUMNS=60
   run test/go 'cd'
   [[ "$status" -eq '1' ]]
   [[ "$output" = "$expected" ]]
 }
 
 @test "produce error on pushd" {
-  local expected='pushd is only available after using "test/go env" to set up '
+  local expected
+  expected+='pushd is only available after using "test/go env" to set up '$'\n'
   expected+='your shell environment.'
 
+  COLUMNS=60
   run test/go 'pushd'
   [[ "$status" -eq '1' ]]
-  echo "EXPECTED: '$expected'" >&2
-  echo "ACTUAL:   '$output'" >&2
   [[ "$output" = "$expected" ]]
 }
 
 @test "produce error on unenv" {
-  local expected='unenv is only available after using "test/go env" to set up '
+  local expected
+  expected+='unenv is only available after using "test/go env" to set up '$'\n'
   expected+='your shell environment.'
 
+  COLUMNS=60
   run test/go 'unenv'
   [[ "$status" -eq '1' ]]
-  echo "EXPECTED: '$expected'" >&2
-  echo "ACTUAL:   '$output'" >&2
   [[ "$output" = "$expected" ]]
 }
 
