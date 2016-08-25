@@ -1,37 +1,34 @@
 #! /usr/bin/env bats
 
+load assertions
+
 setup() {
   . 'lib/command_descriptions'
 }
 
 @test "cmd desc: check command path passes" {
   run _@go.check_command_path go
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  assert_success ''
 }
 
 @test "cmd desc: check command path errors if no path is specified" {
   run _@go.check_command_path
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = 'ERROR: no command script specified' ]]
+  assert_failure 'ERROR: no command script specified'
 }
 
 @test "cmd desc: check command path errors if the path doesn't exist" {
   run _@go.check_command_path foobar
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = 'ERROR: command script "foobar" does not exist' ]]
+  assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
 @test "cmd desc: check command_summary fails if the path doesn't exist" {
   run _@go.command_summary foobar
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = 'ERROR: command script "foobar" does not exist' ]]
+  assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
 @test "cmd desc: check command_description fails if the path doesn't exist" {
   run _@go.command_description foobar
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = 'ERROR: command script "foobar" does not exist' ]]
+  assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
 @test "cmd desc: filter description line" {
@@ -42,14 +39,13 @@ setup() {
   line+='the command is {{cmd}}, and '
   line+='the project root is {{root}}.'
 
-
-  _@go.filter_description_line
-  [[ "$status" -eq '0' ]]
-
   local expected="The script is test-go, "
   expected+='the command is test-command, and '
   expected+="the project root is $_GO_ROOTDIR."
-  [[ "$line" = "$expected" ]]
+
+  _@go.filter_description_line
+  assert_success
+  assert_equal "$expected" "$line" 'filtered description line'
 }
 
 @test "cmd desc: format summary without folding if total length <= COLUMNS" {
@@ -60,8 +56,7 @@ setup() {
   # Add one to account for the newline, though $() trims it.
   COLUMNS="$((${#expected} + 1))"
   local formatted="$(_@go.format_summary "$cmd_name" "$summary" "${#cmd_name}")"
-
-  [[ "$formatted" = "$expected" ]]
+  assert_equal "$expected" "$formatted" 'formatted summary'
 }
 
 @test "cmd desc: format summary with folding if total length > COLUMNS" {
@@ -80,5 +75,5 @@ setup() {
   expected+="                       longer than the current"$'\n'
   expected+="                       column width"
 
-  [[ "$formatted" = "$expected" ]]
+  assert_equal "$expected" "$formatted" 'formatted summary'
 }

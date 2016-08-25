@@ -1,5 +1,7 @@
 #! /usr/bin/env bats
 
+load assertions
+
 setup () {
   . 'lib/env/bash'
 }
@@ -9,8 +11,7 @@ setup () {
   command -v _go_func
 
   run complete -p _go_func
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = "complete -o filenames -F __go_func _go_func" ]]
+  assert_success "complete -o filenames -F __go_func _go_func"
 
   _go_func 'unenv'
   ! command -v __go_func
@@ -22,28 +23,29 @@ setup () {
   . 'lib/env/bash'
 
   run _go_func 'help'
-  [[ "$status" -eq '0' ]]
-  [[ "${lines[0]}" = 'Usage: _go_func <command> [arguments...]' ]]
+  assert_success
+  assert_line_equals 0 'Usage: _go_func <command> [arguments...]'
 }
 
 @test "env-bash: environment function handles cd" {
   local orig_pwd="$PWD"
 
   _go_func 'cd' 'scripts'
-  [[ "$PWD" = "$_GO_ROOTDIR/scripts" ]]
+  assert_success
+  assert_equal "$_GO_ROOTDIR/scripts" "$PWD" 'working dir'
 
   cd -
-  [[ "$PWD" = "$orig_pwd" ]]
+  assert_equal "$orig_pwd" "$PWD" 'original working dir'
 }
 
 @test "env-bash: environment function handles pushd" {
   local orig_pwd="$PWD"
 
   _go_func 'pushd' 'scripts'
-  [[ "$PWD" = "$_GO_ROOTDIR/scripts" ]]
+  assert_equal "$_GO_ROOTDIR/scripts" "$PWD" 'current working dir'
 
   popd
-  [[ "$PWD" = "$orig_pwd" ]]
+  assert_equal "$orig_pwd" "$PWD" 'original working dir'
 }
 
 @test "env-bash: tab complete first argument lists commands, keeps PWD" {
@@ -55,11 +57,10 @@ setup () {
 
   cd 'scripts'
   __go_func
-  [[ "$status" -eq '0' ]]
-  [[ "${COMPREPLY[0]}" = 'awk' ]]  # First alias
-  [[ "${COMPREPLY[$((${#COMPREPLY[@]} - 1))]}" = 'unenv' ]]  # Last builtin
-
-  [[ "$PWD" = "$_GO_ROOTDIR/scripts" ]]
+  assert_success
+  assert_equal 'awk' "${COMPREPLY[0]}" 'first alias'
+  assert_equal 'unenv' "${COMPREPLY[$((${#COMPREPLY[@]} - 1))]}" 'last builtin'
+  assert_equal "$_GO_ROOTDIR/scripts" "$PWD" 'current working dir'
   cd -
 }
 
@@ -73,12 +74,12 @@ setup () {
 
   cd 'scripts'
   __go_func
-  [[ "$status" -eq '0' ]]
-  [[ "${#COMPREPLY[@]}" -eq '2' ]]
-  [[ "${COMPREPLY[0]}" = '--summaries' ]]
-  [[ "${COMPREPLY[1]}" = '--paths' ]]
+  assert_success
+  assert_equal '2' "${#COMPREPLY[@]}" 'number of tab completion entries'
+  assert_equal '--summaries' "${COMPREPLY[0]}" 'first tab completion entry'
+  assert_equal '--paths' "${COMPREPLY[1]}" 'second tab completion entry'
 
-  [[ "$PWD" = "$_GO_ROOTDIR" ]]
+  assert_equal "$_GO_ROOTDIR" "$PWD" 'current working dir'
   cd -
 }
 
@@ -92,10 +93,10 @@ setup () {
 
   cd 'scripts'
   __go_func
-  [[ "$status" -eq '0' ]]
-  [[ "${#COMPREPLY[@]}" -eq '1' ]]
-  [[ "${COMPREPLY[0]}" = 'scripts' ]]
+  assert_success
+  assert_equal '1' "${#COMPREPLY[@]}" 'number of tab completion entries'
+  assert_equal 'scripts' "${COMPREPLY[0]}" 'first tab completion entry'
 
-  [[ "$PWD" = "$_GO_ROOTDIR" ]]
+  assert_equal "$_GO_ROOTDIR" "$PWD" 'current working dir'
   cd -
 }

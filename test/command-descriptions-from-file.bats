@@ -1,5 +1,7 @@
 #! /usr/bin/env bats
 
+load assertions
+
 setup() {
   . 'lib/command_descriptions'
 
@@ -49,17 +51,21 @@ echo "This script has no description"
 
   local __go_cmd_desc=''
   _@go.command_summary "$TEST_CMD_SCRIPT"
-  [[ "$__go_cmd_desc" = 'No description available' ]]
+  assert_success
+  assert_equal 'No description available' "$__go_cmd_desc" 'command summary'
 
   __go_cmd_desc=''
   _@go.command_description "$TEST_CMD_SCRIPT"
-  [[ "$__go_cmd_desc" = 'No description available' ]]
+  assert_success
+  assert_equal 'No description available' "$__go_cmd_desc" 'command description'
 }
 
 @test "cmd desc: parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
   _@go.command_summary "$TEST_CMD_SCRIPT"
-  [[ "$__go_cmd_desc" = "Command that does something in /foo/bar" ]]
+  assert_success
+  assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
+    'command summary'
 }
 
 @test "cmd desc: parse description from command script" {
@@ -67,6 +73,7 @@ echo "This script has no description"
   _GO_ROOTDIR='/foo/bar'
   COLUMNS=40
   _@go.command_description "$TEST_CMD_SCRIPT"
+  assert_success
 
   local expected='Command that does something in /foo/bar
 
@@ -98,7 +105,7 @@ Indented lines that look like tables (there are two or more adjacent spaces afte
   # With this test, I learned that you _do_ have to quote strings even inside of
   # '[[' and ']]' in case the strings themselves contain '[' or ']', as with
   # '[args...]' above.
-  [[ "$__go_cmd_desc" = "$expected" ]]
+  assert_equal "$expected" "$__go_cmd_desc" 'command description'
 }
 
 teardown() {

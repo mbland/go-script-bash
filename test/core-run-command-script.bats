@@ -1,5 +1,7 @@
 #! /usr/bin/env bats
 
+load assertions
+
 setup() {
   declare -g TEST_GO_SCRIPT="$BATS_TMPDIR/go"
   declare -g TEST_COMMAND_SCRIPT="$BATS_TMPDIR/test-command"
@@ -16,8 +18,7 @@ setup() {
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'Can use @go.printf' ]]
+  assert_success 'Can use @go.printf'
 }
 
 @test "core: run sh script by sourcing" {
@@ -25,8 +26,7 @@ setup() {
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'Can use @go.printf' ]]
+  assert_success 'Can use @go.printf'
 }
 
 @test "core: run perl script" {
@@ -38,31 +38,28 @@ setup() {
   echo 'printf("%s", join(" ", @ARGV))' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can run perl
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'Can run perl' ]]
+  assert_success 'Can run perl'
 }
 
 @test "core: produce error if script doesn't contain an interpreter line" {
+  local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "
+  expected+='#!/path/to/interpreter.'
+
   echo '@go.printf "%s" "$*"' >"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
-  [[ "$status" -eq '1' ]]
-
-  local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "
-  expected+='#!/path/to/interpreter.'
-  [[ "$output" = "$expected" ]]
+  assert_failure "$expected"
 }
 
 @test "core: produce error if shebang line not parseable" {
+  local expected='Could not parse interpreter from first line of '
+  expected+="$TEST_COMMAND_SCRIPT."
+
   echo '#!' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Shebang line not complete
-  [[ "$status" -eq '1' ]]
-
-  local expected='Could not parse interpreter from first line of '
-  expected+="$TEST_COMMAND_SCRIPT."
-  [[ "$output" = "$expected" ]]
+  assert_failure "$expected"
 }
 
 @test "core: parse space after shebang" {
@@ -70,8 +67,7 @@ setup() {
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Space after shebang OK
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'Space after shebang OK' ]]
+  assert_success 'Space after shebang OK'
 }
 
 @test "core: parse /path/to/env bash" {
@@ -79,8 +75,7 @@ setup() {
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command '/path/to/env' OK
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = '/path/to/env OK' ]]
+  assert_success '/path/to/env OK'
 }
 
 @test "core: ignore flags and arguments after shell name" {
@@ -88,8 +83,7 @@ setup() {
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Flags after interpreter ignored
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'Flags after interpreter ignored' ]]
+  assert_success 'Flags after interpreter ignored'
 }
 
 teardown() {

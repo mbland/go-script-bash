@@ -2,6 +2,8 @@
 #
 # Tests for scripts/test.
 
+load assertions
+
 setup() {
   declare -g ALL_TESTS
   ALL_TESTS=(test/*.bats)
@@ -13,37 +15,31 @@ setup() {
 
 @test "test: tab completion lists all test/*.bats files" {
   run "$BASH" ./go test --complete
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = "--list ${ALL_TESTS[@]}" ]]
+  assert_success "--list ${ALL_TESTS[*]}"
 }
 
 @test "test: no arguments lists test directory only" {
   run "$BASH" ./go test --list
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = "test" ]]
+  assert_success "test"
 }
 
 @test "test: glob lists all tests" {
   run "$BASH" ./go test --list '*'
-  [[ "$status" -eq '0' ]]
   local IFS=$'\n'
-  [[ "$output" = "${ALL_TESTS[*]}" ]]
+  assert_success "${ALL_TESTS[*]}"
 }
 
 @test "test: single test name lists only that name" {
   run "$BASH" ./go test --list test
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'test' ]]
+  assert_success 'test'
 }
 
 @test "test: produce an error if any test name fails to match" {
   run "$BASH" ./go test --list test foobar
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = '"foobar" does not match any test files.' ]]
+  assert_failure '"foobar" does not match any test files.'
 }
 
 @test "test: produce an error if any test pattern fails to match" {
   run "$BASH" ./go test --list test 'foo*'
-  [[ "$status" -eq '1' ]]
-  [[ "$output" = '"foo*" does not match any test files.' ]]
+  assert_failure '"foo*" does not match any test files.'
 }

@@ -1,5 +1,7 @@
 #! /usr/bin/env bats
 
+load assertions
+
 setup() {
   declare -g TEST_GO_SCRIPT="$BATS_TMPDIR/go"
   echo . "$_GO_ROOTDIR/go-core.bash" '.' >>"$TEST_GO_SCRIPT"
@@ -8,20 +10,18 @@ setup() {
 
 @test "core: set COLUMNS if unset" {
   run env COLUMNS= "$BASH" "$TEST_GO_SCRIPT"
-  [[ "$status" -eq '0' ]]
+  assert_success
   [[ -n "$output" ]]
 }
 
 @test "core: honor COLUMNS if already set" {
   run env COLUMNS="example value" "$BASH" "$TEST_GO_SCRIPT"
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = 'example value' ]]
+  assert_success 'example value'
 }
 
 @test "core: default COLUMNS to 80 if actual columns can't be determined" {
   run env COLUMNS= PATH= "$BASH" "$TEST_GO_SCRIPT"
-  [[ "$status" -eq '0' ]]
-  [[ "$output" = '80' ]]
+  assert_success '80'
 }
 
 teardown() {
