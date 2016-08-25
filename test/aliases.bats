@@ -1,5 +1,9 @@
 #! /usr/bin/env bats
 
+setup() {
+  COLUMNS=1000
+}
+
 @test "aliases: with no arguments, list all aliases" {
   run "$BASH" ./go aliases
   [[ "$status" -eq '0' ]]

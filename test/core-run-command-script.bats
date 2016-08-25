@@ -8,6 +8,7 @@ setup() {
   echo '@go "$@"' >>"$TEST_GO_SCRIPT"
   touch "$TEST_COMMAND_SCRIPT"
   chmod 700 "$TEST_COMMAND_SCRIPT"
+  COLUMNS=1000
 }
 
 @test "core: run bash script by sourcing" {

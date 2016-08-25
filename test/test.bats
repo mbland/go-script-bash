@@ -13,6 +13,8 @@ setup() {
 @test "test: tab completion lists all test/*.bats files" {
   run "$BASH" ./go test --complete
   [[ "$status" -eq '0' ]]
+  echo "EXPECT '--list ${ALL_TESTS[@]}" >&2
+  echo "OUTPUT '$output'" >&2
   [[ "$output" = "--list ${ALL_TESTS[@]}" ]]
 }
 
@@ -26,6 +28,8 @@ setup() {
   run "$BASH" ./go test --list '*'
   [[ "$status" -eq '0' ]]
   local IFS=$'\n'
+  echo "EXPECT '${ALL_TESTS[*]}'" >&2
+  echo "OUTPUT '$output'" >&2
   [[ "$output" = "${ALL_TESTS[*]}" ]]
 }
 
