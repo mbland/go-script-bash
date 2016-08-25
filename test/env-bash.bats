@@ -4,7 +4,7 @@ setup () {
   . 'lib/env/bash'
 }
 
-@test "set and unset environment functions" {
+@test "env-bash: set and unset environment functions" {
   command -v __go_func
   command -v _go_func
 
@@ -18,7 +18,7 @@ setup () {
   ! complete -p _go_func
 }
 
-@test "environment function forwards commands to script" {
+@test "env-bash: environment function forwards commands to script" {
   . 'lib/env/bash'
 
   run _go_func 'help'
@@ -26,7 +26,7 @@ setup () {
   [[ "${lines[0]}" = 'Usage: _go_func <command> [arguments...]' ]]
 }
 
-@test "environment function handles cd" {
+@test "env-bash: environment function handles cd" {
   local orig_pwd="$PWD"
 
   _go_func 'cd' 'scripts'
@@ -36,7 +36,7 @@ setup () {
   [[ "$PWD" = "$orig_pwd" ]]
 }
 
-@test "environment function handles pushd" {
+@test "env-bash: environment function handles pushd" {
   local orig_pwd="$PWD"
 
   _go_func 'pushd' 'scripts'
@@ -46,7 +46,7 @@ setup () {
   [[ "$PWD" = "$orig_pwd" ]]
 }
 
-@test "tab complete first argument lists commands, keeps PWD" {
+@test "env-bash: tab complete first argument lists commands, keeps PWD" {
   local COMP_WORDS=('_go_func')
   local COMP_CWORD='1'
   local COMP_LINE='_go_func'
@@ -63,7 +63,7 @@ setup () {
   cd -
 }
 
-@test "tab complete second argument, changes dir to _GO_ROOTDIR" {
+@test "env-bash: tab complete second argument, changes dir to _GO_ROOTDIR" {
   # Complete the flags for the 'commands' builtin.
   local COMP_WORDS=('_go_func' 'commands' '-')
   local COMP_CWORD='2'
@@ -82,7 +82,7 @@ setup () {
   cd -
 }
 
-@test "tab complete alias completes filenames in _GO_ROOTDIR" {
+@test "env-bash: tab complete alias completes filenames in _GO_ROOTDIR" {
   # Complete the '$_GO_ROOTIDR/scripts' directory name.
   local COMP_WORDS=('_go_func' 'ls' 'scrip')
   local COMP_CWORD='2'

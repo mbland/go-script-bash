@@ -1,12 +1,12 @@
 #! /usr/bin/env bats
 
-@test "produce help message with successful return for help command" {
+@test "help: produce message with successful return for help command" {
   run test/go help
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = 'Usage: test/go <command> [arguments...]' ]
 }
 
-@test "accept -h, -help, and --help  as help command substitutes" {
+@test "help: accept -h, -help, and --help as synonyms" {
   run test/go help
   [ "$status" -eq 0 ]
   local help_output="$output"

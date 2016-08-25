@@ -6,19 +6,19 @@ setup() {
   echo 'echo "$COLUMNS"' >>"$TEST_GO_SCRIPT"
 }
 
-@test "set COLUMNS if unset" {
+@test "core: set COLUMNS if unset" {
   run env COLUMNS= "$BASH" "$TEST_GO_SCRIPT"
   [[ "$status" -eq '0' ]]
   [[ -n "$output" ]]
 }
 
-@test "honor COLUMNS if already set" {
+@test "core: honor COLUMNS if already set" {
   run env COLUMNS="example value" "$BASH" "$TEST_GO_SCRIPT"
   [[ "$status" -eq '0' ]]
   [[ "$output" = 'example value' ]]
 }
 
-@test "default COLUMNS to 80 if actual columns can't be determined" {
+@test "core: default COLUMNS to 80 if actual columns can't be determined" {
   run env COLUMNS= PATH= "$BASH" "$TEST_GO_SCRIPT"
   [[ "$status" -eq '0' ]]
   [[ "$output" = '80' ]]

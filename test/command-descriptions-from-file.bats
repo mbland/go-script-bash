@@ -41,7 +41,7 @@ echo The command script starts now.
   echo "$script" >"$TEST_CMD_SCRIPT"
 }
 
-@test "return default text when no description is available" {
+@test "cmd desc: return default text when no description is available" {
   echo '#! /bin/bash
 
 echo "This script has no description"
@@ -56,13 +56,13 @@ echo "This script has no description"
   [[ "$__go_cmd_desc" = 'No description available' ]]
 }
 
-@test "parse summary from command script" {
+@test "cmd desc: parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
   _@go.command_summary "$TEST_CMD_SCRIPT"
   [[ "$__go_cmd_desc" = "Command that does something in /foo/bar" ]]
 }
 
-@test "parse description from command script" {
+@test "cmd desc: parse description from command script" {
   _GO_CMD='test-go'
   _GO_ROOTDIR='/foo/bar'
   COLUMNS=40

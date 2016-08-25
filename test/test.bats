@@ -10,38 +10,38 @@ setup() {
   COLUMNS=1000
 }
 
-@test "tab completion lists all test/*.bats files" {
+@test "test: tab completion lists all test/*.bats files" {
   run "$BASH" ./go test --complete
   [[ "$status" -eq '0' ]]
   [[ "$output" = "--list ${ALL_TESTS[@]}" ]]
 }
 
-@test "no arguments lists test directory only" {
+@test "test: no arguments lists test directory only" {
   run "$BASH" ./go test --list
   [[ "$status" -eq '0' ]]
   [[ "$output" = "test" ]]
 }
 
-@test "glob lists all tests" {
+@test "test: glob lists all tests" {
   run "$BASH" ./go test --list '*'
   [[ "$status" -eq '0' ]]
   local IFS=$'\n'
   [[ "$output" = "${ALL_TESTS[*]}" ]]
 }
 
-@test "single test name lists only that name" {
+@test "test: single test name lists only that name" {
   run "$BASH" ./go test --list test
   [[ "$status" -eq '0' ]]
   [[ "$output" = 'test' ]]
 }
 
-@test "produce an error if any test name fails to match" {
+@test "test: produce an error if any test name fails to match" {
   run "$BASH" ./go test --list test foobar
   [[ "$status" -eq '1' ]]
   [[ "$output" = '"foobar" does not match any test files.' ]]
 }
 
-@test "produce an error if any test pattern fails to match" {
+@test "test: produce an error if any test pattern fails to match" {
   run "$BASH" ./go test --list test 'foo*'
   [[ "$status" -eq '1' ]]
   [[ "$output" = '"foo*" does not match any test files.' ]]

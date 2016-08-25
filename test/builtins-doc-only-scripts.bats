@@ -16,7 +16,7 @@ setup() {
   COLUMNS='1000'
 }
 
-@test "builtin 'edit' script should exit with an error" {
+@test "builtins: 'edit' script should exit with an error" {
   echo "_@go.source_builtin 'edit'" >>"$TEST_GO_SCRIPT"
   run "$BASH" "$TEST_GO_SCRIPT"
   [[ "$status" -eq '1' ]]
@@ -26,7 +26,7 @@ setup() {
   [[ "$output" = "$expected" ]]
 }
 
-@test "builtin 'run' script should exit with an error" {
+@test "builtins: 'run' script should exit with an error" {
   echo "_@go.source_builtin 'run'" >>"$TEST_GO_SCRIPT"
   run "$BASH" "$TEST_GO_SCRIPT"
   [[ "$status" -eq '1' ]]
@@ -36,7 +36,7 @@ setup() {
   [[ "$output" = "$expected" ]]
 }
 
-@test "builtin 'unenv' script should exit with an error" {
+@test "builtins: 'unenv' script should exit with an error" {
   echo "_@go.source_builtin 'unenv'" >>"$TEST_GO_SCRIPT"
   run "$BASH" "$TEST_GO_SCRIPT"
   [[ "$status" -eq '1' ]]

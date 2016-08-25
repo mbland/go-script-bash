@@ -5,14 +5,14 @@ setup() {
   mkdir "$CORE_TEST_DIR"
 }
 
-@test "produce an error if more than on dir specified when sourced" {
+@test "core: produce an error if more than one dir specified when sourced" {
   run ./go-core.bash "$CORE_TEST_DIR" 'test/scripts'
   [[ "$status" -eq '1' ]]
   [[ "$output" = \
     'ERROR: there should be exactly one command script dir specified' ]]
 }
 
-@test "produce an error if the script dir does not exist" {
+@test "core: produce an error if the script dir does not exist" {
   rmdir "$CORE_TEST_DIR"
   run ./go-core.bash "$CORE_TEST_DIR"
   [[ "$status" -eq '1' ]]
@@ -22,7 +22,7 @@ setup() {
   [[ "$output" = "$expected" ]]
 }
 
-@test "produce an error if the script dir isn't readable or executable" {
+@test "core: produce an error if the script dir isn't readable or executable" {
   chmod 200 "$CORE_TEST_DIR"
   run ./go-core.bash "$CORE_TEST_DIR"
   [[ "$status" -eq '1' ]]

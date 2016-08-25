@@ -8,7 +8,7 @@ setup() {
   declare -g TEST_TEXT='1234567890 1234567890 1234567890'
 }
 
-@test "wrap text according to COLUMNS if fold command is available" {
+@test "core: wrap text according to COLUMNS if fold command is available" {
   run env COLUMNS=11 "$BASH" "$TEST_GO_SCRIPT" "$TEST_TEXT"
   [[ "$status" -eq '0' ]]
   [[ "${#lines[@]}" -eq '3' ]]
@@ -17,7 +17,7 @@ setup() {
   [[ "${lines[2]}" = '1234567890' ]]
 }
 
-@test "don't wrap text if fold command isn't available" {
+@test "core: don't wrap text if fold command isn't available" {
   run env PATH= COLUMNS=11 "$BASH" "$TEST_GO_SCRIPT" "$TEST_TEXT"
   [[ "$status" -eq '0' ]]
   [[ "${#lines[@]}" -eq '1' ]]

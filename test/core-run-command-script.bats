@@ -10,7 +10,7 @@ setup() {
   chmod 700 "$TEST_COMMAND_SCRIPT"
 }
 
-@test "run bash script by sourcing" {
+@test "core: run bash script by sourcing" {
   echo '#!/bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -19,7 +19,7 @@ setup() {
   [[ "$output" = 'Can use @go.printf' ]]
 }
 
-@test "run sh script by sourcing" {
+@test "core: run sh script by sourcing" {
   echo '#!/bin/sh' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -28,7 +28,7 @@ setup() {
   [[ "$output" = 'Can use @go.printf' ]]
 }
 
-@test "run perl script" {
+@test "core: run perl script" {
   if ! command -v perl; then
     skip 'perl not installed'
   fi
@@ -41,7 +41,7 @@ setup() {
   [[ "$output" = 'Can run perl' ]]
 }
 
-@test "produce error if script doesn't contain an interpreter line" {
+@test "core: produce error if script doesn't contain an interpreter line" {
   echo '@go.printf "%s" "$*"' >"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
@@ -52,7 +52,7 @@ setup() {
   [[ "$output" = "$expected" ]]
 }
 
-@test "produce error if shebang line not parseable" {
+@test "core: produce error if shebang line not parseable" {
   echo '#!' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -64,7 +64,7 @@ setup() {
   [[ "$output" = "$expected" ]]
 }
 
-@test "parse space after shebang" {
+@test "core: parse space after shebang" {
   echo '#! /bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -73,7 +73,7 @@ setup() {
   [[ "$output" = 'Space after shebang OK' ]]
 }
 
-@test "parse /path/to/env bash" {
+@test "core: parse /path/to/env bash" {
   echo '#! /path/to/env bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -82,7 +82,7 @@ setup() {
   [[ "$output" = '/path/to/env OK' ]]
 }
 
-@test "ignore flags and arguments after shell name" {
+@test "core: ignore flags and arguments after shell name" {
   echo '#!/bin/bash -x' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 

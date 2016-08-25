@@ -4,37 +4,37 @@ setup() {
   . 'lib/command_descriptions'
 }
 
-@test "check command path passes" {
+@test "cmd desc: check command path passes" {
   run _@go.check_command_path go
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "check command path produces an error if no path is specified" {
+@test "cmd desc: check command path errors if no path is specified" {
   run _@go.check_command_path
   [[ "$status" -eq '1' ]]
   [[ "$output" = 'ERROR: no command script specified' ]]
 }
 
-@test "check command path produces an error if the path doesn't exist" {
+@test "cmd desc: check command path errors if the path doesn't exist" {
   run _@go.check_command_path foobar
   [[ "$status" -eq '1' ]]
   [[ "$output" = 'ERROR: command script "foobar" does not exist' ]]
 }
 
-@test "check command_summary fails if the path doesn't exist" {
+@test "cmd desc: check command_summary fails if the path doesn't exist" {
   run _@go.command_summary foobar
   [[ "$status" -eq '1' ]]
   [[ "$output" = 'ERROR: command script "foobar" does not exist' ]]
 }
 
-@test "check command_description fails if the path doesn't exist" {
+@test "cmd desc: check command_description fails if the path doesn't exist" {
   run _@go.command_description foobar
   [[ "$status" -eq '1' ]]
   [[ "$output" = 'ERROR: command script "foobar" does not exist' ]]
 }
 
-@test "filter description line" {
+@test "cmd desc: filter description line" {
   local _GO_CMD='test-go'
   local cmd_name='test-command'
 
@@ -52,7 +52,7 @@ setup() {
   [[ "$line" = "$expected" ]]
 }
 
-@test "format summary without folding if total length <= COLUMNS" {
+@test "cmd desc: format summary without folding if total length <= COLUMNS" {
   local cmd_name='test-command'
   local summary='Summary for a command parsed from the file header comment'
   local expected="  $cmd_name  $summary"
@@ -64,7 +64,7 @@ setup() {
   [[ "$formatted" = "$expected" ]]
 }
 
-@test "format summary with folding if total length > COLUMNS" {
+@test "cmd desc: format summary with folding if total length > COLUMNS" {
   local cmd_name='test-command'
   local summary='Summary for a command parsed from the file header comment '
   summary+="that's a bit longer than the current column width"
