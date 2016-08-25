@@ -6,12 +6,13 @@ setup() {
 
   echo . "$_GO_ROOTDIR/go-core.bash" '.' >>"$TEST_GO_SCRIPT"
   echo '@go "$@"' >>"$TEST_GO_SCRIPT"
+  touch "$TEST_COMMAND_SCRIPT"
+  chmod 700 "$TEST_COMMAND_SCRIPT"
 }
 
 @test "run bash script by sourcing" {
   echo '#!/bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
   [[ "$status" -eq '0' ]]
@@ -21,7 +22,6 @@ setup() {
 @test "run sh script by sourcing" {
   echo '#!/bin/sh' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
   [[ "$status" -eq '0' ]]
@@ -35,7 +35,6 @@ setup() {
 
   echo '#!/bin/perl' >"$TEST_COMMAND_SCRIPT"
   echo 'printf("%s", join(" ", @ARGV))' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Can run perl
   [[ "$status" -eq '0' ]]
@@ -44,7 +43,6 @@ setup() {
 
 @test "produce error if script doesn't contain an interpreter line" {
   echo '@go.printf "%s" "$*"' >"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
   [[ "$status" -eq '1' ]]
@@ -57,7 +55,6 @@ setup() {
 @test "produce error if shebang line not parseable" {
   echo '#!' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Shebang line not complete
   [[ "$status" -eq '1' ]]
@@ -70,7 +67,6 @@ setup() {
 @test "parse space after shebang" {
   echo '#! /bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Space after shebang OK
   [[ "$status" -eq '0' ]]
@@ -80,7 +76,6 @@ setup() {
 @test "parse /path/to/env bash" {
   echo '#! /path/to/env bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command '/path/to/env' OK
   [[ "$status" -eq '0' ]]
@@ -90,7 +85,6 @@ setup() {
 @test "ignore flags and arguments after shell name" {
   echo '#!/bin/bash -x' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Flags after interpreter ignored
   [[ "$status" -eq '0' ]]
