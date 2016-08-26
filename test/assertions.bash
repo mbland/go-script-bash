@@ -18,7 +18,9 @@ assert_equal() {
   if [[ "$expected" != "$actual" ]]; then
     printf "%s not equal to expected value:\n  %s\n  %s\n" \
       "$label" "expected: '$expected'" "actual:   '$actual'" >&2
+    set +o functrace
     fail
+    set -o functrace
     return 1
   fi
 }
@@ -27,32 +29,52 @@ assert_output() {
   if [[ "$#" -eq '0' ]]; then
     return
   elif [[ "$#" -ne 1 ]]; then
-    echo "ERROR: assert_output takes only one argument" >&2
+    echo "ERROR: ${FUNCNAME[0]} takes only one argument" >&2
     return 1
   fi
+  set +o functrace
   assert_equal "$1" "$output" 'output'
+  local result="$?"
+  set -o functrace
+  return "$result"
 }
 
 assert_status() {
+  set +o functrace
   assert_equal "$1" "$status" "exit status"
+  local result="$?"
+  set -o functrace
+  return "$result"
 }
 
 assert_success() {
   if [[ "$status" -ne '0' ]]; then
     printf 'expected success, but command failed\n' >&2
+    set +o functrace
     fail
+    set -o functrace
     return 1
   fi
+  set +o functrace
   assert_output "$@"
+  local result="$?"
+  set -o functrace
+  return "$result"
 }
 
 assert_failure() {
   if [[ "$status" -eq '0' ]]; then
     printf 'expected failure, but command succeeded\n' >&2
+    set +o functrace
     fail
+    set -o functrace
     return 1
   fi
+  set +o functrace
   assert_output "$@"
+  local result="$?"
+  set -o functrace
+  return "$result"
 }
 
 assert_line_equals() {
@@ -64,5 +86,9 @@ assert_line_equals() {
     lineno="$((${#lines[@]} - ${lineno:1}))"
   fi
 
+  set +o functrace
   assert_equal "$expected" "${lines[$lineno]}" "line $lineno"
+  local result="$?"
+  set -o functrace
+  return "$result"
 }

@@ -49,7 +49,7 @@ echo_fail() {
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_output success" {
+@test "assertions: assert_output fail output check" {
   run echo 'Hello, world!'
   run assert_output 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
