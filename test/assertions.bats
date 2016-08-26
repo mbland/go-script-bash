@@ -61,6 +61,32 @@ echo_fail() {
   [[ "${lines[5]}" = 'Hello, world!' ]]
 }
 
+@test "assertions: assert_output empty string check" {
+  run echo
+  run assert_output ''
+  [[ "$status" -eq '0' ]]
+  [[ -z "$output" ]]
+}
+
+@test "assertions: assert_output fail empty string check" {
+  run echo 'Not empty'
+  run assert_output ''
+  [[ "$status" -eq '1' ]]
+  [[ "${lines[0]}" = 'output not equal to expected value:' ]]
+  [[ "${lines[1]}" = "  expected: ''" ]]
+  [[ "${lines[2]}" = "  actual:   'Not empty'" ]]
+  [[ "${lines[3]}" = 'STATUS: 0' ]]
+  [[ "${lines[4]}" = 'OUTPUT:' ]]
+  [[ "${lines[5]}" = 'Not empty' ]]
+}
+
+@test "assertions: assert_output fails if more than one argument" {
+  run echo 'Hello, world!'
+  run assert_output 'Hello,' 'world!'
+  [[ "$status" -eq '1' ]]
+  [[ "$output" = 'ERROR: assert_output takes only one argument' ]]
+}
+
 @test "assertions: assert_status" {
   run echo 'Hello, world!'
   run assert_status '0'

@@ -23,12 +23,12 @@ load assertions
 
 @test "core: invoke editor on edit command" {
   run env EDITOR=echo test/go edit 'editor invoked'
-  assert_success 'editor invoked' ]]
+  assert_success 'editor invoked'
 }
 
 @test "core: invoke run command" {
   run test/go run echo run command invoked
-  assert_success 'run command invoked' ]]
+  assert_success 'run command invoked'
 }
 
 @test "core: produce error on cd" {

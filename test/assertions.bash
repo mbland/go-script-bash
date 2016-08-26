@@ -24,12 +24,13 @@ assert_equal() {
 }
 
 assert_output() {
-  local expected="$1"
-
-  if [[ -z "$expected" ]]; then
+  if [[ "$#" -eq '0' ]]; then
     return
+  elif [[ "$#" -ne 1 ]]; then
+    echo "ERROR: assert_output takes only one argument" >&2
+    return 1
   fi
-  assert_equal "$expected" "$output" 'output'
+  assert_equal "$1" "$output" 'output'
 }
 
 assert_status() {
@@ -42,7 +43,7 @@ assert_success() {
     fail
     return 1
   fi
-  assert_output "$1"
+  assert_output "$@"
 }
 
 assert_failure() {
@@ -51,7 +52,7 @@ assert_failure() {
     fail
     return 1
   fi
-  assert_output "$1"
+  assert_output "$@"
 }
 
 assert_line_equals() {
