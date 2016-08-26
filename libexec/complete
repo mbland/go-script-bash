@@ -63,7 +63,7 @@ _@go.tab_completions() {
     fi
     return
     ;;
-  -h|-help|--help|help|-i|--interactive|path)
+  -h|-help|--help|help|path)
     if [[ "${#args[@]}" -eq '0' ]]; then
       compgen -W "$(_@go.all_commands)" -- "$word"
       return
