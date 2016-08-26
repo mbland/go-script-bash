@@ -2,6 +2,8 @@
 #
 # Shell aliases that will run in the project root directory
 #
+# Usage: {{go}} {{cmd}} [--exists <alias>]
+#
 # To run an alias in {{root}}:
 #
 #   {{go}} <alias> [...arguments...]
@@ -9,14 +11,6 @@
 # where <alias> is one of:
 #
 #   {{_GO_ALIAS_CMDS}}
-#
-# To list available aliases:
-#
-#   {{go}} {{cmd}}
-#
-# To check whether an alias exists:
-#
-#   {{go}} {{cmd}} <alias>
 #
 # Automatic file name completion within this directory is available via the
 # "{{go}} env" command.
@@ -34,34 +28,39 @@ _@go.aliases() {
       echo $c
     done
     return
+  elif [[ "$1" = '--complete' ]]; then
+    # Tab completions
+    if [[ "${2:0:1}" != '-' ]]; then
+      echo "--exists"
+    fi
+    return
   fi
 
+  . "$_GO_CORE_DIR/lib/argv"
   local flag
 
   case "$1" in
-  --complete)
-    # Tab completions
-    echo "--exists"
-    return
-    ;;
-  --exists|--help)
+  --exists|--help|--help-filter)
     flag="${1#--}"
     shift
-    ;;
-  --help-filter)
-    # Help filter
-    echo "${2//\{\{_GO_ALIAS_CMDS\}\}/${_GO_ALIAS_CMDS[@]}}"
-    return
+    if ! _@go.check_flag_has_one_argument "--$flag" "$@"; then
+      return 1
+    fi
     ;;
   -*)
-    echo "ERROR: unknown flag: $1"
+    @go.printf "ERROR: unknown flag: $1\n" >&2
     return 1
     ;;
   esac
 
-  if [[ -n "$flag" && -z "$1" ]]; then
-    echo "ERROR: no argument given after --$flag flag"
+  if [[ -z "$flag" ]] && ! _@go.check_argv_empty_if_no_flags "$@"; then
     return 1
+  fi
+
+  # Help filter
+  if [[ "$flag" = 'help-filter' ]]; then
+    echo "${1//\{\{_GO_ALIAS_CMDS\}\}/${_GO_ALIAS_CMDS[@]}}"
+    return
   fi
 
   for c in "${_GO_ALIAS_CMDS[@]}"; do

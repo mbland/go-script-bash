@@ -2,6 +2,10 @@
 
 load assertions
 
+setup() {
+  COLUMNS=1000
+}
+
 @test "builtins: no args lists all builtin commands" {
   run "$BASH" ./go 'builtins'
   assert_success
@@ -23,18 +27,28 @@ load assertions
 
   run "$BASH" ./go builtins --exists foobar
   assert_failure ''
+}
 
-  # No flag is the same as --exists
+@test "builtins: error if no flag specified and other arguments present" {
   run "$BASH" ./go builtins builtins
-  assert_success ''
+  assert_failure \
+    'ERROR: with no flag specified, the argument list should be empty'
+}
 
-  run "$BASH" ./go builtins foobar
-  assert_failure ''
+@test "builtins: error if too many arguments present for flag" {
+  run "$BASH" ./go builtins --summaries builtins aliases
+  assert_failure 'ERROR: --summaries takes no arguments'
+
+  run "$BASH" ./go builtins --exists builtins aliases
+  assert_failure 'ERROR: only one argument should follow --exists'
+
+  run "$BASH" ./go builtins --help-filter builtins aliases
+  assert_failure 'ERROR: only one argument should follow --help-filter'
 }
 
 @test "builtins: error if --exists not followed by a command name" {
   run "$BASH" ./go builtins --exists
-  assert_failure 'ERROR: --exists not followed by a command name'
+  assert_failure 'ERROR: no argument given after --exists'
 }
 
 @test "builtins: error on unknown flag" {

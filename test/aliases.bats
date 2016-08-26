@@ -16,6 +16,9 @@ setup() {
 @test "aliases: tab completions" {
   run "$BASH" ./go aliases --complete
   assert_success '--exists'
+
+  run "$BASH" ./go aliases --complete -
+  assert_success ''
 }
 
 @test "aliases: error on unknown flag" {
@@ -31,15 +34,11 @@ setup() {
 
 @test "aliases: error if no argument after valid flag" {
   run "$BASH" ./go aliases --exists
-  assert_failure 'ERROR: no argument given after --exists flag'
+  assert_failure 'ERROR: no argument given after --exists'
 }
 
 @test "aliases: return true if alias exists, false if not" {
   run "$BASH" ./go aliases --exists ls
-  assert_success ''
-
-  # No flag is the same as --exists.
-  run "$BASH" ./go aliases ls
   assert_success ''
 
   run "$BASH" ./go aliases --exists foobar
@@ -47,9 +46,23 @@ setup() {
 
   run "$BASH" ./go aliases --help foobar
   assert_failure ''
+}
 
-  run "$BASH" ./go aliases foobar
-  assert_failure ''
+@test "aliases: error if no flag specified and other arguments present" {
+  run "$BASH" ./go aliases ls
+  assert_failure \
+    'ERROR: with no flag specified, the argument list should be empty'
+}
+
+@test "aliases: error if too many arguments present for flag" {
+  run "$BASH" ./go aliases --exists ls cat
+  assert_failure 'ERROR: only one argument should follow --exists'
+
+  run "$BASH" ./go aliases --help ls cat
+  assert_failure 'ERROR: only one argument should follow --help'
+
+  run "$BASH" ./go aliases --help-filter foo bar
+  assert_failure 'ERROR: only one argument should follow --help-filter'
 }
 
 @test "aliases: show generic help for alias" {
