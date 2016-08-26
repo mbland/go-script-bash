@@ -14,6 +14,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'STATUS: 0' ]]
   [[ "${lines[1]}" = 'OUTPUT:' ]]
   [[ "${lines[2]}" = 'Hello, world!' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_equal success" {
@@ -30,9 +31,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'echo result not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
   [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" = 'STATUS: 0' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Hello, world!' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_output success if null expected value" {
@@ -56,9 +55,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'output not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
   [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" = 'STATUS: 0' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Hello, world!' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_output empty string check" {
@@ -75,9 +72,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'output not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: ''" ]]
   [[ "${lines[2]}" = "  actual:   'Not empty'" ]]
-  [[ "${lines[3]}" = 'STATUS: 0' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Not empty' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_output fails if more than one argument" {
@@ -101,9 +96,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'exit status not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: '1'" ]]
   [[ "${lines[2]}" = "  actual:   '0'" ]]
-  [[ "${lines[3]}" = 'STATUS: 0' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Hello, world!' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_success without output check" {
@@ -121,6 +114,7 @@ echo_fail() {
   [[ "${lines[1]}" = 'STATUS: 1' ]]
   [[ "${lines[2]}" = 'OUTPUT:' ]]
   [[ "${lines[3]}" = 'Hello, world!' ]]
+  [[ -z "${lines[4]}" ]]
 }
 
 @test "assertions: assert_success with output check" {
@@ -137,9 +131,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'output not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
   [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" = 'STATUS: 0' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Hello, world!' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_failure without output check" {
@@ -157,6 +149,7 @@ echo_fail() {
   [[ "${lines[1]}" = 'STATUS: 0' ]]
   [[ "${lines[2]}" = 'OUTPUT:' ]]
   [[ "${lines[3]}" = 'Hello, world!' ]]
+  [[ -z "${lines[4]}" ]]
 }
 
 @test "assertions: assert_failure with output check" {
@@ -173,9 +166,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'output not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
   [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" = 'STATUS: 1' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Hello, world!' ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "assertions: assert_line_equals" {
@@ -199,7 +190,7 @@ echo_fail() {
   [[ "${lines[0]}" = 'line 0 not equal to expected value:' ]]
   [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
   [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" = 'STATUS: 0' ]]
-  [[ "${lines[4]}" = 'OUTPUT:' ]]
-  [[ "${lines[5]}" = 'Hello, world!' ]]
+  [[ "${lines[3]}" = 'OUTPUT:' ]]
+  [[ "${lines[4]}" = 'Hello, world!' ]]
+  [[ -z "${lines[5]}" ]]
 }

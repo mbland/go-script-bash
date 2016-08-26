@@ -18,9 +18,6 @@ assert_equal() {
   if [[ "$expected" != "$actual" ]]; then
     printf "%s not equal to expected value:\n  %s\n  %s\n" \
       "$label" "expected: '$expected'" "actual:   '$actual'" >&2
-    set +o functrace
-    fail
-    set -o functrace
     return 1
   fi
 }
@@ -90,5 +87,9 @@ assert_line_equals() {
   assert_equal "$expected" "${lines[$lineno]}" "line $lineno"
   local result="$?"
   set -o functrace
+
+  if [[ "$result" -ne '0' ]]; then
+    printf "OUTPUT:\n$output\n" >&2
+  fi
   return "$result"
 }
