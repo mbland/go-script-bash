@@ -1,18 +1,25 @@
 #! /bin/bash
 #
-# List shell command aliases or execute an alias in the project root
+# Shell aliases that will run in the project root directory
 #
-# Usage:
+# To run an alias in {{root}}:
 #
-#   {{go}} {{cmd}}
-#   {{go}} {{cmd}} <alias> [...]
+#   {{go}} <alias> [...arguments...]
 #
-# Where <alias> is one of the following system programs:
+# where <alias> is one of:
 #
 #   {{_GO_ALIAS_CMDS}}
 #
-# Each command alias runs the command in {{root}}. Automatic file name
-# completion within this directory is available via the "{{go}} env" command.
+# To list available aliases:
+#
+#   {{go}} {{cmd}}
+#
+# To check whether an alias exists:
+#
+#   {{go}} {{cmd}} <alias>
+#
+# Automatic file name completion within this directory is available via the
+# "{{go}} env" command.
 #
 # Note that "cd" and "pushd" are only available after you've used "{{go}} env"
 # to set up your shell environment.

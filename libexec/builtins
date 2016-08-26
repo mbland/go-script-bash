@@ -1,10 +1,12 @@
 #! /bin/bash
 #
-# List commands built directly into the core ./go script library
+# Commands built directly into the core ./go script library
 #
-# Usage: {{go}} <builtin> arguments
+# To run a builtin command within {{root}}:
 #
-# Where <builtin> is one of the following built-in commands:
+#   {{go}} <builtin> [...arguments...]
+#
+# where <builtin> is one of the following built-in commands:
 #
 # {{_GO_BUILTIN_SUMMARIES}}
 #
@@ -15,8 +17,16 @@
 #   <word>          a command line argument being tab-completed
 #   <file-paths>    zero or more file paths relative to <project root>
 #
-# Each command runs within {{root}}. Automatic file and command name completion
-# within this directory is available via the "{{go}} env" command.
+# To list available builtins:
+#
+#   {{go}} {{cmd}}
+#
+# To check whether a builtin exists:
+#
+#   {{go}} {{cmd}} <builtin>
+#
+# Automatic file and command name completion within this directory is available
+# via the "{{go}} env" command.
 #
 # Note that "unenv" is only available after you've used "{{go}} env" to set up
 # your shell environment.
