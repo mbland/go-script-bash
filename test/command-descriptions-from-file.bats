@@ -22,6 +22,8 @@ setup() {
 # preformatted, and will not be joined:
 #
 #   foo bar baz
+#     preformatted lines should support
+#       multiple indentations
 #   quux xyzzy plugh
 #
 # Indented lines that look like tables
@@ -84,6 +86,8 @@ Paragraphs of adjacent lines will be joined. They will not be folded; @go.printf
 Lines indented by two spaces like the following are considered preformatted, and will not be joined:
 
   foo bar baz
+    preformatted lines should support
+      multiple indentations
   quux xyzzy plugh
 
 Indented lines that look like tables (there are two or more adjacent spaces after the first non-space character) will be parsed as summary items and folded as appropriate. Each table item should be only one line long.

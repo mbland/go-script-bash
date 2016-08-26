@@ -107,9 +107,9 @@ _@go.command_description() {
 
   local line
   local paragraph_pattern='^# [[:graph:]]'
-  local preformatted_pattern='^#   [[:graph:]]'
   local end_paragraph_pattern=' $'
   local summary_pattern='^#   [[:graph:]].*  '
+  local preformatted_pattern='^#    *[[:graph:]]'
   local summary_item
   local summary
   local cmd_name="${1##*/}"
