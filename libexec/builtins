@@ -79,17 +79,11 @@ _@go.builtins() {
     return
     ;;
   --exists)
-    if [[ -z "$2" ]]; then
-      @go.printf "ERROR: no command name given" >&2
+    shift
+    if [[ "$#" -eq 0 ]]; then
+      echo "ERROR: --exists not followed by a command name"
       return 1
     fi
-    for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
-      if [[ "$cmd_name" = "$2" ]]; then
-        return
-      fi
-    done
-    return 1
-    shift
     ;;
   --help-filter)
     # Help filter
@@ -102,13 +96,18 @@ _@go.builtins() {
     ;;
   esac
 
-  if [[ "$#" -ne '0' ]]; then
-    @go.printf "ERROR: invalid argument(s): $@" >&2
-    return 1
+  if [[ "$#" -eq '0' ]]; then
+    local IFS=$'\n'
+    echo "${_GO_BUILTIN_CMDS[*]}"
+    return
   fi
 
-  IFS=$'\n'
-  echo "${_GO_BUILTIN_CMDS[*]}"
+  for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
+    if [[ "$cmd_name" = "$1" ]]; then
+      return
+    fi
+  done
+  return 1
 }
 
 _@go.builtins "$@"
