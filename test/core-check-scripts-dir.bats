@@ -45,9 +45,6 @@ teardown() {
   run "$TEST_GO_SCRIPT"
   assert_failure "$expected"
 
-  expected="ERROR: you do not have permission to access the "
-  expected+="$TEST_GO_SCRIPTS_DIR directory"
-
   chmod 600 "$TEST_GO_SCRIPTS_DIR"
   run "$TEST_GO_SCRIPT"
   assert_failure "$expected"

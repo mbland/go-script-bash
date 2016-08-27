@@ -27,7 +27,3 @@ teardown() {
   run env COLUMNS= PATH= "$BASH" "$TEST_GO_SCRIPT"
   assert_success '80'
 }
-
-teardown() {
-  rm "$TEST_GO_SCRIPT"
-}

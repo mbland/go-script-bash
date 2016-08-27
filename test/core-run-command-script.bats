@@ -85,10 +85,3 @@ teardown() {
   run "$BASH" "$TEST_GO_SCRIPT" test-command Flags after interpreter ignored
   assert_success 'Flags after interpreter ignored'
 }
-
-teardown() {
-  if [[ -f "$TEST_COMMAND_SCRIPT" ]]; then
-    rm "$TEST_COMMAND_SCRIPT"
-  fi
-  rm "$TEST_GO_SCRIPT"
-}
