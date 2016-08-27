@@ -19,15 +19,15 @@
 # _before_ executing the test command.
 
 _find_tests() {
+  local glob_patterns=("$@")
   if [[ "$#" -eq '0' ]]; then
-    tests=('tests')
-    return
+    glob_patterns+=('*')
   fi
 
   local test_name_or_glob
   local matches=()
 
-  for test_name_or_glob in "$@"; do
+  for test_name_or_glob in "${glob_patterns[@]}"; do
     shopt -s nullglob
     matches=(tests/$test_name_or_glob.bats)
     shopt -u nullglob
@@ -52,7 +52,7 @@ _test() {
 
   if [[ "$1" = '--complete' ]]; then
     # Tab completions
-    if ! _find_tests '*'; then
+    if ! _find_tests; then
       return 1
     fi
     _filter_test_names_only

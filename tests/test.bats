@@ -14,9 +14,10 @@ ALL_TESTS=("${ALL_TESTS[@]%.bats}")
   assert_success "--list ${ALL_TESTS[*]}"
 }
 
-@test "test: no arguments lists test directory only" {
+@test "test: no arguments lists all tests" {
   run "$BASH" ./go test --list
-  assert_success "tests"
+  local IFS=$'\n'
+  assert_success "${ALL_TESTS[*]}"
 }
 
 @test "test: glob lists all tests" {
