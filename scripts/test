@@ -20,7 +20,7 @@
 
 _find_tests() {
   if [[ "$#" -eq '0' ]]; then
-    tests=('test')
+    tests=('tests')
     return
   fi
 
@@ -29,7 +29,7 @@ _find_tests() {
 
   for test_name_or_glob in "$@"; do
     shopt -s nullglob
-    matches=(test/$test_name_or_glob.bats)
+    matches=(tests/$test_name_or_glob.bats)
     shopt -u nullglob
 
     if [[ "${#matches[@]}" -eq '0' ||
@@ -42,7 +42,7 @@ _find_tests() {
 }
 
 _filter_test_names_only() {
-  tests=("${tests[@]#test/}")
+  tests=("${tests[@]#tests/}")
   tests=("${tests[@]%.bats}")
 }
 
@@ -70,7 +70,7 @@ _test() {
     local IFS=$'\n'
     echo "${tests[*]}"
   else
-    test/bats/bin/bats "${tests[@]}"
+    tests/bats/bin/bats "${tests[@]}"
   fi
 }
 

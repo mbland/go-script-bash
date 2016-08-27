@@ -5,18 +5,18 @@
 load environment
 load assertions
 
-ALL_TESTS=(test/*.bats)
-ALL_TESTS=("${ALL_TESTS[@]#test/}")
+ALL_TESTS=(tests/*.bats)
+ALL_TESTS=("${ALL_TESTS[@]#tests/}")
 ALL_TESTS=("${ALL_TESTS[@]%.bats}")
 
-@test "test: tab completion lists all test/*.bats files" {
+@test "test: tab completion lists all tests/*.bats files" {
   run "$BASH" ./go test --complete
   assert_success "--list ${ALL_TESTS[*]}"
 }
 
 @test "test: no arguments lists test directory only" {
   run "$BASH" ./go test --list
-  assert_success "test"
+  assert_success "tests"
 }
 
 @test "test: glob lists all tests" {
