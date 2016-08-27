@@ -8,9 +8,9 @@
 # Though these scripts should never get executed, these tests ensure they fail
 # loudly in case something goes wrong and they are.
 
-load environment
-load assertions
-load script_helper
+load ../environment
+load ../assertions
+load ../script_helper
 
 teardown() {
   remove_test_go_rootdir

@@ -18,26 +18,46 @@
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the test command.
 
-_find_tests() {
-  local glob_patterns=("$@")
-  if [[ "$#" -eq '0' ]]; then
-    glob_patterns+=('*')
+_find_tests_helper() {
+  local pattern="$1"
+
+  shopt -s nullglob
+  local matches=($pattern.bats)
+  shopt -u nullglob
+
+  if [[ "${#matches[@]}" -eq '0' || ! -f "${matches[0]}" ]]; then
+    @go.printf "\"${pattern#tests/}\" does not match any test files.\n" >&2
+    return 1
   fi
 
-  local test_name_or_glob
-  local matches=()
+  local match
 
-  for test_name_or_glob in "${glob_patterns[@]}"; do
-    shopt -s nullglob
-    matches=(tests/$test_name_or_glob.bats)
-    shopt -u nullglob
+  for match in "${matches[@]}"; do
+    tests+=("$match")
 
-    if [[ "${#matches[@]}" -eq '0' ||
-      ( "${#matches[@]}" -eq '1' && ! -f "${matches[0]}" ) ]]; then
-      @go.printf "\"$test_name_or_glob\" does not match any test files.\n" >&2
+    # If the pattern isn't a literal file name, recurse into the directory
+    # matching the file name if it exists.
+    if [[ "$match" != "$pattern.bats" && -d "${match%.bats}" ]]; then
+      if ! _find_tests_helper "${match%.bats}/*"; then
+        return 1
+      fi
+    fi
+  done
+}
+
+_find_tests() {
+  local patterns=("$@")
+
+  if [[ "$#" -eq '0' ]]; then
+    patterns+=('*')
+  fi
+
+  local pattern
+
+  for pattern in "${patterns[@]}"; do
+    if ! _find_tests_helper "tests/$pattern"; then
       return 1
     fi
-    tests+=("${matches[@]}")
   done
 }
 
@@ -46,22 +66,36 @@ _filter_test_names_only() {
   tests=("${tests[@]%.bats}")
 }
 
-_test() {
+_test_tab_completion() {
+  if [[ "${1:0:1}" != '-' ]]; then
+    echo -n "--list "
+    shift
+  fi
+
   local tests=()
+
+  if ! _find_tests; then
+    return 1
+  fi
+  _filter_test_names_only
+
+  echo "${tests[@]}"
+}
+
+_test() {
   local list_only
 
   if [[ "$1" = '--complete' ]]; then
     # Tab completions
-    if ! _find_tests; then
-      return 1
-    fi
-    _filter_test_names_only
-    echo "--list ${tests[@]}"
+    shift
+    _test_tab_completion "$@"
     return
   elif [[ "$1" = '--list' ]]; then
     list_only='true'
     shift
   fi
+
+  local tests=()
 
   if !  _find_tests "$@"; then
     return 1

@@ -1,8 +1,8 @@
 #! /usr/bin/env bats
 
-load environment
-load assertions
-load script_helper
+load ../environment
+load ../assertions
+load ../script_helper
 
 setup() {
   . 'lib/command_descriptions'

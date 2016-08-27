@@ -1,7 +1,7 @@
 #! /usr/bin/env bats
 
-load environment
-load assertions
+load ../environment
+load ../assertions
 
 setup () {
   . 'lib/env/bash'
