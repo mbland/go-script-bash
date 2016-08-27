@@ -1,5 +1,6 @@
 #! /usr/bin/env bats
 
+load environment
 load assertions
 
 setup() {
@@ -15,8 +16,8 @@ setup() {
 }
 
 @test "core: honor COLUMNS if already set" {
-  run env COLUMNS="example value" "$BASH" "$TEST_GO_SCRIPT"
-  assert_success 'example value'
+  run env COLUMNS="19700918" "$BASH" "$TEST_GO_SCRIPT"
+  assert_success '19700918'
 }
 
 @test "core: default COLUMNS to 80 if actual columns can't be determined" {

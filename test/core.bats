@@ -1,11 +1,11 @@
 #! /usr/bin/env bats
 
+load environment
 load assertions
 
 @test "core: check exported global constants" {
   assert_equal "$PWD" "$_GO_ROOTDIR" 'working dir'
   assert_equal "$_GO_ROOTDIR/go" "$_GO_SCRIPT" 'go script path'
-  [[ -n "$COLUMNS" ]]
 }
 
 @test "core: produce help message with error return when no args" {

@@ -1,10 +1,7 @@
 #! /usr/bin/env bats
 
+load environment
 load assertions
-
-setup() {
-  COLUMNS=1000
-}
 
 @test "aliases: with no arguments, list all aliases" {
   run "$BASH" ./go aliases

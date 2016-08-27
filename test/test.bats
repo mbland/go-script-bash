@@ -2,6 +2,7 @@
 #
 # Tests for scripts/test.
 
+load environment
 load assertions
 
 setup() {

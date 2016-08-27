@@ -1,5 +1,6 @@
 #! /usr/bin/env bats
 
+load environment
 load assertions
 
 @test "help: produce message with successful return for help command" {

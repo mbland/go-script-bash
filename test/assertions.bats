@@ -1,5 +1,6 @@
 #! /usr/bin/env bats
 
+load environment
 load assertions
 
 echo_fail() {

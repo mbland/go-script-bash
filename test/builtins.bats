@@ -1,10 +1,7 @@
 #! /usr/bin/env bats
 
+load environment
 load assertions
-
-setup() {
-  COLUMNS=1000
-}
 
 @test "builtins: no args lists all builtin commands" {
   run "$BASH" ./go 'builtins'

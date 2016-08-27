@@ -8,14 +8,12 @@
 # Though these scripts should never get executed, these tests ensure they fail
 # loudly in case something goes wrong and they are.
 
+load environment
 load assertions
 
 setup() {
   declare -g TEST_GO_SCRIPT="$BATS_TMPDIR/go"
   echo . "$_GO_ROOTDIR/go-core.bash" '.' >>"$TEST_GO_SCRIPT"
-
-  # Avoid having to fold our test strings.
-  COLUMNS='1000'
 }
 
 @test "builtins: 'edit' script should exit with an error" {
