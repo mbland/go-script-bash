@@ -172,7 +172,7 @@ it easier to find, count, and possibly transform things.
     function __go_glob_builtin_scripts {
       local c
       for c in "$_GO_CORE_DIR/libexec/"*; do
-        if [[ -f $c && -x $c ]]; then
+        if [[ -f "$c" && -x "$c" ]]; then
           __go_builtin_cmds+=("${c##*/}")
         fi
       done
@@ -197,7 +197,7 @@ it easier to find, count, and possibly transform things.
   `libexec/help`:
   ```bash
   _@go.help() {
-    if [[ $# -eq 0 ]]; then
+    if [[ "$#" -eq '0' ]]; then
       _@go.usage
     else
       _@go.help_message_for_command "$@"
@@ -220,8 +220,10 @@ it easier to find, count, and possibly transform things.
 ### Variable and parameter declarations
 
 - Declare all constants near the top of the file using `declare -r`.
+  - Exception: `declare` is not available in test files run using `bats`.
 - Avoid globals; but if you must, declare all globals near the top of the file,
   outside of any function, using `declare`.
+  - Exception: `declare` is not available in test files run using `bats`.
 - Declare all variables inside functions using `local`.
   - Exception: If an internal function needs to return more than one distinct
     result value, or an array of values, it should use _undeclared_ variables
@@ -243,7 +245,7 @@ it easier to find, count, and possibly transform things.
   For very short functions, this _may not_ be necessary, e.g.:
   ```bash
   _@go.has_spaces() {
-    [[ $1 != ${1//[[:space:]]/} ]]
+    [[ "$1" != "${1//[[:space:]]/}" ]]
   }
   ```
 
@@ -257,8 +259,9 @@ it easier to find, count, and possibly transform things.
 
 ### Conditionals and loops
 
-- Always use `[[` and `]]` for evaluating variables. Do not quote variables
-  within the brackets.
+- Always use `[[` and `]]` for evaluating variables. Per the guideline under
+  **Formatting**, quote variables and strings within the brackets, but not
+  regular expressions appearing on the right side of the `=~` operator.
 
 ### Output
 
@@ -271,11 +274,7 @@ it easier to find, count, and possibly transform things.
   then check the exit status of the command substitution, you _must_ declare the
   variable on one line and perform the substitution on another. If you don't,
   the exit status will always indicate success, as it is the status of the
-  `local` declaration, not the command substitution:
-  ```bash
-  local defined
-  defined=($(declare -F "${_COMMANDS[@]}")) && [[ $? -eq 0 ]] && return
-  ```
+  `local` declaration, not the command substitution.
 
 ## Public domain
 
