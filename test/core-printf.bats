@@ -2,13 +2,16 @@
 
 load environment
 load assertions
+load script_helper
+
+TEST_TEXT='1234567890 1234567890 1234567890'
 
 setup() {
-  declare -g TEST_GO_SCRIPT="$BATS_TMPDIR/go"
-  echo . "$_GO_ROOTDIR/go-core.bash" '.' >>"$TEST_GO_SCRIPT"
-  echo '@go.printf "%s" "$@"' >>"$TEST_GO_SCRIPT"
+  create_test_go_script '@go.printf "%s" "$@"'
+}
 
-  declare -g TEST_TEXT='1234567890 1234567890 1234567890'
+teardown() {
+  remove_test_go_rootdir
 }
 
 @test "core: wrap text according to COLUMNS if fold command is available" {
@@ -24,8 +27,4 @@ setup() {
   run env PATH= COLUMNS=11 "$BASH" "$TEST_GO_SCRIPT" "$TEST_TEXT"
   assert_success "$TEST_TEXT"
   assert_equal '1' "${#lines[@]}" 'number of output lines'
-}
-
-teardown() {
-  rm "$TEST_GO_SCRIPT"
 }

@@ -2,13 +2,12 @@
 
 load environment
 load assertions
+load script_helper
 
 setup() {
   . 'lib/command_descriptions'
 
-  declare -g TEST_CMD_SCRIPT="$BATS_TMPDIR/test-command"
-  local script='#! /bin/bash
-#
+  local script='#
 # Command that does something in {{root}}
 #
 # Usage: {{go}} {{cmd}} [args...]
@@ -43,29 +42,30 @@ setup() {
 
 echo The command script starts now.
 '
-  echo "$script" >"$TEST_CMD_SCRIPT"
+  create_test_command_script "$script"
+}
+
+teardown() {
+  remove_test_go_rootdir
 }
 
 @test "cmd desc: return default text when no description is available" {
-  echo '#! /bin/bash
-
-echo "This script has no description"
-' >"$TEST_CMD_SCRIPT"
+  create_test_command_script 'echo "This script has no description"'
 
   local __go_cmd_desc=''
-  _@go.command_summary "$TEST_CMD_SCRIPT"
+  _@go.command_summary "$TEST_COMMAND_SCRIPT"
   assert_success
   assert_equal 'No description available' "$__go_cmd_desc" 'command summary'
 
   __go_cmd_desc=''
-  _@go.command_description "$TEST_CMD_SCRIPT"
+  _@go.command_description "$TEST_COMMAND_SCRIPT"
   assert_success
   assert_equal 'No description available' "$__go_cmd_desc" 'command description'
 }
 
 @test "cmd desc: parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
-  _@go.command_summary "$TEST_CMD_SCRIPT"
+  _@go.command_summary "$TEST_COMMAND_SCRIPT"
   assert_success
   assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
     'command summary'
@@ -75,7 +75,7 @@ echo "This script has no description"
   _GO_CMD='test-go'
   _GO_ROOTDIR='/foo/bar'
   COLUMNS=40
-  _@go.command_description "$TEST_CMD_SCRIPT"
+  _@go.command_description "$TEST_COMMAND_SCRIPT"
   assert_success
 
   local expected='Command that does something in /foo/bar
@@ -111,8 +111,4 @@ Indented lines that look like tables (there are two or more adjacent spaces afte
   # '[[' and ']]' in case the strings themselves contain '[' or ']', as with
   # '[args...]' above.
   assert_equal "$expected" "$__go_cmd_desc" 'command description'
-}
-
-teardown() {
-  rm "$TEST_CMD_SCRIPT"
 }

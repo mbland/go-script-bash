@@ -2,15 +2,15 @@
 
 load environment
 load assertions
+load script_helper
 
 setup() {
-  declare -g TEST_GO_SCRIPT="$BATS_TMPDIR/go"
-  declare -g TEST_COMMAND_SCRIPT="$BATS_TMPDIR/test-command"
+  create_test_go_script '@go "$@"'
+  create_test_command_script
+}
 
-  echo . "$_GO_ROOTDIR/go-core.bash" '.' >>"$TEST_GO_SCRIPT"
-  echo '@go "$@"' >>"$TEST_GO_SCRIPT"
-  touch "$TEST_COMMAND_SCRIPT"
-  chmod 700 "$TEST_COMMAND_SCRIPT"
+teardown() {
+  remove_test_go_rootdir
 }
 
 @test "core: run bash script by sourcing" {

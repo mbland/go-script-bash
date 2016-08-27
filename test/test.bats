@@ -5,14 +5,9 @@
 load environment
 load assertions
 
-setup() {
-  declare -g ALL_TESTS
-  ALL_TESTS=(test/*.bats)
-  ALL_TESTS=("${ALL_TESTS[@]#test/}")
-  ALL_TESTS=("${ALL_TESTS[@]%.bats}")
-
-  COLUMNS=1000
-}
+ALL_TESTS=(test/*.bats)
+ALL_TESTS=("${ALL_TESTS[@]#test/}")
+ALL_TESTS=("${ALL_TESTS[@]%.bats}")
 
 @test "test: tab completion lists all test/*.bats files" {
   run "$BASH" ./go test --complete

@@ -2,11 +2,14 @@
 
 load environment
 load assertions
+load script_helper
 
 setup() {
-  declare -g TEST_GO_SCRIPT="$BATS_TMPDIR/go"
-  echo . "$_GO_ROOTDIR/go-core.bash" '.' >>"$TEST_GO_SCRIPT"
-  echo 'echo "$COLUMNS"' >>"$TEST_GO_SCRIPT"
+  create_test_go_script 'echo "$COLUMNS"'
+}
+
+teardown() {
+  remove_test_go_rootdir
 }
 
 @test "core: set COLUMNS if unset" {
