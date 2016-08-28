@@ -125,14 +125,14 @@ _@go.list_command_paths() {
 
 _@go.commands() {
   local action="list"
+
   case "$1" in
   --complete)  # Tab completions
-    shift
-    if [[ "${1:0:1}" = '-' ]]; then
-      shift
-    elif [[ "$#" -eq '0' ]]; then
+    local word_index="$2"
+    if [[ "$word_index" -eq '0' ]]; then
       echo '--summaries --paths'
     fi
+    return
     ;;
   --*)
     action="${1#--}"

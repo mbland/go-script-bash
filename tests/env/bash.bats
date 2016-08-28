@@ -49,33 +49,27 @@ setup () {
   assert_equal "$orig_pwd" "$PWD" 'original working dir'
 }
 
-@test "env-bash: tab complete first argument lists commands, keeps PWD" {
+@test "env-bash: complete first argument lists commands, cd to _GO_ROOTDIR" {
   local COMP_WORDS=('_go_func')
   local COMP_CWORD='1'
-  local COMP_LINE='_go_func'
-  local COMP_POINT="${#COMP_LINE}"
   local COMPREPLY
 
   cd 'scripts'
   __go_func
-  assert_success
   assert_equal 'awk' "${COMPREPLY[0]}" 'first alias'
   assert_equal 'unenv' "${COMPREPLY[$((${#COMPREPLY[@]} - 1))]}" 'last builtin'
-  assert_equal "$_GO_ROOTDIR/scripts" "$PWD" 'current working dir'
+  assert_equal "$_GO_ROOTDIR" "$PWD" 'current working dir'
   cd -
 }
 
-@test "env-bash: tab complete second argument, changes dir to _GO_ROOTDIR" {
+@test "env-bash: complete second argument, cd to _GO_ROOTDIR" {
   # Complete the flags for the 'commands' builtin.
   local COMP_WORDS=('_go_func' 'commands' '-')
   local COMP_CWORD='2'
-  local COMP_LINE='_go_func commands -'
-  local COMP_POINT="${#COMP_LINE}"
   local COMPREPLY
 
   cd 'scripts'
   __go_func
-  assert_success
   assert_equal '2' "${#COMPREPLY[@]}" 'number of tab completion entries'
   assert_equal '--summaries' "${COMPREPLY[0]}" 'first tab completion entry'
   assert_equal '--paths' "${COMPREPLY[1]}" 'second tab completion entry'
@@ -84,17 +78,14 @@ setup () {
   cd -
 }
 
-@test "env-bash: tab complete alias completes filenames in _GO_ROOTDIR" {
+@test "env-bash: complete alias completes filenames in _GO_ROOTDIR" {
   # Complete the '$_GO_ROOTIDR/scripts' directory name.
   local COMP_WORDS=('_go_func' 'ls' 'scrip')
   local COMP_CWORD='2'
-  local COMP_LINE='_go_func ls script'
-  local COMP_POINT="${#COMP_LINE}"
   local COMPREPLY
 
   cd 'scripts'
   __go_func
-  assert_success
   assert_equal '1' "${#COMPREPLY[@]}" 'number of tab completion entries'
   assert_equal 'scripts' "${COMPREPLY[0]}" 'first tab completion entry'
 

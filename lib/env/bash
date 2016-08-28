@@ -3,18 +3,9 @@
 # eval "$(%s env -)"
 
 __go_func() {
-  local word="${COMP_WORDS[$COMP_CWORD]}"
-  local script="$_GO_SCRIPT"
-
-  if [[ "$COMP_CWORD" -eq '1' ]]; then
-    COMPREPLY=($("$script" 'complete' "$word"))
-  else
-    local words=("${COMP_WORDS[@]}")
-    unset 'words[0]'
-    unset "words[$COMP_CWORD]"
-    COMPREPLY=($("$script" 'complete' "${words[@]}" "$word"))
-    cd "$_GO_ROOTDIR"
-  fi
+  unset COMP_WORDS[0]
+  COMPREPLY=($("$_GO_SCRIPT" 'complete' "$((COMP_CWORD-1))" "${COMP_WORDS[@]}"))
+  cd "$_GO_ROOTDIR"
 }
 
 _go_func() {

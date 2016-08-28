@@ -66,7 +66,8 @@ _@go.builtins() {
     return
   elif [[ "$1" = '--complete' ]]; then
     # Tab completions
-    if [[ "${2:0:1}" != '-' ]]; then
+    local word_index="$2"
+    if [[ "$word_index" -eq '0' ]]; then
       echo "--exists --summaries"
     fi
     return

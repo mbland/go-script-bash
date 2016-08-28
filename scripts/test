@@ -8,7 +8,7 @@
 #   {{go}} {{cmd}} [--list] <glob> [<glob>...]
 #
 # Without arguments, runs all tests. With one or more <glob> arguments, only
-# runs tests matching 'test/<glob>.bats'. With the --list flag, only lists the
+# runs tests matching 'tests/<glob>.bats'. With the --list flag, only lists the
 # test file names without executing them.
 #
 # If a <glob> doesn't match any test files, the command will return an error
@@ -67,19 +67,44 @@ _filter_test_names_only() {
 }
 
 _test_tab_completion() {
-  if [[ "${1:0:1}" != '-' ]]; then
-    echo -n "--list "
-    shift
+  local word_index="$1"
+  shift
+  local args=("$@")
+  local word=("${args[$word_index]}")
+  local flag='^-'
+
+  if [[ "$word_index" -eq '0' ]]; then
+    if [[ -z "$word" ]]; then
+      echo "--list"
+    elif [[ "$word" =~ $flag ]]; then
+      echo "--list"
+      return
+    fi
   fi
 
-  local tests=()
-
-  if ! _find_tests; then
+  if ! _find_tests "$word*"; then
     return 1
   fi
   _filter_test_names_only
 
-  echo "${tests[@]}"
+  local word_prefix_len="${#word}"
+  local separator='[/]'
+  local test_name
+  local suffix
+
+  for test_name in "${tests[@]}"; do
+    suffix="${test_name:${#word}}"
+
+    if [[ "$suffix" =~ $separator ]]; then
+      continue
+    fi
+
+    echo "${test_name}"
+
+    if [[ -d "tests/$test_name" ]]; then
+      echo "${test_name}/"
+    fi
+  done
 }
 
 _test() {

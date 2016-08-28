@@ -11,10 +11,16 @@ load assertions
 }
 
 @test "aliases: tab completions" {
-  run "$BASH" ./go aliases --complete
+  run "$BASH" ./go aliases --complete 0 ''
   assert_success '--exists'
 
-  run "$BASH" ./go aliases --complete -
+  run "$BASH" ./go aliases --complete 0 -
+  assert_success '--exists'
+
+  run "$BASH" ./go aliases --complete 1 --exists
+  assert_success ''
+
+  run "$BASH" ./go aliases --complete 1 cd --exists
   assert_success ''
 }
 

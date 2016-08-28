@@ -26,9 +26,48 @@ setup() {
   ALL_TESTS=("${ALL_TESTS[@]%.bats}")
 }
 
-@test "test: tab completion lists all tests/*.bats files" {
-  run "$BASH" ./go test --complete
-  assert_success "--list ${ALL_TESTS[*]}"
+_fill_expected_completions() {
+  local pattern="$1"
+  local test_name
+
+  for test_name in $pattern.bats; do
+    test_name="${test_name%.bats}"
+    expected+=("${test_name#tests/}")
+
+    if [[ -d "$test_name" ]]; then
+      expected+=("${test_name#tests/}/")
+    fi
+  done
+}
+
+@test "test: tab complete flags" {
+  run "$BASH" ./go test --complete 0 '-'
+  assert_success "--list"
+}
+
+@test "test: tab completion lists first-level tests and directories" {
+  local expected=('--list')
+  _fill_expected_completions 'tests/*'
+
+  run "$BASH" ./go test --complete 0 ''
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
+@test "test: tab completion matches test file and matching directory" {
+  expected=('core' 'core/')
+  run "$BASH" ./go test --complete 0 'core'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
+@test "test: tab completion lists second-level tests and directories" {
+  local expected=()
+  _fill_expected_completions 'tests/core/*'
+
+  run "$BASH" ./go test --complete 0 'core/'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
 }
 
 @test "test: no arguments lists all tests" {
@@ -59,7 +98,9 @@ setup() {
 @test "test: a pattern matching a directory name returns its files" {
   run "$BASH" ./go test --list test aliases 'builtins*'
 
-  local expected=(test aliases builtins builtins/doc-only-scripts)
+  local expected=(test aliases builtins)
+  _fill_expected_completions 'tests/builtins/*'
+
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }

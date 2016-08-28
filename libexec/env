@@ -1,6 +1,19 @@
 #! /bin/bash
 #
 # Print shell commands to set up your environment for this project
+#
+# Usage:
+#   To view the generated shell commands:
+#   {{go}} {{cmd}}
+#
+#   To apply the commands to your shell environment (bash version):
+#   eval "$({{go}} {{cmd}} -)"
+#
+# This command defines a shell function with argument completion that may be
+# used in place of running the script directly.
+#
+# For information on how to make your own command scripts implement argument
+# completion, run `{{go}} help complete`.
 
 _@go.has_spaces() {
   [[ "$1" != "${1//[[:space:]]/}" ]]
@@ -9,7 +22,8 @@ _@go.has_spaces() {
 _@go.env() {
   # Tab completions
   if [[ "$1" = '--complete' ]]; then
-    if [[ -z "$2" ]]; then
+    local word_index="$2"
+    if [[ "$word_index" -eq '0' ]]; then
       echo -
     fi
     return

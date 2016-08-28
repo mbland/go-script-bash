@@ -1,28 +1,79 @@
 #! /bin/bash
 #
-# Lists tab completions for <command> <word> within <project-root>
+# Generate automatic command and argument completions
+#
+# Usage:
+#   For all commands:
+#   {{go}} {{cmd}} <word-index> [arguments]
+#
+#   For command scripts implementing argument completion:
+#   {{go}} <command> --complete <word-index> [arguments]
+#
+# Where:
+#   <word-index>  is the index of the word to be completed within [arguments]
+#   [arguments]   is the current list of command line arguments
+#   <command>     is the command supporting argument completion
+#
+# Aliases and some builtin commands will complete file and directory paths
+# relative to {{root}}. Other commands may implement their own specific
+# completion schemes.
+#
+# This behavior is normally accessible by using `{{go}} env` to set up your
+# shell environment for argument completion. Running `{{go}} {{cmd}}` or `{{go}}
+# <command> --complete` directly is useful for experimenting with and testing
+# argument completions, but otherwise should prove unnecessary.
+#
+# * Notes on implementing argument completion:
+#
+# - If you wish to implement custom argument completion in your own command
+# scripts, your script must contain a `# Tab completion` comment and respond to
+# the `--complete` command line interface described above.
+#
+# - The argument list must/will always contain at least one element, even if
+# it is the empty string, which represents the user completing an argument
+# without typing anything first. Take this into account when implementing
+# argument completion.
+#
+# - Subcommand scripts stored in `<parent>.d` directories are automatically
+# added to the argument completions for `{{go}} <parent>` and do not need to be
+# explicitly implemented.
 
 _@go.command_completions() {
+  local word_index="$1"
+  shift
   exec 2>/dev/null
+
+  _@go.source_builtin 'path'
 
   local __go_cmd_path
   local __go_argv
   if ! _@go.set_command_path_and_argv "$@"; then
     return 1
   fi
+  (( word_index -= ($# - ${#__go_argv[@]}) ))
 
-  shopt -s nullglob
-  for c in "${__go_cmd_path}.d"/*; do
-    if [[ -f "$c" && -x "$c" ]]; then
-      echo "${c##*/}"
-    fi
-  done
-  shopt -u nullglob
+  if [[ "$word_index" -lt '0' ]]; then
+    # This (sub)command itself is the completion target.
+    echo "${__go_cmd_path##*/}"
+    return
+
+  elif [[ "$word_index" -eq '0' ]]; then
+    # Automatically complete subcommand scripts.
+    local c
+    shopt -s nullglob
+    for c in "${__go_cmd_path}.d"/*; do
+      if [[ -f "$c" && -x "$c" ]]; then
+        echo "${c##*/}"
+      fi
+    done
+    shopt -u nullglob
+  fi
 
   local tab_completions_pattern='# [Tt]ab [Cc]ompletions'$'\n'
 
   if [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
-    _@go.run_command_script "$__go_cmd_path" --complete "${__go_argv[@]}"
+    _@go.run_command_script "$__go_cmd_path" --complete "$word_index" \
+      "${__go_argv[@]}"
   fi
 }
 
@@ -33,20 +84,19 @@ _@go.all_commands() {
 }
 
 _@go.tab_completions() {
+  local word_index="$1"
+  shift
   local args=("$@")
 
-  _@go.source_builtin 'path'
-
-  if [[ "$#" -le '1' ]]; then
+  if [[ "${#args[@]}" -le '1' ]]; then
     compgen -W "$(_@go.all_commands)" -- "$1"
     return
   fi
 
   local cmd_name="${args[0]}"
-  local word_pos=$((${#args[@]}-1))
-  local word="${args[$word_pos]}"
+  local word="${args[$word_index]}"
 
-  unset 'args[0]' "args[$word_pos]"
+  unset 'args[0]'
 
   case "$cmd_name" in
   cd|pushd)
@@ -58,18 +108,19 @@ _@go.tab_completions() {
     return
     ;;
   plugins)
-    if [[ "${#args[@]}" -eq '0' ]]; then
+    if [[ "$word_index" -eq '1' ]]; then
       compgen -W "--paths --summaries" -- "$word"
     fi
     return
     ;;
   -h|-help|--help|help|path)
-    if [[ "${#args[@]}" -eq '0' ]]; then
+    if [[ "$word_index" -eq '1' ]]; then
       compgen -W "$(_@go.all_commands)" -- "$word"
       return
     fi
     cmd_name="${args[1]}"
     unset 'args[1]'
+    ((--word_index))
     ;;
   -*)
     return
@@ -81,7 +132,9 @@ _@go.tab_completions() {
     return
   fi
 
-  compgen -W "$(_@go.command_completions "$cmd_name" "${args[@]}")" -- "$word"
+  compgen -W \
+    "$(_@go.command_completions "$word_index" "$cmd_name" "${args[@]}")" \
+    -- "$word"
 }
 
 _@go.tab_completions "$@"

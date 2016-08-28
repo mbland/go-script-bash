@@ -54,6 +54,11 @@ _@go.set_command_path_and_argv() {
   local cmd_arg_index=1
 
   for arg in "${cmd_args[@]}"; do
+    # This is most likely to happen during argument completion.
+    if [[ -z "$arg" ]]; then
+      break
+    fi
+
     try_path="${cmd_path}.d/$arg"
 
     if [[ ! -e "$try_path" ]]; then

@@ -2,10 +2,11 @@
 #
 # Shell aliases that will run in the project root directory
 #
-# Usage: {{go}} {{cmd}} [--exists <alias>]
+# Usage:
+#   To list all aliases or check if an alias exists:
+#   {{go}} {{cmd}} [--exists <alias>]
 #
-# To run an alias in {{root}}:
-#
+#   To run an alias in {{root}}:
 #   {{go}} <alias> [...arguments...]
 #
 # where <alias> is one of:
@@ -14,6 +15,9 @@
 #
 # Automatic file name completion within this directory is available via the
 # "{{go}} env" command.
+#
+# If an alias doesn't exist, you can also pass a program as an argument to
+# {{go}} run <command> and it will execute within {{root}}.
 #
 # Note that "cd" and "pushd" are only available after you've used "{{go}} env"
 # to set up your shell environment.
@@ -30,7 +34,8 @@ _@go.aliases() {
     return
   elif [[ "$1" = '--complete' ]]; then
     # Tab completions
-    if [[ "${2:0:1}" != '-' ]]; then
+    local word_index="$2"
+    if [[ "$word_index" -eq 0 ]]; then
       echo "--exists"
     fi
     return

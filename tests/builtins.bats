@@ -11,10 +11,13 @@ load assertions
 }
 
 @test "builtins: tab completions" {
-  run "$BASH" ./go builtins --complete
+  run "$BASH" ./go builtins --complete 0 ''
   assert_success '--exists --summaries'
 
-  run "$BASH" ./go builtins --complete -
+  run "$BASH" ./go builtins --complete 0 -
+  assert_success '--exists --summaries'
+
+  run "$BASH" ./go builtins --complete 1 --exists
   assert_success ''
 }
 
