@@ -2,10 +2,8 @@
 #
 # Lists all installed plugin commands
 
-shopt -s nullglob
-plugins_paths=("$_GO_CORE_DIR/plugins"/*/bin)
-shopt -u nullglob
+. "$_GO_CORE_DIR/lib/path"
 
-if [[ "${#plugins_paths[@]}" -ne '0' ]]; then
-  _@go.source_builtin 'commands' "$@" "${plugins_paths[@]}"
+if [[ "${#_GO_PLUGINS_PATHS[@]}" -ne '0' ]]; then
+  _@go.source_builtin 'commands' "$@" "${_GO_PLUGINS_PATHS[@]}"
 fi
