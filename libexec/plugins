@@ -1,12 +1,27 @@
 #! /bin/bash
 #
 # Lists all installed plugin commands
+#
+# Usage: {{go}} {{cmd}} [--paths|--summaries]
+#
+# Options:
+#   --paths      List all plugin command paths relative to the project root
+#   --summaries  List all plugin command summaries
+#
+# To install plugins, first create a subdirectory of your scripts directory
+# called "plugins". Then add any third-party scripts to this new directory.
+#
+# As with your project-specific scripts, any scripts in this directory must be
+# executable and the first line must be of the form: '#!/path/to/interpreter'
+#
+# Plugins that are installed as directories (possibly as git submodules) should
+# contain a `bin/` subdirectory containing its command scripts.
 
 # TODO(mbland): add --add and --remove options to automatically download scripts
 # or add submodules if curl, wget, or git are present.
 
 . "$_GO_CORE_DIR/lib/path"
 
-if [[ "${#_GO_PLUGINS_PATHS[@]}" -ne '0' ]]; then
+if [[ -n "$_GO_PLUGINS_DIR" ]]; then
   _@go.source_builtin 'commands' "$@" "${_GO_PLUGINS_PATHS[@]}"
 fi
