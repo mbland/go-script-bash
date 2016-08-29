@@ -5,11 +5,17 @@
 _@go.list_available_commands() {
   echo "Available commands are:"
 
-  local line
+  . "$_GO_CORE_DIR/lib/commands"
+  local __go_command_names
+  local cmd_name
 
-  while read -r line; do
-    echo "  $line"
-  done <<< "$(. "$_GO_CORE_DIR/libexec/commands")"
+  if ! _@go.find_commands "${_GO_SEARCH_PATHS[@]}"; then
+    return 1
+  fi
+
+  for cmd_name in "${__go_command_names[@]}"; do
+    echo "  $cmd_name"
+  done
 }
 
 _@go.set_command_path_and_argv() {

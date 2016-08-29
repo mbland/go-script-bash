@@ -1,0 +1,67 @@
+#! /bin/bash
+
+# Note that _@go.find_commands uses this insertion sort rather than `sort |
+# uniq` not just because it's is more portable (to Windows), but because it's
+# actually faster for the amount of data involved, since it avoids the overhead
+# of launching the `sort | uniq` pipeline. Since the user's expected to invoke
+# this frequently via the 'help' command and tab completion, scraping out this
+# tiny bit of performance potentially matters. (And it keeps the tests fast.)
+_@go.insert_name_and_script() {
+  local cmd_name="$1"
+  local cmd_script="$2"
+  local i=0
+  local current_name
+  local current_script
+
+  for ((i=${#__go_command_names[@]}; i != 0; --i)); do
+    current_name="${__go_command_names[$((i-1))]}"
+    current_script="${__go_command_scripts[$((i-1))]}"
+
+    if [[ "$cmd_name" = "$current_name" ]]; then
+      printf "WARNING: duplicate command $cmd_name:\n\n  %s\n  %s\n" \
+        "$current_script" "$cmd_script" >&2
+      return 1
+    elif [[ "$cmd_name" < "$current_name" ]]; then
+      __go_command_names[$i]="$current_name"
+      __go_command_scripts[$i]="$current_script"
+    else
+      break
+    fi
+  done
+
+  __go_command_names[$i]="$cmd_name"
+  __go_command_scripts[$i]="$cmd_script"
+}
+
+_@go.find_commands() {
+  local scripts_dir
+  local cmd_script
+  local cmd
+
+  __go_longest_name_len=0
+  __go_command_names=()
+  __go_command_scripts=()
+
+  shopt -s nullglob
+
+  for scripts_dir in "$@"; do
+    for cmd_script in "$scripts_dir"/*; do
+      if [[ ! (-f "$cmd_script" && -x "$cmd_script") ]]; then
+        continue
+      fi
+
+      cmd="${cmd_script##*/}"
+      _@go.insert_name_and_script "$cmd" "${cmd_script#$_GO_ROOTDIR/}"
+
+      if [[ "${#cmd}" -gt "$__go_longest_name_len" ]]; then
+        __go_longest_name_len="${#cmd}"
+      fi
+    done
+  done
+
+  shopt -u nullglob
+
+  if [[ "${#__go_command_names[@]}" -eq 0 ]]; then
+    return 1
+  fi
+}
