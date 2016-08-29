@@ -109,6 +109,7 @@ cd "$_GO_ROOTDIR"
     return
   fi
 
+  . "$_GO_CORE_DIR/lib/path"
   _@go.source_builtin 'path'
   local __go_cmd_path
   local __go_argv

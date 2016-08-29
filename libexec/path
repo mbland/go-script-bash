@@ -23,7 +23,6 @@ _@go.set_command_path_and_argv() {
   local try_path
 
   unset 'cmd_args[0]'
-  . "$_GO_CORE_DIR/lib/path"
 
   for try_path in "${_GO_SEARCH_PATHS[@]}"; do
     try_path="$try_path/$cmd_name"

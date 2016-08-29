@@ -141,7 +141,6 @@ _@go.commands() {
   esac
 
   if [[ -z "$*" ]]; then
-    . "$_GO_CORE_DIR/lib/path"
     set "${_GO_SEARCH_PATHS[@]}"
 
   elif [[ ! -e "$1" ]]; then
