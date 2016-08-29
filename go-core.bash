@@ -133,7 +133,8 @@ _@go.run_command_script() {
   read -r interpreter < "$cmd_path"
 
   if [[ "${interpreter:0:2}" != '#!' ]]; then
-    @go.printf "The first line of %s does not contain #!/path/to/interpreter." \
+    @go.printf \
+      "The first line of %s does not contain #!/path/to/interpreter.\n" \
       "$cmd_path" >&2
     return 1
   fi
