@@ -2,6 +2,9 @@
 #
 # Lists all installed plugin commands
 
+# TODO(mbland): add --add and --remove options to automatically download scripts
+# or add submodules if curl, wget, or git are present.
+
 . "$_GO_CORE_DIR/lib/path"
 
 if [[ "${#_GO_PLUGINS_PATHS[@]}" -ne '0' ]]; then
