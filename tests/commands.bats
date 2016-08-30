@@ -6,7 +6,7 @@ load script_helper
 
 declare BUILTIN_CMDS
 declare BUILTIN_SCRIPTS
-declare LONGEST_NAME
+declare LONGEST_BUILTIN_NAME
 
 setup() {
   create_test_go_script \
@@ -42,8 +42,8 @@ find_builtins() {
     BUILTIN_CMDS+=("$cmd_name")
     BUILTIN_SCRIPTS+=("$cmd_script")
 
-    if [[ "${#cmd_name}" -gt "${#LONGEST_NAME}" ]]; then
-      LONGEST_NAME="$cmd_name"
+    if [[ "${#cmd_name}" -gt "${#LONGEST_BUILTIN_NAME}" ]]; then
+      LONGEST_BUILTIN_NAME="$cmd_name"
     fi
   done
 
@@ -62,11 +62,49 @@ assert_command_scripts_equal() {
   return "$result"
 }
 
+merge_scripts() {
+  local args=("$@")
+  local i=0
+  local j=0
+  local lhs
+  local rhs
+  local result=()
+
+  while ((i != ${#all_scripts[@]} && j != ${#args[@]})); do
+    lhs="${all_scripts[$i]#*/}"
+    rhs="${args[$j]#*/}"
+
+    if [[ "$lhs" < "$rhs" ]]; then
+      result+=("${all_scripts[$i]}")
+      ((++i))
+    elif [[ "$lhs" = "$rhs" ]]; then
+      result+=("${all_scripts[$i]}")
+      ((++i))
+      ((++j))
+    else
+      result+=("${args[$j]}")
+      ((++j))
+    fi
+  done
+
+  while ((i != ${#all_scripts[@]})); do
+    result+=("${all_scripts[$i]}")
+    ((++i))
+  done
+
+  while ((j != ${#args[@]})); do
+    result+=("${args[$j]}")
+    ((++j))
+  done
+
+  all_scripts=("${result[@]}")
+}
+
 @test "commands: find returns only builtin commands" {
   run "$TEST_GO_SCRIPT"
   assert_success
 
-  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_BUILTIN_NAME}"
   assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
   assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
@@ -76,7 +114,7 @@ assert_command_scripts_equal() {
   run "$TEST_GO_SCRIPT"
   assert_success
 
-  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_BUILTIN_NAME}"
   assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
   assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
@@ -91,13 +129,26 @@ assert_command_scripts_equal() {
   run "$TEST_GO_SCRIPT"
   assert_success
 
-  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_BUILTIN_NAME}"
   assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
   assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
 
 @test "commands: find returns builtins and user scripts" {
-  skip
+  local longest_name="extra-long-name-that-no-one-would-use"
+  local user_commands=('bar' 'baz' "$longest_name" 'foo')
+  local all_scripts=("${BUILTIN_SCRIPTS[@]}")
+
+  merge_scripts "${user_commands[@]/#/$TEST_GO_SCRIPTS_RELATIVE_DIR/}"
+  touch "${user_commands[@]/#/$TEST_GO_SCRIPTS_DIR/}"
+  chmod 700 $TEST_GO_SCRIPTS_DIR/*
+
+  run "$TEST_GO_SCRIPT"
+  assert_success
+
+  assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
+  assert_line_equals 1 "COMMAND_NAMES: ${all_scripts[*]#**/}"
+  assert_command_scripts_equal "${all_scripts[@]}"
 }
 
 @test "commands: find returns builtins, plugins, and user scripts" {
