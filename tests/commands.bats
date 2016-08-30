@@ -15,13 +15,13 @@ setup() {
     'declare __go_longest_name_len' \
     'declare __go_command_names' \
     'declare __go_command_scripts' \
-    '_@go.find_commands "${@:-${_GO_SEARCH_PATHS[@]}}"' \
-    'STATUS="$?"' \
+    'if ! _@go.find_commands "${@:-${_GO_SEARCH_PATHS[@]}}"; then' \
+    '  exit 1' \
+    'fi' \
     'echo LONGEST NAME LEN: "$__go_longest_name_len"' \
     'echo COMMAND_NAMES: "${__go_command_names[@]}"' \
     "IFS=$'\n'" \
     'echo "${__go_command_scripts[*]}"' \
-    'exit "$STATUS"'
 
   find_builtins
 }
@@ -210,9 +210,5 @@ add_scripts() {
 @test "commands: find returns error if no commands are found" {
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
-  assert_failure
-
-  assert_line_equals 0 "LONGEST NAME LEN: 0"
-  assert_line_equals 1 'COMMAND_NAMES:'
-  assert_command_scripts_equal ''
+  assert_failure ''
 }
