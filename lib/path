@@ -45,6 +45,9 @@ _@go.set_command_path_and_argv() {
     if [[ -f "$try_path" && -x "$try_path" ]]; then
       cmd_path="$try_path"
       break
+    elif [[ -e "$try_path" ]]; then
+      @go.printf "$try_path is not an executable script\n" >&2
+      return 1
     fi
   done
 

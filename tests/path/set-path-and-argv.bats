@@ -18,7 +18,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "path+argv: error on empty argument list" {
+@test "path/argv: error on empty argument list" {
   run "$TEST_GO_SCRIPT"
   assert_failure
 
@@ -26,41 +26,46 @@ teardown() {
   assert_failure
 }
 
-@test "path+argv: list available commands if command not found" {
-  # Since we aren't creating any new commands, and _@go.find_commands is already
-  # thoroughly tested in isolation, we only check that builtins are available.
-  local expected=($_GO_ROOTDIR/libexec/*)
-  expected=("${expected[@]##*/}")
-
-  run "$TEST_GO_SCRIPT" 'foobar'
-  assert_failure
-
-  assert_line_equals 0 'Unknown command: foobar'
-  assert_line_equals 1 'Available commands are:'
-
-  unset 'lines[0]' 'lines[1]'
-  local IFS=$'\n'
-  assert_equal "${expected[*]/#/  }" "${lines[*]}" 'available commands'
-}
-
-@test "path+argv: error if command not found and no commands available" {
-  # Overwrite the script to isolate _@go.list_available_commands.
-  create_test_go_script \
-    '. "$_GO_CORE_DIR/lib/path"' \
-    "_@go.list_available_commands \"$TEST_GO_SCRIPTS_DIR\""
-  run "$TEST_GO_SCRIPT" 'foobar'
-  assert_failure
-
-  assert_line_equals 0 'ERROR: No commands available in:'
-  assert_line_equals 1 "  $TEST_GO_SCRIPTS_DIR"
-}
-
-@test "path+argv: find builtin command" {
+@test "path/argv: find builtin command" {
   local builtins=($_GO_ROOTDIR/libexec/*)
   local builtin_cmd="${builtins[0]}"
 
   run "$TEST_GO_SCRIPT" "${builtin_cmd##*/}" '--exists' 'ls'
   assert_success
   assert_line_equals 0 "PATH: $builtin_cmd"
-  assert_line_equals 1 "ARGV: --exists ls"
+  assert_line_equals 1 'ARGV: --exists ls'
+}
+
+@test "path/argv: list available commands if command not found" {
+  # Since _@go.list_available_commands is already tested in isolation, we only
+  # check the beginning of the error output.
+  run "$TEST_GO_SCRIPT" 'foobar'
+  assert_failure
+
+  assert_line_equals 0 'Unknown command: foobar'
+  assert_line_equals 1 'Available commands are:'
+}
+
+@test "path/argv: find top-level command" {
+  touch "$TEST_GO_SCRIPTS_DIR/foobar"
+  chmod 700 "$TEST_GO_SCRIPTS_DIR/foobar"
+  run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
+  assert_success
+  assert_line_equals 0 "PATH: $TEST_GO_SCRIPTS_DIR/foobar"
+  assert_line_equals 1 'ARGV: baz quux'
+}
+
+@test "path/argv: error if top-level command name is a directory" {
+  mkdir "$TEST_GO_SCRIPTS_DIR/foobar"
+  run "$TEST_GO_SCRIPT" 'foobar'
+  assert_failure
+  assert_line_equals 0 "$TEST_GO_SCRIPTS_DIR/foobar is not an executable script"
+}
+
+@test "path/argv: error if top-level command script is not executable" {
+  touch "$TEST_GO_SCRIPTS_DIR/foobar"
+  chmod 600 "$TEST_GO_SCRIPTS_DIR/foobar"
+  run "$TEST_GO_SCRIPT" 'foobar'
+  assert_failure
+  assert_line_equals 0 "$TEST_GO_SCRIPTS_DIR/foobar is not an executable script"
 }
