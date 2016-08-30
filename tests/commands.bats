@@ -87,17 +87,7 @@ merge_scripts() {
     fi
   done
 
-  while ((i != ${#all_scripts[@]})); do
-    result+=("${all_scripts[$i]}")
-    ((++i))
-  done
-
-  while ((j != ${#args[@]})); do
-    result+=("${args[$j]}")
-    ((++j))
-  done
-
-  all_scripts=("${result[@]}")
+  all_scripts=("${result[@]}" "${all_scripts[@]:$i}" "${args[@]:$j}")
 }
 
 add_scripts() {
