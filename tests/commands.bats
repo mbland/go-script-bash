@@ -4,6 +4,10 @@ load environment
 load assertions
 load script_helper
 
+declare BUILTIN_CMDS
+declare BUILTIN_SCRIPTS
+declare LONGEST_NAME
+
 setup() {
   create_test_go_script \
     '. "$_GO_CORE_DIR/lib/path"' \
@@ -18,13 +22,15 @@ setup() {
     "IFS=$'\n'" \
     'echo "${__go_command_scripts[*]}"' \
     'exit "$STATUS"'
+   
+  find_builtins
 }
 
 teardown() {
   remove_test_go_rootdir
 }
 
-_find_builtins() {
+find_builtins() {
   local cmd_script
   local cmd_name
 
@@ -33,16 +39,16 @@ _find_builtins() {
       continue
     fi
     cmd_name="${cmd_script##*/}"
-    __builtin_cmds+=("$cmd_name")
-    __builtin_scripts+=("$cmd_script")
+    BUILTIN_CMDS+=("$cmd_name")
+    BUILTIN_SCRIPTS+=("$cmd_script")
 
-    if [[ "${#cmd_name}" -gt "${#__longest_name}" ]]; then
-      __longest_name="$cmd_name"
+    if [[ "${#cmd_name}" -gt "${#LONGEST_NAME}" ]]; then
+      LONGEST_NAME="$cmd_name"
     fi
   done
 }
 
-_assert_command_scripts_equal() {
+assert_command_scripts_equal() {
   local result
   local IFS=$'\n'
   unset 'lines[0]' 'lines[1]'
@@ -57,14 +63,9 @@ _assert_command_scripts_equal() {
   run "$TEST_GO_SCRIPT"
   assert_success
 
-  local __builtin_cmds
-  local __builtin_scripts
-  local __longest_name
-  _find_builtins
-
-  assert_line_equals 0 "LONGEST NAME LEN: ${#__longest_name}"
-  assert_line_equals 1 "COMMAND_NAMES: ${__builtin_cmds[*]}"
-  _assert_command_scripts_equal "${__builtin_scripts[@]#$_GO_ROOTDIR/}"
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
+  assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
+  assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]#$_GO_ROOTDIR/}"
 }
 
 @test "commands: find returns builtins and user scripts" {
