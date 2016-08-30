@@ -200,10 +200,29 @@ add_scripts() {
   assert_line_equals 2 "  scripts/$duplicate_cmd"
 }
 
-@test "commands: find subcommands" {
-  skip
+@test "commands: find returns subcommands only" {
+  # parent_commands and subcommands must remain hand-sorted
+  local longest_name='terribly-long-name-that-would-be-insane-in-a-real-script'
+  local parent_commands=('bar' 'baz' 'foo')
+  local subcommands=('plugh' 'quux' "$longest_name" 'xyzzy')
+  local all_scripts=()
+
+  add_scripts "$TEST_GO_SCRIPTS_DIR" "${parent_commands[@]}"
+  add_scripts "$TEST_GO_SCRIPTS_DIR/foo.d" "${subcommands[@]}"
+  run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
+  assert_success
+
+  assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
+  assert_line_equals 1 "COMMAND_NAMES: ${subcommands[*]}"
+  assert_command_scripts_equal "${subcommands[@]/#/scripts/foo.d/}"
 }
 
 @test "commands: find returns error if no commands are found" {
-  skip
+  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
+  run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
+  assert_failure
+
+  assert_line_equals 0 "LONGEST NAME LEN: 0"
+  assert_line_equals 1 'COMMAND_NAMES:'
+  assert_command_scripts_equal ''
 }
