@@ -3,16 +3,14 @@
 # List all available commands or subcommands for a specified command
 
 _@go.list_commands() {
-  local cmd
   local __go_command_names
 
   if ! _@go.find_commands "$@"; then
     return 1
   fi
 
-  for cmd in "${__go_command_names[@]}"; do
-    echo $cmd
-  done
+  local IFS=$'\n'
+  echo "${__go_command_names[*]}"
 }
 
 _@go.summarize_commands() {

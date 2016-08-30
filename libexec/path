@@ -7,15 +7,13 @@ _@go.list_available_commands() {
 
   . "$_GO_CORE_DIR/lib/commands"
   local __go_command_names
-  local cmd_name
 
   if ! _@go.find_commands "${_GO_SEARCH_PATHS[@]}"; then
     return 1
   fi
 
-  for cmd_name in "${__go_command_names[@]}"; do
-    echo "  $cmd_name"
-  done
+  local IFS=$'\n'
+  echo "${__go_command_names[*]/#/  }"
 }
 
 _@go.set_command_path_and_argv() {
