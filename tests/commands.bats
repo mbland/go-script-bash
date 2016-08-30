@@ -46,6 +46,9 @@ find_builtins() {
       LONGEST_NAME="$cmd_name"
     fi
   done
+
+  # Strip the rootdir to make output less noisy.
+  BUILTIN_SCRIPTS=("${BUILTIN_SCRIPTS[@]#$_GO_ROOTDIR/}")
 }
 
 assert_command_scripts_equal() {
@@ -65,7 +68,32 @@ assert_command_scripts_equal() {
 
   assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
   assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
-  assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]#$_GO_ROOTDIR/}"
+  assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
+}
+
+@test "commands: find ignores directories" {
+  mkdir $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
+  run "$TEST_GO_SCRIPT"
+  assert_success
+
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
+  assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
+  assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
+}
+
+@test "commands: find ignores nonexecutable files" {
+  if [[ -n "$COMSPEC" ]]; then
+    skip "All files are executable on Windows"
+  fi
+
+  touch $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
+  chmod 600 $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
+  run "$TEST_GO_SCRIPT"
+  assert_success
+
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_NAME}"
+  assert_line_equals 1 "COMMAND_NAMES: ${BUILTIN_CMDS[*]}"
+  assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
 
 @test "commands: find returns builtins and user scripts" {
