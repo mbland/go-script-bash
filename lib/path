@@ -12,15 +12,17 @@ else
 fi
 
 _@go.list_available_commands() {
-  echo "Available commands are:"
-
   . "$_GO_CORE_DIR/lib/commands"
   local __go_command_names
 
-  if ! _@go.find_commands "${_GO_SEARCH_PATHS[@]}"; then
+  if ! _@go.find_commands "$@"; then
+    echo "ERROR: No commands available in:" >&2
+    local IFS=$'\n'
+    echo "${@/#/  }" >&2
     return 1
   fi
 
+  echo "Available commands are:"
   local IFS=$'\n'
   echo "${__go_command_names[*]/#/  }"
 }
@@ -48,7 +50,7 @@ _@go.set_command_path_and_argv() {
 
   if [[ -z "$cmd_path" ]]; then
     printf "Unknown command: ${cmd_name}\n\n" >&2
-    _@go.list_available_commands >&2
+    _@go.list_available_commands "${_GO_SEARCH_PATHS[@]}" >&2
     return 1
   fi
 
