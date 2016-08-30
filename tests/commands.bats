@@ -15,14 +15,14 @@ setup() {
     'declare __go_longest_name_len' \
     'declare __go_command_names' \
     'declare __go_command_scripts' \
-    '_@go.find_commands "${_GO_SEARCH_PATHS[@]}"' \
+    '_@go.find_commands "${@:-${_GO_SEARCH_PATHS[@]}}"' \
     'STATUS="$?"' \
     'echo LONGEST NAME LEN: "$__go_longest_name_len"' \
     'echo COMMAND_NAMES: "${__go_command_names[@]}"' \
     "IFS=$'\n'" \
     'echo "${__go_command_scripts[*]}"' \
     'exit "$STATUS"'
-   
+
   find_builtins
 }
 
@@ -71,8 +71,8 @@ merge_scripts() {
   local result=()
 
   while ((i != ${#all_scripts[@]} && j != ${#args[@]})); do
-    lhs="${all_scripts[$i]#*/}"
-    rhs="${args[$j]#*/}"
+    lhs="${all_scripts[$i]##*/}"
+    rhs="${args[$j]##*/}"
 
     if [[ "$lhs" < "$rhs" ]]; then
       result+=("${all_scripts[$i]}")
@@ -98,6 +98,22 @@ merge_scripts() {
   done
 
   all_scripts=("${result[@]}")
+}
+
+add_scripts() {
+  local scripts_dir="$1/"
+  shift
+
+  local relative_dir="${scripts_dir#$TEST_GO_ROOTDIR/}"
+  local script_names=("$@")
+
+  if [[ ! -d "$scripts_dir" ]]; then
+    mkdir "$scripts_dir"
+  fi
+
+  merge_scripts "${script_names[@]/#/$relative_dir}"
+  touch "${script_names[@]/#/$scripts_dir}"
+  chmod 700 "${script_names[@]/#/$scripts_dir}"
 }
 
 @test "commands: find returns only builtin commands" {
@@ -136,26 +152,55 @@ merge_scripts() {
 
 @test "commands: find returns builtins and user scripts" {
   local longest_name="extra-long-name-that-no-one-would-use"
+  # user_commands must remain hand-sorted.
   local user_commands=('bar' 'baz' "$longest_name" 'foo')
   local all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  merge_scripts "${user_commands[@]/#/$TEST_GO_SCRIPTS_RELATIVE_DIR/}"
-  touch "${user_commands[@]/#/$TEST_GO_SCRIPTS_DIR/}"
-  chmod 700 $TEST_GO_SCRIPTS_DIR/*
-
+  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
   run "$TEST_GO_SCRIPT"
   assert_success
 
   assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
-  assert_line_equals 1 "COMMAND_NAMES: ${all_scripts[*]#**/}"
+  assert_line_equals 1 "COMMAND_NAMES: ${all_scripts[*]##*/}"
   assert_command_scripts_equal "${all_scripts[@]}"
 }
 
 @test "commands: find returns builtins, plugins, and user scripts" {
-  skip
+  local longest_name="super-extra-long-name-that-no-one-would-use"
+  # user_commands and plugin_commands must remain hand-sorted.
+  local user_commands=('bar' 'baz' 'foo')
+  local plugin_commands=('plugh' 'quux' "$longest_name" 'xyzzy')
+  local all_scripts=("${BUILTIN_SCRIPTS[@]}")
+
+  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
+  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
+  run "$TEST_GO_SCRIPT"
+  assert_success
+
+  assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
+  assert_line_equals 1 "COMMAND_NAMES: ${all_scripts[*]##*/}"
+  assert_command_scripts_equal "${all_scripts[@]}"
 }
 
 @test "commands: find returns error if duplicates exists" {
+  local duplicate_cmd="${BUILTIN_SCRIPTS[0]##*/}"
+  local user_commands=("$duplicate_cmd")
+  local all_scripts=("${BUILTIN_SCRIPTS[@]}")
+
+  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+
+  assert_line_equals 0 "ERROR: duplicate command $duplicate_cmd:"
+
+  # Because the go-core.bash file is in the test's $_GO_ROOTDIR, and the test
+  # script has a different $_GO_ROOTDIR, the builtin scripts will retain their
+  # absolute path, whereas user scripts will be relative.
+  assert_line_equals 1 "  $_GO_ROOTDIR/${BUILTIN_SCRIPTS[0]}"
+  assert_line_equals 2 "  scripts/$duplicate_cmd"
+}
+
+@test "commands: find subcommands" {
   skip
 }
 
