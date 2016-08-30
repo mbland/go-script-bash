@@ -43,7 +43,10 @@ teardown() {
 
 @test "path: initialize constants with plugin bindirs" {
   local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
-  local plugin_bindirs=($plugins_dir/plugin{0..2}/bin)
+  local plugin_bindirs=(
+    "$plugins_dir/plugin0/bin"
+    "$plugins_dir/plugin1/bin"
+    "$plugins_dir/plugin2/bin")
   mkdir -p "${plugin_bindirs[@]}"
 
   run "$TEST_GO_SCRIPT"
