@@ -18,7 +18,7 @@ _@go.insert_name_and_script() {
     current_script="${__go_command_scripts[$((i-1))]}"
 
     if [[ "$cmd_name" = "$current_name" ]]; then
-      printf "WARNING: duplicate command $cmd_name:\n\n  %s\n  %s\n" \
+      printf "ERROR: duplicate command $cmd_name:\n\n  %s\n  %s\n" \
         "$current_script" "$cmd_script" >&2
       return 1
     elif [[ "$cmd_name" < "$current_name" ]]; then
@@ -51,7 +51,10 @@ _@go.find_commands() {
       fi
 
       cmd="${cmd_script##*/}"
-      _@go.insert_name_and_script "$cmd" "${cmd_script#$_GO_ROOTDIR/}"
+      cmd_script="${cmd_script#$_GO_ROOTDIR/}"
+      if ! _@go.insert_name_and_script "$cmd" "$cmd_script"; then
+        return 1
+      fi
 
       if [[ "${#cmd}" -gt "$__go_longest_name_len" ]]; then
         __go_longest_name_len="${#cmd}"
@@ -61,7 +64,7 @@ _@go.find_commands() {
 
   shopt -u nullglob
 
-  if [[ "${#__go_command_names[@]}" -eq 0 ]]; then
+  if [[ "${#__go_command_names[@]}" -eq '0' ]]; then
     return 1
   fi
 }
