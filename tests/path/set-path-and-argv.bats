@@ -55,6 +55,17 @@ teardown() {
   assert_line_equals 1 'ARGV: baz quux'
 }
 
+@test "path/argv: empty string argument is not an error" {
+  # This is most likely to happen during argument completion, but could be valid
+  # in the general case as well, depending on the command implementation.
+  touch "$TEST_GO_SCRIPTS_DIR/foobar"
+  chmod 700 "$TEST_GO_SCRIPTS_DIR/foobar"
+  run "$TEST_GO_SCRIPT" 'foobar' '' 'baz' 'quux'
+  assert_success
+  assert_line_equals 0 "PATH: $TEST_GO_SCRIPTS_DIR/foobar"
+  assert_line_equals 1 'ARGV:  baz quux'
+}
+
 @test "path/argv: error if top-level command name is a directory" {
   mkdir "$TEST_GO_SCRIPTS_DIR/foobar"
   run "$TEST_GO_SCRIPT" 'foobar'
@@ -68,4 +79,45 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'foobar'
   assert_failure
   assert_line_equals 0 "$TEST_GO_SCRIPTS_DIR/foobar is not an executable script"
+}
+
+@test "path/argv: find subcommand" {
+  local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
+  touch "$cmd_path"
+  chmod 700 "$cmd_path"
+  mkdir "${cmd_path}.d"
+
+  local subcmd_path="${cmd_path}.d/baz"
+  touch "$subcmd_path"
+  chmod 700 "$subcmd_path"
+
+  run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
+  assert_success
+  assert_line_equals 0 "PATH: $TEST_GO_SCRIPTS_DIR/foobar.d/baz"
+  assert_line_equals 1 'ARGV: quux'
+}
+
+@test "path/argv: error if subcommand name is a directory" {
+  local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
+  touch "$cmd_path"
+  chmod 700 "$cmd_path"
+  mkdir -p "${cmd_path}.d/baz"
+
+  run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
+  assert_failure
+  assert_line_equals 0 "${cmd_path}.d/baz is not an executable script"
+}
+
+@test "path/argv: error if subcommand script is not executable" {
+  local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
+  touch "$cmd_path"
+  chmod 700 "$cmd_path"
+
+  mkdir "${cmd_path}.d"
+  touch "${cmd_path}.d/baz"
+  chmod 600 "${cmd_path}.d/baz"
+
+  run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
+  assert_failure
+  assert_line_equals 0 "${cmd_path}.d/baz is not an executable script"
 }
