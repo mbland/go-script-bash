@@ -17,7 +17,7 @@
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
 
-_find_tests_helper() {
+_find_tests() {
   local pattern="$1"
 
   shopt -s nullglob
@@ -37,20 +37,9 @@ _find_tests_helper() {
     # If the pattern isn't a literal file name, recurse into the directory
     # matching the file name if it exists.
     if [[ "$match" != "$pattern.bats" && -d "${match%.bats}" ]]; then
-      if ! _find_tests_helper "${match%.bats}/*"; then
+      if ! _find_tests "${match%.bats}/*"; then
         return 1
       fi
-    fi
-  done
-}
-
-_find_tests() {
-  local patterns=("${@:-*}")
-  local pattern
-
-  for pattern in "${patterns[@]}"; do
-    if ! _find_tests_helper "tests/$pattern"; then
-      return 1
     fi
   done
 }
@@ -108,11 +97,16 @@ _test() {
     shift
   fi
 
+  local pattern
   local tests=()
 
-  if !  _find_tests "$@"; then
-    return 1
-  elif [[ "$list_only" = 'true' ]]; then
+  for pattern in "${@:-*}"; do
+    if ! _find_tests "tests/$pattern"; then
+      return 1
+    fi
+  done
+
+  if [[ "$list_only" = 'true' ]]; then
     _filter_test_names_only
     local IFS=$'\n'
     echo "${tests[*]}"
