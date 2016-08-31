@@ -115,10 +115,10 @@ _fill_expected_completions() {
 
 @test "test: produce an error if any test name fails to match" {
   run "$BASH" ./go test --list test foobar
-  assert_failure '"foobar" does not match any test files.'
+  assert_failure '"foobar" does not match any .bats files in tests.'
 }
 
 @test "test: produce an error if any test pattern fails to match" {
   run "$BASH" ./go test --list test 'foo*'
-  assert_failure '"foo*" does not match any test files.'
+  assert_failure '"foo*" does not match any .bats files in tests.'
 }
