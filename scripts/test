@@ -16,7 +16,7 @@
 #
 # NOTE: If the <glob> produces errors, or generally doesn't do as you expect,
 # you may need to include it in quotes so it isn't expanded by the shell
-# _before_ executing the test command.
+# _before_ executing the {{cmd}} command.
 
 _find_tests_helper() {
   local pattern="$1"
@@ -82,29 +82,23 @@ _test_tab_completion() {
     fi
   fi
 
-  if ! _find_tests "$word*"; then
-    return 1
-  fi
+  shopt -s nullglob
+  local tests=(tests/$word*.bats)
+  shopt -u nullglob
   _filter_test_names_only
 
-  local word_prefix_len="${#word}"
-  local separator='[/]'
+  local results=()
   local test_name
-  local suffix
 
   for test_name in "${tests[@]}"; do
-    suffix="${test_name:${#word}}"
-
-    if [[ "$suffix" =~ $separator ]]; then
-      continue
-    fi
-
-    echo "${test_name}"
-
+    results+=("$test_name")
     if [[ -d "tests/$test_name" ]]; then
-      echo "${test_name}/"
+      results+=("$test_name/")
     fi
   done
+
+  local IFS=$'\n'
+  echo "${results[*]}"
 }
 
 _test() {
