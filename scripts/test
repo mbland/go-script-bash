@@ -3,7 +3,6 @@
 # Run automated tests
 #
 # Usage:
-#
 #   {{go}} {{cmd}} [--list]
 #   {{go}} {{cmd}} [--list] <glob> [<glob>...]
 #
@@ -46,12 +45,7 @@ _find_tests_helper() {
 }
 
 _find_tests() {
-  local patterns=("$@")
-
-  if [[ "$#" -eq '0' ]]; then
-    patterns+=('*')
-  fi
-
+  local patterns=("${@:-*}")
   local pattern
 
   for pattern in "${patterns[@]}"; do
