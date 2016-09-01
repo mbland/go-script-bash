@@ -80,33 +80,35 @@ _@go.glob_files_tab_completion() {
   for ((i=0; i != ${#args[@]}; ++i)); do
     arg="${args[$i]}"
 
-    if [[ "$arg" =~ $flag && "$word_index" -lt "$i" ]]; then
-      return
-    fi
-
     case "$arg" in
     --compact)
       unset 'flags[0]'
       ;;
     --ignore)
       if [[ "$word_index" -eq "$((i+1))" ]]; then
-        return
+        return 1
       fi
       unset 'flags[1]'
       ;;
     *)
       if [[ -d "$arg" ]]; then
+        if [[ "$word_index" -lt "$i" ]]; then
+          compgen -W "${flags[*]}" -- "$word"
+          return
+        elif [[ "$word_index" -eq "$((i+1))" ]]; then
+          return 1
+        fi
         __go_glob_files_rootdir="$arg"
         __go_glob_files_suffix="${args[$((i+1))]}"
-
-        if [[ "$word_index" -eq "$((i+1))" || \
-          -z "$__go_glob_files_suffix" ]]; then
-          return
-        fi
         break
       fi
       ;;
     esac
+
+    if [[ "$arg" =~ $flag && "$word_index" -lt "$i" ]]; then
+      compgen -W "${flags[*]}" -- "$word"
+      return
+    fi
   done
 
   if [[ -z "$__go_glob_files_rootdir" ]]; then
