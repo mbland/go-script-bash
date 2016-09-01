@@ -24,7 +24,12 @@
 #
 # The primary use case is to support the `./go test` command in selecting a
 # subset of tests to run, tests which my occupy a multi-level directory
-# structure.
+# structure. Can be used by other command scripts to provide a better user
+# experience than using full paths or default filename completion by:
+#
+#   - restricting the search directories
+#   - restricting the kinds of files matched
+#   - removing the need to specify the root directory or file suffix
 #
 # NOTE: If a <glob> produces errors, or generally doesn't do as you expect,
 # you may need to include it in quotes so it isn't expanded by the shell
