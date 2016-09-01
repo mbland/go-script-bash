@@ -5,39 +5,29 @@
 load environment
 load assertions
 
-ALL_TESTS=()
-
-_setup_helper() {
-  local glob_pattern="$1"
-  local test_path
-
-  for test_path in $glob_pattern.bats; do
-    ALL_TESTS+=("$test_path")
-
-    if [[ -d "${test_path%.bats}" ]]; then
-      _setup_helper "${test_path%.bats}/*"
-    fi
-  done
-}
-
-setup() {
-  _setup_helper 'tests/*'
-  ALL_TESTS=("${ALL_TESTS[@]#tests/}")
-  ALL_TESTS=("${ALL_TESTS[@]%.bats}")
-}
+ALL_TESTS=($("$BASH" './go' 'glob' '--compact' '--ignore' 'bats/*' \
+  'tests' '.bats'))
 
 _fill_expected_completions() {
   local pattern="$1"
-  local test_name
+  local entry
 
-  for test_name in $pattern.bats; do
-    test_name="${test_name%.bats}"
-    expected+=("${test_name#tests/}")
+  for entry in $pattern; do
+    if [[ -d "$entry" ]]; then
+      if [[ -f "$entry.bats" ]]; then
+        expected+=("$entry")
+      fi
 
-    if [[ -d "$test_name" ]]; then
-      expected+=("${test_name#tests/}/")
+      local contents=($entry/*.bats)
+      if [[ "${contents[0]}" != "$entry/*.bats" ]]; then
+        expected+=("$entry/")
+      fi
+    elif [[ -f "$entry" && "${entry##*.}" = "bats" \
+      && ! -d "${entry%.bats}" ]]; then
+      expected+=("${entry%.bats}")
     fi
   done
+  expected=("${expected[@]#tests/}")
 }
 
 @test "test: tab complete flags" {
@@ -70,13 +60,13 @@ _fill_expected_completions() {
   assert_success "${expected[*]}"
 }
 
-@test "test: no arguments lists all tests" {
+@test "test: no arguments after --list lists all tests" {
   run "$BASH" ./go test --list
   local IFS=$'\n'
   assert_success "${ALL_TESTS[*]}"
 }
 
-@test "test: glob lists all tests" {
+@test "test: glob after --list lists all tests" {
   run "$BASH" ./go test --list '*'
   local IFS=$'\n'
   assert_success "${ALL_TESTS[*]}"

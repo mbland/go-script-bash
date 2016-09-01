@@ -11,11 +11,13 @@
 # test file names without executing them.
 #
 # If a <glob> doesn't match any test files, the command will return an error
-# without running any tests.
+# without running any tests. See `{{go}} help glob` for details.
 #
 # NOTE: If the <glob> produces errors, or generally doesn't do as you expect,
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
+
+declare -r __go_glob_args=('--ignore' 'bats/*' 'tests' '.bats')
 
 _test_tab_completion() {
   local word_index="$1"
@@ -28,7 +30,8 @@ _test_tab_completion() {
       return
     fi
   fi
-  @go 'glob' '--complete' "$((word_index + 2))" 'tests' '.bats' "$@"
+  @go 'glob' '--complete' "$((word_index + ${#__go_glob_args[@]}))" \
+    "${__go_glob_args[@]}" "$@"
 }
 
 _test() {
@@ -38,9 +41,9 @@ _test() {
     _test_tab_completion "$@"
   elif [[ "$1" = '--list' ]]; then
     shift
-    @go 'glob' '--compact' 'tests' '.bats' "$@"
+    @go 'glob' '--compact' "${__go_glob_args[@]}" "$@"
   else
-    local tests=($(@go 'glob' 'tests' '.bats' "$@"))
+    local tests=($(@go 'glob' "${__go_glob_args[@]}" "$@"))
     tests/bats/bin/bats "${tests[@]}"
   fi
 }

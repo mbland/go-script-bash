@@ -2,6 +2,17 @@
 
 load ../environment
 load ../assertions
+load ../script_helper
+
+TESTS_DIR="$TEST_GO_ROOTDIR/tests"
+
+setup() {
+  mkdir -p "$TESTS_DIR"
+}
+
+teardown() {
+  remove_test_go_rootdir
+}
 
 @test "glob/completions: zero arguments" {
   local expected=('--compact' '--ignore')
@@ -105,64 +116,84 @@ load ../assertions
   assert_success '--compact'
 }
 
-fill_expected_globs() {
-  local rootdir="${1%/*}"
-  local f 
-  expected=()
-  for f in $1/*$2; do
-    f="${f%$2}"
-    expected+=("$f")
-    if [[ -d "$f" ]]; then
-      expected+=("$f/")
-    fi
-  done
-  expected=("${expected[@]#$rootdir/}")
-}
-
 @test "glob/complete: complete top-level glob patterns" {
-  local expected=()
-  fill_expected_globs 'tests' '.bats'
-  run "$BASH" ./go glob --complete 2 'tests' '.bats'
+  touch $TESTS_DIR/{foo,bar,baz}.bats
+  local expected=('bar' 'baz' 'foo')
+
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 5 '--compact' '--ignore' 'f*' 'tests' '.bats'
+  run "$BASH" ./go glob --complete 3 '--compact' "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 3 'tests' '.bats' 'foo'
+  run "$BASH" ./go glob --complete 3 "$TESTS_DIR" '.bats' 'foo'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 2 'tests' '.bats' '' 'foo'
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' '' 'foo'
   assert_success "${expected[*]}"
 }
 
 @test "glob/complete: match a file and directory of the same name" {
-  local expected=('core' 'core/')
-  run "$BASH" ./go glob --complete 2 'tests' '.bats' 'core'
+  mkdir "$TESTS_DIR/foo"
+  touch $TESTS_DIR/foo{,/bar,/baz}.bats
+  local expected=('foo' 'foo/')
+
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "glob/complete: complete second-level glob pattern" {
-  local expected=()
-  fill_expected_globs 'tests/core' '.bats'
-  run "$BASH" ./go glob --complete 2 'tests' '.bats' 'core/'
+  mkdir "$TESTS_DIR/foo"
+  touch $TESTS_DIR/foo{,/bar,/baz}.bats
+  local expected=('foo/bar' 'foo/baz')
+
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo/'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
+@test "glob/complete: complete directories that don't match file names" {
+  mkdir $TESTS_DIR/foo
+  touch $TESTS_DIR/foo/{bar,baz}.bats
+
+  local expected=('foo/bar' 'foo/baz')
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo/'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "glob/complete: honor --ignore patterns during completion" {
-  local ignored="tests/core*:tests/path*"
-  local expected=()
-
-  local GLOBIGNORE="$ignored"
-  fill_expected_globs 'tests' '.bats'
-  unset "GLOBIGNORE"
+  mkdir $TESTS_DIR/{foo,bar,baz}
+  touch $TESTS_DIR/{foo/quux,bar/xyzzy,baz/plugh,baz/xyzzy}.bats
 
   # Remember that --ignore will add the rootdir to all the patterns.
-  ignored="${ignored//tests\//}"
-  run "$BASH" ./go glob --complete 4 '--ignore' "$ignored" 'tests' '.bats'
+  run "$BASH" ./go glob --complete 4 '--ignore' "foo/*:bar/*:baz/pl*" \
+    "$TESTS_DIR" '.bats'
+  local IFS=$'\n'
+  assert_success 'baz/xyzzy'
+}
+
+@test "glob/complete: return error if no matches" {
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo'
+  assert_failure
+}
+
+@test "glob/complete: return full path if only one match" {
+  mkdir "$TESTS_DIR/foo"
+  touch "$TESTS_DIR/foo/bar.bats"
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'
+  assert_success "foo/bar"
+}
+
+@test "glob/complete: return completions with longest path prefix" {
+  mkdir -p $TESTS_DIR/foo/bar/{baz,quux}
+  touch $TESTS_DIR/foo/bar/{baz/xyzzy,quux/plugh}.bats
+
+  local expected=('foo/bar/baz/' 'foo/bar/quux/')
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }

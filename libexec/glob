@@ -8,7 +8,7 @@
 #
 # Options:
 #   --ignore   Colon-separated list of ignored patterns (sets Bash's GLOBIGNORE)
-#   --compact  Strip <root-dir>/ prefix and .bats suffix from paths
+#   --compact  Strip <root-dir>/ prefix and <suffix> from paths
 #
 # Arguments:
 #   <root-dir>  Directory in which to search for matching files
@@ -18,6 +18,10 @@
 # Without <glob> arguments, lists all files matching <suffix> within <root-dir>.
 # With one or more <glob> arguments, only lists files matching
 # `<root-dir>/<glob><suffix>`.
+#
+# If <glob> contains no shell metacharacters, it will attempt to match a single
+# file. If <glob> ends with a path separator, it will try to match all files
+# within any matching directories.
 #
 # If the <suffix> or one of the <glob> arguments doesn't match any files, the
 # command will return an error.
@@ -37,31 +41,34 @@
 
 _@go.glob_files_impl() {
   local pattern="$1"
-  local full_pattern="$__go_glob_files_rootdir/$pattern$__go_glob_files_suffix"
+  local full_pattern="$__go_glob_files_rootdir/$pattern"
+
+  # This happens when the pattern contains no shell metacharacters and doesn't
+  # end with a trailing slash, i.e. it matches a single file.
+  if [[ -f "$full_pattern$__go_glob_files_suffix" ]]; then
+    __go_glob_matches+=("$full_pattern$__go_glob_files_suffix")
+    return
+  fi
 
   shopt -s nullglob
   local matches=($full_pattern)
   shopt -u nullglob
-
-  if [[ "${#matches[@]}" -eq '0' || ! -f "${matches[0]}" ]]; then
-    @go.printf "\"$pattern\" does not match any %s files in %s.\n" \
-      "$__go_glob_files_suffix" "$__go_glob_files_rootdir" >&2
-    return 1
-  fi
-
   local match
-  local try_dir
+  local corresponding
 
   for match in "${matches[@]}"; do
-    __go_glob_matches+=("$match")
-
-    # If the pattern isn't a literal file name, recurse into the directory
-    # matching the file name if it exists.
-    if [[ "$match" != "$full_pattern" ]]; then
-      try_dir="${match%$__go_glob_files_suffix}"
-      if [[ -d "$try_dir" ]] && \
-        ! _@go.glob_files_impl "${try_dir#$__go_glob_files_rootdir/}/*"; then
-        return 1
+    # If a file name without the suffix matches a directory name, add the file
+    # first.
+    if [[ -d "$match" ]]; then
+      corresponding="$match$__go_glob_files_suffix"
+      if [[ -f "$corresponding" ]]; then
+        __go_glob_matches+=("$corresponding")
+      fi
+      _@go.glob_files_impl "${match#$__go_glob_files_rootdir/}/*"
+    else
+      corresponding="${match%$__go_glob_files_suffix}"
+      if [[ "$match" != "$corresponding" && ! -d "$corresponding" ]]; then
+        __go_glob_matches+=("$match")
       fi
     fi
   done
@@ -130,20 +137,48 @@ _@go.glob_files_tab_completion() {
   fi
 
   _@go.glob_files_set_globignore "$globignore"
-  shopt -s nullglob
-  local __go_glob_matches=(
-    $__go_glob_files_rootdir/$word*$__go_glob_files_suffix)
-  shopt -u nullglob
+  local __go_glob_matches=()
+  _@go.glob_files_impl "$word*"
   _@go.glob_files_compact_matches
 
-  local results=()
+  local num_matches="${#__go_glob_matches[@]}"
+
+  if [[ "$num_matches" -eq '0' ]]; then
+    return 1
+  elif [[ "$num_matches" -eq '1' ]]; then
+    echo "${__go_glob_matches[0]}"
+    return
+  fi
+
+  local prefix="${__go_glob_matches[0]}"
+  local prefix_len="${#prefix}"
   local match
 
   for match in "${__go_glob_matches[@]}"; do
-    results+=("$match")
-    if [[ -d "$__go_glob_files_rootdir/$match" ]]; then
-      results+=("$match/")
+    while [[ "${match:0:$prefix_len}" != "$prefix" ]]; do
+      ((--prefix_len))
+      prefix="${prefix:0:$prefix_len}"
+    done
+    if [[ "$prefix_len" -eq '0' ]]; then
+      break
     fi
+  done
+
+  local results=()
+  local suffix
+  local trimmed_suffix
+
+  for match in "${__go_glob_matches[@]}"; do
+    suffix="${match:${#prefix}}"
+    trimmed_suffix="${suffix%%/*}"
+
+    if [[ "$suffix" != "$trimmed_suffix" ]]; then
+      match="${match:0:${#prefix}}${trimmed_suffix}/"
+    fi
+    if [[ "$match" != "$prev" ]]; then
+      results+=("$match")
+    fi
+    prev="$match"
   done
 
   local IFS=$'\n'
@@ -208,16 +243,24 @@ _@go.glob() {
   fi
 
   local pattern
-  local __go_glob_matches=()
+  local __go_glob_matches
+  local results=()
 
   _@go.glob_files_set_globignore "$globignore"
 
   for pattern in "${@:-*}"; do
-    if ! _@go.glob_files_impl "$pattern"; then
+    __go_glob_matches=()
+    _@go.glob_files_impl "$pattern"
+
+    if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
+      @go.printf "\"$pattern\" does not match any %s files in %s.\n" \
+        "$__go_glob_files_suffix" "$__go_glob_files_rootdir" >&2
       return 1
     fi
+    results+=("${__go_glob_matches[@]}")
   done
 
+  __go_glob_matches=("${results[@]}")
   if [[ "$list_compact" = 'true' ]]; then
     _@go.glob_files_compact_matches
   fi
