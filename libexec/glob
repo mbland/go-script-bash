@@ -22,6 +22,10 @@
 # If the <suffix> or one of the <glob> arguments doesn't match any files, the
 # command will return an error.
 #
+# The primary use case is to support the `./go test` command in selecting a
+# subset of tests to run, tests which my occupy a multi-level directory
+# structure.
+#
 # NOTE: If a <glob> produces errors, or generally doesn't do as you expect,
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
@@ -106,9 +110,14 @@ _@go.glob_files_tab_completion() {
   done
 
   if [[ -z "$__go_glob_files_rootdir" ]]; then
-    compgen -W "${flags[*]}" -- "$word"
-    compgen -d -- "$word"
-    return
+    local err_count=0
+    if ! compgen -W "${flags[*]}" -- "$word"; then
+      ((++err_count))
+    fi
+    if ! compgen -d -- "$word"; then
+      ((++err_count))
+    fi
+    return $((err_count != 2 ? 0 : 1))
   fi
 
   shopt -s nullglob
