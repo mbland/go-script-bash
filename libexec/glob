@@ -79,6 +79,7 @@ _@go.glob_files_tab_completion() {
   local word=("${args[$word_index]}")
   local flags=('--compact' '--ignore')
   local flag='^-'
+  local globignore
   local i
   local arg
 
@@ -94,6 +95,7 @@ _@go.glob_files_tab_completion() {
         return 1
       fi
       unset 'flags[1]'
+      globignore="${args[$((i+1))]}"
       ;;
     *)
       if [[ -d "$arg" ]]; then
@@ -127,6 +129,7 @@ _@go.glob_files_tab_completion() {
     return $((err_count != 2 ? 0 : 1))
   fi
 
+  _@go.glob_files_set_globignore "$globignore"
   shopt -s nullglob
   local __go_glob_matches=(
     $__go_glob_files_rootdir/$word*$__go_glob_files_suffix)

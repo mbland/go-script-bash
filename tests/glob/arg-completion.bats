@@ -151,3 +151,18 @@ fill_expected_globs() {
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
+
+@test "glob/complete: honor --ignore patterns during completion" {
+  local ignored="tests/core*:tests/path*"
+  local expected=()
+
+  local GLOBIGNORE="$ignored"
+  fill_expected_globs 'tests' '.bats'
+  unset "GLOBIGNORE"
+
+  # Remember that --ignore will add the rootdir to all the patterns.
+  ignored="${ignored//tests\//}"
+  run "$BASH" ./go glob --complete 4 '--ignore' "$ignored" 'tests' '.bats'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
