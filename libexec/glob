@@ -82,7 +82,7 @@ _@go.glob_compact_matches() {
   __go_glob_matches=("${__go_glob_matches[@]%$__go_glob_suffix}")
 }
 
-_@go.glob_trim_matches() {
+_@go.glob_emit_trimmed_matches() {
   local prefix="${__go_glob_matches[0]}"
   local prefix_len="${#prefix}"
   local match
@@ -93,13 +93,16 @@ _@go.glob_trim_matches() {
       prefix="${prefix:0:$prefix_len}"
     done
     if [[ "$prefix_len" -eq '0' ]]; then
-      break
+      local IFS=$'\n'
+      echo "${__go_glob_matches[*]}"
+      return
     fi
   done
 
   local suffix
   local trimmed_suffix
   local prev
+  local results=()
 
   for match in "${__go_glob_matches[@]}"; do
     suffix="${match:${#prefix}}"
@@ -109,7 +112,7 @@ _@go.glob_trim_matches() {
       match="${match:0:${#prefix}}${trimmed_suffix}/"
     fi
     if [[ "$match" != "$prev" ]]; then
-      __go_glob_trimmed_matches+=("$match")
+      echo "$match"
     fi
     prev="$match"
   done
@@ -181,13 +184,9 @@ _@go.glob_tab_completion() {
     return 1
   elif [[ "${#__go_glob_matches[@]}" -eq '1' ]]; then
     echo "${__go_glob_matches[0]}"
-    return
+  else
+    _@go.glob_emit_trimmed_matches
   fi
-
-  local __go_glob_trimmed_matches=()
-  _@go.glob_trim_matches
-  local IFS=$'\n'
-  compgen -W "${__go_glob_trimmed_matches[*]}" -- "$word"
 }
 
 _@go.glob_set_globignore() {
