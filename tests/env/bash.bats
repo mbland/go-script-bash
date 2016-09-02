@@ -7,7 +7,7 @@ setup () {
   . 'lib/env/bash'
 }
 
-@test "env-bash: set and unset environment functions" {
+@test "$SUITE: set and unset environment functions" {
   command -v __go_func
   command -v _go_func
 
@@ -20,7 +20,7 @@ setup () {
   ! complete -p _go_func
 }
 
-@test "env-bash: environment function forwards commands to script" {
+@test "$SUITE: environment function forwards commands to script" {
   . 'lib/env/bash'
 
   run _go_func 'help'
@@ -28,7 +28,7 @@ setup () {
   assert_line_equals 0 'Usage: _go_func <command> [arguments...]'
 }
 
-@test "env-bash: environment function handles cd" {
+@test "$SUITE: environment function handles cd" {
   local orig_pwd="$PWD"
 
   _go_func 'cd' 'scripts'
@@ -39,7 +39,7 @@ setup () {
   assert_equal "$orig_pwd" "$PWD" 'original working dir'
 }
 
-@test "env-bash: environment function handles pushd" {
+@test "$SUITE: environment function handles pushd" {
   local orig_pwd="$PWD"
 
   _go_func 'pushd' 'scripts'
@@ -49,7 +49,7 @@ setup () {
   assert_equal "$orig_pwd" "$PWD" 'original working dir'
 }
 
-@test "env-bash: complete first argument lists commands, cd to _GO_ROOTDIR" {
+@test "$SUITE: complete first argument lists commands, cd to _GO_ROOTDIR" {
   local COMP_WORDS=('_go_func')
   local COMP_CWORD='1'
   local COMPREPLY
@@ -62,7 +62,7 @@ setup () {
   cd -
 }
 
-@test "env-bash: complete second argument, cd to _GO_ROOTDIR" {
+@test "$SUITE: complete second argument, cd to _GO_ROOTDIR" {
   # Complete the flags for the 'commands' builtin.
   local COMP_WORDS=('_go_func' 'commands' '-')
   local COMP_CWORD='2'
@@ -78,7 +78,7 @@ setup () {
   cd -
 }
 
-@test "env-bash: complete alias completes filenames in _GO_ROOTDIR" {
+@test "$SUITE: complete alias completes filenames in _GO_ROOTDIR" {
   # Complete the '$_GO_ROOTIDR/scripts' directory name.
   local COMP_WORDS=('_go_func' 'ls' 'scrip')
   local COMP_CWORD='2'

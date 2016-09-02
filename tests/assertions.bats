@@ -8,7 +8,7 @@ echo_fail() {
   return 1
 }
 
-@test "assertions: fail prints status and output, returns error" {
+@test "$SUITE: fail prints status and output, returns error" {
   run echo 'Hello, world!'
   run fail
   [[ "$status" -eq '1' ]]
@@ -18,14 +18,14 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_equal success" {
+@test "$SUITE: assert_equal success" {
   run echo 'Hello, world!'
   run assert_equal 'Hello, world!' "$output" "echo result"
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_equal failure" {
+@test "$SUITE: assert_equal failure" {
   run echo 'Hello, world!'
   run assert_equal 'Goodbye, world!' "$output" "echo result"
   [[ "$status" -eq '1' ]]
@@ -35,21 +35,21 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_output success if null expected value" {
+@test "$SUITE: assert_output success if null expected value" {
   run echo 'Hello, world!'
   run assert_output
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_output success" {
+@test "$SUITE: assert_output success" {
   run echo 'Hello, world!'
   run assert_output 'Hello, world!'
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_output fail output check" {
+@test "$SUITE: assert_output fail output check" {
   run echo 'Hello, world!'
   run assert_output 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
@@ -59,14 +59,14 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_output empty string check" {
+@test "$SUITE: assert_output empty string check" {
   run echo
   run assert_output ''
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_output fail empty string check" {
+@test "$SUITE: assert_output fail empty string check" {
   run echo 'Not empty'
   run assert_output ''
   [[ "$status" -eq '1' ]]
@@ -76,21 +76,21 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_output fails if more than one argument" {
+@test "$SUITE: assert_output fails if more than one argument" {
   run echo 'Hello, world!'
   run assert_output 'Hello,' 'world!'
   [[ "$status" -eq '1' ]]
   [[ "$output" = 'ERROR: assert_output takes only one argument' ]]
 }
 
-@test "assertions: assert_status" {
+@test "$SUITE: assert_status" {
   run echo 'Hello, world!'
   run assert_status '0'
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_status failure" {
+@test "$SUITE: assert_status failure" {
   run echo 'Hello, world!'
   run assert_status '1'
   [[ "$status" -eq '1' ]]
@@ -100,14 +100,14 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_success without output check" {
+@test "$SUITE: assert_success without output check" {
   run echo 'Hello, world!'
   run assert_success
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_success failure" {
+@test "$SUITE: assert_success failure" {
   run echo_fail 'Hello, world!'
   run assert_success
   [[ "$status" -eq '1' ]]
@@ -118,14 +118,14 @@ echo_fail() {
   [[ -z "${lines[4]}" ]]
 }
 
-@test "assertions: assert_success with output check" {
+@test "$SUITE: assert_success with output check" {
   run echo 'Hello, world!'
   run assert_success 'Hello, world!'
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_success output check failure" {
+@test "$SUITE: assert_success output check failure" {
   run echo 'Hello, world!'
   run assert_success 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
@@ -135,14 +135,14 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_failure without output check" {
+@test "$SUITE: assert_failure without output check" {
   run echo_fail 'Hello, world!'
   run assert_failure
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_failure failure" {
+@test "$SUITE: assert_failure failure" {
   run echo 'Hello, world!'
   run assert_failure
   [[ "$status" -eq '1' ]]
@@ -153,14 +153,14 @@ echo_fail() {
   [[ -z "${lines[4]}" ]]
 }
 
-@test "assertions: assert_failure with output check" {
+@test "$SUITE: assert_failure with output check" {
   run echo_fail 'Hello, world!'
   run assert_failure 'Hello, world!'
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_failure output check failure" {
+@test "$SUITE: assert_failure output check failure" {
   run echo_fail 'Hello, world!'
   run assert_failure 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
@@ -170,21 +170,21 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
-@test "assertions: assert_line_equals" {
+@test "$SUITE: assert_line_equals" {
   run echo 'Hello, world!'
   run assert_line_equals 0 'Hello, world!'
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_line_equals with negative index" {
+@test "$SUITE: assert_line_equals with negative index" {
   run echo 'Hello, world!'
   run assert_line_equals -1 'Hello, world!'
   [[ "$status" -eq '0' ]]
   [[ -z "$output" ]]
 }
 
-@test "assertions: assert_line_equals failure" {
+@test "$SUITE: assert_line_equals failure" {
   run echo 'Hello, world!'
   run assert_line_equals 0 'Goodbye, world!'
   [[ "$status" -eq '1' ]]

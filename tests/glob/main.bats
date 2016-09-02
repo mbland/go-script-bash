@@ -14,7 +14,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "glob: error on unknown flag" {
+@test "$SUITE: error on unknown flag" {
   run "$BASH" ./go glob --foobar
   assert_failure 'Unknown flag: --foobar'
 
@@ -22,7 +22,7 @@ teardown() {
   assert_failure 'Unknown flag: --foobar'
 }
 
-@test "glob: error if rootdir not specified" {
+@test "$SUITE: error if rootdir not specified" {
   local err_msg='Root directory argument not specified.'
   run "$BASH" ./go glob
   assert_failure "$err_msg"
@@ -31,7 +31,7 @@ teardown() {
   assert_failure "$err_msg"
 }
 
-@test "glob: error if rootdir argument is not a directory" {
+@test "$SUITE: error if rootdir argument is not a directory" {
   local err_msg='Root directory argument bogus_dir is not a directory.'
   run "$BASH" ./go glob bogus_dir
   assert_failure "$err_msg"
@@ -40,7 +40,7 @@ teardown() {
   assert_failure "$err_msg"
 }
 
-@test "glob: error if file suffix argument not specified" {
+@test "$SUITE: error if file suffix argument not specified" {
   local err_msg='File suffix argument not specified.'
   run "$BASH" ./go glob "$TESTS_DIR"
   assert_failure "$err_msg"
@@ -49,7 +49,7 @@ teardown() {
   assert_failure "$err_msg"
 }
 
-@test "glob: error if no files match pattern" {
+@test "$SUITE: error if no files match pattern" {
   run "$BASH" ./go glob "$TESTS_DIR" '.bats'
   assert_failure "\"*\" does not match any .bats files in $TESTS_DIR."
 
@@ -57,7 +57,7 @@ teardown() {
   assert_failure "\"foo\" does not match any .bats files in $TESTS_DIR."
 }
 
-@test "glob: no glob patterns defaults to matching all files" {
+@test "$SUITE: no glob patterns defaults to matching all files" {
   local expected=(
     "$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats" "$TESTS_DIR/foo.bats")
   touch "${expected[@]}"
@@ -67,7 +67,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: start glob matches all files" {
+@test "$SUITE: start glob matches all files" {
   local expected=(
     "$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats" "$TESTS_DIR/foo.bats")
   touch "${expected[@]}"
@@ -77,7 +77,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: --compact strips rootdir and suffix from all files" {
+@test "$SUITE: --compact strips rootdir and suffix from all files" {
   touch $TESTS_DIR/{bar,baz,foo}.bats
   local expected=('bar' 'baz' 'foo')
 
@@ -86,14 +86,14 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: match nothing if the suffix doesn't match" {
+@test "$SUITE: match nothing if the suffix doesn't match" {
   touch $TESTS_DIR/{bar,baz,foo}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bash'
   local IFS=$'\n'
   assert_failure "\"*\" does not match any .bash files in $TESTS_DIR."
 }
 
-@test "glob: set --ignore patterns" {
+@test "$SUITE: set --ignore patterns" {
   touch $TESTS_DIR/{bar,baz,foo}.bats
   local expected=('bar' 'baz' 'foo')
 
@@ -109,14 +109,14 @@ teardown() {
   assert_failure "\"*\" does not match any .bats files in $TESTS_DIR."
 }
 
-@test "glob: match single file" {
+@test "$SUITE: match single file" {
   touch $TESTS_DIR/{bar,baz,foo}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo'
   local IFS=$'\n'
   assert_success "$TESTS_DIR/foo.bats"
 }
 
-@test "glob: match multiple files" {
+@test "$SUITE: match multiple files" {
   local expected=("$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats")
   touch $TESTS_DIR/{bar,baz,foo}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'ba*'
@@ -124,7 +124,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: match multiple patterns" {
+@test "$SUITE: match multiple patterns" {
   local expected=(
     "$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats" "$TESTS_DIR/foo.bats")
   touch $TESTS_DIR/{bar,baz,foo,quux,plugh,xyzzy}.bats
@@ -133,7 +133,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: exact file match when a directory of the same name exists" {
+@test "$SUITE: exact file match when a directory of the same name exists" {
   mkdir $TESTS_DIR/foo
   touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo'
@@ -141,7 +141,7 @@ teardown() {
   assert_success "$TESTS_DIR/foo.bats"
 }
 
-@test "glob: recursive directory match when pattern ends with a separator" {
+@test "$SUITE: recursive directory match when pattern ends with a separator" {
   mkdir $TESTS_DIR/foo
   touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
   local expected=(
@@ -154,7 +154,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: pattern matches file and a directory of the same name" {
+@test "$SUITE: pattern matches file and a directory of the same name" {
   mkdir $TESTS_DIR/foo
   touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
   local expected=(
@@ -168,7 +168,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob: recursively discover files" {
+@test "$SUITE: recursively discover files" {
   mkdir -p $TESTS_DIR/foo/bar/baz $TESTS_DIR/quux/xyzzy $TESTS_DIR/plugh \
     $TESTS_DIR/ignore-me $TESTS_DIR/bar/ignore-me
   touch $TESTS_DIR/foo/bar/baz/{frobozz,zork,ignore-me}.bats \

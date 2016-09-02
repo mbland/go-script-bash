@@ -5,12 +5,12 @@
 load environment
 load assertions
 
-@test "test: tab complete flags" {
+@test "$SUITE: tab complete flags" {
   run "$BASH" ./go test --complete 0 '-'
   assert_success "--list"
 }
 
-@test "test: tab completion lists first-level tests and directories" {
+@test "$SUITE: tab completion lists first-level tests and directories" {
   local expected=(--list)
   expected+=($("$BASH" './go' 'glob' '--complete' '5' \
     '--compact' '--ignore' 'bats/*' 'tests' '.bats'))
@@ -21,7 +21,7 @@ load assertions
   assert_success "${expected[*]}"
 }
 
-@test "test: tab completion matches test file and matching directory" {
+@test "$SUITE: tab completion matches test file and matching directory" {
   expected=('core' 'core/')
   run "$BASH" ./go test --complete 0 'core'
   local IFS=$'\n'
@@ -33,7 +33,7 @@ _trim_expected() {
   expected=("${expected[@]%.bats}")
 }
 
-@test "test: tab completion lists second-level tests and directories" {
+@test "$SUITE: tab completion lists second-level tests and directories" {
   local expected=(tests/core/*.bats)
   _trim_expected
 
@@ -42,7 +42,7 @@ _trim_expected() {
   assert_success "${expected[*]}"
 }
 
-@test "test: no arguments after --list lists all tests" {
+@test "$SUITE: no arguments after --list lists all tests" {
   local expected=(
     $("$BASH" './go' 'glob' '--compact' '--ignore' 'bats/*' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 0 ]]
@@ -52,7 +52,7 @@ _trim_expected() {
   assert_success "${expected[*]}"
 }
 
-@test "test: list specific files and directories" {
+@test "$SUITE: list specific files and directories" {
   run "$BASH" ./go test --list test aliases 'builtins*'
 
   local expected=(test aliases builtins tests/builtins/*)
@@ -62,7 +62,7 @@ _trim_expected() {
   assert_success "${expected[*]}"
 }
 
-@test "test: produce an error if any test pattern fails to match" {
+@test "$SUITE: produce an error if any test pattern fails to match" {
   run "$BASH" ./go test --list test 'foo*'
   assert_failure '"foo*" does not match any .bats files in tests.'
 }

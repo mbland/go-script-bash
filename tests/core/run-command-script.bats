@@ -13,7 +13,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "core: run bash script by sourcing" {
+@test "$SUITE: run bash script by sourcing" {
   echo '#!/bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -21,7 +21,7 @@ teardown() {
   assert_success 'Can use @go.printf'
 }
 
-@test "core: run sh script by sourcing" {
+@test "$SUITE: run sh script by sourcing" {
   echo '#!/bin/sh' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -29,7 +29,7 @@ teardown() {
   assert_success 'Can use @go.printf'
 }
 
-@test "core: run perl script" {
+@test "$SUITE: run perl script" {
   if ! command -v perl; then
     skip 'perl not installed'
   fi
@@ -41,7 +41,7 @@ teardown() {
   assert_success 'Can run perl'
 }
 
-@test "core: produce error if script doesn't contain an interpreter line" {
+@test "$SUITE: produce error if script doesn't contain an interpreter line" {
   local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "
   expected+='#!/path/to/interpreter.'
 
@@ -51,7 +51,7 @@ teardown() {
   assert_failure "$expected"
 }
 
-@test "core: produce error if shebang line not parseable" {
+@test "$SUITE: produce error if shebang line not parseable" {
   local expected='Could not parse interpreter from first line of '
   expected+="$TEST_COMMAND_SCRIPT."
 
@@ -62,7 +62,7 @@ teardown() {
   assert_failure "$expected"
 }
 
-@test "core: parse space after shebang" {
+@test "$SUITE: parse space after shebang" {
   echo '#! /bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -70,7 +70,7 @@ teardown() {
   assert_success 'Space after shebang OK'
 }
 
-@test "core: parse /path/to/env bash" {
+@test "$SUITE: parse /path/to/env bash" {
   echo '#! /path/to/env bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
@@ -78,7 +78,7 @@ teardown() {
   assert_success '/path/to/env OK'
 }
 
-@test "core: ignore flags and arguments after shell name" {
+@test "$SUITE: ignore flags and arguments after shell name" {
   echo '#!/bin/bash -x' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 

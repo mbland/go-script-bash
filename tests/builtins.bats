@@ -3,14 +3,14 @@
 load environment
 load assertions
 
-@test "builtins: no args lists all builtin commands" {
+@test "$SUITE: no args lists all builtin commands" {
   run "$BASH" ./go 'builtins'
   assert_success
   assert_line_equals 0 "aliases" "first builtin"
   assert_line_equals -1 "unenv" "last builtin"
 }
 
-@test "builtins: tab completions" {
+@test "$SUITE: tab completions" {
   run "$BASH" ./go builtins --complete 0 ''
   assert_success '--exists --summaries'
 
@@ -21,7 +21,7 @@ load assertions
   assert_success ''
 }
 
-@test "builtins: return true if a builtin command exists, false if not" {
+@test "$SUITE: return true if a builtin command exists, false if not" {
   run "$BASH" ./go builtins --exists builtins
   assert_success ''
 
@@ -29,13 +29,13 @@ load assertions
   assert_failure ''
 }
 
-@test "builtins: error if no flag specified and other arguments present" {
+@test "$SUITE: error if no flag specified and other arguments present" {
   run "$BASH" ./go builtins builtins
   assert_failure \
     'ERROR: with no flag specified, the argument list should be empty'
 }
 
-@test "builtins: error if too many arguments present for flag" {
+@test "$SUITE: error if too many arguments present for flag" {
   run "$BASH" ./go builtins --summaries builtins aliases
   assert_failure 'ERROR: --summaries takes no arguments'
 
@@ -46,17 +46,17 @@ load assertions
   assert_failure 'ERROR: only one argument should follow --help-filter'
 }
 
-@test "builtins: error if --exists not followed by a command name" {
+@test "$SUITE: error if --exists not followed by a command name" {
   run "$BASH" ./go builtins --exists
   assert_failure 'ERROR: no argument given after --exists'
 }
 
-@test "builtins: error on unknown flag" {
+@test "$SUITE: error on unknown flag" {
   run "$BASH" ./go builtins --foobar
   assert_failure 'ERROR: unknown flag: --foobar'
 }
 
-@test "builtins: list builtin command summaries" {
+@test "$SUITE: list builtin command summaries" {
   local builtins=($("$BASH" ./go builtins))
   local longest_name_len=0
   local cmd_name
@@ -86,7 +86,7 @@ load assertions
     "last builtin summary"
 }
 
-@test "builtins: help filter" {
+@test "$SUITE: help filter" {
   run "$BASH" ./go builtins --help-filter 'BEGIN {{_GO_BUILTIN_SUMMARIES}} END'
 
   local IFS=$'\n'

@@ -7,7 +7,7 @@ setup() {
   . 'lib/argv'
 }
 
-@test "argv: check_flag_has_no_arguments" {
+@test "$SUITE: check_flag_has_no_arguments" {
   run _@go.check_flag_has_no_arguments --flag
   assert_success ''
 
@@ -15,7 +15,7 @@ setup() {
   assert_failure 'ERROR: --flag takes no arguments'
 }
 
-@test "argv: check_flag_has_one_argument" {
+@test "$SUITE: check_flag_has_one_argument" {
   run _@go.check_flag_has_one_argument --flag arg
   assert_success ''
 
@@ -26,7 +26,7 @@ setup() {
   assert_failure 'ERROR: only one argument should follow --flag'
 }
 
-@test "argv: check_argv_empty_if_no_flags" {
+@test "$SUITE: check_argv_empty_if_no_flags" {
   run _@go.check_argv_empty_if_no_flags
   assert_success ''
 

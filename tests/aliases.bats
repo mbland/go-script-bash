@@ -3,14 +3,14 @@
 load environment
 load assertions
 
-@test "aliases: with no arguments, list all aliases" {
+@test "$SUITE: with no arguments, list all aliases" {
   run "$BASH" ./go aliases
   assert_success
   assert_line_equals 0 'awk'  # first alias
   assert_line_equals -1 'sed'  # last alias
 }
 
-@test "aliases: tab completions" {
+@test "$SUITE: tab completions" {
   run "$BASH" ./go aliases --complete 0 ''
   assert_success '--exists'
 
@@ -24,23 +24,23 @@ load assertions
   assert_success ''
 }
 
-@test "aliases: error on unknown flag" {
+@test "$SUITE: error on unknown flag" {
   run "$BASH" ./go aliases --foobar
   assert_failure 'ERROR: unknown flag: --foobar'
 }
 
-@test "aliases: help filter" {
+@test "$SUITE: help filter" {
   local expected=($("$BASH" ./go aliases))
   run "$BASH" ./go aliases --help-filter 'BEGIN {{_GO_ALIAS_CMDS}} END'
   assert_success "BEGIN ${expected[*]} END"
 }
 
-@test "aliases: error if no argument after valid flag" {
+@test "$SUITE: error if no argument after valid flag" {
   run "$BASH" ./go aliases --exists
   assert_failure 'ERROR: no argument given after --exists'
 }
 
-@test "aliases: return true if alias exists, false if not" {
+@test "$SUITE: return true if alias exists, false if not" {
   run "$BASH" ./go aliases --exists ls
   assert_success ''
 
@@ -51,13 +51,13 @@ load assertions
   assert_failure ''
 }
 
-@test "aliases: error if no flag specified and other arguments present" {
+@test "$SUITE: error if no flag specified and other arguments present" {
   run "$BASH" ./go aliases ls
   assert_failure \
     'ERROR: with no flag specified, the argument list should be empty'
 }
 
-@test "aliases: error if too many arguments present for flag" {
+@test "$SUITE: error if too many arguments present for flag" {
   run "$BASH" ./go aliases --exists ls cat
   assert_failure 'ERROR: only one argument should follow --exists'
 
@@ -68,7 +68,7 @@ load assertions
   assert_failure 'ERROR: only one argument should follow --help-filter'
 }
 
-@test "aliases: show generic help for alias" {
+@test "$SUITE: show generic help for alias" {
   run "$BASH" ./go aliases --help ls
   assert_success
   assert_line_equals 0 "./go ls - Shell alias that will execute in $_GO_ROOTDIR"
@@ -76,7 +76,7 @@ load assertions
     'Filename completion is available via the "./go env" command.'
 }
 
-@test "aliases: specialize help for cd, pushd when running script directly" {
+@test "$SUITE: specialize help for cd, pushd when running script directly" {
   run "$BASH" ./go aliases --help cd
   assert_success
 
@@ -96,7 +96,7 @@ load assertions
   assert_line_equals 2 "${expected[2]/\"cd\"/\"pushd\"}"
 }
 
-@test "aliases: leave help generic for cd, pushd when using env function" {
+@test "$SUITE: leave help generic for cd, pushd when using env function" {
   # Setting _GO_CMD will trick the script into thinking the shell function is
   # running it.
   

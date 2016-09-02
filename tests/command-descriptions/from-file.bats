@@ -49,7 +49,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "cmd desc: return default text when no description is available" {
+@test "$SUITE: return default text when no description is available" {
   create_test_command_script 'echo "This script has no description"'
 
   local __go_cmd_desc=''
@@ -63,7 +63,7 @@ teardown() {
   assert_equal 'No description available' "$__go_cmd_desc" 'command description'
 }
 
-@test "cmd desc: parse summary from command script" {
+@test "$SUITE: parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
   _@go.command_summary "$TEST_COMMAND_SCRIPT"
   assert_success
@@ -71,7 +71,7 @@ teardown() {
     'command summary'
 }
 
-@test "cmd desc: parse description from command script" {
+@test "$SUITE: parse description from command script" {
   _GO_CMD='test-go'
   _GO_ROOTDIR='/foo/bar'
   COLUMNS=40

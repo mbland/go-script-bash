@@ -14,7 +14,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "glob/completions: zero arguments" {
+@test "$SUITE: zero arguments" {
   local expected=('--compact' '--ignore')
   expected+=($(compgen -d))
 
@@ -23,7 +23,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: first argument" {
+@test "$SUITE: first argument" {
   local expected=('--compact' '--ignore')
   expected+=($(compgen -d))
 
@@ -46,7 +46,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: completion omits flags already present" {
+@test "$SUITE: completion omits flags already present" {
   local expected=('--ignore' $(compgen -d))
   run "$BASH" ./go glob --complete 1 '--compact'
   local IFS=$'\n'
@@ -71,7 +71,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: argument does not complete if previous is --ignore" {
+@test "$SUITE: argument does not complete if previous is --ignore" {
   # The next argument should be the GLOBIGNORE value.
   run "$BASH" ./go glob --complete 1 '--ignore'
   assert_failure ''
@@ -83,7 +83,7 @@ teardown() {
   assert_failure
 }
 
-@test "glob/complete: argument does not complete if previous is root dir" {
+@test "$SUITE: argument does not complete if previous is root dir" {
   # The next argument should be the suffix pattern.
   run "$BASH" ./go glob --complete 1 'tests'
   assert_failure ''
@@ -95,7 +95,7 @@ teardown() {
   assert_failure ''
 }
 
-@test "glob/complete: arguments before flags only complete other flags" {
+@test "$SUITE: arguments before flags only complete other flags" {
   run "$BASH" ./go glob --complete 0 '' '--compact'
   assert_success '--ignore'
 
@@ -103,7 +103,7 @@ teardown() {
   assert_success '--compact'
 }
 
-@test "glob/complete: complete flags before rootdir" {
+@test "$SUITE: complete flags before rootdir" {
   local expected=('--compact' '--ignore')
   run "$BASH" ./go glob --complete 0 '' 'tests'
   local IFS=$'\n'
@@ -116,7 +116,7 @@ teardown() {
   assert_success '--compact'
 }
 
-@test "glob/complete: complete top-level glob patterns" {
+@test "$SUITE: complete top-level glob patterns" {
   touch $TESTS_DIR/{foo,bar,baz}.bats
   local expected=('bar' 'baz' 'foo')
 
@@ -135,7 +135,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: match a file and directory of the same name" {
+@test "$SUITE: match a file and directory of the same name" {
   mkdir "$TESTS_DIR/foo"
   touch $TESTS_DIR/foo{,/bar,/baz}.bats
   local expected=('foo' 'foo/')
@@ -145,7 +145,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: complete second-level glob pattern" {
+@test "$SUITE: complete second-level glob pattern" {
   mkdir "$TESTS_DIR/foo"
   touch $TESTS_DIR/foo{,/bar,/baz}.bats
   local expected=('foo/bar' 'foo/baz')
@@ -155,7 +155,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: complete directories that don't match file names" {
+@test "$SUITE: complete directories that don't match file names" {
   mkdir $TESTS_DIR/foo
   touch $TESTS_DIR/foo/{bar,baz}.bats
 
@@ -165,7 +165,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "glob/complete: honor --ignore patterns during completion" {
+@test "$SUITE: honor --ignore patterns during completion" {
   mkdir $TESTS_DIR/{foo,bar,baz}
   touch $TESTS_DIR/{foo/quux,bar/xyzzy,baz/plugh,baz/xyzzy}.bats
 
@@ -176,19 +176,19 @@ teardown() {
   assert_success 'baz/xyzzy'
 }
 
-@test "glob/complete: return error if no matches" {
+@test "$SUITE: return error if no matches" {
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo'
   assert_failure
 }
 
-@test "glob/complete: return full path if only one match" {
+@test "$SUITE: return full path if only one match" {
   mkdir "$TESTS_DIR/foo"
   touch "$TESTS_DIR/foo/bar.bats"
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'
   assert_success "foo/bar"
 }
 
-@test "glob/complete: return completions with longest possible prefix" {
+@test "$SUITE: return completions with longest possible prefix" {
   mkdir -p $TESTS_DIR/foo/bar/{baz,quux}
   touch $TESTS_DIR/foo/bar/{baz/xyzzy,quux/plugh}.bats
 

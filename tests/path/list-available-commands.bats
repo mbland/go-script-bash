@@ -14,7 +14,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "path/available: list available commands" {
+@test "$SUITE: list available commands" {
   # Since we aren't creating any new commands, and _@go.find_commands is already
   # thoroughly tested in isolation, we only check that builtins are available.
   local expected=($_GO_ROOTDIR/libexec/*)
@@ -30,7 +30,7 @@ teardown() {
 
 }
 
-@test "path/available: error if no commands available" {
+@test "$SUITE: error if no commands available" {
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_DIR"
   assert_failure
 

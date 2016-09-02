@@ -16,7 +16,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "path: initialize constants without plugins" {
+@test "$SUITE: initialize constants without plugins" {
   run "$TEST_GO_SCRIPT"
   assert_success
 
@@ -27,7 +27,7 @@ teardown() {
   assert_line_equals 2 "_GO_SEARCH_PATHS: ${expected_paths[*]}"
 }
 
-@test "path: initialize constants with plugins dir" {
+@test "$SUITE: initialize constants with plugins dir" {
   local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
   mkdir "$plugins_dir"
   run "$TEST_GO_SCRIPT"
@@ -41,7 +41,7 @@ teardown() {
   assert_line_equals 2 "_GO_SEARCH_PATHS: ${expected_paths[*]}"
 }
 
-@test "path: initialize constants with plugin bindirs" {
+@test "$SUITE: initialize constants with plugin bindirs" {
   local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
   local plugin_bindirs=(
     "$plugins_dir/plugin0/bin"

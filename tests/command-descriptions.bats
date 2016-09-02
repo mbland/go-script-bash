@@ -7,32 +7,32 @@ setup() {
   . 'lib/command_descriptions'
 }
 
-@test "cmd desc: check command path passes" {
+@test "$SUITE: check command path passes" {
   run _@go.check_command_path go
   assert_success ''
 }
 
-@test "cmd desc: check command path errors if no path is specified" {
+@test "$SUITE: check command path errors if no path is specified" {
   run _@go.check_command_path
   assert_failure 'ERROR: no command script specified'
 }
 
-@test "cmd desc: check command path errors if the path doesn't exist" {
+@test "$SUITE: check command path errors if the path doesn't exist" {
   run _@go.check_command_path foobar
   assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
-@test "cmd desc: check command_summary fails if the path doesn't exist" {
+@test "$SUITE: check command_summary fails if the path doesn't exist" {
   run _@go.command_summary foobar
   assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
-@test "cmd desc: check command_description fails if the path doesn't exist" {
+@test "$SUITE: check command_description fails if the path doesn't exist" {
   run _@go.command_description foobar
   assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
-@test "cmd desc: filter description line" {
+@test "$SUITE: filter description line" {
   local _GO_CMD='test-go'
   local cmd_name='test-command'
 
@@ -49,7 +49,7 @@ setup() {
   assert_equal "$expected" "$line" 'filtered description line'
 }
 
-@test "cmd desc: format summary without folding if total length <= COLUMNS" {
+@test "$SUITE: format summary without folding if total length <= COLUMNS" {
   local cmd_name='test-command'
   local summary='Summary for a command parsed from the file header comment'
   local expected="  $cmd_name  $summary"
@@ -60,7 +60,7 @@ setup() {
   assert_equal "$expected" "$formatted" 'formatted summary'
 }
 
-@test "cmd desc: format summary with folding if total length > COLUMNS" {
+@test "$SUITE: format summary with folding if total length > COLUMNS" {
   local cmd_name='test-command'
   local summary='Summary for a command parsed from the file header comment '
   summary+="that's a bit longer than the current column width"
