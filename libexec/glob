@@ -209,25 +209,18 @@ _@go.glob_set_globignore() {
   fi
 }
 
-_@go.glob() {
+_@go.glob_parse_argv() {
   local globignore
-  local list_compact
 
   while [[ "${1:0:1}" = '-' ]]; do
     case "$1" in
-    --complete)
-      # Tab completions
-      shift
-      _@go.glob_tab_completion "$@"
-      return
-      ;;
     --ignore)
       globignore="$2"
       shift
       shift
       ;;
     --compact)
-      list_compact='true'
+      __go_glob_compact='true'
       shift
       ;;
     *)
@@ -237,7 +230,7 @@ _@go.glob() {
     esac
   done
 
-  local __go_glob_rootdir="$1"
+  __go_glob_rootdir="$1"
   shift
 
   if [[ -z "$__go_glob_rootdir" ]]; then
@@ -249,7 +242,7 @@ _@go.glob() {
     return 1
   fi
 
-  local __go_glob_suffix="$1"
+  __go_glob_suffix="$1"
   shift
 
   if [[ -z "$__go_glob_suffix" ]]; then
@@ -257,13 +250,34 @@ _@go.glob() {
     return 1
   fi
 
+  if ! _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"; then
+    return 1
+  fi
+  __go_glob_patterns=("${@:-*}")
+}
+
+_@go.glob() {
+  # Tab completions
+  if [[ "$1" = '--complete' ]]; then
+    shift
+    _@go.glob_tab_completion "$@"
+    return
+  fi
+
+  local __go_glob_compact
+  local __go_glob_rootdir
+  local __go_glob_suffix
+  local __go_glob_patterns
+
+  if ! _@go.glob_parse_argv "$@"; then
+    return 1
+  fi
+
   local pattern
   local __go_glob_matches
   local results=()
 
-  _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"
-
-  for pattern in "${@:-*}"; do
+  for pattern in "${__go_glob_patterns[@]}"; do
     __go_glob_matches=()
     _@go.glob_helper "$pattern"
 
@@ -276,7 +290,7 @@ _@go.glob() {
   done
 
   __go_glob_matches=("${results[@]}")
-  if [[ "$list_compact" = 'true' ]]; then
+  if [[ "$__go_glob_compact" = 'true' ]]; then
     _@go.glob_compact_matches
   fi
 
