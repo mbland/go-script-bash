@@ -123,3 +123,72 @@ teardown() {
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
+
+@test "glob: match multiple patterns" {
+  local expected=(
+    "$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats" "$TESTS_DIR/foo.bats")
+  touch $TESTS_DIR/{bar,baz,foo,quux,plugh,xyzzy}.bats
+  run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'ba*' 'foo'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
+@test "glob: exact file match when a directory of the same name exists" {
+  mkdir $TESTS_DIR/foo
+  touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
+  run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo'
+  local IFS=$'\n'
+  assert_success "$TESTS_DIR/foo.bats"
+}
+
+@test "glob: recursive directory match when pattern ends with a separator" {
+  mkdir $TESTS_DIR/foo
+  touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
+  local expected=(
+    "$TESTS_DIR/foo/bar.bats"
+    "$TESTS_DIR/foo/baz.bats"
+    "$TESTS_DIR/foo/quux.bats")
+
+  run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo/'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
+@test "glob: pattern matches file and a directory of the same name" {
+  mkdir $TESTS_DIR/foo
+  touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
+  local expected=(
+    "$TESTS_DIR/foo.bats"
+    "$TESTS_DIR/foo/bar.bats"
+    "$TESTS_DIR/foo/baz.bats"
+    "$TESTS_DIR/foo/quux.bats")
+
+  run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo*'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
+@test "glob: recursively discover files" {
+  mkdir -p $TESTS_DIR/foo/bar/baz $TESTS_DIR/quux/xyzzy $TESTS_DIR/plugh \
+    $TESTS_DIR/ignore-me $TESTS_DIR/bar/ignore-me
+  touch $TESTS_DIR/foo/bar/baz/{frobozz,zork,ignore-me}.bats \
+    $TESTS_DIR/quux/xyzzy/frotz.bats \
+    $TESTS_DIR/quux/xyzzy.bats \
+    $TESTS_DIR/plugh/bogus.not-the-right-type \
+    $TESTS_DIR/plugh/{jimi,john}.bats \
+    $TESTS_DIR/plugh.{bats,c,md} \
+    $TESTS_DIR/ignore-me/{foo,bar,baz}.bats \
+    $TESTS_DIR/bar/ignore-me/{foo,bar,baz}.bats
+  local expected=(
+    "foo/bar/baz/frobozz"
+    "foo/bar/baz/zork"
+    "plugh"
+    "plugh/jimi"
+    "plugh/john"
+    "quux/xyzzy"
+    "quux/xyzzy/frotz")
+
+  run "$BASH" ./go glob --ignore '*ignore-me*' --compact "$TESTS_DIR" '.bats'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}

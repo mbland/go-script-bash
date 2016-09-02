@@ -57,13 +57,17 @@ _@go.glob_files_impl() {
   local corresponding
 
   for match in "${matches[@]}"; do
-    # If a file name without the suffix matches a directory name, add the file
-    # first.
+    # If a file name without the suffix matches a directory, add the file first.
     if [[ -d "$match" ]]; then
       corresponding="$match$__go_glob_files_suffix"
+
+      # If the original pattern ends in a path separator, it won't match a
+      # corresponding file of the same name. However, we then strip the
+      # separator off to avoid generating adjacent separators in the results.
       if [[ -f "$corresponding" ]]; then
         __go_glob_matches+=("$corresponding")
       fi
+      match="${match%/}"
       _@go.glob_files_impl "${match#$__go_glob_files_rootdir/}/*"
     else
       corresponding="${match%$__go_glob_files_suffix}"

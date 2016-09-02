@@ -66,26 +66,7 @@ _fill_expected_completions() {
   assert_success "${ALL_TESTS[*]}"
 }
 
-@test "test: glob after --list lists all tests" {
-  run "$BASH" ./go test --list '*'
-  local IFS=$'\n'
-  assert_success "${ALL_TESTS[*]}"
-}
-
-@test "test: single test name lists only that name" {
-  run "$BASH" ./go test --list test
-  assert_success 'test'
-}
-
-@test "test: multiple test names list multiple names" {
-  run "$BASH" ./go test --list test aliases argv
-
-  local expected=(test aliases argv)
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
-}
-
-@test "test: a pattern matching a directory name returns its files" {
+@test "test: list specific files and directories" {
   run "$BASH" ./go test --list test aliases 'builtins*'
 
   local expected=(test aliases builtins)
@@ -93,19 +74,6 @@ _fill_expected_completions() {
 
   local IFS=$'\n'
   assert_success "${expected[*]}"
-}
-
-@test "test: a pattern matching a file and directory returns the file only" {
-  run "$BASH" ./go test --list test aliases builtins
-
-  local expected=(test aliases builtins)
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
-}
-
-@test "test: produce an error if any test name fails to match" {
-  run "$BASH" ./go test --list test foobar
-  assert_failure '"foobar" does not match any .bats files in tests.'
 }
 
 @test "test: produce an error if any test pattern fails to match" {

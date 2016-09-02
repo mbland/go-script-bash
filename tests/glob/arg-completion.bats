@@ -188,7 +188,7 @@ teardown() {
   assert_success "foo/bar"
 }
 
-@test "glob/complete: return completions with longest path prefix" {
+@test "glob/complete: return completions with longest possible prefix" {
   mkdir -p $TESTS_DIR/foo/bar/{baz,quux}
   touch $TESTS_DIR/foo/bar/{baz/xyzzy,quux/plugh}.bats
 
