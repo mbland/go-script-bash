@@ -7,11 +7,13 @@ load assertions
 
 @test "$SUITE: tab complete flags" {
   run "$BASH" ./go test --complete 0 '-'
-  assert_success "--list"
+  local expected=('--edit' '--list')
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
 }
 
-@test "$SUITE: tab completion lists first-level tests and directories" {
-  local expected=(--list)
+@test "$SUITE: tab complete flags, first-level tests and directories" {
+  local expected=('--edit' '--list')
   expected+=($("$BASH" './go' 'glob' '--complete' '5' \
     '--compact' '--ignore' 'bats/*' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 1 ]]

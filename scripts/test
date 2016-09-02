@@ -17,21 +17,19 @@
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
 
-declare -r __go_glob_args=('--ignore' 'bats/*' 'tests' '.bats')
+declare -r __GO_TEST_GLOB_ARGS=('--ignore' 'bats/*' 'tests' '.bats')
 
 _test_tab_completion() {
   local word_index="$1"
   shift
   if [[ "$word_index" -eq '0' ]]; then
-    if [[ -z "$1" ]]; then
-      echo '--list'
-    elif [[ "${1:0:1}" = '-' ]]; then
-      echo '--list'
+    compgen -W '--edit --list' -- "$1"
+    if [[ "${1:0:1}" = '-' ]]; then
       return
     fi
   fi
-  @go 'glob' '--complete' "$((word_index + ${#__go_glob_args[@]}))" \
-    "${__go_glob_args[@]}" "$@"
+  @go 'glob' '--complete' "$((word_index + ${#__GO_TEST_GLOB_ARGS[@]}))" \
+    "${__GO_TEST_GLOB_ARGS[@]}" "$@"
 }
 
 _test() {
@@ -41,9 +39,13 @@ _test() {
     _test_tab_completion "$@"
   elif [[ "$1" = '--list' ]]; then
     shift
-    @go 'glob' '--compact' "${__go_glob_args[@]}" "$@"
+    @go 'glob' '--compact' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
+  elif [[ "$1" = '--edit' ]]; then
+    shift
+    local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
+    @go 'edit' "${tests[@]}"
   else
-    local tests=($(@go 'glob' "${__go_glob_args[@]}" "$@"))
+    local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
     tests/bats/bin/bats "${tests[@]}"
   fi
 }
