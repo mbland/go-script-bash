@@ -154,6 +154,19 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
+@test "$SUITE: recursive directory match when no file of the same name" {
+  mkdir $TESTS_DIR/foo
+  touch $TESTS_DIR/foo/{bar,baz,quux}.bats
+  local expected=(
+    "$TESTS_DIR/foo/bar.bats"
+    "$TESTS_DIR/foo/baz.bats"
+    "$TESTS_DIR/foo/quux.bats")
+
+  run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
 @test "$SUITE: pattern matches file and a directory of the same name" {
   mkdir $TESTS_DIR/foo
   touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
