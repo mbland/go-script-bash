@@ -140,7 +140,7 @@ _@go.glob_files_tab_completion() {
     return $((err_count != 2 ? 0 : 1))
   fi
 
-  _@go.glob_files_set_globignore "$globignore"
+  _@go.glob_files_set_globignore "$globignore" "$__go_glob_files_rootdir"
   local __go_glob_matches=()
   _@go.glob_files_impl "$word*"
   _@go.glob_files_compact_matches
@@ -190,11 +190,22 @@ _@go.glob_files_tab_completion() {
 }
 
 _@go.glob_files_set_globignore() {
-  if [[ -n "$*" ]]; then
+  local globignore_spec="$1"
+  local rootdir="$2"
+
+  if [[ -z "$rootdir" ]]; then
+    echo "ERROR: root dir not set before setting GLOBIGNORE" >&2
+    return 1
+  elif [[ ! -d "$rootdir" ]]; then
+    echo "ERROR: root dir not valid when setting GLOBIGNORE: $rootdir " >&2
+    return 1
+  fi
+
+  if [[ -n "$globignore_spec" ]]; then
     local patterns=()
     local IFS=':'
-    read -r -a patterns <<<"$*"
-    GLOBIGNORE="${patterns[*]/#/$__go_glob_files_rootdir/}"
+    read -r -a patterns <<<"$globignore_spec"
+    GLOBIGNORE="${patterns[*]/#/$rootdir/}"
   fi
 }
 
@@ -250,7 +261,7 @@ _@go.glob() {
   local __go_glob_matches
   local results=()
 
-  _@go.glob_files_set_globignore "$globignore"
+  _@go.glob_files_set_globignore "$globignore" "$__go_glob_files_rootdir"
 
   for pattern in "${@:-*}"; do
     __go_glob_matches=()
