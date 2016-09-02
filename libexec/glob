@@ -39,14 +39,14 @@
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
 
-_@go.glob_files_impl() {
+_@go.glob_helper() {
   local pattern="$1"
-  local full_pattern="$__go_glob_files_rootdir/$pattern"
+  local full_pattern="$__go_glob_rootdir/$pattern"
 
   # This happens when the pattern contains no shell metacharacters and doesn't
   # end with a trailing slash, i.e. it matches a single file.
-  if [[ -f "$full_pattern$__go_glob_files_suffix" ]]; then
-    __go_glob_matches+=("$full_pattern$__go_glob_files_suffix")
+  if [[ -f "$full_pattern$__go_glob_suffix" ]]; then
+    __go_glob_matches+=("$full_pattern$__go_glob_suffix")
     return
   fi
 
@@ -59,7 +59,7 @@ _@go.glob_files_impl() {
   for match in "${matches[@]}"; do
     # If a file name without the suffix matches a directory, add the file first.
     if [[ -d "$match" ]]; then
-      corresponding="$match$__go_glob_files_suffix"
+      corresponding="$match$__go_glob_suffix"
 
       # If the original pattern ends in a path separator, it won't match a
       # corresponding file of the same name. However, we then strip the
@@ -68,9 +68,9 @@ _@go.glob_files_impl() {
         __go_glob_matches+=("$corresponding")
       fi
       match="${match%/}"
-      _@go.glob_files_impl "${match#$__go_glob_files_rootdir/}/*"
+      _@go.glob_helper "${match#$__go_glob_rootdir/}/*"
     else
-      corresponding="${match%$__go_glob_files_suffix}"
+      corresponding="${match%$__go_glob_suffix}"
       if [[ "$match" != "$corresponding" && ! -d "$corresponding" ]]; then
         __go_glob_matches+=("$match")
       fi
@@ -78,12 +78,12 @@ _@go.glob_files_impl() {
   done
 }
 
-_@go.glob_files_compact_matches() {
-  __go_glob_matches=("${__go_glob_matches[@]#$__go_glob_files_rootdir/}")
-  __go_glob_matches=("${__go_glob_matches[@]%$__go_glob_files_suffix}")
+_@go.glob_compact_matches() {
+  __go_glob_matches=("${__go_glob_matches[@]#$__go_glob_rootdir/}")
+  __go_glob_matches=("${__go_glob_matches[@]%$__go_glob_suffix}")
 }
 
-_@go.glob_files_tab_completion() {
+_@go.glob_tab_completion() {
   local word_index="$1"
   shift
   local args=("$@")
@@ -116,8 +116,8 @@ _@go.glob_files_tab_completion() {
         elif [[ "$word_index" -eq "$((i+1))" ]]; then
           return 1
         fi
-        __go_glob_files_rootdir="$arg"
-        __go_glob_files_suffix="${args[$((i+1))]}"
+        __go_glob_rootdir="$arg"
+        __go_glob_suffix="${args[$((i+1))]}"
         break
       fi
       ;;
@@ -129,7 +129,7 @@ _@go.glob_files_tab_completion() {
     fi
   done
 
-  if [[ -z "$__go_glob_files_rootdir" ]]; then
+  if [[ -z "$__go_glob_rootdir" ]]; then
     local err_count=0
     if ! compgen -W "${flags[*]}" -- "$word"; then
       ((++err_count))
@@ -140,10 +140,10 @@ _@go.glob_files_tab_completion() {
     return $((err_count != 2 ? 0 : 1))
   fi
 
-  _@go.glob_files_set_globignore "$globignore" "$__go_glob_files_rootdir"
+  _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"
   local __go_glob_matches=()
-  _@go.glob_files_impl "$word*"
-  _@go.glob_files_compact_matches
+  _@go.glob_helper "$word*"
+  _@go.glob_compact_matches
 
   local num_matches="${#__go_glob_matches[@]}"
 
@@ -189,7 +189,7 @@ _@go.glob_files_tab_completion() {
   echo "${results[*]}"
 }
 
-_@go.glob_files_set_globignore() {
+_@go.glob_set_globignore() {
   local globignore_spec="$1"
   local rootdir="$2"
 
@@ -218,7 +218,7 @@ _@go.glob() {
     --complete)
       # Tab completions
       shift
-      _@go.glob_files_tab_completion "$@"
+      _@go.glob_tab_completion "$@"
       return
       ;;
     --ignore)
@@ -237,22 +237,22 @@ _@go.glob() {
     esac
   done
 
-  local __go_glob_files_rootdir="$1"
+  local __go_glob_rootdir="$1"
   shift
 
-  if [[ -z "$__go_glob_files_rootdir" ]]; then
+  if [[ -z "$__go_glob_rootdir" ]]; then
     @go.printf "Root directory argument not specified.\n" >&2
     return 1
-  elif [[ ! -d "$__go_glob_files_rootdir" ]]; then
+  elif [[ ! -d "$__go_glob_rootdir" ]]; then
     @go.printf "Root directory argument %s is not a directory.\n" \
-      "$__go_glob_files_rootdir" >&2
+      "$__go_glob_rootdir" >&2
     return 1
   fi
 
-  local __go_glob_files_suffix="$1"
+  local __go_glob_suffix="$1"
   shift
 
-  if [[ -z "$__go_glob_files_suffix" ]]; then
+  if [[ -z "$__go_glob_suffix" ]]; then
     @go.printf "File suffix argument not specified.\n" >&2
     return 1
   fi
@@ -261,15 +261,15 @@ _@go.glob() {
   local __go_glob_matches
   local results=()
 
-  _@go.glob_files_set_globignore "$globignore" "$__go_glob_files_rootdir"
+  _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"
 
   for pattern in "${@:-*}"; do
     __go_glob_matches=()
-    _@go.glob_files_impl "$pattern"
+    _@go.glob_helper "$pattern"
 
     if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
       @go.printf "\"$pattern\" does not match any %s files in %s.\n" \
-        "$__go_glob_files_suffix" "$__go_glob_files_rootdir" >&2
+        "$__go_glob_suffix" "$__go_glob_rootdir" >&2
       return 1
     fi
     results+=("${__go_glob_matches[@]}")
@@ -277,7 +277,7 @@ _@go.glob() {
 
   __go_glob_matches=("${results[@]}")
   if [[ "$list_compact" = 'true' ]]; then
-    _@go.glob_files_compact_matches
+    _@go.glob_compact_matches
   fi
 
   local IFS=$'\n'
