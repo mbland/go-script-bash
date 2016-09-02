@@ -3,12 +3,14 @@
 # Run automated tests
 #
 # Usage:
-#   {{go}} {{cmd}} [--list]
-#   {{go}} {{cmd}} [--list] <glob> [<glob>...]
+#   {{go}} {{cmd}} [--edit|--list] [<glob>...]
 #
-# Without arguments, runs all tests. With one or more <glob> arguments, only
-# runs tests matching 'tests/<glob>.bats'. With the --list flag, only lists the
-# test file names without executing them.
+# Options:
+#   --edit  Open matching test files using `{{go}} edit`
+#   --list  List test suite names without executing them
+#
+# Without <glob> arguments, runs (or edits, or lists) all tests. With one or
+# more <glob> arguments, only runs tests matching 'tests/<glob>.bats'.
 #
 # If a <glob> doesn't match any test files, the command will return an error
 # without running any tests. See `{{go}} help glob` for details.
