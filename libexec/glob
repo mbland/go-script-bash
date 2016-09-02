@@ -101,29 +101,27 @@ _@go.glob_tab_completion_parse_argv() {
       unset '__go_glob_flags[0]'
       ;;
     --ignore)
-      if [[ "$word_index" -eq "$((i+1))" ]]; then
-        return 1
-      fi
       unset '__go_glob_flags[1]'
       __go_glob_ignore_spec="${args[$((i+1))]}"
-      ;;
-    *)
-      if [[ -d "$arg" ]]; then
-        if [[ "$word_index" -lt "$i" ]]; then
-          __go_glob_complete_flags_only='true'
-          return
-        elif [[ "$word_index" -eq "$((i+1))" ]]; then
-          return 1
-        fi
-        __go_glob_rootdir="$arg"
-        __go_glob_suffix="${args[$((i+1))]}"
-        break
+
+      if [[ "$word_index" -eq "$((i+1))" ]]; then
+        # No completion for the GLOBIGNORE spec.
+        return 1
       fi
       ;;
     esac
 
-    if [[ "$arg" =~ $flag && "$word_index" -lt "$i" ]]; then
+    if [[ "$word_index" -lt "$i" ]]; then
       __go_glob_complete_flags_only='true'
+      return
+    elif [[ -d "$arg" ]]; then
+      __go_glob_rootdir="$arg"
+      __go_glob_suffix="${args[$((i+1))]}"
+
+      if [[ "$word_index" -eq "$((i+1))" ]]; then
+        # No completion for the file suffix.
+        return 1
+      fi
       return
     fi
   done
