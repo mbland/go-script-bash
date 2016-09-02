@@ -82,6 +82,39 @@ _@go.glob_compact_matches() {
   __go_glob_matches=("${__go_glob_matches[@]%$__go_glob_suffix}")
 }
 
+_@go.glob_trim_matches() {
+  local prefix="${__go_glob_matches[0]}"
+  local prefix_len="${#prefix}"
+  local match
+
+  for match in "${__go_glob_matches[@]}"; do
+    while [[ "${match:0:$prefix_len}" != "$prefix" ]]; do
+      ((--prefix_len))
+      prefix="${prefix:0:$prefix_len}"
+    done
+    if [[ "$prefix_len" -eq '0' ]]; then
+      break
+    fi
+  done
+
+  local suffix
+  local trimmed_suffix
+  local prev
+
+  for match in "${__go_glob_matches[@]}"; do
+    suffix="${match:${#prefix}}"
+    trimmed_suffix="${suffix%%/*}"
+
+    if [[ "$suffix" != "$trimmed_suffix" ]]; then
+      match="${match:0:${#prefix}}${trimmed_suffix}/"
+    fi
+    if [[ "$match" != "$prev" ]]; then
+      __go_glob_trimmed_matches+=("$match")
+    fi
+    prev="$match"
+  done
+}
+
 _@go.glob_tab_completion() {
   local word_index="$1"
   shift
@@ -139,53 +172,22 @@ _@go.glob_tab_completion() {
     return $((err_count != 2 ? 0 : 1))
   fi
 
-  _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"
   local __go_glob_matches=()
+  _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"
   _@go.glob_helper "$word*"
   _@go.glob_compact_matches
 
-  local num_matches="${#__go_glob_matches[@]}"
-
-  if [[ "$num_matches" -eq '0' ]]; then
+  if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
     return 1
-  elif [[ "$num_matches" -eq '1' ]]; then
+  elif [[ "${#__go_glob_matches[@]}" -eq '1' ]]; then
     echo "${__go_glob_matches[0]}"
     return
   fi
 
-  local prefix="${__go_glob_matches[0]}"
-  local prefix_len="${#prefix}"
-  local match
-
-  for match in "${__go_glob_matches[@]}"; do
-    while [[ "${match:0:$prefix_len}" != "$prefix" ]]; do
-      ((--prefix_len))
-      prefix="${prefix:0:$prefix_len}"
-    done
-    if [[ "$prefix_len" -eq '0' ]]; then
-      break
-    fi
-  done
-
-  local results=()
-  local suffix
-  local trimmed_suffix
-
-  for match in "${__go_glob_matches[@]}"; do
-    suffix="${match:${#prefix}}"
-    trimmed_suffix="${suffix%%/*}"
-
-    if [[ "$suffix" != "$trimmed_suffix" ]]; then
-      match="${match:0:${#prefix}}${trimmed_suffix}/"
-    fi
-    if [[ "$match" != "$prev" ]]; then
-      results+=("$match")
-    fi
-    prev="$match"
-  done
-
+  local __go_glob_trimmed_matches=()
+  _@go.glob_trim_matches
   local IFS=$'\n'
-  echo "${results[*]}"
+  compgen -W "${__go_glob_trimmed_matches[*]}" -- "$word"
 }
 
 _@go.glob_set_globignore() {
