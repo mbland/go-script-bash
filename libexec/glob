@@ -145,9 +145,7 @@ _@go.glob_emit_trimmed_matches() {
       prefix="${prefix:0:$prefix_len}"
     done
     if [[ "$prefix_len" -eq '0' ]]; then
-      local IFS=$'\n'
-      echo "${__go_glob_matches[*]}"
-      return
+      break
     fi
   done
 

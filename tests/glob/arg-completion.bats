@@ -145,6 +145,18 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
+@test "$SUITE: trim top-level glob patterns with no shared prefix" {
+  mkdir $TESTS_DIR/{foo,bar,baz}
+  touch $TESTS_DIR/foo/quux.bats \
+    $TESTS_DIR/bar/xyzzy.bats \
+    $TESTS_DIR/baz/plugh.bats
+  local expected=('bar/' 'baz/' 'foo/')
+
+  run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
 @test "$SUITE: match a file and directory of the same name" {
   mkdir "$TESTS_DIR/foo"
   touch $TESTS_DIR/foo{,/bar,/baz}.bats
