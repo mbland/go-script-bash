@@ -104,12 +104,17 @@ _@go.glob_tab_completion_parse_argv() {
     --ignore)
       unset '__go_glob_flags[1]'
       __go_glob_ignore_spec="${args[$((i+1))]}"
+      local shell_quote="[\"\']"
 
       if [[ "$word_index" -eq "$((i+1))" ]]; then
         # No completion for the GLOBIGNORE spec.
         return 1
+      elif [[ "${__go_glob_ignore_spec:0:1}" =~ $shell_quote ]]; then
+        # The shell won't expand arguments or remove quotes during completion.
+        local spec_len="${#__go_glob_ignore_spec}"
+        __go_glob_ignore_spec="${__go_glob_ignore_spec:1:$((spec_len-2))}"
       fi
-      ;;
+    ;;
     esac
 
     if [[ "$word_index" -lt "$i" ]]; then

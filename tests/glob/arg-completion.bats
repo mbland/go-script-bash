@@ -174,6 +174,12 @@ teardown() {
     "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success 'baz/xyzzy'
+
+  # Make sure the --ignore argument has any quotes removed, as the shell will
+  # not expand any command line arguments or unquote them during completion.
+  run "$BASH" ./go glob --complete 4 '--ignore' "'foo/*:bar/*:baz/pl*'" \
+    "$TESTS_DIR" '.bats'
+  assert_success 'baz/xyzzy'
 }
 
 @test "$SUITE: return error if no matches" {
