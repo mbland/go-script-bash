@@ -121,12 +121,13 @@ _@go.glob_tab_completion_parse_argv() {
       __go_glob_complete_flags_only='true'
       return
     elif [[ -d "$arg" ]]; then
-      __go_glob_rootdir="$arg"
-      __go_glob_suffix="${args[$((i+1))]}"
-
       if [[ "$word_index" -eq "$((i+1))" ]]; then
         # No completion for the file suffix.
         return 1
+      elif [[ "$word_index" -ne "$i" ]]; then
+        # Don't set rootdir if rootdir is the completion target argument.
+        __go_glob_rootdir="$arg"
+        __go_glob_suffix="${args[$((i+1))]}"
       fi
       return
     fi

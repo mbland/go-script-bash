@@ -116,6 +116,16 @@ teardown() {
   assert_success '--compact'
 }
 
+@test "$SUITE: complete rootdir" {
+  run "$BASH" ./go glob --complete 0 'tests'
+  assert_success 'tests'
+
+  local expected=($(compgen -d 'tests/'))
+  run "$BASH" ./go glob --complete 0 'tests/'
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
 @test "$SUITE: complete top-level glob patterns" {
   touch $TESTS_DIR/{foo,bar,baz}.bats
   local expected=('bar' 'baz' 'foo')
