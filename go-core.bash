@@ -139,6 +139,7 @@ _@go.run_command_script() {
     return 1
   fi
 
+  interpreter="${interpreter%$'\r'}"
   interpreter="${interpreter:2}"
   interpreter="${interpreter#*/env }"
   interpreter="${interpreter##*/}"

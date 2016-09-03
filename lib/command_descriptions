@@ -81,6 +81,7 @@ _@go.command_summary() {
   cmd_name="${cmd_name//\// }"
 
   while read -r line; do
+    line="${line%$'\r'}"
     if [[ "$line" =~ $summary_pattern ]]; then
       _@go.filter_description_line
       __go_cmd_desc="${line:2}"
@@ -116,6 +117,7 @@ _@go.command_description() {
   cmd_name="${cmd_name//\// }"
 
   while read -r line; do
+    line="${line%$'\r'}"
     _@go.filter_description_line
 
     if [[ "$line" =~ $paragraph_pattern ]]; then

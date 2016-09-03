@@ -36,7 +36,7 @@ _@go.help_message_for_command() {
     return 1
   fi
 
-  local filter_pattern='# [Hh]elp [Ff]ilter'$'\n'
+  local filter_pattern='# [Hh]elp [Ff]ilter['$'\n'$'\r'']'
 
   if [[ "$(< "$__go_cmd_path")" =~ $filter_pattern ]]; then
     __go_cmd_desc="$(_@go.run_command_script "$__go_cmd_path" --help-filter \

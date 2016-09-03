@@ -69,7 +69,7 @@ _@go.command_completions() {
     shopt -u nullglob
   fi
 
-  local tab_completions_pattern='# [Tt]ab [Cc]ompletions'$'\n'
+  local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n'$'\r'']'
 
   if [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
     _@go.run_command_script "$__go_cmd_path" --complete "$word_index" \
