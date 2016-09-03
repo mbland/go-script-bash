@@ -48,7 +48,7 @@ _test() {
     @go 'edit' "${tests[@]}"
   else
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
-    tests/bats/bin/bats "${tests[@]}"
+    "$BASH" 'tests/bats/libexec/bats' "${tests[@]}"
   fi
 }
 
