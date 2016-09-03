@@ -7,8 +7,8 @@
 #     <root-dir> <suffix> [<glob>...]
 #
 # Options:
-#   --ignore   Colon-separated list of ignored patterns (sets Bash's GLOBIGNORE)
 #   --compact  Strip <root-dir>/ prefix and <suffix> from paths
+#   --ignore   Colon-separated list of ignored patterns (sets Bash's GLOBIGNORE)
 #
 # Arguments:
 #   <root-dir>  Directory in which to search for matching files
@@ -19,9 +19,10 @@
 # With one or more <glob> arguments, only lists files matching
 # `<root-dir>/<glob><suffix>`.
 #
-# If <glob> contains no shell metacharacters, it will attempt to match a single
-# file. If <glob> ends with a path separator, it will try to match all files
-# within any matching directories.
+# If <glob> contains no shell metacharacters and does not end with a path
+# separator, it will attempt to match a single file or directory, and will
+# prefer the file if both exist. If no such file exists, or if <glob> ends with
+# a path separator, it will match all files within the matching directory.
 #
 # If the <suffix> or one of the <glob> arguments doesn't match any files, the
 # command will return an error.
