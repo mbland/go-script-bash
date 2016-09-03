@@ -184,9 +184,9 @@ if [[ -z "$COLUMNS" ]]; then
   elif command -v 'mode.com' >/dev/null; then
     COLUMNS="$(mode.com) con:"
     shopt -s extglob
-    COLUMNS="${COLUMNS#*Columns:+( )}"
+    COLUMNS="${COLUMNS##*Columns:+( )}"
     shopt -u extglob
-    COLUMNS="${COLUMNS%% *}"
+    COLUMNS="${COLUMNS%%[ $'\r'$'\n']*}"
   else
     COLUMNS=80
   fi
