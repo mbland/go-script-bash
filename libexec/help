@@ -47,7 +47,7 @@ _@go.help_message_for_command() {
     __go_cmd_desc+="$(printf '\n\nSubcommands:\n\n'; \
       _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d")"
   fi
-  @go.printf "$_GO_CMD $cmd_name - $__go_cmd_desc\n\n"
+  @go.printf "$_GO_CMD $cmd_name - $__go_cmd_desc\n"
 }
 
 _@go.help() {
