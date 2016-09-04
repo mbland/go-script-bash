@@ -127,8 +127,14 @@ No bug fixes or new features will be accepted without accompanying tests.
 - Keep all files 80 characters wide. (Yes, the maintainer is a dinosaur who
   likes viewing files side-by-side in a 161-column terminal window.)
 - Indent using two spaces.
-- Enclose all variables in double quotes when used, to avoid having them
-  interpreted as glob patterns (unless the variable contains a glob pattern).
+- Enclose all variables in double quotes when used:
+  - to avoid having them interpreted as glob patterns (unless the variable
+    contains a glob pattern).
+  - since a variable value may contain spaces. Without the quotes, the string
+    may be split apart into separate arguments, rendering it useless. THIS IS
+    ESPECIALLY IMPORTANT when the variable is used to generate a glob pattern,
+    since spaces may appear in a path value.
+  - Exception: See below regarding `[[ ]]` conditions.
 - Enclose all string literals in single quotes.
   - Exception: If the string contains an apostrophe, use double quotes.
 - Use quotes around variables and literals even inside of `[[ ]]` conditions.
@@ -261,7 +267,8 @@ it easier to find, count, and possibly transform things.
 
 - Always use `[[` and `]]` for evaluating variables. Per the guideline under
   **Formatting**, quote variables and strings within the brackets, but not
-  regular expressions appearing on the right side of the `=~` operator.
+  regular expressions (or variables containing regular expressions) appearing
+  on the right side of the `=~` operator.
 
 ### Output
 

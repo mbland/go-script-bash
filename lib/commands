@@ -52,7 +52,7 @@ _@go.find_commands() {
     scripts=()
 
     shopt -s nullglob
-    for script in $scripts_dir/*; do
+    for script in "$scripts_dir"/*; do
       if [[ -f "$script" && -x "$script" ]]; then
         scripts+=("$script")
       fi

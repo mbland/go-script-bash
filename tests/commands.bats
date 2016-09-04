@@ -34,7 +34,7 @@ find_builtins() {
   local cmd_script
   local cmd_name
 
-  for cmd_script in $_GO_ROOTDIR/libexec/*; do
+  for cmd_script in "$_GO_ROOTDIR"/libexec/*; do
     if [[ ! (-f "$cmd_script" && -x "$cmd_script") ]]; then
       continue
     fi

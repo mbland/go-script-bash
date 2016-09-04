@@ -27,7 +27,7 @@ teardown() {
 }
 
 @test "$SUITE: find builtin command" {
-  local builtins=($_GO_ROOTDIR/libexec/*)
+  local builtins=("$_GO_ROOTDIR"/libexec/*)
   local builtin_cmd="${builtins[0]}"
 
   run "$TEST_GO_SCRIPT" "${builtin_cmd##*/}" '--exists' 'ls'

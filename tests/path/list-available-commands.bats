@@ -17,7 +17,7 @@ teardown() {
 @test "$SUITE: list available commands" {
   # Since we aren't creating any new commands, and _@go.find_commands is already
   # thoroughly tested in isolation, we only check that builtins are available.
-  local expected=($_GO_ROOTDIR/libexec/*)
+  local expected=("$_GO_ROOTDIR"/libexec/*)
   expected=("${expected[@]##*/}")
 
   run "$TEST_GO_SCRIPT" "$_GO_ROOTDIR/libexec"
