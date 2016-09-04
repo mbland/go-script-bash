@@ -50,7 +50,7 @@ teardown() {
   local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "
   expected+='#!/path/to/interpreter.'
 
-  echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
+  echo '@go.printf "%s" "$*"' >"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
   assert_failure "$expected"
