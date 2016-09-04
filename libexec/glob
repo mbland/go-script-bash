@@ -42,29 +42,28 @@
 
 _@go.glob_helper() {
   local pattern="$1"
-  local full_pattern="$__go_glob_rootdir/$pattern"
 
   # If the pattern contains no shell metacharacters, it matches a single file or
   # directory (preferring the file if they share the same name).
-  if [[ -f "$full_pattern$__go_glob_suffix" ]]; then
-    __go_glob_matches+=("$full_pattern$__go_glob_suffix")
+  if [[ -f "$pattern$__go_glob_suffix" ]]; then
+    __go_glob_matches+=("$pattern$__go_glob_suffix")
     return
-  elif [[ -d "$full_pattern" ]]; then
-    full_pattern="${full_pattern%/}/*"
+  elif [[ -d "$pattern" ]]; then
+    pattern="${pattern%/}/*"
   fi
 
   local match
   local corresponding
   local IFS=$'\n'
 
-  for match in $full_pattern; do
+  for match in $pattern; do
     # If a file name without the suffix matches a directory, add the file first.
     if [[ -d "$match" ]]; then
       corresponding="$match$__go_glob_suffix"
       if [[ -f "$corresponding" ]]; then
         __go_glob_matches+=("$corresponding")
       fi
-      _@go.glob_helper "${match:$((${#__go_glob_rootdir} + 1))}/*"
+      _@go.glob_helper "$match/*"
     else
       corresponding="${match%$__go_glob_suffix}"
       if [[ "$match" != "$corresponding" && ! -d "$corresponding" ]]; then
@@ -122,7 +121,7 @@ _@go.glob_tab_completion_parse_argv() {
         return 1
       elif [[ "$word_index" -ne "$i" ]]; then
         # Don't set rootdir if rootdir is the completion target argument.
-        __go_glob_rootdir="$arg"
+        __go_glob_rootdir="${arg%/}"
         __go_glob_suffix="${args[$((i+1))]}"
       fi
       return
@@ -189,7 +188,7 @@ _@go.glob_tab_completion() {
 
   local __go_glob_matches=()
   _@go.glob_set_globignore "$__go_glob_ignore_spec" "$__go_glob_rootdir"
-  _@go.glob_helper "$__go_glob_complete_word*"
+  _@go.glob_helper "$__go_glob_rootdir/$__go_glob_complete_word*"
   _@go.glob_compact_matches
 
   if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
@@ -242,7 +241,7 @@ _@go.glob_parse_argv() {
     esac
   done
 
-  __go_glob_rootdir="$1"
+  __go_glob_rootdir="${1%/}"
   shift
 
   if [[ -z "$__go_glob_rootdir" ]]; then
@@ -291,7 +290,7 @@ _@go.glob() {
 
   for pattern in "${__go_glob_patterns[@]}"; do
     __go_glob_matches=()
-    _@go.glob_helper "$pattern"
+    _@go.glob_helper "$__go_glob_rootdir/$pattern"
 
     if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
       @go.printf "\"$pattern\" does not match any %s files in %s.\n" \
