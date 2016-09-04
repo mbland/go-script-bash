@@ -102,7 +102,12 @@ add_scripts() {
   fi
 
   merge_scripts "${script_names[@]/#/$relative_dir}"
-  touch "${script_names[@]/#/$scripts_dir}"
+
+  # chmod is neutralized in MSYS2 on Windows; `#!` makes files executable.
+  local script_path
+  for script_path in "${script_names[@]/#/$scripts_dir}"; do
+    echo '#!' > $script_path
+  done
   chmod 700 "${script_names[@]/#/$scripts_dir}"
 }
 
@@ -126,10 +131,6 @@ add_scripts() {
 }
 
 @test "$SUITE: find ignores nonexecutable files" {
-  if [[ -n "$COMSPEC" ]]; then
-    skip "All files are executable on Windows"
-  fi
-
   touch $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
   chmod 600 $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
   run "$TEST_GO_SCRIPT"

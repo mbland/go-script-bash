@@ -42,10 +42,15 @@ teardown() {
 }
 
 @test "$SUITE: produce error if script doesn't contain an interpreter line" {
+  if [[ "$MSYSTEM" = "MINGW64" ]]; then
+    # The executable check will fail first because there's no `#!` line.
+    skip "Can't trigger condition on MINGW64"
+  fi
+
   local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "
   expected+='#!/path/to/interpreter.'
 
-  echo '@go.printf "%s" "$*"' >"$TEST_COMMAND_SCRIPT"
+  echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
   run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
   assert_failure "$expected"

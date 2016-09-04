@@ -47,7 +47,8 @@ teardown() {
 }
 
 @test "$SUITE: find top-level command" {
-  touch "$TEST_GO_SCRIPTS_DIR/foobar"
+  # chmod is neutralized in MSYS2 on Windows; `#!` makes files executable.
+  echo '#!' > "$TEST_GO_SCRIPTS_DIR/foobar"
   chmod 700 "$TEST_GO_SCRIPTS_DIR/foobar"
   run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
   assert_success
@@ -58,7 +59,7 @@ teardown() {
 @test "$SUITE: empty string argument is not an error" {
   # This is most likely to happen during argument completion, but could be valid
   # in the general case as well, depending on the command implementation.
-  touch "$TEST_GO_SCRIPTS_DIR/foobar"
+  echo '#!' > "$TEST_GO_SCRIPTS_DIR/foobar"
   chmod 700 "$TEST_GO_SCRIPTS_DIR/foobar"
   run "$TEST_GO_SCRIPT" 'foobar' '' 'baz' 'quux'
   assert_success
@@ -83,12 +84,12 @@ teardown() {
 
 @test "$SUITE: find subcommand" {
   local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
-  touch "$cmd_path"
+  echo '#!' > "$cmd_path"
   chmod 700 "$cmd_path"
   mkdir "${cmd_path}.d"
 
   local subcmd_path="${cmd_path}.d/baz"
-  touch "$subcmd_path"
+  echo '#!' > "$subcmd_path"
   chmod 700 "$subcmd_path"
 
   run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
@@ -99,7 +100,7 @@ teardown() {
 
 @test "$SUITE: error if subcommand name is a directory" {
   local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
-  touch "$cmd_path"
+  echo '#!' > "$cmd_path"
   chmod 700 "$cmd_path"
   mkdir -p "${cmd_path}.d/baz"
 
@@ -110,7 +111,7 @@ teardown() {
 
 @test "$SUITE: error if subcommand script is not executable" {
   local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
-  touch "$cmd_path"
+  echo '#!' > "$cmd_path"
   chmod 700 "$cmd_path"
 
   mkdir "${cmd_path}.d"

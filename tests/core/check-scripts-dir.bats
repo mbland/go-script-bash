@@ -38,6 +38,11 @@ teardown() {
 }
 
 @test "$SUITE: produce an error if the script dir isn't readable or executable" {
+  if [[ "$MSYSTEM" = "MINGW64" ]]; then
+    # Even using icacls to set permissions, the dir still seems accessible.
+    skip "Can't trigger condition on MINGW64"
+  fi
+
   local expected="ERROR: you do not have permission to access the "
   expected+="$TEST_GO_SCRIPTS_DIR directory"
 
