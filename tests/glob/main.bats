@@ -78,7 +78,7 @@ teardown() {
 }
 
 @test "$SUITE: --compact strips rootdir and suffix from all files" {
-  touch $TESTS_DIR/{bar,baz,foo}.bats
+  touch "$TESTS_DIR"/{bar,baz,foo}.bats
   local expected=('bar' 'baz' 'foo')
 
   run "$BASH" ./go glob --compact "$TESTS_DIR" '.bats'
@@ -87,14 +87,14 @@ teardown() {
 }
 
 @test "$SUITE: match nothing if the suffix doesn't match" {
-  touch $TESTS_DIR/{bar,baz,foo}.bats
+  touch "$TESTS_DIR"/{bar,baz,foo}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bash'
   local IFS=$'\n'
   assert_failure "\"*\" does not match any .bash files in $TESTS_DIR."
 }
 
 @test "$SUITE: set --ignore patterns" {
-  touch $TESTS_DIR/{bar,baz,foo}.bats
+  touch "$TESTS_DIR"/{bar,baz,foo}.bats
   local expected=('bar' 'baz' 'foo')
 
   run "$BASH" ./go glob --ignore 'ba*' "$TESTS_DIR" '.bats'
@@ -110,7 +110,7 @@ teardown() {
 }
 
 @test "$SUITE: match single file" {
-  touch $TESTS_DIR/{bar,baz,foo}.bats
+  touch "$TESTS_DIR"/{bar,baz,foo}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo'
   local IFS=$'\n'
   assert_success "$TESTS_DIR/foo.bats"
@@ -118,7 +118,7 @@ teardown() {
 
 @test "$SUITE: match multiple files" {
   local expected=("$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats")
-  touch $TESTS_DIR/{bar,baz,foo}.bats
+  touch "$TESTS_DIR"/{bar,baz,foo}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'ba*'
   local IFS=$'\n'
   assert_success "${expected[*]}"
@@ -127,23 +127,23 @@ teardown() {
 @test "$SUITE: match multiple patterns" {
   local expected=(
     "$TESTS_DIR/bar.bats" "$TESTS_DIR/baz.bats" "$TESTS_DIR/foo.bats")
-  touch $TESTS_DIR/{bar,baz,foo,quux,plugh,xyzzy}.bats
+  touch "$TESTS_DIR"/{bar,baz,foo,quux,plugh,xyzzy}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'ba*' 'foo'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: exact file match when a directory of the same name exists" {
-  mkdir $TESTS_DIR/foo
-  touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
+  mkdir "$TESTS_DIR"/foo
+  touch "$TESTS_DIR"/foo.bats "$TESTS_DIR"/foo/{bar,baz,quux}.bats
   run "$BASH" ./go glob "$TESTS_DIR" '.bats' 'foo'
   local IFS=$'\n'
   assert_success "$TESTS_DIR/foo.bats"
 }
 
 @test "$SUITE: recursive directory match when pattern ends with a separator" {
-  mkdir $TESTS_DIR/foo
-  touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
+  mkdir "$TESTS_DIR"/foo
+  touch "$TESTS_DIR"/foo.bats "$TESTS_DIR"/foo/{bar,baz,quux}.bats
   local expected=(
     "$TESTS_DIR/foo/bar.bats"
     "$TESTS_DIR/foo/baz.bats"
@@ -155,8 +155,8 @@ teardown() {
 }
 
 @test "$SUITE: recursive directory match when no file of the same name" {
-  mkdir $TESTS_DIR/foo
-  touch $TESTS_DIR/foo/{bar,baz,quux}.bats
+  mkdir "$TESTS_DIR"/foo
+  touch "$TESTS_DIR"/foo/{bar,baz,quux}.bats
   local expected=(
     "$TESTS_DIR/foo/bar.bats"
     "$TESTS_DIR/foo/baz.bats"
@@ -168,8 +168,8 @@ teardown() {
 }
 
 @test "$SUITE: pattern matches file and a directory of the same name" {
-  mkdir $TESTS_DIR/foo
-  touch $TESTS_DIR/foo.bats $TESTS_DIR/foo/{bar,baz,quux}.bats
+  mkdir "$TESTS_DIR"/foo
+  touch "$TESTS_DIR"/foo.bats "$TESTS_DIR"/foo/{bar,baz,quux}.bats
   local expected=(
     "$TESTS_DIR/foo.bats"
     "$TESTS_DIR/foo/bar.bats"
@@ -182,16 +182,16 @@ teardown() {
 }
 
 @test "$SUITE: recursively discover files" {
-  mkdir -p $TESTS_DIR/foo/bar/baz $TESTS_DIR/quux/xyzzy $TESTS_DIR/plugh \
-    $TESTS_DIR/ignore-me $TESTS_DIR/bar/ignore-me
-  touch $TESTS_DIR/foo/bar/baz/{frobozz,zork,ignore-me}.bats \
-    $TESTS_DIR/quux/xyzzy/frotz.bats \
-    $TESTS_DIR/quux/xyzzy.bats \
-    $TESTS_DIR/plugh/bogus.not-the-right-type \
-    $TESTS_DIR/plugh/{jimi,john}.bats \
-    $TESTS_DIR/plugh.{bats,c,md} \
-    $TESTS_DIR/ignore-me/{foo,bar,baz}.bats \
-    $TESTS_DIR/bar/ignore-me/{foo,bar,baz}.bats
+  mkdir -p "$TESTS_DIR"/foo/bar/baz "$TESTS_DIR"/quux/xyzzy "$TESTS_DIR"/plugh \
+    "$TESTS_DIR"/ignore-me "$TESTS_DIR"/bar/ignore-me
+  touch "$TESTS_DIR"/foo/bar/baz/{frobozz,zork,ignore-me}.bats \
+    "$TESTS_DIR"/quux/xyzzy/frotz.bats \
+    "$TESTS_DIR"/quux/xyzzy.bats \
+    "$TESTS_DIR"/plugh/bogus.not-the-right-type \
+    "$TESTS_DIR"/plugh/{jimi,john}.bats \
+    "$TESTS_DIR"/plugh.{bats,c,md} \
+    "$TESTS_DIR"/ignore-me/{foo,bar,baz}.bats \
+    "$TESTS_DIR"/bar/ignore-me/{foo,bar,baz}.bats
   local expected=(
     "foo/bar/baz/frobozz"
     "foo/bar/baz/zork"

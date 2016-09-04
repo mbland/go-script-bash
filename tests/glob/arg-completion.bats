@@ -127,7 +127,7 @@ teardown() {
 }
 
 @test "$SUITE: complete top-level glob patterns" {
-  touch $TESTS_DIR/{foo,bar,baz}.bats
+  touch "$TESTS_DIR"/{foo,bar,baz}.bats
   local expected=('bar' 'baz' 'foo')
 
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats'
@@ -146,10 +146,10 @@ teardown() {
 }
 
 @test "$SUITE: trim top-level glob patterns with no shared prefix" {
-  mkdir $TESTS_DIR/{foo,bar,baz}
-  touch $TESTS_DIR/foo/quux.bats \
-    $TESTS_DIR/bar/xyzzy.bats \
-    $TESTS_DIR/baz/plugh.bats
+  mkdir "$TESTS_DIR"/{foo,bar,baz}
+  touch "$TESTS_DIR"/foo/quux.bats \
+    "$TESTS_DIR"/bar/xyzzy.bats \
+    "$TESTS_DIR"/baz/plugh.bats
   local expected=('bar/' 'baz/' 'foo/')
 
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats'
@@ -159,7 +159,7 @@ teardown() {
 
 @test "$SUITE: match a file and directory of the same name" {
   mkdir "$TESTS_DIR/foo"
-  touch $TESTS_DIR/foo{,/bar,/baz}.bats
+  touch "$TESTS_DIR"/foo{,/bar,/baz}.bats
   local expected=('foo' 'foo/')
 
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'
@@ -169,7 +169,7 @@ teardown() {
 
 @test "$SUITE: complete second-level glob pattern" {
   mkdir "$TESTS_DIR/foo"
-  touch $TESTS_DIR/foo{,/bar,/baz}.bats
+  touch "$TESTS_DIR"/foo{,/bar,/baz}.bats
   local expected=('foo/bar' 'foo/baz')
 
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo/'
@@ -178,8 +178,8 @@ teardown() {
 }
 
 @test "$SUITE: complete directories that don't match file names" {
-  mkdir $TESTS_DIR/foo
-  touch $TESTS_DIR/foo/{bar,baz}.bats
+  mkdir "$TESTS_DIR"/foo
+  touch "$TESTS_DIR"/foo/{bar,baz}.bats
 
   local expected=('foo/bar' 'foo/baz')
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo/'
@@ -188,8 +188,8 @@ teardown() {
 }
 
 @test "$SUITE: honor --ignore patterns during completion" {
-  mkdir $TESTS_DIR/{foo,bar,baz}
-  touch $TESTS_DIR/{foo/quux,bar/xyzzy,baz/plugh,baz/xyzzy}.bats
+  mkdir "$TESTS_DIR"/{foo,bar,baz}
+  touch "$TESTS_DIR"/{foo/quux,bar/xyzzy,baz/plugh,baz/xyzzy}.bats
 
   # Remember that --ignore will add the rootdir to all the patterns.
   run "$BASH" ./go glob --complete 4 '--ignore' "foo/*:bar/*:baz/pl*" \
@@ -217,8 +217,8 @@ teardown() {
 }
 
 @test "$SUITE: return completions with longest possible prefix" {
-  mkdir -p $TESTS_DIR/foo/bar/{baz,quux}
-  touch $TESTS_DIR/foo/bar/{baz/xyzzy,quux/plugh}.bats
+  mkdir -p "$TESTS_DIR"/foo/bar/{baz,quux}
+  touch "$TESTS_DIR"/foo/bar/{baz/xyzzy,quux/plugh}.bats
 
   local expected=('foo/bar/baz/' 'foo/bar/quux/')
   run "$BASH" ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'

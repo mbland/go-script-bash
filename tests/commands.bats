@@ -106,7 +106,7 @@ add_scripts() {
   # chmod is neutralized in MSYS2 on Windows; `#!` makes files executable.
   local script_path
   for script_path in "${script_names[@]/#/$scripts_dir}"; do
-    echo '#!' > $script_path
+    echo '#!' > "$script_path"
   done
   chmod 700 "${script_names[@]/#/$scripts_dir}"
 }
@@ -121,7 +121,7 @@ add_scripts() {
 }
 
 @test "$SUITE: find ignores directories" {
-  mkdir $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
+  mkdir "$TEST_GO_SCRIPTS_DIR"/{foo,bar,baz}
   run "$TEST_GO_SCRIPT"
   assert_success
 
@@ -131,8 +131,8 @@ add_scripts() {
 }
 
 @test "$SUITE: find ignores nonexecutable files" {
-  touch $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
-  chmod 600 $TEST_GO_SCRIPTS_DIR/{foo,bar,baz}
+  touch "$TEST_GO_SCRIPTS_DIR"/{foo,bar,baz}
+  chmod 600 "$TEST_GO_SCRIPTS_DIR"/{foo,bar,baz}
   run "$TEST_GO_SCRIPT"
   assert_success
 

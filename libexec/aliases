@@ -29,7 +29,7 @@ _@go.aliases() {
 
   if [[ "$#" -eq '0' ]]; then
     for c in "${_GO_ALIAS_CMDS[@]}"; do
-      echo $c
+      echo "$c"
     done
     return
   elif [[ "$1" = '--complete' ]]; then

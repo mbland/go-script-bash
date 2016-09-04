@@ -50,25 +50,21 @@ _@go.glob_helper() {
     __go_glob_matches+=("$full_pattern$__go_glob_suffix")
     return
   elif [[ -d "$full_pattern" ]]; then
-    full_pattern="${full_pattern%/}"
-    _@go.glob_helper "${full_pattern#$__go_glob_rootdir/}/*"
-    return
+    full_pattern="${full_pattern%/}/*"
   fi
 
-  shopt -s nullglob
-  local matches=($full_pattern)
-  shopt -u nullglob
   local match
   local corresponding
+  local IFS=$'\n'
 
-  for match in "${matches[@]}"; do
+  for match in $full_pattern; do
     # If a file name without the suffix matches a directory, add the file first.
     if [[ -d "$match" ]]; then
       corresponding="$match$__go_glob_suffix"
       if [[ -f "$corresponding" ]]; then
         __go_glob_matches+=("$corresponding")
       fi
-      _@go.glob_helper "${match#$__go_glob_rootdir/}/*"
+      _@go.glob_helper "${match:$((${#__go_glob_rootdir} + 1))}/*"
     else
       corresponding="${match%$__go_glob_suffix}"
       if [[ "$match" != "$corresponding" && ! -d "$corresponding" ]]; then

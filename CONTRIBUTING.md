@@ -127,14 +127,18 @@ No bug fixes or new features will be accepted without accompanying tests.
 - Keep all files 80 characters wide. (Yes, the maintainer is a dinosaur who
   likes viewing files side-by-side in a 161-column terminal window.)
 - Indent using two spaces.
-- Enclose all variables in double quotes when used:
-  - to avoid having them interpreted as glob patterns (unless the variable
-    contains a glob pattern).
-  - since a variable value may contain spaces. Without the quotes, the string
-    may be split apart into separate arguments, rendering it useless. THIS IS
-    ESPECIALLY IMPORTANT when the variable is used to generate a glob pattern,
-    since spaces may appear in a path value.
-  - Exception: See below regarding `[[ ]]` conditions.
+- Enclose all variables in double quotes when used to avoid having them
+  interpreted as glob patterns (unless the variable contains a glob pattern)
+  and to avoid word splitting when the value contains spaces. Both scenarios
+  can introduce errors that often prove difficult to diagnose.
+  - **This is especially important when the variable is used to generate a
+    glob pattern**, since spaces may appear in a path value.
+  - If the variable itself contains a glob pattern, make sure to set
+    `IFS=$'\n'` before using it so that the pattern itself and any matching
+    file names containing spaces are not split apart.
+  - Exceptions: Quotes are not required within math contexts, i.e. `(( ))` or
+    `$(( ))`, and must not be used for variables on the right side of the `=~`
+    operator.
 - Enclose all string literals in single quotes.
   - Exception: If the string contains an apostrophe, use double quotes.
 - Use quotes around variables and literals even inside of `[[ ]]` conditions.

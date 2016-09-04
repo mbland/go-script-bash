@@ -60,13 +60,11 @@ _@go.command_completions() {
   elif [[ "$word_index" -eq '0' ]]; then
     # Automatically complete subcommand scripts.
     local c
-    shopt -s nullglob
     for c in "${__go_cmd_path}.d"/*; do
       if [[ -f "$c" && -x "$c" ]]; then
         echo "${c##*/}"
       fi
     done
-    shopt -u nullglob
   fi
 
   local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n'$'\r'']'
