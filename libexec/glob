@@ -40,7 +40,7 @@
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
 
-_@go.glob_helper() {
+_@go.glob_impl() {
   local pattern="$1"
 
   # If the pattern contains no shell metacharacters, it matches a single file or
@@ -52,22 +52,33 @@ _@go.glob_helper() {
     pattern="${pattern%/}/*"
   fi
 
+  # Setting IFS ensures that matching paths with spaces are handled properly.
+  local IFS=$'\n'
+  local __go_glob_impl_matches=()
+  _@go.glob_impl_helper "$pattern"
+
+  if [[ "${#__go_glob_impl_matches[@]}" -eq '0' ]]; then
+    return 1
+  fi
+  __go_glob_matches+=("${__go_glob_impl_matches[@]}")
+}
+
+_@go.glob_impl_helper() {
   local match
   local corresponding
-  local IFS=$'\n'
 
-  for match in $pattern; do
+  for match in $1; do
     # If a file name without the suffix matches a directory, add the file first.
     if [[ -d "$match" ]]; then
       corresponding="$match$__go_glob_suffix"
       if [[ -f "$corresponding" ]]; then
-        __go_glob_matches+=("$corresponding")
+        __go_glob_impl_matches+=("$corresponding")
       fi
-      _@go.glob_helper "$match/*"
+      _@go.glob_impl_helper "$match/*"
     else
       corresponding="${match%$__go_glob_suffix}"
       if [[ "$match" != "$corresponding" && ! -d "$corresponding" ]]; then
-        __go_glob_matches+=("$match")
+        __go_glob_impl_matches+=("$match")
       fi
     fi
   done
@@ -188,7 +199,7 @@ _@go.glob_tab_completion() {
 
   local __go_glob_matches=()
   _@go.glob_set_globignore "$__go_glob_ignore_spec" "$__go_glob_rootdir"
-  _@go.glob_helper "$__go_glob_rootdir/$__go_glob_complete_word*"
+  _@go.glob_impl "$__go_glob_rootdir/$__go_glob_complete_word*"
   _@go.glob_compact_matches
 
   if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
@@ -286,21 +297,15 @@ _@go.glob() {
 
   local pattern
   local __go_glob_matches
-  local results=()
 
   for pattern in "${__go_glob_patterns[@]}"; do
-    __go_glob_matches=()
-    _@go.glob_helper "$__go_glob_rootdir/$pattern"
-
-    if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
+    if ! _@go.glob_impl "$__go_glob_rootdir/$pattern"; then
       @go.printf "\"$pattern\" does not match any %s files in %s.\n" \
         "$__go_glob_suffix" "$__go_glob_rootdir" >&2
       return 1
     fi
-    results+=("${__go_glob_matches[@]}")
   done
 
-  __go_glob_matches=("${results[@]}")
   if [[ "$__go_glob_compact" = 'true' ]]; then
     _@go.glob_compact_matches
   fi
