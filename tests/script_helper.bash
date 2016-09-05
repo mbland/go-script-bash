@@ -10,6 +10,36 @@ TEST_GO_SCRIPTS_RELATIVE_DIR="scripts"
 TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
 TEST_COMMAND_SCRIPT="$TEST_GO_SCRIPTS_DIR/test-command"
 
+# The FS_MISSING_PERM_SUPPORT variable provides a generic means of determining
+# whether or not to skip certain tests, since the lack of permission support
+# prevents some code paths from ever getting executed.
+#
+# MINGW64- and MSYS2-based file systems are mounted with the 'noacl'
+# attribute, which prevents chmod from having any effect. These file systems
+# do automatically mark files beginning with '#!' as executable, however,
+# which is why several tests create files containing only those characters.
+#
+# Also, directories on these file systems are always readable and executable.
+#
+# See commit 2794086bde1dc05193154211fe0577728031453c for more details.
+__check_fs_permission_support() {
+  set +o errexit
+  if [[ -z "$FS_MISSING_PERM_SUPPORT" ]]; then
+    local check_perms_file="$BATS_TMPDIR/check_perms"
+    touch "$check_perms_file"
+    chmod 700 "$check_perms_file"
+    if [[ ! -x "$check_perms_file" ]]; then
+      export FS_MISSING_PERM_SUPPORT="true"
+    else
+      export FS_MISSING_PERM_SUPPORT="false"
+    fi
+    rm "$check_perms_file"
+  fi
+  set -o errexit
+}
+
+__check_fs_permission_support
+
 __create_test_dirs() {
   local test_dir
 

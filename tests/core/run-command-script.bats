@@ -42,9 +42,9 @@ teardown() {
 }
 
 @test "$SUITE: produce error if script doesn't contain an interpreter line" {
-  if [[ "$MSYSTEM" = "MINGW64" ]]; then
+  if [[ "$FS_MISSING_PERM_SUPPORT" = 'true' ]]; then
     # The executable check will fail first because there's no `#!` line.
-    skip "Can't trigger condition on MINGW64"
+    skip "Can't trigger condition on this file system"
   fi
 
   local expected="The first line of $TEST_COMMAND_SCRIPT does not contain "

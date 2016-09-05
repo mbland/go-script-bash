@@ -38,9 +38,9 @@ teardown() {
 }
 
 @test "$SUITE: produce an error if the script dir isn't readable or executable" {
-  if [[ "$MSYSTEM" = "MINGW64" ]]; then
+  if [[ "$FS_MISSING_PERM_SUPPORT" = 'true' ]]; then
     # Even using icacls to set permissions, the dir still seems accessible.
-    skip "Can't trigger condition on MINGW64"
+    skip "Can't trigger condition on this file system"
   fi
 
   local expected="ERROR: you do not have permission to access the "
