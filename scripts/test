@@ -42,7 +42,9 @@ _test() {
     return
   fi
 
-  if [[ ! -d 'tests/bats' ]]; then
+  local bats_path='tests/bats/libexec/bats'
+
+  if [[ ! -f "$bats_path" ]]; then
     git submodule update --init tests/bats
   fi
 
@@ -55,7 +57,7 @@ _test() {
     @go 'edit' "${tests[@]}"
   else
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
-    "$BASH" 'tests/bats/libexec/bats' "${tests[@]}"
+    "$BASH" "$bats_path" "${tests[@]}"
   fi
 }
 
