@@ -183,7 +183,7 @@ _@go.glob_tab_completion() {
 
   if ! _@go.glob_tab_completion_parse_argv "$@"; then
     return 1
-  elif [[ "$__go_glob_complete_flags_only" = 'true' ]]; then
+  elif [[ "$__go_glob_complete_flags_only" == 'true' ]]; then
     compgen -W "${__go_glob_flags[*]}" -- "$__go_glob_complete_word"
     return
   elif [[ -z "$__go_glob_rootdir" ]]; then
@@ -234,7 +234,7 @@ _@go.glob_set_globignore() {
 _@go.glob_parse_argv() {
   local globignore
 
-  while [[ "${1:0:1}" = '-' ]]; do
+  while [[ "${1:0:1}" == '-' ]]; do
     case "$1" in
     --ignore)
       globignore="$2"
@@ -280,7 +280,7 @@ _@go.glob_parse_argv() {
 
 _@go.glob() {
   # Tab completions
-  if [[ "$1" = '--complete' ]]; then
+  if [[ "$1" == '--complete' ]]; then
     shift
     _@go.glob_tab_completion "$@"
     return
@@ -306,7 +306,7 @@ _@go.glob() {
     fi
   done
 
-  if [[ "$__go_glob_trim" = 'true' ]]; then
+  if [[ "$__go_glob_trim" == 'true' ]]; then
     _@go.glob_trim_matches
   fi
 

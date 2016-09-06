@@ -77,7 +77,7 @@ merge_scripts() {
     if [[ "$lhs" < "$rhs" ]]; then
       result+=("${all_scripts[$i]}")
       ((++i))
-    elif [[ "$lhs" = "$rhs" ]]; then
+    elif [[ "$lhs" == "$rhs" ]]; then
       result+=("${all_scripts[$i]}")
       ((++i))
       ((++j))

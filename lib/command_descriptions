@@ -145,7 +145,7 @@ _@go.command_description() {
       __go_cmd_desc="${__go_cmd_desc% }"
       __go_cmd_desc+="${line:2}"$'\n'
 
-    elif [[ "$line" = '#' && -n "$__go_cmd_desc" ]]; then
+    elif [[ "$line" == '#' && -n "$__go_cmd_desc" ]]; then
       __go_cmd_desc+=$'\n'
 
     elif [[ "${line:0:1}" != '#' ]]; then

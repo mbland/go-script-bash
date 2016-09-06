@@ -22,7 +22,7 @@ _@go.merge_scripts_into_list() {
     lhs_name="${lhs_script##*/}"
     rhs_name="${rhs_script##*/}"
 
-    if [[ "$lhs_name" = "$rhs_name" ]]; then
+    if [[ "$lhs_name" == "$rhs_name" ]]; then
       printf "ERROR: duplicate command $lhs_name:\n\n  %s\n  %s\n" \
         "$lhs_script" "$rhs_script" >&2
       return 1

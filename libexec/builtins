@@ -64,7 +64,7 @@ _@go.builtins() {
     local IFS=$'\n'
     echo "${_GO_BUILTIN_CMDS[*]}"
     return
-  elif [[ "$1" = '--complete' ]]; then
+  elif [[ "$1" == '--complete' ]]; then
     # Tab completions
     local word_index="$2"
     if [[ "$word_index" -eq '0' ]]; then
@@ -93,7 +93,7 @@ _@go.builtins() {
       return 1
     fi
     for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
-      if [[ "$cmd_name" = "$1" ]]; then
+      if [[ "$cmd_name" == "$1" ]]; then
         return
       fi
     done

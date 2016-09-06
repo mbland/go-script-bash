@@ -79,7 +79,7 @@ assert_line_equals() {
   local expected="$2"
 
   # Implement negative indices for Bash 3.x.
-  if [[ "${lineno:0:1}" = '-' ]]; then
+  if [[ "${lineno:0:1}" == '-' ]]; then
     lineno="$((${#lines[@]} - ${lineno:1}))"
   fi
 

@@ -26,7 +26,7 @@ _test_tab_completion() {
   shift
   if [[ "$word_index" -eq '0' ]]; then
     compgen -W '--edit --list' -- "$1"
-    if [[ "${1:0:1}" = '-' ]]; then
+    if [[ "${1:0:1}" == '-' ]]; then
       return
     fi
   fi
@@ -35,14 +35,14 @@ _test_tab_completion() {
 }
 
 _test() {
-  if [[ "$1" = '--complete' ]]; then
+  if [[ "$1" == '--complete' ]]; then
     # Tab completions
     shift
     _test_tab_completion "$@"
-  elif [[ "$1" = '--list' ]]; then
+  elif [[ "$1" == '--list' ]]; then
     shift
     @go 'glob' '--trim' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
-  elif [[ "$1" = '--edit' ]]; then
+  elif [[ "$1" == '--edit' ]]; then
     shift
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
     @go 'edit' "${tests[@]}"

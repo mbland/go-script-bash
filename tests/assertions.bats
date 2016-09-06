@@ -12,9 +12,9 @@ echo_fail() {
   run echo 'Hello, world!'
   run fail
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'STATUS: 0' ]]
-  [[ "${lines[1]}" = 'OUTPUT:' ]]
-  [[ "${lines[2]}" = 'Hello, world!' ]]
+  [[ "${lines[0]}" == 'STATUS: 0' ]]
+  [[ "${lines[1]}" == 'OUTPUT:' ]]
+  [[ "${lines[2]}" == 'Hello, world!' ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -29,9 +29,9 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_equal 'Goodbye, world!' "$output" "echo result"
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'echo result not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
+  [[ "${lines[0]}" == 'echo result not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
+  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -53,9 +53,9 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_output 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
+  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
+  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -70,9 +70,9 @@ echo_fail() {
   run echo 'Not empty'
   run assert_output ''
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: ''" ]]
-  [[ "${lines[2]}" = "  actual:   'Not empty'" ]]
+  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: ''" ]]
+  [[ "${lines[2]}" == "  actual:   'Not empty'" ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -80,7 +80,7 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_output 'Hello,' 'world!'
   [[ "$status" -eq '1' ]]
-  [[ "$output" = 'ERROR: assert_output takes only one argument' ]]
+  [[ "$output" == 'ERROR: assert_output takes only one argument' ]]
 }
 
 @test "$SUITE: assert_status" {
@@ -94,9 +94,9 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_status '1'
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'exit status not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: '1'" ]]
-  [[ "${lines[2]}" = "  actual:   '0'" ]]
+  [[ "${lines[0]}" == 'exit status not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: '1'" ]]
+  [[ "${lines[2]}" == "  actual:   '0'" ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -111,10 +111,10 @@ echo_fail() {
   run echo_fail 'Hello, world!'
   run assert_success
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'expected success, but command failed' ]]
-  [[ "${lines[1]}" = 'STATUS: 1' ]]
-  [[ "${lines[2]}" = 'OUTPUT:' ]]
-  [[ "${lines[3]}" = 'Hello, world!' ]]
+  [[ "${lines[0]}" == 'expected success, but command failed' ]]
+  [[ "${lines[1]}" == 'STATUS: 1' ]]
+  [[ "${lines[2]}" == 'OUTPUT:' ]]
+  [[ "${lines[3]}" == 'Hello, world!' ]]
   [[ -z "${lines[4]}" ]]
 }
 
@@ -129,9 +129,9 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_success 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
+  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
+  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -146,10 +146,10 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_failure
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'expected failure, but command succeeded' ]]
-  [[ "${lines[1]}" = 'STATUS: 0' ]]
-  [[ "${lines[2]}" = 'OUTPUT:' ]]
-  [[ "${lines[3]}" = 'Hello, world!' ]]
+  [[ "${lines[0]}" == 'expected failure, but command succeeded' ]]
+  [[ "${lines[1]}" == 'STATUS: 0' ]]
+  [[ "${lines[2]}" == 'OUTPUT:' ]]
+  [[ "${lines[3]}" == 'Hello, world!' ]]
   [[ -z "${lines[4]}" ]]
 }
 
@@ -164,9 +164,9 @@ echo_fail() {
   run echo_fail 'Hello, world!'
   run assert_failure 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
+  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
+  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
   [[ -z "${lines[3]}" ]]
 }
 
@@ -188,10 +188,10 @@ echo_fail() {
   run echo 'Hello, world!'
   run assert_line_equals 0 'Goodbye, world!'
   [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" = 'line 0 not equal to expected value:' ]]
-  [[ "${lines[1]}" = "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" = "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" = 'OUTPUT:' ]]
-  [[ "${lines[4]}" = 'Hello, world!' ]]
+  [[ "${lines[0]}" == 'line 0 not equal to expected value:' ]]
+  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
+  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
+  [[ "${lines[3]}" == 'OUTPUT:' ]]
+  [[ "${lines[4]}" == 'Hello, world!' ]]
   [[ -z "${lines[5]}" ]]
 }

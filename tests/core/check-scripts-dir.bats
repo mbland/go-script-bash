@@ -38,7 +38,7 @@ teardown() {
 }
 
 @test "$SUITE: produce an error if the script dir isn't readable or executable" {
-  if [[ "$FS_MISSING_PERM_SUPPORT" = 'true' ]]; then
+  if [[ "$FS_MISSING_PERM_SUPPORT" == 'true' ]]; then
     # Even using icacls to set permissions, the dir still seems accessible.
     skip "Can't trigger condition on this file system"
   fi

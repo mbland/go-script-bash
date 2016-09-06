@@ -106,8 +106,8 @@ load assertions
   local expected=("test-go cd - Shell alias that will execute in $_GO_ROOTDIR")
   expected+=('Filename completion is available via the "test-go env" command.')
 
-  [[ "${lines[0]}" = "${expected[0]}" ]]
-  [[ "${lines[1]}" = "${expected[1]}" ]]
+  [[ "${lines[0]}" == "${expected[0]}" ]]
+  [[ "${lines[1]}" == "${expected[1]}" ]]
   [[ -z "${lines[2]}" ]]
 
   run env _GO_CMD='test-go' ./go aliases --help pushd
@@ -115,7 +115,7 @@ load assertions
 
   expected[0]="${expected[0]/test-go cd/test-go pushd}"
 
-  [[ "${lines[0]}" = "${expected[0]}" ]]
-  [[ "${lines[1]}" = "${expected[1]}" ]]
+  [[ "${lines[0]}" == "${expected[0]}" ]]
+  [[ "${lines[1]}" == "${expected[1]}" ]]
   [[ -z "${lines[2]}" ]]
 }
