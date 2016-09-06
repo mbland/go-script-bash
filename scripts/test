@@ -45,7 +45,7 @@ _test() {
   local bats_path='tests/bats/libexec/bats'
 
   if [[ ! -f "$bats_path" ]]; then
-    git submodule update --init tests/bats
+    git submodule update --init --depth 1 tests/bats
   fi
 
   if [[ "$1" == '--list' ]]; then
