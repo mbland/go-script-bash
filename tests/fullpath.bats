@@ -19,8 +19,9 @@ teardown() {
   run ./go fullpath --complete 0 '-'
   assert_success '--existing'
 
+  expected=($(compgen -f -- 'li'))
+  [[ "${#expected[@]}" -ne '0' ]]
   run ./go fullpath --complete 0 'li'
-  expected=('lib' 'libexec')
   assert_success "${expected[*]}"
 }
 

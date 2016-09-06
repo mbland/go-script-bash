@@ -41,7 +41,8 @@ teardown() {
   run ./go glob --complete 0 '--i'
   assert_success '--ignore'
 
-  expected=('lib' 'libexec')
+  expected=($(compgen -f -- 'li'))
+  [[ "${#expected[@]}" -ne '0' ]]
   run ./go glob --complete 0 'li'
   assert_success "${expected[*]}"
 }
@@ -66,7 +67,8 @@ teardown() {
   run ./go glob --complete 3 '--ignore' 'foo*:bar*' '--trim'
   assert_success "${expected[*]}"
 
-  expected=('lib' 'libexec')
+  expected=($(compgen -f -- 'li'))
+  [[ "${#expected[@]}" -ne '0' ]]
   run ./go glob --complete 3 '--ignore' 'foo*:bar*' '--trim' 'li'
   assert_success "${expected[*]}"
 }
