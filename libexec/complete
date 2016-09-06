@@ -26,7 +26,7 @@
 # * Notes on implementing argument completion:
 #
 # - If you wish to implement custom argument completion in your own command
-# scripts, your script must contain a `# Tab completion` comment and respond to
+# scripts, your script must contain a `# Tab completions` comment and respond to
 # the `--complete` command line interface described above.
 #
 # - The argument list must/will always contain at least one element, even if
