@@ -39,7 +39,14 @@ _test() {
     # Tab completions
     shift
     _test_tab_completion "$@"
-  elif [[ "$1" == '--list' ]]; then
+    return
+  fi
+
+  if [[ ! -d 'tests/bats' ]]; then
+    git submodule update --init tests/bats
+  fi
+
+  if [[ "$1" == '--list' ]]; then
     shift
     @go 'glob' '--trim' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
   elif [[ "$1" == '--edit' ]]; then
