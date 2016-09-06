@@ -4,23 +4,23 @@ load environment
 load assertions
 
 @test "$SUITE: produce message with successful return for help command" {
-  run tests/go help
+  run ./go help
   assert_success
-  assert_line_equals 0 'Usage: tests/go <command> [arguments...]'
+  assert_line_equals 0 'Usage: ./go <command> [arguments...]'
 }
 
 @test "$SUITE: accept -h, -help, and --help as synonyms" {
-  run tests/go help
+  run ./go help
   assert_success
 
   local help_output="$output"
 
-  run tests/go -h
+  run ./go -h
   assert_success "$help_output"
 
-  run tests/go -help
+  run ./go -help
   assert_success "$help_output"
 
-  run tests/go --help
+  run ./go --help
   assert_success "$help_output"
 }
