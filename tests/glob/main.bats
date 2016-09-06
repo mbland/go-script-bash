@@ -18,7 +18,7 @@ teardown() {
   run "$BASH" ./go glob --foobar
   assert_failure 'Unknown flag: --foobar'
 
-  run "$BASH" ./go glob --compact --ignore '*' --foobar
+  run "$BASH" ./go glob --trim --ignore '*' --foobar
   assert_failure 'Unknown flag: --foobar'
 }
 
@@ -27,7 +27,7 @@ teardown() {
   run "$BASH" ./go glob
   assert_failure "$err_msg"
 
-  run "$BASH" ./go glob --compact --ignore '*'
+  run "$BASH" ./go glob --trim --ignore '*'
   assert_failure "$err_msg"
 }
 
@@ -36,7 +36,7 @@ teardown() {
   run "$BASH" ./go glob bogus_dir
   assert_failure "$err_msg"
 
-  run "$BASH" ./go glob --compact --ignore '*' bogus_dir
+  run "$BASH" ./go glob --trim --ignore '*' bogus_dir
   assert_failure "$err_msg"
 }
 
@@ -45,7 +45,7 @@ teardown() {
   run "$BASH" ./go glob "$TESTS_DIR"
   assert_failure "$err_msg"
 
-  run "$BASH" ./go glob --compact --ignore '*' "$TESTS_DIR"
+  run "$BASH" ./go glob --trim --ignore '*' "$TESTS_DIR"
   assert_failure "$err_msg"
 }
 
@@ -77,11 +77,11 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "$SUITE: --compact strips rootdir and suffix from all files" {
+@test "$SUITE: --trim strips rootdir and suffix from all files" {
   touch "$TESTS_DIR"/{bar,baz,foo}.bats
   local expected=('bar' 'baz' 'foo')
 
-  run "$BASH" ./go glob --compact "$TESTS_DIR" '.bats'
+  run "$BASH" ./go glob --trim "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -101,11 +101,11 @@ teardown() {
   local IFS=$'\n'
   assert_success "$TESTS_DIR/foo.bats"
 
-  run "$BASH" ./go glob --ignore 'f*' --compact "$TESTS_DIR" '.bats'
+  run "$BASH" ./go glob --ignore 'f*' --trim "$TESTS_DIR" '.bats'
   expected=('bar' 'baz')
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --compact --ignore 'ba*:f*' "$TESTS_DIR" '.bats'
+  run "$BASH" ./go glob --trim --ignore 'ba*:f*' "$TESTS_DIR" '.bats'
   assert_failure "\"*\" does not match any .bats files in $TESTS_DIR."
 }
 
@@ -201,7 +201,7 @@ teardown() {
     "quux/xyzzy"
     "quux/xyzzy/frotz")
 
-  run "$BASH" ./go glob --ignore '*ignore-me*' --compact "$TESTS_DIR" '.bats'
+  run "$BASH" ./go glob --ignore '*ignore-me*' --trim "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }

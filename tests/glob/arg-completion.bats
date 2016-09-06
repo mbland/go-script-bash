@@ -15,7 +15,7 @@ teardown() {
 }
 
 @test "$SUITE: zero arguments" {
-  local expected=('--compact' '--ignore')
+  local expected=('--trim' '--ignore')
   expected+=($(compgen -d))
 
   run "$BASH" ./go glob --complete 0
@@ -24,19 +24,19 @@ teardown() {
 }
 
 @test "$SUITE: first argument" {
-  local expected=('--compact' '--ignore')
+  local expected=('--trim' '--ignore')
   expected+=($(compgen -d))
 
   run "$BASH" ./go glob --complete 0 ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  expected=('--compact' '--ignore')
+  expected=('--trim' '--ignore')
   run "$BASH" ./go glob --complete 0 '-'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 0 '--c'
-  assert_success '--compact'
+  run "$BASH" ./go glob --complete 0 '--t'
+  assert_success '--trim'
 
   run "$BASH" ./go glob --complete 0 '--i'
   assert_success '--ignore'
@@ -48,26 +48,26 @@ teardown() {
 
 @test "$SUITE: completion omits flags already present" {
   local expected=('--ignore' $(compgen -d))
-  run "$BASH" ./go glob --complete 1 '--compact'
+  run "$BASH" ./go glob --complete 1 '--trim'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 1 '--compact' '-'
+  run "$BASH" ./go glob --complete 1 '--trim' '-'
   assert_success '--ignore'
 
-  expected[0]='--compact'
+  expected[0]='--trim'
   run "$BASH" ./go glob --complete 2 '--ignore' 'foo*:bar*'
   assert_success "${expected[*]}"
 
   run "$BASH" ./go glob --complete 2 '--ignore' 'foo*:bar*' '-'
-  assert_success '--compact'
+  assert_success '--trim'
 
   unset expected[0]
-  run "$BASH" ./go glob --complete 3 '--ignore' 'foo*:bar*' '--compact'
+  run "$BASH" ./go glob --complete 3 '--ignore' 'foo*:bar*' '--trim'
   assert_success "${expected[*]}"
 
   expected=('lib' 'libexec')
-  run "$BASH" ./go glob --complete 3 '--ignore' 'foo*:bar*' '--compact' 'li'
+  run "$BASH" ./go glob --complete 3 '--ignore' 'foo*:bar*' '--trim' 'li'
   assert_success "${expected[*]}"
 }
 
@@ -76,7 +76,7 @@ teardown() {
   run "$BASH" ./go glob --complete 1 '--ignore'
   assert_failure ''
 
-  run "$BASH" ./go glob --complete 2 '--compact' '--ignore'
+  run "$BASH" ./go glob --complete 2 '--trim' '--ignore'
   assert_failure ''
 
   run "$BASH" ./go glob --complete 1 '--ignore' '' 'tests'
@@ -88,32 +88,32 @@ teardown() {
   run "$BASH" ./go glob --complete 1 'tests'
   assert_failure ''
 
-  run "$BASH" ./go glob --complete 2 '--compact' 'tests'
+  run "$BASH" ./go glob --complete 2 '--trim' 'tests'
   assert_failure ''
 
-  run "$BASH" ./go glob --complete 4 '--compact' '--ignore' 'foo*:bar*' 'tests'
+  run "$BASH" ./go glob --complete 4 '--trim' '--ignore' 'foo*:bar*' 'tests'
   assert_failure ''
 }
 
 @test "$SUITE: arguments before flags only complete other flags" {
-  run "$BASH" ./go glob --complete 0 '' '--compact'
+  run "$BASH" ./go glob --complete 0 '' '--trim'
   assert_success '--ignore'
 
   run "$BASH" ./go glob --complete 0 '' '--ignore'
-  assert_success '--compact'
+  assert_success '--trim'
 }
 
 @test "$SUITE: complete flags before rootdir" {
-  local expected=('--compact' '--ignore')
+  local expected=('--trim' '--ignore')
   run "$BASH" ./go glob --complete 0 '' 'tests'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 1 '--compact' '' 'tests'
+  run "$BASH" ./go glob --complete 1 '--trim' '' 'tests'
   assert_success '--ignore'
 
   run "$BASH" ./go glob --complete 2 '--ignore' 'foo*:bar*' '' 'tests'
-  assert_success '--compact'
+  assert_success '--trim'
 }
 
 @test "$SUITE: complete rootdir" {
@@ -134,7 +134,7 @@ teardown() {
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$BASH" ./go glob --complete 3 '--compact' "$TESTS_DIR" '.bats'
+  run "$BASH" ./go glob --complete 3 '--trim' "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 

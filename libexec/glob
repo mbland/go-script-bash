@@ -3,12 +3,12 @@
 # Recursively find files with a specified suffix matching shell patterns
 #
 # Usage:
-#   {{go}} {{cmd}} [--ignore <patterns>] [--compact]
+#   {{go}} {{cmd}} [--ignore <patterns>] [--trim]
 #     <root-dir> <suffix> [<glob>...]
 #
 # Options:
-#   --compact  Strip <root-dir>/ prefix and <suffix> from paths
-#   --ignore   Colon-separated list of ignored patterns (sets Bash's GLOBIGNORE)
+#   --trim    Strip <root-dir>/ prefix and <suffix> from paths
+#   --ignore  Colon-separated list of ignored patterns (sets Bash's GLOBIGNORE)
 #
 # Arguments:
 #   <root-dir>  Directory in which to search for matching files
@@ -84,7 +84,7 @@ _@go.glob_impl_helper() {
   done
 }
 
-_@go.glob_compact_matches() {
+_@go.glob_trim_matches() {
   __go_glob_matches=("${__go_glob_matches[@]#$__go_glob_rootdir/}")
   __go_glob_matches=("${__go_glob_matches[@]%$__go_glob_suffix}")
 }
@@ -98,13 +98,13 @@ _@go.glob_tab_completion_parse_argv() {
   local arg
 
   __go_glob_complete_word="${args[$word_index]}"
-  __go_glob_flags=('--compact' '--ignore')
+  __go_glob_flags=('--trim' '--ignore')
 
   for ((i=0; i != ${#args[@]}; ++i)); do
     arg="${args[$i]}"
 
     case "$arg" in
-    --compact)
+    --trim)
       unset '__go_glob_flags[0]'
       ;;
     --ignore)
@@ -140,7 +140,7 @@ _@go.glob_tab_completion_parse_argv() {
   done
 }
 
-_@go.glob_emit_trimmed_matches() {
+_@go.glob_emit_completion_matches() {
   local prefix="${__go_glob_matches[0]}"
   local prefix_len="${#prefix}"
   local match
@@ -200,14 +200,14 @@ _@go.glob_tab_completion() {
   local __go_glob_matches=()
   _@go.glob_set_globignore "$__go_glob_ignore_spec" "$__go_glob_rootdir"
   _@go.glob_impl "$__go_glob_rootdir/$__go_glob_complete_word*"
-  _@go.glob_compact_matches
+  _@go.glob_trim_matches
 
   if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
     return 1
   elif [[ "${#__go_glob_matches[@]}" -eq '1' ]]; then
     echo "${__go_glob_matches[0]}"
   else
-    _@go.glob_emit_trimmed_matches
+    _@go.glob_emit_completion_matches
   fi
 }
 
@@ -241,8 +241,8 @@ _@go.glob_parse_argv() {
       shift
       shift
       ;;
-    --compact)
-      __go_glob_compact='true'
+    --trim)
+      __go_glob_trim='true'
       shift
       ;;
     *)
@@ -286,7 +286,7 @@ _@go.glob() {
     return
   fi
 
-  local __go_glob_compact
+  local __go_glob_trim
   local __go_glob_rootdir
   local __go_glob_suffix
   local __go_glob_patterns
@@ -306,8 +306,8 @@ _@go.glob() {
     fi
   done
 
-  if [[ "$__go_glob_compact" = 'true' ]]; then
-    _@go.glob_compact_matches
+  if [[ "$__go_glob_trim" = 'true' ]]; then
+    _@go.glob_trim_matches
   fi
 
   local IFS=$'\n'

@@ -15,7 +15,7 @@ load assertions
 @test "$SUITE: tab complete flags, first-level tests and directories" {
   local expected=('--edit' '--list')
   expected+=($("$BASH" './go' 'glob' '--complete' '5' \
-    '--compact' '--ignore' 'bats/*' 'tests' '.bats'))
+    '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 1 ]]
 
   run "$BASH" ./go test --complete 0 ''
@@ -46,7 +46,7 @@ _trim_expected() {
 
 @test "$SUITE: no arguments after --list lists all tests" {
   local expected=(
-    $("$BASH" './go' 'glob' '--compact' '--ignore' 'bats/*' 'tests' '.bats'))
+    $("$BASH" './go' 'glob' '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 0 ]]
 
   run "$BASH" ./go test --list

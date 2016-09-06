@@ -41,7 +41,7 @@ _test() {
     _test_tab_completion "$@"
   elif [[ "$1" = '--list' ]]; then
     shift
-    @go 'glob' '--compact' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
+    @go 'glob' '--trim' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
   elif [[ "$1" = '--edit' ]]; then
     shift
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
