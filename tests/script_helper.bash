@@ -56,7 +56,7 @@ __create_test_script() {
   local line
 
   __create_test_dirs
-  echo "#! $BASH" >"$script"
+  echo "#! /usr/bin/env bash" >"$script"
 
   for line in "$@"; do
     echo "$line" >>"$script"

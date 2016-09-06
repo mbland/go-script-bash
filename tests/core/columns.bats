@@ -13,13 +13,13 @@ teardown() {
 }
 
 @test "$SUITE: set COLUMNS if unset" {
-  run env COLUMNS= "$BASH" "$TEST_GO_SCRIPT"
+  run env COLUMNS= "$TEST_GO_SCRIPT"
   assert_success
   [[ -n "$output" ]]
 }
 
 @test "$SUITE: honor COLUMNS if already set" {
-  run env COLUMNS="19700918" "$BASH" "$TEST_GO_SCRIPT"
+  run env COLUMNS="19700918" "$TEST_GO_SCRIPT"
   assert_success '19700918'
 }
 

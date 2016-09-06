@@ -6,7 +6,7 @@ load environment
 load assertions
 
 @test "$SUITE: tab complete flags" {
-  run "$BASH" ./go test --complete 0 '-'
+  run ./go test --complete 0 '-'
   local expected=('--edit' '--list')
   local IFS=$'\n'
   assert_success "${expected[*]}"
@@ -14,18 +14,18 @@ load assertions
 
 @test "$SUITE: tab complete flags, first-level tests and directories" {
   local expected=('--edit' '--list')
-  expected+=($("$BASH" './go' 'glob' '--complete' '5' \
+  expected+=($('./go' 'glob' '--complete' '5' \
     '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 1 ]]
 
-  run "$BASH" ./go test --complete 0 ''
+  run ./go test --complete 0 ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: tab completion matches test file and matching directory" {
   expected=('core' 'core/')
-  run "$BASH" ./go test --complete 0 'core'
+  run ./go test --complete 0 'core'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -39,23 +39,23 @@ _trim_expected() {
   local expected=(tests/core/*.bats)
   _trim_expected
 
-  run "$BASH" ./go test --complete 0 'core/'
+  run ./go test --complete 0 'core/'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: no arguments after --list lists all tests" {
   local expected=(
-    $("$BASH" './go' 'glob' '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
+    $('./go' 'glob' '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 0 ]]
 
-  run "$BASH" ./go test --list
+  run ./go test --list
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: list specific files and directories" {
-  run "$BASH" ./go test --list test aliases 'builtins*'
+  run ./go test --list test aliases 'builtins*'
 
   local expected=(test aliases builtins tests/builtins/*)
   _trim_expected
@@ -65,6 +65,6 @@ _trim_expected() {
 }
 
 @test "$SUITE: produce an error if any test pattern fails to match" {
-  run "$BASH" ./go test --list test 'foo*'
+  run ./go test --list test 'foo*'
   assert_failure '"foo*" does not match any .bats files in tests.'
 }

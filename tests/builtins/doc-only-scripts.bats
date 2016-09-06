@@ -21,7 +21,7 @@ teardown() {
   expected+='is implemented directly within the @go function.'
 
   create_test_go_script "_@go.source_builtin 'edit'"
-  run "$BASH" "$TEST_GO_SCRIPT"
+  run "$TEST_GO_SCRIPT"
   assert_failure "$expected"
 }
 
@@ -30,7 +30,7 @@ teardown() {
   expected+='is implemented directly within the @go function.'
 
   create_test_go_script "_@go.source_builtin 'run'"
-  run "$BASH" "$TEST_GO_SCRIPT"
+  run "$TEST_GO_SCRIPT"
   assert_failure "$expected"
 }
 
@@ -40,6 +40,6 @@ teardown() {
   expected+="\"$TEST_GO_SCRIPT env\"."
 
   create_test_go_script "_@go.source_builtin 'unenv'"
-  run "$BASH" "$TEST_GO_SCRIPT"
+  run "$TEST_GO_SCRIPT"
   assert_failure "$expected"
 }

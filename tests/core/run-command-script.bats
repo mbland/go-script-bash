@@ -17,7 +17,7 @@ teardown() {
   echo '#!/bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
+  run "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
   assert_success 'Can use @go.printf'
 }
 
@@ -25,7 +25,7 @@ teardown() {
   echo '#!/bin/sh' >"$TEST_COMMAND_SCRIPT"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
+  run "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
   assert_success 'Can use @go.printf'
 }
 
@@ -37,7 +37,7 @@ teardown() {
   echo '#!/bin/perl' >"$TEST_COMMAND_SCRIPT"
   echo 'printf("%s", join(" ", @ARGV))' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Can run perl
+  run "$TEST_GO_SCRIPT" test-command Can run perl
   assert_success 'Can run perl'
 }
 
@@ -52,7 +52,7 @@ teardown() {
 
   echo '@go.printf "%s" "$*"' >"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Missing shebang line
+  run "$TEST_GO_SCRIPT" test-command Missing shebang line
   assert_failure "$expected"
 }
 
@@ -63,7 +63,7 @@ teardown() {
   echo '#!' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Shebang line not complete
+  run "$TEST_GO_SCRIPT" test-command Shebang line not complete
   assert_failure "$expected"
 }
 
@@ -71,7 +71,7 @@ teardown() {
   echo '#! /bin/bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Space after shebang OK
+  run "$TEST_GO_SCRIPT" test-command Space after shebang OK
   assert_success 'Space after shebang OK'
 }
 
@@ -79,7 +79,7 @@ teardown() {
   echo '#! /path/to/env bash' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command '/path/to/env' OK
+  run "$TEST_GO_SCRIPT" test-command '/path/to/env' OK
   assert_success '/path/to/env OK'
 }
 
@@ -87,6 +87,6 @@ teardown() {
   echo '#!/bin/bash -x' >"$TEST_COMMAND_SCRIPT"
   echo 'echo "$@"' >>"$TEST_COMMAND_SCRIPT"
 
-  run "$BASH" "$TEST_GO_SCRIPT" test-command Flags after interpreter ignored
+  run "$TEST_GO_SCRIPT" test-command Flags after interpreter ignored
   assert_success 'Flags after interpreter ignored'
 }

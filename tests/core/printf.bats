@@ -15,7 +15,7 @@ teardown() {
 }
 
 @test "$SUITE: wrap text according to COLUMNS if fold command is available" {
-  run env COLUMNS=11 "$BASH" "$TEST_GO_SCRIPT" "$TEST_TEXT"
+  run env COLUMNS=11 "$TEST_GO_SCRIPT" "$TEST_TEXT"
   assert_success
   assert_equal '3' "${#lines[@]}" 'number of output lines'
   assert_line_equals 0 '1234567890 '

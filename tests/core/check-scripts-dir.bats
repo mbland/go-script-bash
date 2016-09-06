@@ -19,7 +19,7 @@ teardown() {
 
 @test "$SUITE: produce an error if more than one dir specified when sourced" {
   # Overwrite the entire script to force the multiple dir error.
-  echo "#! $BASH" >"$TEST_GO_SCRIPT"
+  echo "#! /usr/bin/env bash" >"$TEST_GO_SCRIPT"
   echo ". '$_GO_ROOTDIR/go-core.bash' " \
     "'$TEST_GO_SCRIPTS_RELATIVE_DIR' 'test/scripts'" >>"$TEST_GO_SCRIPT"
 
