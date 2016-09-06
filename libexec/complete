@@ -101,7 +101,7 @@ _@go.tab_completions() {
     compgen -d -- "$word"
     return
     ;;
-  edit|fullpath|run)
+  edit|run)
     compgen -f -- "$word"
     return
     ;;

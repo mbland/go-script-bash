@@ -1,15 +1,66 @@
 #! /bin/bash
 #
 # Prefixes <file-paths> with <project-root> or prints <project-root>
+#
+# Usage:
+#   {{go}} {{cmd}} [--existing] [<path>...]
+#
+# Options:
+#   --existing  Only print the paths that already exist
 
-if [[ "$#" -eq '0' ]]; then
-  echo "$_GO_ROOTDIR"
-fi
+_@go.fullpath_tab_completion() {
+  local word_index="$1"
+  shift
+  local args=("$@")
+  local word="${args[$word_index]}"
 
-for fp in "$@"; do
-  if [[ "${fp:0:1}" != '/' ]]; then
-    echo "$_GO_ROOTDIR/$fp"
-  else
-    echo "$fp"
+  if [[ "$word_index" -eq '0' ]]; then
+    local err_count=0
+    if ! compgen -W '--existing' -- "$word"; then
+      ((++err_count))
+    fi
+    if ! compgen -f -- "$word"; then
+      ((++err_count))
+    fi
+    return $((err_count != 2 ? 0 : 1))
   fi
-done
+  compgen -f -- "$word"
+}
+
+_@go.fullpath() {
+  # Tab completions
+  if [[ "$1" == '--complete' ]]; then
+    shift
+    _@go.fullpath_tab_completion "$@"
+    return
+  fi
+
+  local existing_only
+
+  if [[ "$1" == '--existing' ]]; then
+    existing_only='true'
+    shift
+  fi
+
+  if [[ "$#" -eq '0' ]]; then
+    echo "$_GO_ROOTDIR"
+  fi
+
+  local arg
+  local expanded
+  local IFS=$'\n'
+
+  for arg in "$@"; do
+    if [[ "${arg:0:1}" != '/' ]]; then
+      arg="$_GO_ROOTDIR/$arg"
+    fi
+
+    for expanded in $arg; do
+      if [[ -z "$existing_only" || -e "$expanded" ]]; then
+        echo $expanded
+      fi
+    done
+  done
+}
+
+_@go.fullpath "$@"
