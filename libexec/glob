@@ -296,7 +296,7 @@ _@go.glob() {
   fi
 
   local pattern
-  local __go_glob_matches
+  local __go_glob_matches=()
 
   for pattern in "${__go_glob_patterns[@]}"; do
     if ! _@go.glob_impl "$__go_glob_rootdir/$pattern"; then
