@@ -1,8 +1,8 @@
 #! /usr/bin/env bats
 
-load environment
-load assertions
-load script_helper
+load ../environment
+load ../assertions
+load ../script_helper
 
 declare BUILTIN_CMDS
 declare BUILTIN_SCRIPTS
@@ -111,7 +111,7 @@ add_scripts() {
   chmod 700 "${script_names[@]/#/$scripts_dir}"
 }
 
-@test "$SUITE: find returns only builtin commands" {
+@test "$SUITE: return only builtin commands" {
   run "$TEST_GO_SCRIPT"
   assert_success
 
@@ -120,7 +120,7 @@ add_scripts() {
   assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
 
-@test "$SUITE: find ignores directories" {
+@test "$SUITE: ignore directories" {
   mkdir "$TEST_GO_SCRIPTS_DIR"/{foo,bar,baz}
   run "$TEST_GO_SCRIPT"
   assert_success
@@ -130,7 +130,7 @@ add_scripts() {
   assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
 
-@test "$SUITE: find ignores nonexecutable files" {
+@test "$SUITE: ignore nonexecutable files" {
   touch "$TEST_GO_SCRIPTS_DIR"/{foo,bar,baz}
   chmod 600 "$TEST_GO_SCRIPTS_DIR"/{foo,bar,baz}
   run "$TEST_GO_SCRIPT"
@@ -141,7 +141,7 @@ add_scripts() {
   assert_command_scripts_equal "${BUILTIN_SCRIPTS[@]}"
 }
 
-@test "$SUITE: find returns builtins and user scripts" {
+@test "$SUITE: return builtins and user scripts" {
   local longest_name="extra-long-name-that-no-one-would-use"
   # user_commands must remain hand-sorted.
   local user_commands=('bar' 'baz' "$longest_name" 'foo')
@@ -156,7 +156,7 @@ add_scripts() {
   assert_command_scripts_equal "${all_scripts[@]}"
 }
 
-@test "$SUITE: find returns builtins, plugins, and user scripts" {
+@test "$SUITE: return builtins, plugins, and user scripts" {
   local longest_name="super-extra-long-name-that-no-one-would-use"
   # user_commands and plugin_commands must remain hand-sorted.
   local user_commands=('bar' 'baz' 'foo')
@@ -173,7 +173,7 @@ add_scripts() {
   assert_command_scripts_equal "${all_scripts[@]}"
 }
 
-@test "$SUITE: find returns error if duplicates exists" {
+@test "$SUITE: return error if duplicates exists" {
   local duplicate_cmd="${BUILTIN_SCRIPTS[0]##*/}"
   local user_commands=("$duplicate_cmd")
   local all_scripts=("${BUILTIN_SCRIPTS[@]}")
@@ -191,7 +191,7 @@ add_scripts() {
   assert_line_equals 2 "  scripts/$duplicate_cmd"
 }
 
-@test "$SUITE: find returns subcommands only" {
+@test "$SUITE: return subcommands only" {
   # parent_commands and subcommands must remain hand-sorted
   local longest_name='terribly-long-name-that-would-be-insane-in-a-real-script'
   local parent_commands=('bar' 'baz' 'foo')
@@ -208,7 +208,7 @@ add_scripts() {
   assert_command_scripts_equal "${subcommands[@]/#/scripts/foo.d/}"
 }
 
-@test "$SUITE: find returns error if no commands are found" {
+@test "$SUITE: return error if no commands are found" {
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
   assert_failure ''
