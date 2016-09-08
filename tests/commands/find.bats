@@ -3,10 +3,7 @@
 load ../environment
 load ../assertions
 load ../script_helper
-
-declare BUILTIN_CMDS
-declare BUILTIN_SCRIPTS
-declare LONGEST_BUILTIN_NAME
+load helpers
 
 setup() {
   create_test_go_script \
@@ -30,27 +27,6 @@ teardown() {
   remove_test_go_rootdir
 }
 
-find_builtins() {
-  local cmd_script
-  local cmd_name
-
-  for cmd_script in "$_GO_ROOTDIR"/libexec/*; do
-    if [[ ! (-f "$cmd_script" && -x "$cmd_script") ]]; then
-      continue
-    fi
-    cmd_name="${cmd_script##*/}"
-    BUILTIN_CMDS+=("$cmd_name")
-    BUILTIN_SCRIPTS+=("$cmd_script")
-
-    if [[ "${#cmd_name}" -gt "${#LONGEST_BUILTIN_NAME}" ]]; then
-      LONGEST_BUILTIN_NAME="$cmd_name"
-    fi
-  done
-
-  # Strip the rootdir to make output less noisy.
-  BUILTIN_SCRIPTS=("${BUILTIN_SCRIPTS[@]#$_GO_ROOTDIR/}")
-}
-
 assert_command_scripts_equal() {
   local result
   local IFS=$'\n'
@@ -60,55 +36,6 @@ assert_command_scripts_equal() {
   result="$?"
   set -o functrace
   return "$result"
-}
-
-merge_scripts() {
-  local args=("$@")
-  local i=0
-  local j=0
-  local lhs
-  local rhs
-  local result=()
-
-  while ((i != ${#all_scripts[@]} && j != ${#args[@]})); do
-    lhs="${all_scripts[$i]##*/}"
-    rhs="${args[$j]##*/}"
-
-    if [[ "$lhs" < "$rhs" ]]; then
-      result+=("${all_scripts[$i]}")
-      ((++i))
-    elif [[ "$lhs" == "$rhs" ]]; then
-      result+=("${all_scripts[$i]}")
-      ((++i))
-      ((++j))
-    else
-      result+=("${args[$j]}")
-      ((++j))
-    fi
-  done
-
-  all_scripts=("${result[@]}" "${all_scripts[@]:$i}" "${args[@]:$j}")
-}
-
-add_scripts() {
-  local scripts_dir="$1/"
-  shift
-
-  local relative_dir="${scripts_dir#$TEST_GO_ROOTDIR/}"
-  local script_names=("$@")
-
-  if [[ ! -d "$scripts_dir" ]]; then
-    mkdir "$scripts_dir"
-  fi
-
-  merge_scripts "${script_names[@]/#/$relative_dir}"
-
-  # chmod is neutralized in MSYS2 on Windows; `#!` makes files executable.
-  local script_path
-  for script_path in "${script_names[@]/#/$scripts_dir}"; do
-    echo '#!' > "$script_path"
-  done
-  chmod 700 "${script_names[@]/#/$scripts_dir}"
 }
 
 @test "$SUITE: return only builtin commands" {
@@ -145,15 +72,15 @@ add_scripts() {
   local longest_name="extra-long-name-that-no-one-would-use"
   # user_commands must remain hand-sorted.
   local user_commands=('bar' 'baz' "$longest_name" 'foo')
-  local all_scripts=("${BUILTIN_SCRIPTS[@]}")
+  local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
   add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
   run "$TEST_GO_SCRIPT"
   assert_success
 
   assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
-  assert_line_equals 1 "COMMAND_NAMES: ${all_scripts[*]##*/}"
-  assert_command_scripts_equal "${all_scripts[@]}"
+  assert_line_equals 1 "COMMAND_NAMES: ${__all_scripts[*]##*/}"
+  assert_command_scripts_equal "${__all_scripts[@]}"
 }
 
 @test "$SUITE: return builtins, plugins, and user scripts" {
@@ -161,7 +88,7 @@ add_scripts() {
   # user_commands and plugin_commands must remain hand-sorted.
   local user_commands=('bar' 'baz' 'foo')
   local plugin_commands=('plugh' 'quux' "$longest_name" 'xyzzy')
-  local all_scripts=("${BUILTIN_SCRIPTS[@]}")
+  local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
   add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
   add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
@@ -169,14 +96,14 @@ add_scripts() {
   assert_success
 
   assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
-  assert_line_equals 1 "COMMAND_NAMES: ${all_scripts[*]##*/}"
-  assert_command_scripts_equal "${all_scripts[@]}"
+  assert_line_equals 1 "COMMAND_NAMES: ${__all_scripts[*]##*/}"
+  assert_command_scripts_equal "${__all_scripts[@]}"
 }
 
 @test "$SUITE: return error if duplicates exists" {
   local duplicate_cmd="${BUILTIN_SCRIPTS[0]##*/}"
   local user_commands=("$duplicate_cmd")
-  local all_scripts=("${BUILTIN_SCRIPTS[@]}")
+  local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
   add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
   run "$TEST_GO_SCRIPT"
@@ -196,7 +123,7 @@ add_scripts() {
   local longest_name='terribly-long-name-that-would-be-insane-in-a-real-script'
   local parent_commands=('bar' 'baz' 'foo')
   local subcommands=('plugh' 'quux' "$longest_name" 'xyzzy')
-  local all_scripts=()
+  local __all_scripts=()
 
   add_scripts "$TEST_GO_SCRIPTS_DIR" "${parent_commands[@]}"
   add_scripts "$TEST_GO_SCRIPTS_DIR/foo.d" "${subcommands[@]}"
@@ -210,6 +137,11 @@ add_scripts() {
 
 @test "$SUITE: return error if no commands are found" {
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
+  run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
+  assert_failure ''
+}
+
+@test "$SUITE: error if no commands are found because dir doesn't exist" {
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
   assert_failure ''
 }

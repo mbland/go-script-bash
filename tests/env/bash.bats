@@ -71,8 +71,8 @@ setup () {
   cd 'scripts'
   __go_func
   assert_equal '2' "${#COMPREPLY[@]}" 'number of tab completion entries'
-  assert_equal '--summaries' "${COMPREPLY[0]}" 'first tab completion entry'
-  assert_equal '--paths' "${COMPREPLY[1]}" 'second tab completion entry'
+  assert_equal '--paths' "${COMPREPLY[0]}" 'first tab completion entry'
+  assert_equal '--summaries' "${COMPREPLY[1]}" 'second tab completion entry'
 
   assert_equal "$_GO_ROOTDIR" "$PWD" 'current working dir'
   cd -

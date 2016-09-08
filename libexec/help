@@ -3,11 +3,13 @@
 # Print the full help message, or help for a specific command
 
 _@go.usage() {
+  local cmd_paths=("${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
+  local IFS=':'
+
   @go.printf "%s\n\n%s\n\n%s\n\n%s %s\n\n%s %s\n\n" \
     "Usage: $_GO_CMD <command> [arguments...]" \
     "Where <command> is one of:" \
-    "$(_@go.source_builtin 'commands' --summaries "$_GO_SCRIPTS_DIR" \
-      "$_GO_CORE_DIR/plugins"/*/bin)" \
+    "$(_@go.source_builtin 'commands' --summaries "${cmd_paths[*]}")" \
     "Use \"$_GO_CMD help <command>\" for more information about that command," \
     "if available." \
     "Use \"$_GO_CMD help builtins\" for help on builtin commands," \

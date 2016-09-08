@@ -20,8 +20,13 @@
 # TODO(mbland): add --add and --remove options to automatically download scripts
 # or add submodules if curl, wget, or git are present.
 
-. "$_GO_CORE_DIR/lib/path"
+_@go.plugins() {
+  . "$_GO_CORE_DIR/lib/path"
 
-if [[ -n "$_GO_PLUGINS_DIR" ]]; then
-  _@go.source_builtin 'commands' "$@" "${_GO_PLUGINS_PATHS[@]}"
-fi
+  if [[ -n "$_GO_PLUGINS_DIR" ]]; then
+    local IFS=':'
+    _@go.source_builtin 'commands' "$@" "${_GO_PLUGINS_PATHS[*]}"
+  fi
+}
+
+_@go.plugins "$@"

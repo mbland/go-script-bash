@@ -1,27 +1,28 @@
 #! /bin/bash
 #
-# List all available commands or subcommands for a specified command
-
-_@go.list_commands() {
-  local __go_command_names
-
-  if ! _@go.find_commands "$@"; then
-    return 1
-  fi
-
-  local IFS=$'\n'
-  echo "${__go_command_names[*]}"
-}
+# List available commands or subcommands for a specified command
+#
+# Usage:
+#   {{go}} {{cmd}} [--paths|--summaries] <command-name|script-paths>
+#
+# Options:
+#   --paths      List the path of each command script
+#   --summaries  List the summary of each command script
+#
+# If no <command-name> or <script-path> is given, lists all top-level builtins,
+# plugins, and user-defined commands. If <command-name> is given, lists the
+# subcommands for that command. If <script-paths> is given, lists top-level
+# commands within those directories.
+#
+# Only one of <command-name> or <script-paths> may be specified. <command-name>
+# can be a multiple-word subcommand name, in which case its subcommands, if any,
+# will be listed. <script-paths> can be a single directory path or a
+# colon-separated list of paths to search for command scripts.
+#
+# NOTE: This command will not return the names of shell aliases; use `{{go}}
+# aliases` for those.
 
 _@go.summarize_commands() {
-  local __go_command_names
-  local __go_command_scripts
-  local __go_longest_name_len
-
-  if ! _@go.find_commands "$@"; then
-    return 1
-  fi
-
   . "$_GO_CORE_DIR/lib/command_descriptions"
 
   local i
@@ -40,43 +41,40 @@ _@go.summarize_commands() {
   done
 }
 
-_@go.list_command_paths() {
-  local __go_command_names
-  local __go_command_scripts
-  local __go_longest_name_len
+_@go.commands_parse_search_paths() {
+  local IFS=':'
+  read -r -a __go_commands_search_paths <<<"$1"
 
-  _@go.find_commands "$@" || return 1
-
-  local i
-
-  for ((i=0; i != "${#__go_command_names[@]}"; ++i)); do
-    printf "%-${__go_longest_name_len}s  %s\n" \
-      "${__go_command_names[$i]}" "${__go_command_scripts[$i]}"
+  local search_path
+  for search_path in "${__go_commands_search_paths[@]}"; do
+    if [[ ! -d "$search_path" ]]; then
+      @go.printf "Command search path %s does not exist.\n" "$search_path" >&2
+      return 1
+    fi
   done
 }
 
-_@go.commands() {
-  local action="list"
-
+_@go.commands_parse_argv() {
   case "$1" in
-  --complete)  # Tab completions
-    local word_index="$2"
-    if [[ "$word_index" -eq '0' ]]; then
-      echo '--summaries --paths'
-    fi
-    return
-    ;;
-  --*)
-    action="${1#--}"
+  --paths|--summaries)
+    __go_commands_action="${1#--}"
     shift
+    ;;
+  -*)
+    echo "Unknown option: $1"
+    return 1
     ;;
   esac
 
-  if [[ -z "$*" ]]; then
-    set "${_GO_SEARCH_PATHS[@]}"
-
-  elif [[ ! -e "$1" ]]; then
+  if [[ "$#" -eq 0 ]]; then
+    __go_commands_search_paths=("${_GO_SEARCH_PATHS[@]}")
+  elif [[ "$#" -eq '1' && ( "$1" =~ : || -d "$1" ) ]]; then
+    if ! _@go.commands_parse_search_paths "$1"; then
+      return 1
+    fi
+  else
     if _@go.source_builtin 'aliases' --exists "$1"; then
+      @go.printf '%s is a shell alias.\n' "$1" >&2
       return 1
     fi
 
@@ -84,25 +82,60 @@ _@go.commands() {
     if ! _@go.set_command_path_and_argv "$@"; then
       return 1
     fi
+    __go_commands_search_paths=("${__go_cmd_path}.d")
+  fi
+}
 
-    set "${__go_cmd_path}.d"
+_@go.commands_tab_completions() {
+  local word_index="$1"
+  shift
+
+  if [[ "$word_index" -eq '0' ]]; then
+    compgen -W '--paths --summaries' -- "$1"
+  else
+    return 1
+  fi
+}
+
+_@go.commands() {
+  # Tab completions
+  if [[ "$1" == '--complete' ]]; then
+    shift
+    _@go.commands_tab_completions "$@"
+    return
+  fi
+
+  local __go_commands_action="list"
+  local __go_commands_search_paths=()
+
+  if ! _@go.commands_parse_argv "$@"; then
+    return 1
   fi
 
   . "$_GO_CORE_DIR/lib/commands"
 
-  case "$action" in
+  local __go_command_names
+  local __go_command_scripts
+  local __go_longest_name_len
+
+  if ! _@go.find_commands "${__go_commands_search_paths[@]}"; then
+    return 1
+  fi
+
+  case "$__go_commands_action" in
   list)
-    _@go.list_commands "$@"
+    local IFS=$'\n'
+    echo "${__go_command_names[*]}"
+    ;;
+  paths)
+    local i
+    for ((i=0; i != "${#__go_command_names[@]}"; ++i)); do
+      printf "%-${__go_longest_name_len}s  %s\n" \
+        "${__go_command_names[$i]}" "${__go_command_scripts[$i]}"
+    done
     ;;
   summaries)
     _@go.summarize_commands "$@"
-    ;;
-  paths)
-    _@go.list_command_paths "$@"
-    ;;
-  *)
-    echo "unknown option: --$action"
-    return 1
     ;;
   esac
 }
