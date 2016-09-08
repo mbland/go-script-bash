@@ -4,6 +4,8 @@ load ../environment
 load ../assertions
 load ../script_helper
 
+TEST_COMMAND_SCRIPT_PATH="$TEST_GO_SCRIPTS_DIR/test-command"
+
 setup() {
   . 'lib/command_descriptions'
 
@@ -42,7 +44,7 @@ setup() {
 
 echo The command script starts now.
 '
-  create_test_command_script "$script"
+  create_test_command_script 'test-command' "$script"
 }
 
 teardown() {
@@ -50,22 +52,23 @@ teardown() {
 }
 
 @test "$SUITE: return default text when no description is available" {
-  create_test_command_script 'echo "This script has no description"'
+  create_test_command_script 'test-command' \
+    'echo "This script has no description"'
 
   local __go_cmd_desc=''
-  _@go.command_summary "$TEST_COMMAND_SCRIPT"
+  _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
   assert_success
   assert_equal 'No description available' "$__go_cmd_desc" 'command summary'
 
   __go_cmd_desc=''
-  _@go.command_description "$TEST_COMMAND_SCRIPT"
+  _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
   assert_success
   assert_equal 'No description available' "$__go_cmd_desc" 'command description'
 }
 
 @test "$SUITE: parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
-  _@go.command_summary "$TEST_COMMAND_SCRIPT"
+  _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
   assert_success
   assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
     'command summary'
@@ -75,7 +78,7 @@ teardown() {
   _GO_CMD='test-go'
   _GO_ROOTDIR='/foo/bar'
   COLUMNS=40
-  _@go.command_description "$TEST_COMMAND_SCRIPT"
+  _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
   assert_success
 
   local expected='Command that does something in /foo/bar
