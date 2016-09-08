@@ -23,8 +23,9 @@ teardown() {
 @test "$SUITE: tab completions" {
   run "$TEST_GO_SCRIPT" commands --complete 0
   local flags=('--paths' '--summaries')
+  local expected=("${flags[@]}" "${BUILTIN_CMDS[@]}")
   local IFS=$'\n'
-  assert_success "${flags[*]}"
+  assert_success "${expected[*]}"
 
   run "$TEST_GO_SCRIPT" commands --complete 0 --
   local flags=('--paths' '--summaries')
@@ -34,7 +35,67 @@ teardown() {
   local flags=('--paths')
   assert_success '--paths'
 
+  run "$TEST_GO_SCRIPT" commands --complete 0 --foo
+  assert_failure
+
   run "$TEST_GO_SCRIPT" commands --complete 1 --paths
+  assert_success "${BUILTIN_CMDS[*]}"
+
+  run "$TEST_GO_SCRIPT" commands --complete 1 --summaries
+  assert_success "${BUILTIN_CMDS[*]}"
+}
+
+@test "$SUITE: no tab completions for or after search paths" {
+  run "$TEST_GO_SCRIPT" commands --complete 0 "$TEST_GO_SCRIPTS_DIR"
+  assert_failure
+
+  run "$TEST_GO_SCRIPT" commands --complete 1 "$TEST_GO_SCRIPTS_DIR"
+  assert_failure
+}
+
+@test "$SUITE: tab complete subcommand" {
+  create_test_command_script 'foo'
+  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
+
+  local expected=('bar' 'baz' 'quux')
+  local subcommand
+
+  for subcommand in "${expected[@]}"; do
+    create_test_command_script "foo.d/$subcommand"
+  done
+
+  run "$TEST_GO_SCRIPT" commands --complete 1 foo
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" commands --complete 1 foo b
+  expected=('bar' 'baz')
+  assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" commands --complete 1 foo g
+  assert_failure
+
+  run "$TEST_GO_SCRIPT" commands --complete 2 foo bar
+  assert_failure
+}
+
+@test "$SUITE: only tab complete flags before other args" {
+  create_test_command_script 'foo'
+  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
+
+  local subcommands=('bar' 'baz' 'quux')
+  local subcommand
+
+  for subcommand in "${subcommands[@]}"; do
+    create_test_command_script "foo.d/$subcommand"
+  done
+
+  run "$TEST_GO_SCRIPT" commands --complete 0 '' foo
+  expected=('--paths' '--summaries')
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" commands --complete 1 foo '' bar
   assert_failure
 }
 
@@ -46,6 +107,11 @@ teardown() {
 @test "$SUITE: error if search path does not exist" {
   run "$TEST_GO_SCRIPT" commands "$TEST_GO_SCRIPTS_DIR:foo/bar"
   assert_failure "Command search path foo/bar does not exist."
+}
+
+@test "$SUITE: error if any arguments after search path" {
+  run "$TEST_GO_SCRIPT" commands "$TEST_GO_SCRIPTS_DIR" foo bar
+  assert_failure "Cannot specify any arguments after search paths."
 }
 
 @test "$SUITE: error if command is a shell alias" {
