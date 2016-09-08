@@ -72,16 +72,16 @@ teardown() {
   add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
   add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
 
+  local cmd_name
+
   mkdir "$TEST_GO_SCRIPTS_DIR/"{bar,baz,foo}.d
-  echo '#!' > "$TEST_GO_SCRIPTS_DIR/bar.d/child0"
-  echo '#!' > "$TEST_GO_SCRIPTS_DIR/baz.d/child1"
-  echo '#!' > "$TEST_GO_SCRIPTS_DIR/foo.d/child2"
-  chmod 700 "$TEST_GO_SCRIPTS_DIR/"{bar,baz,foo}.d/*
+  create_test_command_script 'bar.d/child0'
+  create_test_command_script 'baz.d/child1'
+  create_test_command_script 'foo.d/child2'
   mkdir "$TEST_GO_SCRIPTS_DIR/plugins/"{plugh,quux,xyzzy}.d
-  echo '#!' > "$TEST_GO_SCRIPTS_DIR/plugins/plugh.d/child3"
-  echo '#!' > "$TEST_GO_SCRIPTS_DIR/plugins/quux.d/child4"
-  echo '#!' > "$TEST_GO_SCRIPTS_DIR/plugins/xyzzy.d/child5"
-  chmod 700 "$TEST_GO_SCRIPTS_DIR/plugins/"{plugh,quux,xyzzy}.d/*
+  create_test_command_script 'plugins/plugh.d/child3'
+  create_test_command_script 'plugins/quux.d/child4'
+  create_test_command_script 'plugins/xyzzy.d/child5'
 
   run "$TEST_GO_SCRIPT" commands
   local IFS=$'\n'
@@ -138,25 +138,27 @@ generate_expected_paths() {
 }
 
 create_script_with_description() {
-  local cmd_dir="$1"
-  local cmd_name="$2"
-  local cmd_path="$cmd_dir/$cmd_name"
+  local script_path="$1"
+  local cmd_name="${script_path##*/}"
 
-  printf '#!\n#\n# Does %s stuff\n' "$cmd_name" > "$cmd_path"
-  chmod 700 "$cmd_path"
+  create_test_command_script "$script_path" \
+    '#' \
+    "# Does $cmd_name stuff"
 }
 
 @test "$SUITE: command summaries" {
   local user_commands=('bar' 'baz' 'foo')
 
   for cmd_name in "${user_commands[@]}"; do
-    create_script_with_description "$TEST_GO_SCRIPTS_DIR" "$cmd_name"
+    create_script_with_description "$cmd_name"
   done
 
   run "$TEST_GO_SCRIPT" commands --summaries "$TEST_GO_SCRIPTS_DIR"
   local IFS=$'\n'
   local expected=(
-    '  bar  Does bar stuff' '  baz  Does baz stuff' '  foo  Does foo stuff')
+    '  bar  Does bar stuff'
+    '  baz  Does baz stuff'
+    '  foo  Does foo stuff')
   assert_success "${expected[*]}"
 }
 
@@ -168,12 +170,12 @@ create_script_with_description() {
   local subcmd_name
 
   for cmd_name in "${top_level_commands[@]}"; do
-    create_script_with_description "$TEST_GO_SCRIPTS_DIR" "$cmd_name"
+    create_script_with_description "$cmd_name"
     subcmd_dir="$TEST_GO_SCRIPTS_DIR/$cmd_name.d"
     mkdir "$subcmd_dir"
 
     for subcmd_name in "${subcommands[@]}"; do
-      create_script_with_description "$subcmd_dir" "$subcmd_name"
+      create_script_with_description "$cmd_name.d/$subcmd_name"
     done
   done
 
@@ -181,13 +183,13 @@ create_script_with_description() {
   local IFS=$'\n'
   assert_success "${subcommands[*]}"
 
-  local __all_scripts=(
-    'scripts/foo.d/plugh' 'scripts/foo.d/quux' 'scripts/foo.d/xyzzy')
-  local __expected_paths=()
-  generate_expected_paths
+  local expected_paths=(
+    'plugh  scripts/foo.d/plugh'
+    'quux   scripts/foo.d/quux'
+    'xyzzy  scripts/foo.d/xyzzy')
 
   run "$TEST_GO_SCRIPT" commands --paths 'foo'
-  assert_success "${__expected_paths[*]}"
+  assert_success "${expected_paths[*]}"
 
   local expected_summaries=(
     '  plugh  Does plugh stuff'
