@@ -1,6 +1,13 @@
 #! /bin/bash
 #
 # Prints the path to the <command> script, [alias] or [builtin]
+#
+# Usage:
+#   {{go}} {{cmd}} <command>
+#
+# Will parse the command path out of a complete argument list and return the
+# path to the script relative to {{root}}. Aliases are identifed by a path of
+# `[alias]`. Builtin command paths are prefixed with `[builtin] `.
 
 _@go.path() {
   if [[ "$#" -ne '0' ]]; then
