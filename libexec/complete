@@ -104,12 +104,6 @@ _@go.complete_args() {
     compgen -f -- "$word"
     return
     ;;
-  plugins)
-    if [[ "$word_index" -eq '1' ]]; then
-      compgen -W "--paths --summaries" -- "$word"
-    fi
-    return
-    ;;
   -h|-help|--help|help|path)
     if [[ "$word_index" -eq '1' ]]; then
       compgen -W "$(_@go.all_commands)" -- "$word"

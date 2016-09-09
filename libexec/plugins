@@ -21,6 +21,15 @@
 # or add submodules if curl, wget, or git are present.
 
 _@go.plugins() {
+  if [[ "$1" == '--complete' ]]; then
+    # Tab completions
+    local word_index="$2"
+    if [[ "$word_index" -eq '0' ]]; then
+      compgen -W '--exists --summaries' -- "$3"
+    fi
+    return
+  fi
+
   . "$_GO_CORE_DIR/lib/path"
 
   if [[ -n "$_GO_PLUGINS_DIR" ]]; then
