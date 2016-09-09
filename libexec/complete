@@ -75,15 +75,11 @@ _@go.complete_command() {
   fi
 }
 
-_@go.all_commands() {
-  _@go.source_builtin 'aliases'
-  _@go.source_builtin 'commands'
-}
-
 _@go.complete_args() {
   local word_index="$1"
   shift
   local args=("$@")
+  . "$_GO_CORE_DIR/lib/complete"
 
   if [[ "${#args[@]}" -le '1' ]]; then
     case "${args[0]}" in
@@ -97,7 +93,7 @@ _@go.complete_args() {
       compgen -W "--help" -- "$1"
       ;;
     *)
-      compgen -W "$(_@go.all_commands)" -- "$1"
+      _@go.complete_top_level_commands "$1"
       ;;
     esac
     return
@@ -119,7 +115,7 @@ _@go.complete_args() {
     ;;
   -h|-help|--help|help|path)
     if [[ "$word_index" -eq '1' ]]; then
-      compgen -W "$(_@go.all_commands)" -- "$word"
+      _@go.complete_top_level_commands "$word"
       return
     fi
     cmd_name="${args[1]}"
