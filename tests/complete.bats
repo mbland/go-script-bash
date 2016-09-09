@@ -48,11 +48,17 @@ teardown() {
   run "$TEST_GO_SCRIPT" complete 1 pushd ''
   assert_success 'scripts'
 
-  run "$TEST_GO_SCRIPT" complete 1 cd 'scripts/'
+  local prev_IFS="$IFS"
   local IFS=$'\n'
-  assert_success "${subdirs[*]/#/scripts/}"
+  local expected=($(compgen -d "$TEST_GO_SCRIPTS_DIR/"))
+  IFS="$prev_IFS"
+  expected=("${expected[@]#$TEST_GO_ROOTDIR/}")
+
+  run "$TEST_GO_SCRIPT" complete 1 cd 'scripts/'
+  IFS=$'\n'
+  assert_success "${expected[*]}"
   run "$TEST_GO_SCRIPT" complete 1 pushd 'scripts/'
-  assert_success "${subdirs[*]/#/scripts/}"
+  assert_success "${expected[*]}"
 }
 
 @test "$SUITE: edit and run" {
@@ -61,7 +67,13 @@ teardown() {
   mkdir -p "${subdirs[@]/#/$TEST_GO_SCRIPTS_DIR/}"
   touch "${files[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
-  local top_level=('go' 'scripts')
+  local prevIFS="$IFS"
+  local IFS=$'\n'
+  local top_level=($(compgen -f "$TEST_GO_ROOTDIR/"))
+  local all_scripts_entries=($(compgen -f "$TEST_GO_SCRIPTS_DIR/"))
+  IFS="$prevIFS"
+  top_level=("${top_level[@]#$TEST_GO_ROOTDIR/}")
+  all_scripts_entries=("${all_scripts_entries[@]#$TEST_GO_ROOTDIR/}")
 
   run "$TEST_GO_SCRIPT" complete 1 edit ''
   local IFS=$'\n'
@@ -69,10 +81,9 @@ teardown() {
   run "$TEST_GO_SCRIPT" complete 1 run ''
   assert_success "${top_level[*]}"
 
-  local all_scripts_entries=("${subdirs[@]}" "${files[@]}")
 
   run "$TEST_GO_SCRIPT" complete 1 edit 'scripts/'
-  assert_success "${all_scripts_entries[*]/#/scripts/}"
+  assert_success "${all_scripts_entries[*]}"
   run "$TEST_GO_SCRIPT" complete 1 run 'scripts/'
-  assert_success "${all_scripts_entries[*]/#/scripts/}"
+  assert_success "${all_scripts_entries[*]}"
 }
