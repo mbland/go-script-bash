@@ -21,8 +21,6 @@ setup () {
 }
 
 @test "$SUITE: environment function forwards commands to script" {
-  . 'lib/env/bash'
-
   run _go_func 'help'
   assert_success
   assert_line_equals 0 'Usage: _go_func <command> [arguments...]'
