@@ -53,6 +53,14 @@ _@go.help_message_for_command() {
 }
 
 _@go.help() {
+  if [[ "$1" == '--complete' ]]; then
+    # Tab completions
+    shift
+    . "$_GO_CORE_DIR/lib/complete"
+    _@go.complete_command_path "$@"
+    return
+  fi
+
   if [[ "$#" -eq '0' ]]; then
     _@go.usage
   else

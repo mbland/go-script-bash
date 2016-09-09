@@ -39,39 +39,19 @@
 # explicitly implemented.
 
 _@go.complete_command() {
-  local word_index="$1"
-  shift
+  . "$_GO_CORE_DIR/lib/complete"
   exec 2>/dev/null
 
-  _@go.source_builtin 'path'
-
+  local __go_complete_word_index
   local __go_cmd_path
   local __go_argv
-  if ! _@go.set_command_path_and_argv "$@"; then
-    return 1
-  fi
-  (( word_index -= ($# - ${#__go_argv[@]}) ))
-
-  if [[ "$word_index" -lt '0' ]]; then
-    # This (sub)command itself is the completion target.
-    echo "${__go_cmd_path##*/}"
-    return
-
-  elif [[ "$word_index" -eq '0' ]]; then
-    # Automatically complete subcommand scripts.
-    local c
-    for c in "${__go_cmd_path}.d"/*; do
-      if [[ -f "$c" && -x "$c" ]]; then
-        echo "${c##*/}"
-      fi
-    done
-  fi
-
   local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n'$'\r'']'
 
-  if [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
-    _@go.run_command_script "$__go_cmd_path" --complete "$word_index" \
-      "${__go_argv[@]}"
+  if ! _@go.complete_command_path "$@"; then
+    return 1
+  elif [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
+    _@go.run_command_script "$__go_cmd_path" --complete \
+      "$__go_complete_word_index" "${__go_argv[@]}"
   fi
 }
 
@@ -113,14 +93,8 @@ _@go.complete_args() {
     compgen -f -- "$word"
     return
     ;;
-  -h|-help|--help|help|path)
-    if [[ "$word_index" -eq '1' ]]; then
-      _@go.complete_top_level_commands "$word"
-      return
-    fi
-    cmd_name="${args[1]}"
-    unset 'args[1]'
-    ((--word_index))
+  -h|-help|--help)
+    cmd_name='help'
     ;;
   -*|unenv)
     return 1

@@ -10,6 +10,14 @@
 # `[alias]`. Builtin command paths are prefixed with `[builtin] `.
 
 _@go.path() {
+  if [[ "$1" == '--complete' ]]; then
+    # Tab completions
+    shift
+    . "$_GO_CORE_DIR/lib/complete"
+    _@go.complete_command_path "$@"
+    return
+  fi
+
   if [[ "$#" -ne '0' ]]; then
     if _@go.source_builtin 'aliases' --exists "$1"; then
       echo '[alias]'
