@@ -38,7 +38,7 @@
 # added to the argument completions for `{{go}} <parent>` and do not need to be
 # explicitly implemented.
 
-_@go.command_completions() {
+_@go.complete_command() {
   local word_index="$1"
   shift
   exec 2>/dev/null
@@ -77,11 +77,10 @@ _@go.command_completions() {
 
 _@go.all_commands() {
   _@go.source_builtin 'aliases'
-  _@go.source_builtin 'builtins'
   _@go.source_builtin 'commands'
 }
 
-_@go.tab_completions() {
+_@go.complete_args() {
   local word_index="$1"
   shift
   local args=("$@")
@@ -131,8 +130,7 @@ _@go.tab_completions() {
   fi
 
   compgen -W \
-    "$(_@go.command_completions "$word_index" "$cmd_name" "${args[@]}")" \
-    -- "$word"
+    "$(_@go.complete_command "$word_index" "$cmd_name" "${args[@]}")" -- "$word"
 }
 
-_@go.tab_completions "$@"
+_@go.complete_args "$@"
