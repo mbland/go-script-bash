@@ -2,13 +2,18 @@
 #
 # Commands built directly into the core ./go script library
 #
-# Usage: {{go}} {{cmd}} [--exists <builtin>]
+# Usage:
+#   {{go}} {{cmd}} [--exists|--summaries] <command>
+#
+# Options:
+#   --exists     Check whether <command> is a builtin
+#   --summaries  List the summary for the specified builtin <command>
 #
 # To run a builtin command within {{root}}:
 #
-#   {{go}} <builtin> [...arguments...]
+#   {{go}} <command> [...arguments...]
 #
-# where <builtin> is one of the following built-in commands:
+# where <command> is one of the following built-in commands:
 #
 # {{_GO_BUILTIN_SUMMARIES}}
 #
@@ -68,7 +73,7 @@ _@go.builtins() {
     # Tab completions
     local word_index="$2"
     if [[ "$word_index" -eq '0' ]]; then
-      echo "--exists --summaries"
+      compgen -W '--exists --summaries' -- "$3"
     fi
     return
   fi

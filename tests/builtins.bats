@@ -11,11 +11,14 @@ load assertions
 }
 
 @test "$SUITE: tab completions" {
+  local expected=('--exists' '--summaries')
+  local IFS=$'\n'
+
   run ./go builtins --complete 0 ''
-  assert_success '--exists --summaries'
+  assert_success "${expected[*]}"
 
   run ./go builtins --complete 0 -
-  assert_success '--exists --summaries'
+  assert_success "${expected[*]}"
 
   run ./go builtins --complete 1 --exists
   assert_success ''
