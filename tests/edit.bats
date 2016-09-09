@@ -4,8 +4,7 @@ load environment
 load assertions
 
 @test "$SUITE: open file with EDITOR" {
-  local EDITOR='echo'
-  run ./go edit foo/bar/baz
+  run env EDITOR='echo' ./go edit foo/bar/baz
   assert_success 'foo/bar/baz'
 }
 
