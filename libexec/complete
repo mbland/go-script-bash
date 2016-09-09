@@ -113,8 +113,8 @@ _@go.complete_args() {
     unset 'args[1]'
     ((--word_index))
     ;;
-  -*)
-    return
+  -*|unenv)
+    return 1
     ;;
   esac
 

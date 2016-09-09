@@ -81,9 +81,16 @@ teardown() {
   run "$TEST_GO_SCRIPT" complete 1 run ''
   assert_success "${top_level[*]}"
 
-
   run "$TEST_GO_SCRIPT" complete 1 edit 'scripts/'
   assert_success "${all_scripts_entries[*]}"
   run "$TEST_GO_SCRIPT" complete 1 run 'scripts/'
   assert_success "${all_scripts_entries[*]}"
+}
+
+@test "$SUITE: unenv and unknown flag return errors" {
+  run "$TEST_GO_SCRIPT" complete 1 unenv ''
+  assert_failure ''
+
+  run "$TEST_GO_SCRIPT" complete 1 --foobar ''
+  assert_failure ''
 }
