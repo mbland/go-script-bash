@@ -14,6 +14,20 @@ teardown() {
   remove_test_go_rootdir
 }
 
+@test "$SUITE: complete help flag variations" {
+  run "$TEST_GO_SCRIPT" complete 0 -h
+  assert_success '-h'
+
+  run "$TEST_GO_SCRIPT" complete 0 -he
+  assert_success '-help'
+
+  run "$TEST_GO_SCRIPT" complete 0 -
+  assert_success '--help'
+
+  run "$TEST_GO_SCRIPT" complete 0 --
+  assert_success '--help'
+}
+
 @test "$SUITE: all top-level commands for zeroth or first argument" {
   # user_commands and plugin_commands must remain hand-sorted.
   local user_commands=('bar' 'baz' 'foo')

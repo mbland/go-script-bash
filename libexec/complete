@@ -86,7 +86,20 @@ _@go.complete_args() {
   local args=("$@")
 
   if [[ "${#args[@]}" -le '1' ]]; then
-    compgen -W "$(_@go.all_commands)" -- "$1"
+    case "${args[0]}" in
+    -h)
+      echo '-h'
+      ;;
+    -he*)
+      compgen -W "-help" -- "$1"
+      ;;
+    -|--*)
+      compgen -W "--help" -- "$1"
+      ;;
+    *)
+      compgen -W "$(_@go.all_commands)" -- "$1"
+      ;;
+    esac
     return
   fi
 
