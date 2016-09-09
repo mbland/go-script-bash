@@ -90,6 +90,10 @@ cd "$_GO_ROOTDIR"
     return 1
     ;;
   edit)
+    if [[ -z "$EDITOR" ]]; then
+      echo "Cannot edit $@: \$EDITOR not defined."
+      return 1
+    fi
     "$EDITOR" "$@"
     return
     ;;
