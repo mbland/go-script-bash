@@ -43,7 +43,7 @@ teardown() {
   assert_failure ''
 }
 
-@test "$SUITE: cd and pushd" {
+@test "$SUITE: cd and pushd complete directories" {
   local subdirs=('bar' 'baz' 'foo')
   local files=('plugh' 'quux' 'xyzzy')
   mkdir -p "${subdirs[@]/#/$TEST_GO_SCRIPTS_DIR/}"
@@ -67,7 +67,7 @@ teardown() {
   assert_success "${expected[*]}"
 }
 
-@test "$SUITE: edit and run" {
+@test "$SUITE: edit, run, and aliases complete directories and files" {
   local subdirs=('bar' 'baz' 'foo')
   local files=('plugh' 'quux' 'xyzzy')
   mkdir -p "${subdirs[@]/#/$TEST_GO_SCRIPTS_DIR/}"
@@ -86,17 +86,71 @@ teardown() {
   assert_success "${top_level[*]}"
   run "$TEST_GO_SCRIPT" complete 1 run ''
   assert_success "${top_level[*]}"
+  run "$TEST_GO_SCRIPT" complete 1 ls ''
+  assert_success "${top_level[*]}"
 
   run "$TEST_GO_SCRIPT" complete 1 edit 'scripts/'
   assert_success "${all_scripts_entries[*]}"
   run "$TEST_GO_SCRIPT" complete 1 run 'scripts/'
   assert_success "${all_scripts_entries[*]}"
+  run "$TEST_GO_SCRIPT" complete 1 ls 'scripts/'
+  assert_success "${all_scripts_entries[*]}"
 }
 
-@test "$SUITE: unenv and unknown flag return errors" {
+@test "$SUITE: unenv, unknown flags, and unknown commands return errors" {
   run "$TEST_GO_SCRIPT" complete 1 unenv ''
   assert_failure ''
 
   run "$TEST_GO_SCRIPT" complete 1 --foobar ''
   assert_failure ''
+
+  run "$TEST_GO_SCRIPT" complete 1 foobar ''
+  assert_failure ''
+}
+
+@test "$SUITE: invoke command script completion" {
+  create_test_command_script foo \
+    'if [[ "$1" == "--complete" ]]; then ' \
+    '  # Tab completions' \
+    '  local index="$2"' \
+    '  shift; shift' \
+    '  local args=("$@")' \
+    '  compgen -W "bar baz quux" -- "${args[$index]}"' \
+    'fi'
+
+  local expected=('bar' 'baz' 'quux')
+  local IFS=$'\n'
+  run "$TEST_GO_SCRIPT" complete 1 foo ''
+  assert_success "${expected[*]}"
+
+  expected=('bar' 'baz')
+  run "$TEST_GO_SCRIPT" complete 1 foo 'b'
+  assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" complete 1 foo 'x'
+  assert_failure ''
+}
+
+@test "$SUITE: command script completion not detected without comment" {
+  create_test_command_script foo \
+    'if [[ "$1" == "--complete" ]]; then ' \
+    '  local index="$2"' \
+    '  shift; shift' \
+    '  local args=("$@")' \
+    '  compgen -W "bar baz quux" -- "${args[$index]}"' \
+    'fi'
+
+  run "$TEST_GO_SCRIPT" complete 1 foo ''
+  assert_failure ''
+}
+
+@test "$SUITE: -h, -help, and --help invoke help command completion" {
+  run "$TEST_GO_SCRIPT" complete 1 -h 'complet'
+  assert_success 'complete'
+
+  run "$TEST_GO_SCRIPT" complete 1 -help 'complet'
+  assert_success 'complete'
+
+  run "$TEST_GO_SCRIPT" complete 1 --help 'complet'
+  assert_success 'complete'
 }

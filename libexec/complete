@@ -39,17 +39,16 @@
 # explicitly implemented.
 
 _@go.complete_command() {
-  . "$_GO_CORE_DIR/lib/complete"
-  exec 2>/dev/null
-
   local __go_complete_word_index
   local __go_cmd_path
   local __go_argv
   local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n'$'\r'']'
 
-  if ! _@go.complete_command_path "$@"; then
-    return 1
-  elif [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
+  . "$_GO_CORE_DIR/lib/complete"
+  exec 2>/dev/null
+
+  if _@go.complete_command_path "$@" &&
+    [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
     _@go.run_command_script "$__go_cmd_path" --complete \
       "$__go_complete_word_index" "${__go_argv[@]}"
   fi
