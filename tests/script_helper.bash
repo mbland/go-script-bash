@@ -21,23 +21,21 @@ TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
 # Also, directories on these file systems are always readable and executable.
 #
 # See commit 2794086bde1dc05193154211fe0577728031453c for more details.
-__check_fs_permission_support() {
-  set +o errexit
-  if [[ -z "$FS_MISSING_PERM_SUPPORT" ]]; then
+fs_missing_permission_support() {
+  if [[ -z "$FS_MISSING_PERMISSION_SUPPORT" ]]; then
     local check_perms_file="$BATS_TMPDIR/check_perms"
     touch "$check_perms_file"
     chmod 700 "$check_perms_file"
     if [[ ! -x "$check_perms_file" ]]; then
-      export FS_MISSING_PERM_SUPPORT="true"
+      export FS_MISSING_PERMISSION_SUPPORT="true"
     else
-      export FS_MISSING_PERM_SUPPORT="false"
+      export FS_MISSING_PERMISSION_SUPPORT="false"
     fi
     rm "$check_perms_file"
   fi
-  set -o errexit
-}
 
-__check_fs_permission_support
+  [[ "$FS_MISSING_PERMISSION_SUPPORT" == 'true' ]]
+}
 
 __create_test_dirs() {
   local test_dir

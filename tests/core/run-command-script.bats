@@ -46,7 +46,7 @@ teardown() {
 }
 
 @test "$SUITE: produce error if script doesn't contain an interpreter line" {
-  if [[ "$FS_MISSING_PERM_SUPPORT" == 'true' ]]; then
+  if fs_missing_permission_support; then
     # The executable check will fail first because there's no `#!` line.
     skip "Can't trigger condition on this file system"
   fi
