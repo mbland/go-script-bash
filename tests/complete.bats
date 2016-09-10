@@ -118,6 +118,9 @@ teardown() {
     '  compgen -W "bar baz quux" -- "${args[$index]}"' \
     'fi'
 
+  run "$TEST_GO_SCRIPT" complete 0 foo
+  assert_success 'foo'
+
   local expected=('bar' 'baz' 'quux')
   local IFS=$'\n'
   run "$TEST_GO_SCRIPT" complete 1 foo ''
@@ -126,6 +129,9 @@ teardown() {
   expected=('bar' 'baz')
   run "$TEST_GO_SCRIPT" complete 1 foo 'b'
   assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" complete 2 foo 'b' 'q'
+  assert_success 'quux'
 
   run "$TEST_GO_SCRIPT" complete 1 foo 'x'
   assert_failure ''
@@ -140,8 +146,50 @@ teardown() {
     '  compgen -W "bar baz quux" -- "${args[$index]}"' \
     'fi'
 
+  run "$TEST_GO_SCRIPT" complete 0 foo
+  assert_success 'foo'
+
   run "$TEST_GO_SCRIPT" complete 1 foo ''
   assert_failure ''
+}
+
+@test "$SUITE: subcommand script completion" {
+  create_test_command_script foo \
+    'if [[ "$1" == "--complete" ]]; then ' \
+    '  # Tab completions' \
+    '  local index="$2"' \
+    '  shift; shift' \
+    '  local args=("$@")' \
+    '  compgen -W "baz quux" -- "${args[$index]}"' \
+    'fi'
+
+  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
+
+  create_test_command_script foo.d/bar \
+    'if [[ "$1" == "--complete" ]]; then ' \
+    '  # Tab completions' \
+    '  local index="$2"' \
+    '  shift; shift' \
+    '  local args=("$@")' \
+    '  compgen -W "plugh xyzzy" -- "${args[$index]}"' \
+    'fi'
+
+  run "$TEST_GO_SCRIPT" complete 0 foo
+  assert_success 'foo'
+
+  # Note that 'bar' should show up automatically because it is in foo.d, even
+  # though it isn't in the compgen word list inside foo.
+  local expected=('bar' 'baz' 'quux')
+  local IFS=$'\n'
+  run "$TEST_GO_SCRIPT" complete 1 foo ''
+  assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" complete 1 foo bar
+  assert_success 'bar'
+
+  local expected=('plugh' 'xyzzy')
+  run "$TEST_GO_SCRIPT" complete 2 foo bar ''
+  assert_success "${expected[*]}"
 }
 
 @test "$SUITE: -h, -help, and --help invoke help command completion" {
