@@ -22,18 +22,41 @@ assert_equal() {
   fi
 }
 
-assert_output() {
+assert_matches() {
+  local pattern="$1"
+  local value="$2"
+  local label="$3"
+
+  if [[ ! "$value" =~ $pattern ]]; then
+    printf "%s does not match expected pattern:\n  %s\n  %s\n" \
+      "$label" "pattern: '$pattern'" "value:   '$value'" >&2
+    return 1
+  fi
+}
+
+__evaluate_output() {
+  local assertion="$1"
+  shift
+
   if [[ "$#" -eq '0' ]]; then
     return
   elif [[ "$#" -ne 1 ]]; then
-    echo "ERROR: ${FUNCNAME[0]} takes only one argument" >&2
+    echo "ERROR: ${FUNCNAME[1]} takes only one argument" >&2
     return 1
   fi
   set +o functrace
-  assert_equal "$1" "$output" 'output'
+  "$assertion" "$1" "$output" 'output'
   local result="$?"
   set -o functrace
   return "$result"
+}
+
+assert_output() {
+  __evaluate_output 'assert_equal' "$@"
+}
+
+assert_output_matches() {
+  __evaluate_output 'assert_matches' "$@"
 }
 
 assert_status() {
@@ -74,9 +97,10 @@ assert_failure() {
   return "$result"
 }
 
-assert_line_equals() {
-  local lineno="$1"
-  local expected="$2"
+__evaluate_line() {
+  local assertion="$1"
+  local lineno="$2"
+  local constraint="$3"
 
   # Implement negative indices for Bash 3.x.
   if [[ "${lineno:0:1}" == '-' ]]; then
@@ -84,12 +108,28 @@ assert_line_equals() {
   fi
 
   set +o functrace
-  assert_equal "$expected" "${lines[$lineno]}" "line $lineno"
+  "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"
   local result="$?"
   set -o functrace
 
   if [[ "$result" -ne '0' ]]; then
     printf "OUTPUT:\n$output\n" >&2
   fi
+  return "$result"
+}
+
+assert_line_equals() {
+  set +o functrace
+  __evaluate_line 'assert_equal' "$@" 
+  local result="$?"
+  set -o functrace
+  return "$result"
+}
+
+assert_line_matches() {
+  set +o functrace
+  __evaluate_line 'assert_matches' "$@" 
+  local result="$?"
+  set -o functrace
   return "$result"
 }

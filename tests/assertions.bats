@@ -35,6 +35,23 @@ echo_fail() {
   [[ -z "${lines[3]}" ]]
 }
 
+@test "$SUITE: assert_matches success" {
+  run echo 'Hello, world!'
+  run assert_matches 'o, w' "$output" 'echo result'
+  [[ "$status" -eq '0' ]]
+  [[ -z "$output" ]]
+}
+
+@test "$SUITE: assert_matches failure" {
+  run echo 'Hello, world!'
+  run assert_matches 'e, w' "$output" 'echo result'
+  [[ "$status" -eq '1' ]]
+  [[ "${lines[0]}" == 'echo result does not match expected pattern:' ]]
+  [[ "${lines[1]}" == "  pattern: 'e, w'" ]]
+  [[ "${lines[2]}" == "  value:   'Hello, world!'" ]]
+  [[ -z "${lines[3]}" ]]
+}
+
 @test "$SUITE: assert_output success if null expected value" {
   run echo 'Hello, world!'
   run assert_output
@@ -81,6 +98,23 @@ echo_fail() {
   run assert_output 'Hello,' 'world!'
   [[ "$status" -eq '1' ]]
   [[ "$output" == 'ERROR: assert_output takes only one argument' ]]
+}
+
+@test "$SUITE: assert_output_matches success" {
+  run echo 'Hello, world!'
+  run assert_output_matches 'o, w'
+  [[ "$status" -eq '0' ]]
+  [[ -z "$output" ]]
+}
+
+@test "$SUITE: assert_output_matches failure" {
+  run echo 'Hello, world!'
+  run assert_output_matches 'e, w'
+  [[ "$status" -eq '1' ]]
+  [[ "${lines[0]}" == 'output does not match expected pattern:' ]]
+  [[ "${lines[1]}" == "  pattern: 'e, w'" ]]
+  [[ "${lines[2]}" == "  value:   'Hello, world!'" ]]
+  [[ -z "${lines[3]}" ]]
 }
 
 @test "$SUITE: assert_status" {
@@ -191,6 +225,25 @@ echo_fail() {
   [[ "${lines[0]}" == 'line 0 not equal to expected value:' ]]
   [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
   [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
+  [[ "${lines[3]}" == 'OUTPUT:' ]]
+  [[ "${lines[4]}" == 'Hello, world!' ]]
+  [[ -z "${lines[5]}" ]]
+}
+
+@test "$SUITE: assert_line_matches" {
+  run echo 'Hello, world!'
+  run assert_line_matches 0 'o, w'
+  [[ "$status" -eq '0' ]]
+  [[ -z "$output" ]]
+}
+
+@test "$SUITE: assert_line_matches failure" {
+  run echo 'Hello, world!'
+  run assert_line_matches 0 'e, w'
+  [[ "$status" -eq '1' ]]
+  [[ "${lines[0]}" == 'line 0 does not match expected pattern:' ]]
+  [[ "${lines[1]}" == "  pattern: 'e, w'" ]]
+  [[ "${lines[2]}" == "  value:   'Hello, world!'" ]]
   [[ "${lines[3]}" == 'OUTPUT:' ]]
   [[ "${lines[4]}" == 'Hello, world!' ]]
   [[ -z "${lines[5]}" ]]
