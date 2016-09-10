@@ -44,19 +44,25 @@ __evaluate_output() {
     echo "ERROR: ${FUNCNAME[1]} takes only one argument" >&2
     return 1
   fi
-  set +o functrace
   "$assertion" "$1" "$output" 'output'
+  local result="$?"
+  return "$result"
+}
+
+assert_output() {
+  set +o functrace
+  __evaluate_output 'assert_equal' "$@"
   local result="$?"
   set -o functrace
   return "$result"
 }
 
-assert_output() {
-  __evaluate_output 'assert_equal' "$@"
-}
-
 assert_output_matches() {
+  set +o functrace
   __evaluate_output 'assert_matches' "$@"
+  local result="$?"
+  set -o functrace
+  return "$result"
 }
 
 assert_status() {
