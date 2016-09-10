@@ -87,7 +87,7 @@ teardown() {
   run env SHELL='bash' "$go_script" env -
   assert_success
   assert_line_equals 3 '_my-go() {'
-  assert_output_matches $'\n''my-go\() {'
+  assert_output_matches $'\n''my-go\() \{'
   assert_line_equals -1 'complete -o filenames -F _my-go my-go'
 }
 
@@ -95,6 +95,6 @@ teardown() {
   run env SHELL='bash' "$TEST_GO_SCRIPT" env go-do
   assert_success
   assert_line_equals 3 '_go-do() {'
-  assert_output_matches $'\n''go-do\() {'
+  assert_output_matches $'\n''go-do\() \{'
   assert_line_equals -1 'complete -o filenames -F _go-do go-do'
 }
