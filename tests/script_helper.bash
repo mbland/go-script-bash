@@ -73,6 +73,19 @@ create_test_command_script() {
   __create_test_script "$script_path" "$@"
 }
 
+create_parent_and_subcommands() {
+  local parent="$1"
+  shift
+  create_test_command_script "$parent"
+
+  local subcommand
+  mkdir "$TEST_GO_SCRIPTS_DIR/$parent.d"
+
+  for subcommand in "$@"; do
+    create_test_command_script "$parent.d/$subcommand"
+  done
+}
+
 remove_test_go_rootdir() {
   chmod -R u+rwx "$TEST_GO_ROOTDIR"
   rm -rf "$TEST_GO_ROOTDIR"

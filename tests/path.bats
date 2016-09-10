@@ -4,23 +4,42 @@ load environment
 load assertions
 load script_helper
 
+setup() {
+  create_test_go_script '@go "$@"'
+}
+
 teardown() {
   remove_test_go_rootdir
 }
 
+@test "$SUITE: tab completion" {
+  local subcommands=('plugh' 'quux' 'xyzzy')
+  create_parent_and_subcommands foo "${subcommands[@]}"
+  run "$TEST_GO_SCRIPT" path --complete 0 'foo'
+  assert_success 'foo'
+
+  local IFS=$'\n'
+  run "$TEST_GO_SCRIPT" path --complete 1 'foo' ''
+  assert_success "${subcommands[*]}"
+
+  run "$TEST_GO_SCRIPT" path --complete 1 'foo' 'q'
+  assert_success 'quux'
+}
+
 @test "$SUITE: shell alias" {
-  run ./go path cd
+  run "$TEST_GO_SCRIPT" path cd
   assert_success '[alias]'
 }
 
 @test "$SUITE: builtin path" {
-  run ./go path path
-  assert_success "[builtin] libexec/path"
+  run "$TEST_GO_SCRIPT" path path
+  assert_success "[builtin] $_GO_ROOTDIR/libexec/path"
 }
 
 @test "$SUITE: user script path" {
-  run ./go path test
-  assert_success "scripts/test"
+  create_test_command_script foo
+  run "$TEST_GO_SCRIPT" path foo
+  assert_success "scripts/foo"
 }
 
 @test "$SUITE: user subcommand script with arguments" {
@@ -35,7 +54,7 @@ teardown() {
 }
 
 @test "$SUITE: error if command doesn't exist" {
-  run ./go path foo
+  run "$TEST_GO_SCRIPT" path foo
   assert_failure
   assert_line_equals 0 'Unknown command: foo'
 }

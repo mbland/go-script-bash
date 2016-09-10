@@ -101,19 +101,6 @@ assert_outputs_match() {
   assert_outputs_match
 }
 
-create_parent_and_subcommands() {
-  local parent="$1"
-  shift
-  create_test_command_script "$parent"
-
-  local subcommand
-  mkdir "$TEST_GO_SCRIPTS_DIR/$parent.d"
-
-  for subcommand in "$@"; do
-    create_test_command_script "$parent.d/$subcommand"
-  done
-}
-
 @test "$SUITE: complete parent command" {
   create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 

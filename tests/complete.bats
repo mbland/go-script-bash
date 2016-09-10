@@ -29,25 +29,17 @@ teardown() {
 }
 
 @test "$SUITE: all top-level commands for zeroth or first argument" {
-  # user_commands and plugin_commands must remain hand-sorted.
-  local user_commands=('bar' 'baz' 'foo')
-  local plugin_commands=('plugh' 'quux' 'xyzzy')
-  local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
-
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
-
   # Aliases will get printed before all other commands.
-  __all_scripts=("$(./go 'aliases')" "${__all_scripts[@]}")
+  local __all_commands=("$(./go 'aliases')" "${BUILTIN_CMDS[@]}")
 
   run "$TEST_GO_SCRIPT" complete 0
   local IFS=$'\n'
-  assert_success "${__all_scripts[*]##*/}"
+  assert_success "${__all_commands[*]}"
 
-  run "$TEST_GO_SCRIPT" complete 0 xyz
-  assert_success 'xyzzy'
+  run "$TEST_GO_SCRIPT" complete 0 complete
+  assert_success 'complete'
 
-  run "$TEST_GO_SCRIPT" complete 0 xyzzy-not
+  run "$TEST_GO_SCRIPT" complete 0 complete-not
   assert_failure ''
 }
 
