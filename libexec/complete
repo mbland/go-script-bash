@@ -59,10 +59,13 @@ _@go.complete_args() {
   local word_index="$1"
   shift
   local args=("$@")
+  local cmd_name="${args[0]}"
+  local word="${args[$word_index]}"
+
   . "$_GO_CORE_DIR/lib/complete"
 
-  if [[ "${#args[@]}" -le '1' ]]; then
-    case "${args[0]}" in
+  if [[ "$word_index" -eq '0' ]]; then
+    case "$cmd_name" in
     -h)
       echo '-h'
       ;;
@@ -78,11 +81,6 @@ _@go.complete_args() {
     esac
     return
   fi
-
-  local cmd_name="${args[0]}"
-  local word="${args[$word_index]}"
-
-  unset 'args[0]'
 
   case "$cmd_name" in
   cd|pushd)
@@ -106,6 +104,7 @@ _@go.complete_args() {
     return
   fi
 
+  unset 'args[0]'
   compgen -W \
     "$(_@go.complete_command "$word_index" "$cmd_name" "${args[@]}")" -- "$word"
 }
