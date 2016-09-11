@@ -38,7 +38,6 @@ teardown() {
 @test "$SUITE: error if the ./go script file name contains spaces" {
   local go_script="$TEST_GO_ROOTDIR/go script"
   mv "$TEST_GO_SCRIPT" "$go_script"
-  [[ "$?" -eq '0' ]]
 
   run env SHELL='bash' "$go_script" env
   assert_failure
@@ -51,7 +50,6 @@ teardown() {
 @test "$SUITE: show usage if no function name argument" {
   local go_script="$TEST_GO_ROOTDIR/my-go"
   mv "$TEST_GO_SCRIPT" "$go_script"
-  [[ "$?" -eq '0' ]]
 
   run env SHELL='bash' "$go_script" env
   assert_success
@@ -61,11 +59,9 @@ teardown() {
 
 @test "$SUITE: error if shell impl doesn't contain eval line" {
   echo '' > "$_GO_ROOTDIR/lib/env/badsh"
-  [[ "$?" -eq '0' ]]
 
   run env SHELL='badsh' "$TEST_GO_SCRIPT" env
   rm "$_GO_ROOTDIR/lib/env/badsh"
-  [[ "$?" -eq '0' ]]
 
   assert_failure
   local expected="ERROR: .*badsh must contain a line of the form "
@@ -83,7 +79,6 @@ teardown() {
   local script_name='never-collide-with-test-environment-go'
   local go_script="$TEST_GO_ROOTDIR/$script_name"
   mv "$TEST_GO_SCRIPT" "$go_script"
-  [[ "$?" -eq '0' ]]
 
   run env SHELL='bash' "$go_script" env -
   assert_success
