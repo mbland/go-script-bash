@@ -5,12 +5,41 @@
 # Felt the need for this after several Travis breakages without helpful output,
 # then stole some inspiration from rbenv/test/test_helper.bash.
 
+# Any assertion calls this function directly must call `set +o functrace` first.
+__return_from_bats_assertion() {
+  set +o errexit
+  local result="${1:-0}"
+  local i
+
+  for ((i=0; i != ${#BATS_CURRENT_STACK_TRACE[0]}; ++i)) do
+    if [[ "${BATS_CURRENT_STACK_TRACE[$i]}" =~ $BASH_SOURCE ]]; then
+      unset "BATS_CURRENT_STACK_TRACE[$i]"
+    else
+      break
+    fi
+  done
+
+  for ((i=0; i != ${#BATS_PREVIOUS_STACK_TRACE[0]}; ++i)) do
+    if [[ "${BATS_PREVIOUS_STACK_TRACE[$i]}" =~ $BASH_SOURCE ]]; then
+      unset "BATS_PREVIOUS_STACK_TRACE[$i]"
+    else
+      break
+    fi
+  done
+
+  set -o errexit
+  set -o functrace
+  return "$result"
+}
+
 fail() {
+  set +o functrace
   printf "STATUS: ${status}\nOUTPUT:\n${output}\n" >&2
-  return 1
+  __return_from_bats_assertion 1
 }
 
 assert_equal() {
+  set +o functrace
   local expected="$1"
   local actual="$2"
   local label="$3"
@@ -18,11 +47,13 @@ assert_equal() {
   if [[ "$expected" != "$actual" ]]; then
     printf "%s not equal to expected value:\n  %s\n  %s\n" \
       "$label" "expected: '$expected'" "actual:   '$actual'" >&2
-    return 1
+    __return_from_bats_assertion 1
   fi
+  __return_from_bats_assertion
 }
 
 assert_matches() {
+  set +o functrace
   local pattern="$1"
   local value="$2"
   local label="$3"
@@ -30,80 +61,58 @@ assert_matches() {
   if [[ ! "$value" =~ $pattern ]]; then
     printf "%s does not match expected pattern:\n  %s\n  %s\n" \
       "$label" "pattern: '$pattern'" "value:   '$value'" >&2
-    return 1
+    __return_from_bats_assertion 1
   fi
+  __return_from_bats_assertion
 }
 
-__evaluate_output() {
+__assert_output() {
+  set +o functrace
   local assertion="$1"
   shift
 
+  unset 'BATS_CURRENT_STACK_TRACE[0]'
   if [[ "$#" -eq '0' ]]; then
-    return
+    __return_from_bats_assertion
   elif [[ "$#" -ne 1 ]]; then
     echo "ERROR: ${FUNCNAME[1]} takes only one argument" >&2
-    return 1
+    __return_from_bats_assertion 1
   fi
   "$assertion" "$1" "$output" 'output'
-  local result="$?"
-  return "$result"
 }
 
 assert_output() {
-  set +o functrace
-  __evaluate_output 'assert_equal' "$@"
-  local result="$?"
-  set -o functrace
-  return "$result"
+  __assert_output 'assert_equal' "$@"
 }
 
 assert_output_matches() {
-  set +o functrace
-  __evaluate_output 'assert_matches' "$@"
-  local result="$?"
-  set -o functrace
-  return "$result"
+  __assert_output 'assert_matches' "$@"
 }
 
 assert_status() {
-  set +o functrace
   assert_equal "$1" "$status" "exit status"
-  local result="$?"
-  set -o functrace
-  return "$result"
 }
 
 assert_success() {
   if [[ "$status" -ne '0' ]]; then
     printf 'expected success, but command failed\n' >&2
-    set +o functrace
     fail
-    set -o functrace
-    return 1
+  elif [[ "$#" -ne 0 ]]; then
+    assert_output "$@"
   fi
-  set +o functrace
-  assert_output "$@"
-  local result="$?"
-  set -o functrace
-  return "$result"
 }
 
 assert_failure() {
   if [[ "$status" -eq '0' ]]; then
     printf 'expected failure, but command succeeded\n' >&2
-    set +o functrace
     fail
-    set -o functrace
-    return 1
+  elif [[ "$#" -ne 0 ]]; then
+    assert_output "$@"
   fi
-  set +o functrace
-  assert_output "$@"
-  local result="$?"
-  set -o functrace
-  return "$result"
 }
 
-__evaluate_line() {
+__assert_line() {
+  set +o functrace
   local assertion="$1"
   local lineno="$2"
   local constraint="$3"
@@ -113,29 +122,17 @@ __evaluate_line() {
     lineno="$((${#lines[@]} - ${lineno:1}))"
   fi
 
-  set +o functrace
-  "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"
-  local result="$?"
-  set -o functrace
-
-  if [[ "$result" -ne '0' ]]; then
+  if ! "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"; then
     printf "OUTPUT:\n$output\n" >&2
+    __return_from_bats_assertion 1
   fi
-  return "$result"
+  __return_from_bats_assertion
 }
 
 assert_line_equals() {
-  set +o functrace
-  __evaluate_line 'assert_equal' "$@" 
-  local result="$?"
-  set -o functrace
-  return "$result"
+  __assert_line 'assert_equal' "$@"
 }
 
 assert_line_matches() {
-  set +o functrace
-  __evaluate_line 'assert_matches' "$@" 
-  local result="$?"
-  set -o functrace
-  return "$result"
+  __assert_line 'assert_matches' "$@"
 }

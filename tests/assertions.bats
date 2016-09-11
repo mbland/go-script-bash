@@ -3,248 +3,303 @@
 load environment
 load assertions
 
-echo_fail() {
-  echo "$@"
-  return 1
+TEST_SCRIPT="$BATS_TMPDIR/do_test.bats"
+FAILING_TEST_SCRIPT="$BATS_TMPDIR/fail.bash"
+
+setup() {
+  cp "$BATS_TEST_DIRNAME/assertions.bash" "$BATS_TMPDIR"
+}
+
+teardown() {
+  rm -f "$TEST_SCRIPT" "$BATS_TMPDIR/assertions.bash" "$FAILING_TEST_SCRIPT"
+}
+
+run_test_script() {
+  local lines=('#! /usr/bin/env bats'
+    "load assertions"
+    "@test \"$BATS_TEST_DESCRIPTION\" {"
+    "$@"
+    '}')
+
+  local IFS=$'\n'
+  echo "${lines[*]}" > "$TEST_SCRIPT"
+  chmod 700 "$TEST_SCRIPT"
+  run "$TEST_SCRIPT"
+}
+
+write_failing_test_script() {
+  echo '#! /usr/bin/env bash' >"$FAILING_TEST_SCRIPT"
+  echo 'echo "$@"; exit 1' >>"$FAILING_TEST_SCRIPT"
+  chmod 700 "$FAILING_TEST_SCRIPT"
+}
+
+check_passing_status() {
+  if [[ "$status" -ne 0 ]]; then
+    printf "Expected passing status, actual %d\nOutput:\n%s\n" \
+      "$status" "$output"
+    return 1
+  fi
+
+  local __expected_output=('1..1' "ok 1 $BATS_TEST_DESCRIPTION")
+  check_expected_output
+}
+
+check_failing_status_and_output() {
+  local expected_status="$1"
+  local assertion="$2"
+  shift
+  shift
+
+  if [[ "$status" -ne "$expected_status" ]]; then
+    printf "Expected status %d, actual %d\nOutput:\n%s\n" \
+      "$expected_status" "$status" "$output"
+    return 1
+  fi
+
+  local __expected_output=('1..1'
+    "not ok 1 $BATS_TEST_DESCRIPTION"
+    "# (in test file $TEST_SCRIPT, line 5)"
+    "#   \`$assertion' failed"
+    "$@")
+  check_expected_output
+}
+
+check_expected_output() {
+  local IFS=$'\n'
+
+  if [[ "$output" != "${__expected_output[*]}" ]]; then
+    printf 'EXPECTED:\n%s\n-------\nACTUAL:\n%s\n' \
+      "${__expected_output[*]}" "$output" >&2
+    return 1
+  fi
 }
 
 @test "$SUITE: fail prints status and output, returns error" {
-  run echo 'Hello, world!'
-  run fail
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'STATUS: 0' ]]
-  [[ "${lines[1]}" == 'OUTPUT:' ]]
-  [[ "${lines[2]}" == 'Hello, world!' ]]
-  [[ -z "${lines[3]}" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    'fail'
+  check_failing_status_and_output 1 'fail' \
+    '# STATUS: 0' \
+    '# OUTPUT:' \
+    '# Hello, world!'
 }
 
 @test "$SUITE: assert_equal success" {
-  run echo 'Hello, world!'
-  run assert_equal 'Hello, world!' "$output" "echo result"
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    'assert_equal "Hello, world!" "$output" "echo result"'
+  check_passing_status
 }
 
 @test "$SUITE: assert_equal failure" {
-  run echo 'Hello, world!'
-  run assert_equal 'Goodbye, world!' "$output" "echo result"
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'echo result not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion='assert_equal "Goodbye, world!" "$output" "echo result"'
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# echo result not equal to expected value:' \
+    "#   expected: 'Goodbye, world!'" \
+    "#   actual:   'Hello, world!'"
 }
 
 @test "$SUITE: assert_matches success" {
-  run echo 'Hello, world!'
-  run assert_matches 'o, w' "$output" 'echo result'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    'assert_matches "o, w" "$output" "echo result"'
+  check_passing_status
 }
 
 @test "$SUITE: assert_matches failure" {
-  run echo 'Hello, world!'
-  run assert_matches 'e, w' "$output" 'echo result'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'echo result does not match expected pattern:' ]]
-  [[ "${lines[1]}" == "  pattern: 'e, w'" ]]
-  [[ "${lines[2]}" == "  value:   'Hello, world!'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion='assert_matches "e, w" "$output" "echo result"'
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# echo result does not match expected pattern:' \
+    "#   pattern: 'e, w'" \
+    "#   value:   'Hello, world!'"
 }
 
 @test "$SUITE: assert_output success if null expected value" {
-  run echo 'Hello, world!'
-  run assert_output
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script 'run :' \
+    'assert_output'
+  check_passing_status
 }
 
 @test "$SUITE: assert_output success" {
-  run echo 'Hello, world!'
-  run assert_output 'Hello, world!'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_output 'Hello, world!'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_output fail output check" {
-  run echo 'Hello, world!'
-  run assert_output 'Goodbye, world!'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion="assert_output 'Goodbye, world!'"
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# output not equal to expected value:' \
+    "#   expected: 'Goodbye, world!'" \
+    "#   actual:   'Hello, world!'"
 }
 
 @test "$SUITE: assert_output empty string check" {
-  run echo
-  run assert_output ''
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script 'run echo' \
+    'assert_output ""'
+  check_passing_status
 }
 
 @test "$SUITE: assert_output fail empty string check" {
-  run echo 'Not empty'
-  run assert_output ''
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: ''" ]]
-  [[ "${lines[2]}" == "  actual:   'Not empty'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion="assert_output ''"
+  run_test_script 'run echo "Not empty"' \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# output not equal to expected value:' \
+    "#   expected: ''" \
+    "#   actual:   'Not empty'"
 }
 
 @test "$SUITE: assert_output fails if more than one argument" {
-  run echo 'Hello, world!'
-  run assert_output 'Hello,' 'world!'
-  [[ "$status" -eq '1' ]]
-  [[ "$output" == 'ERROR: assert_output takes only one argument' ]]
+  local assertion="assert_output 'Hello,' 'world!'"
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# ERROR: assert_output takes only one argument'
 }
 
 @test "$SUITE: assert_output_matches success" {
-  run echo 'Hello, world!'
-  run assert_output_matches 'o, w'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_output_matches 'o, w'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_output_matches failure" {
-  run echo 'Hello, world!'
-  run assert_output_matches 'e, w'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'output does not match expected pattern:' ]]
-  [[ "${lines[1]}" == "  pattern: 'e, w'" ]]
-  [[ "${lines[2]}" == "  value:   'Hello, world!'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion="assert_output_matches 'e, w'"
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# output does not match expected pattern:' \
+    "#   pattern: 'e, w'" \
+    "#   value:   'Hello, world!'"
 }
 
 @test "$SUITE: assert_status" {
-  run echo 'Hello, world!'
-  run assert_status '0'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_status '0'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_status failure" {
-  run echo 'Hello, world!'
-  run assert_status '1'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'exit status not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: '1'" ]]
-  [[ "${lines[2]}" == "  actual:   '0'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion="assert_status '1'"
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# exit status not equal to expected value:' \
+    "#   expected: '1'" \
+    "#   actual:   '0'"
 }
 
 @test "$SUITE: assert_success without output check" {
-  run echo 'Hello, world!'
-  run assert_success
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    'assert_success'
+  check_passing_status
 }
 
 @test "$SUITE: assert_success failure" {
-  run echo_fail 'Hello, world!'
-  run assert_success
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'expected success, but command failed' ]]
-  [[ "${lines[1]}" == 'STATUS: 1' ]]
-  [[ "${lines[2]}" == 'OUTPUT:' ]]
-  [[ "${lines[3]}" == 'Hello, world!' ]]
-  [[ -z "${lines[4]}" ]]
+  local assertion='assert_success'
+  write_failing_test_script
+  run_test_script "run '$FAILING_TEST_SCRIPT' 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# expected success, but command failed' \
+    '# STATUS: 1' \
+    '# OUTPUT:' \
+    '# Hello, world!'
 }
 
 @test "$SUITE: assert_success with output check" {
-  run echo 'Hello, world!'
-  run assert_success 'Hello, world!'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_success 'Hello, world!'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_success output check failure" {
-  run echo 'Hello, world!'
-  run assert_success 'Goodbye, world!'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion="assert_success 'Goodbye, world!'"
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# output not equal to expected value:' \
+    "#   expected: 'Goodbye, world!'" \
+    "#   actual:   'Hello, world!'"
 }
 
 @test "$SUITE: assert_failure without output check" {
-  run echo_fail 'Hello, world!'
-  run assert_failure
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  write_failing_test_script
+  run_test_script "run '$FAILING_TEST_SCRIPT' 'Hello, world!'" \
+    'assert_failure'
+  check_passing_status
 }
 
 @test "$SUITE: assert_failure failure" {
-  run echo 'Hello, world!'
-  run assert_failure
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'expected failure, but command succeeded' ]]
-  [[ "${lines[1]}" == 'STATUS: 0' ]]
-  [[ "${lines[2]}" == 'OUTPUT:' ]]
-  [[ "${lines[3]}" == 'Hello, world!' ]]
-  [[ -z "${lines[4]}" ]]
+  local assertion='assert_failure'
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# expected failure, but command succeeded' \
+    '# STATUS: 0' \
+    '# OUTPUT:' \
+    '# Hello, world!'
 }
 
 @test "$SUITE: assert_failure with output check" {
-  run echo_fail 'Hello, world!'
-  run assert_failure 'Hello, world!'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  write_failing_test_script
+  run_test_script "run '$FAILING_TEST_SCRIPT' 'Hello, world!'" \
+    "assert_failure 'Hello, world!'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_failure output check failure" {
-  run echo_fail 'Hello, world!'
-  run assert_failure 'Goodbye, world!'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'output not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
-  [[ -z "${lines[3]}" ]]
+  local assertion="assert_failure 'Goodbye, world!'"
+  write_failing_test_script
+  run_test_script "run '$FAILING_TEST_SCRIPT' 'Hello, world!'" \
+    "$assertion"
+  check_failing_status_and_output 1 "$assertion" \
+    '# output not equal to expected value:' \
+    "#   expected: 'Goodbye, world!'" \
+    "#   actual:   'Hello, world!'"
 }
 
 @test "$SUITE: assert_line_equals" {
-  run echo 'Hello, world!'
-  run assert_line_equals 0 'Hello, world!'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_line_equals 0 'Hello, world!'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_line_equals with negative index" {
-  run echo 'Hello, world!'
-  run assert_line_equals -1 'Hello, world!'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_line_equals -1 'Hello, world!'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_line_equals failure" {
-  run echo 'Hello, world!'
-  run assert_line_equals 0 'Goodbye, world!'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'line 0 not equal to expected value:' ]]
-  [[ "${lines[1]}" == "  expected: 'Goodbye, world!'" ]]
-  [[ "${lines[2]}" == "  actual:   'Hello, world!'" ]]
-  [[ "${lines[3]}" == 'OUTPUT:' ]]
-  [[ "${lines[4]}" == 'Hello, world!' ]]
-  [[ -z "${lines[5]}" ]]
+  local assertion="assert_line_equals 0 'Goodbye, world!'"
+  run_test_script "run echo 'Hello, world!'" \
+  check_failing_status_and_output 1 "$assertion" \
+    '# line 0 not equal to expected value:' \
+    "#   expected: 'Goodbye, world!'" \
+    "#   actual:   'Hello, world!'" \
+    '# OUTPUT:' \
+    '# Hello, world!'
 }
 
 @test "$SUITE: assert_line_matches" {
-  run echo 'Hello, world!'
-  run assert_line_matches 0 'o, w'
-  [[ "$status" -eq '0' ]]
-  [[ -z "$output" ]]
+  run_test_script "run echo 'Hello, world!'" \
+    "assert_line_matches 0 'o, w'"
+  check_passing_status
 }
 
 @test "$SUITE: assert_line_matches failure" {
-  run echo 'Hello, world!'
-  run assert_line_matches 0 'e, w'
-  [[ "$status" -eq '1' ]]
-  [[ "${lines[0]}" == 'line 0 does not match expected pattern:' ]]
-  [[ "${lines[1]}" == "  pattern: 'e, w'" ]]
-  [[ "${lines[2]}" == "  value:   'Hello, world!'" ]]
-  [[ "${lines[3]}" == 'OUTPUT:' ]]
-  [[ "${lines[4]}" == 'Hello, world!' ]]
-  [[ -z "${lines[5]}" ]]
+  local assertion="assert_line_matches 0 'e, w'"
+  run_test_script "run echo 'Hello, world!'" \
+    "$assertion" \
+  check_failing_status_and_output 1 "$assertion" \
+    '# line 0 does not match expected pattern:' \
+    "#   pattern: 'e, w'" \
+    "#   value:   'Hello, world!'" \
+    '# OUTPUT:' \
+    '# Hello, world!'
 }

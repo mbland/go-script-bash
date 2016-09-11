@@ -28,8 +28,8 @@ teardown() {
   remove_test_go_rootdir
 }
 
-assert_outputs_match() {
-  set +o functrace
+__assert_outputs_match() {
+  unset 'BATS_PREVIOUS_STACK_TRACE[0]'
   local num_expected_output_lines="${#__expected_output[@]}"
   local IFS=$'\n'
 
@@ -43,7 +43,11 @@ assert_outputs_match() {
   assert_equal "$__expected_path" "${lines[1]}" 'command path'
   assert_equal "${__expected_argv[*]}" "${lines[2]}" 'argument list'
   assert_equal "$__expected_word" "${lines[3]}" 'target word'
-  set -o functrace
+}
+
+assert_outputs_match() {
+  set +o functrace
+  __assert_outputs_match "$@"
 }
 
 @test "$SUITE: error on empty arguments" {
