@@ -17,25 +17,16 @@
 # Plugins that are installed as directories (possibly as git submodules) should
 # contain a `bin/` subdirectory containing its command scripts.
 
-# TODO(mbland): add --add and --remove options to automatically download scripts
-# or add submodules if curl, wget, or git are present.
+_@go.plugins_pathspec() {
+  local IFS=':'
+  __go_plugins_pathspec="${_GO_PLUGINS_PATHS[*]}"
+}
 
 _@go.plugins() {
-  if [[ "$1" == '--complete' ]]; then
-    # Tab completions
-    local word_index="$2"
-    if [[ "$word_index" -eq '0' ]]; then
-      compgen -W '--exists --summaries' -- "$3"
-    fi
-    return
-  fi
-
-  . "$_GO_CORE_DIR/lib/path"
-
-  if [[ -n "$_GO_PLUGINS_DIR" ]]; then
-    local IFS=':'
-    _@go.source_builtin 'commands' "$@" "${_GO_PLUGINS_PATHS[*]}"
-  fi
+  local __go_plugins_pathspec
+  _@go.plugins_pathspec
+  # Tab completions
+  _@go.source_builtin 'commands' "$@" "$__go_plugins_pathspec"
 }
 
 _@go.plugins "$@"
