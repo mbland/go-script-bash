@@ -12,6 +12,23 @@ teardown() {
   remove_test_go_rootdir
 }
 
+@test "$SUITE: tab completion" {
+  run "$TEST_GO_SCRIPT" plugins --complete 0 ''
+  assert_failure ''
+
+  local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
+  mkdir "$plugins_dir"
+  create_test_command_script "plugins/foo"
+
+  run "$TEST_GO_SCRIPT" plugins --complete 0 ''
+  local expected=('--paths' '--summaries')
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+
+  run "$TEST_GO_SCRIPT" plugins --complete 0 '--paths'
+  assert_success '--paths'
+}
+
 @test "$SUITE: error if no scripts/plugin directory" {
   run "$TEST_GO_SCRIPT" plugins
   assert_failure ''

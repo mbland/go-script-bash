@@ -25,8 +25,13 @@ _@go.plugins_pathspec() {
 _@go.plugins() {
   local __go_plugins_pathspec
   _@go.plugins_pathspec
-  # Tab completions
-  _@go.source_builtin 'commands' "$@" "$__go_plugins_pathspec"
+
+  if [[ -n "$__go_plugins_pathspec" ]]; then
+    # Tab completions
+    _@go.source_builtin 'commands' "$@" "$__go_plugins_pathspec"
+  else
+    return 1
+  fi
 }
 
 _@go.plugins "$@"
