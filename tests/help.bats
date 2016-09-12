@@ -47,3 +47,19 @@ teardown() {
   run "$TEST_GO_SCRIPT" --help
   assert_success "$help_output"
 }
+
+@test "$SUITE: produce message for alias" {
+  run "$TEST_GO_SCRIPT" help ls
+  assert_success
+  assert_line_equals 0 \
+    "$TEST_GO_SCRIPT ls - Shell alias that will execute in $TEST_GO_ROOTDIR"
+}
+
+@test "$SUITE: error if command doesn't exist" {
+  run "$TEST_GO_SCRIPT" help foobar
+  assert_failure
+  assert_line_equals 0  'Unknown command: foobar'
+  assert_line_equals 1  'Available commands are:'
+  assert_line_equals 2  '  aliases'
+  assert_line_equals -1 '  unenv'
+}
