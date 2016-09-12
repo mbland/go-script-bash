@@ -5,29 +5,17 @@
 # Felt the need for this after several Travis breakages without helpful output,
 # then stole some inspiration from rbenv/test/test_helper.bash.
 
-# Any assertion calls this function directly must call `set +o functrace` first.
 __return_from_bats_assertion() {
-  set +o errexit
   local result="${1:-0}"
-  local i
 
-  for ((i=0; i != ${#BATS_CURRENT_STACK_TRACE[0]}; ++i)) do
-    if [[ "${BATS_CURRENT_STACK_TRACE[$i]}" =~ $BASH_SOURCE ]]; then
-      unset "BATS_CURRENT_STACK_TRACE[$i]"
-    else
-      break
-    fi
-  done
+  if [[ "${BATS_CURRENT_STACK_TRACE[0]}" =~ $BASH_SOURCE ]]; then
+    unset "BATS_CURRENT_STACK_TRACE[0]"
+  fi
 
-  for ((i=0; i != ${#BATS_PREVIOUS_STACK_TRACE[0]}; ++i)) do
-    if [[ "${BATS_PREVIOUS_STACK_TRACE[$i]}" =~ $BASH_SOURCE ]]; then
-      unset "BATS_PREVIOUS_STACK_TRACE[$i]"
-    else
-      break
-    fi
-  done
+  if [[ "${BATS_PREVIOUS_STACK_TRACE[0]}" =~ $BASH_SOURCE ]]; then
+    unset "BATS_PREVIOUS_STACK_TRACE[0]"
+  fi
 
-  set -o errexit
   set -o functrace
   return "$result"
 }
@@ -48,8 +36,9 @@ assert_equal() {
     printf "%s not equal to expected value:\n  %s\n  %s\n" \
       "$label" "expected: '$expected'" "actual:   '$actual'" >&2
     __return_from_bats_assertion 1
+  else
+    __return_from_bats_assertion
   fi
-  __return_from_bats_assertion
 }
 
 assert_matches() {
@@ -62,38 +51,42 @@ assert_matches() {
     printf "%s does not match expected pattern:\n  %s\n  %s\n" \
       "$label" "pattern: '$pattern'" "value:   '$value'" >&2
     __return_from_bats_assertion 1
+  else
+    __return_from_bats_assertion
   fi
-  __return_from_bats_assertion
 }
 
 __assert_output() {
-  set +o functrace
   local assertion="$1"
   shift
 
-  unset 'BATS_CURRENT_STACK_TRACE[0]'
   if [[ "$#" -eq '0' ]]; then
     __return_from_bats_assertion
   elif [[ "$#" -ne 1 ]]; then
     echo "ERROR: ${FUNCNAME[1]} takes only one argument" >&2
     __return_from_bats_assertion 1
+  else
+    "$assertion" "$1" "$output" 'output'
   fi
-  "$assertion" "$1" "$output" 'output'
 }
 
 assert_output() {
+  set +o functrace
   __assert_output 'assert_equal' "$@"
 }
 
 assert_output_matches() {
+  set +o functrace
   __assert_output 'assert_matches' "$@"
 }
 
 assert_status() {
+  set +o functrace
   assert_equal "$1" "$status" "exit status"
 }
 
 assert_success() {
+  set +o functrace
   if [[ "$status" -ne '0' ]]; then
     printf 'expected success, but command failed\n' >&2
     fail
@@ -103,6 +96,7 @@ assert_success() {
 }
 
 assert_failure() {
+  set +o functrace
   if [[ "$status" -eq '0' ]]; then
     printf 'expected failure, but command succeeded\n' >&2
     fail
@@ -112,7 +106,6 @@ assert_failure() {
 }
 
 __assert_line() {
-  set +o functrace
   local assertion="$1"
   local lineno="$2"
   local constraint="$3"
@@ -125,14 +118,17 @@ __assert_line() {
   if ! "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"; then
     printf "OUTPUT:\n$output\n" >&2
     __return_from_bats_assertion 1
+  else
+    __return_from_bats_assertion
   fi
-  __return_from_bats_assertion
 }
 
 assert_line_equals() {
+  set +o functrace
   __assert_line 'assert_equal' "$@"
 }
 
 assert_line_matches() {
+  set +o functrace
   __assert_line 'assert_matches' "$@"
 }
