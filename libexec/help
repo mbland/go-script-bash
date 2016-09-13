@@ -64,7 +64,7 @@ _@go.usage() {
 }
 
 _@go.help_message_for_command() {
-  if _@go.source_builtin 'aliases' --help "$@"; then
+  if _@go.source_builtin 'aliases' --help "$1"; then
     return
   fi
 
@@ -82,6 +82,10 @@ _@go.help_message_for_command() {
   local __go_cmd_desc
 
   if ! _@go.command_description "$__go_cmd_path"; then
+    # So long as _@go.set_command_path_and_argv returns valid results, this
+    # _shouldn't_ ever happen.
+    @go.printf "ERROR: failed to parse description from %s\n" \
+      "$__go_cmd_path" >&2
     return 1
   fi
 
@@ -93,7 +97,7 @@ _@go.help_message_for_command() {
   fi
 
   if [[ -d "${__go_cmd_path}.d" ]]; then
-    __go_cmd_desc+="$(printf '\n\nSubcommands:\n\n'; \
+    __go_cmd_desc+="$(printf '\nSubcommands:\n\n'; \
       _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d")"
   fi
   @go.printf "$_GO_CMD $cmd_name - $__go_cmd_desc\n"

@@ -64,7 +64,9 @@ _@go.aliases() {
 
   # Help filter
   if [[ "$flag" == 'help-filter' ]]; then
-    echo "${1//\{\{_GO_ALIAS_CMDS\}\}/${_GO_ALIAS_CMDS[@]}}"
+    local pattern='{{_GO_ALIAS_CMDS}}'
+    local replacement="${_GO_ALIAS_CMDS[@]}"
+    echo "${1//$pattern/$replacement}"
     return
   fi
 

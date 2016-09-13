@@ -111,7 +111,9 @@ _@go.builtins() {
     if ! _@go.check_flag_has_one_argument "$flag" "$@"; then
       return 1
     fi
-    echo "${1//\{\{_GO_BUILTIN_SUMMARIES\}\}/$(_@go.builtin_summaries)}"
+    local pattern='{{_GO_BUILTIN_SUMMARIES}}'
+    local replacement="$(_@go.builtin_summaries)"
+    echo "${1//$pattern/$replacement}"
     return
     ;;
   -*)
