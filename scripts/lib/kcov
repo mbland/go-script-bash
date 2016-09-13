@@ -21,7 +21,7 @@ run_kcov() {
 
   if ! command -v apt-get >/dev/null; then
     @go.printf 'Coverage is only available on Linux platforms %s.\n' \
-       'with apt-get.' >&2
+       'with apt-get' >&2
     return 1
   elif [[ -d "$coverage_dir" ]]; then
     @go.printf '%s %s\n' "The $coverage_dir directory already exists." \
