@@ -6,8 +6,8 @@ docs, add some installation scripts, and add a lot more tests, now that
 settlement](https://github.com/mbland/unit-testing-node/blob/18f-pages/_pages/concepts/exploration-vision-and-settlement.md).
 I've pushed this repo just to back up the work I've done so far.**
 
-[![Build
-status](https://travis-ci.org/mbland/go-script-bash.png?branch=master)](https://travis-ci.org/mbland/go-script-bash)
+[![Build status](https://travis-ci.org/mbland/go-script-bash.png?branch=master)](https://travis-ci.org/mbland/go-script-bash)
+[![Coverage Status](https://coveralls.io/repos/github/mbland/go-script-bash/badge.svg?branch=master)](https://coveralls.io/github/mbland/go-script-bash?branch=master)
 
 A `./go` script aims to abstract away all of the steps needed to develop (and
 sometimes deploy) a software project. It is a replacement for READMEs and

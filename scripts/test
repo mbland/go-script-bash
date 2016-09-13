@@ -3,11 +3,12 @@
 # Run automated tests
 #
 # Usage:
-#   {{go}} {{cmd}} [--edit|--list] [<glob>...]
+#   {{go}} {{cmd}} [--coverage|--edit|--list] [<glob>...]
 #
 # Options:
-#   --edit  Open matching test files using `{{go}} edit`
-#   --list  List test suite names without executing them
+#   --coverage  Collect test coverage data using kcov (Linux only)
+#   --edit      Open matching test files using `{{go}} edit`
+#   --list      List test suite names without executing them
 #
 # Without <glob> arguments, runs (or edits, or lists) all tests. With one or
 # more <glob> arguments, only runs tests matching 'tests/<glob>.bats'.
@@ -25,13 +26,22 @@ _test_tab_completion() {
   local word_index="$1"
   shift
   if [[ "$word_index" -eq '0' ]]; then
-    compgen -W '--edit --list' -- "$1"
+    compgen -W '--coverage --edit --list' -- "$1"
     if [[ "${1:0:1}" == '-' ]]; then
       return
     fi
   fi
   @go 'glob' '--complete' "$((word_index + ${#__GO_TEST_GLOB_ARGS[@]}))" \
     "${__GO_TEST_GLOB_ARGS[@]}" "$@"
+}
+
+_test_coverage() {
+  . 'scripts/lib/kcov'
+  run_kcov "tests/kcov" "tests/coverage" \
+    'go,go-core.bash,lib/,libexec/,scripts/' \
+    '/tmp,tests/bats/' \
+    'https://coveralls.io/github/mbland/go-script-bash' \
+    "$@"
 }
 
 _test() {
@@ -48,7 +58,10 @@ _test() {
     git submodule update --init tests/bats
   fi
 
-  if [[ "$1" == '--list' ]]; then
+  if [[ "$1" == '--coverage' ]]; then
+    shift
+    _test_coverage "$@"
+  elif [[ "$1" == '--list' ]]; then
     shift
     @go 'glob' '--trim' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
   elif [[ "$1" == '--edit' ]]; then
@@ -58,6 +71,10 @@ _test() {
   else
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
     "$BASH" "$bats_path" "${tests[@]}"
+
+    if [[ "$?" -eq 0 && "$TRAVIS_OS_NAME" == 'linux' ]]; then
+      _test_coverage "$@"
+    fi
   fi
 }
 
