@@ -45,7 +45,9 @@ run_kcov() {
   mkdir "$coverage_dir"
   printf 'Starting coverage run:\n  %s\n' "${kcov_argv[*]}"
 
-  if "${kcov_argv[@]}" 2>/dev/null; then
+  # Somehow kcov exits with a failure status on Travis, even though the tests
+  # all pass and information is successfully posted to Coveralls.
+  if "${kcov_argv[@]}" 2>/dev/null || -n "$TRAVIS_JOB_ID" ]]; then
     if [[ "$send_to_coveralls" == 'false' ]]; then
       @go.printf 'Coverage results located in:\n  %s\n' \
         "$_GO_ROOTDIR/$coverage_dir"
