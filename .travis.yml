@@ -11,7 +11,6 @@ addons:
     - libcurl4-openssl-dev
     - libdw-dev
     - libelf-dev
-    - libiberty-dev
     - zlib1g-dev
 
 script:
