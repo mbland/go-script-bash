@@ -1,2 +1,4 @@
+.*.swp
+.DS_Store
 tests/coverage/
 tests/kcov/
