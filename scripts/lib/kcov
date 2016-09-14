@@ -75,6 +75,8 @@ clone_and_build_kcov() {
     fi
   fi
 
+  # Travis uses the "addons > apt > packages" property from .travis.yml to
+  # install packages before the test suite is run, so no need to check here.
   if [[ -z "$TRAVIS_OS_NAME" ]] && ! check_kcov_dev_packages_installed; then
     @go.printf "Installing dev packages to build kcov...\n"
 

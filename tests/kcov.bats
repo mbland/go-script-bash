@@ -69,7 +69,7 @@ write_kcov_go_script() {
   write_kcov_go_script "${go_script[*]}"
   echo 'mkdir -p "$3"' >> "$FAKE_BIN_DIR/git"
 
-  run "$TEST_GO_SCRIPT"
+  run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'scripts/lib/kcov'
   local expected_output=(
     "Cloning kcov repository from $KCOV_URL..."
@@ -95,7 +95,7 @@ write_kcov_go_script() {
   write_kcov_go_script 'clone_and_build_kcov tests/kcov'
   echo 'exit 1' >> "$FAKE_BIN_DIR/git"
 
-  run "$TEST_GO_SCRIPT"
+  run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'scripts/lib/kcov'
   local expected_output=(
     "Cloning kcov repository from $KCOV_URL..."
@@ -110,7 +110,7 @@ write_kcov_go_script() {
   echo 'exit 1' >> "$FAKE_BIN_DIR/sudo"
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
 
-  run "$TEST_GO_SCRIPT"
+  run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'scripts/lib/kcov'
   local expected_output=(
     'Installing dev packages to build kcov...'
@@ -124,7 +124,7 @@ write_kcov_go_script() {
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
   echo 'exit 1' >> "$FAKE_BIN_DIR/cmake"
 
-  run "$TEST_GO_SCRIPT"
+  run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'scripts/lib/kcov'
   local expected_output=(
     'Building kcov...'
@@ -138,7 +138,7 @@ write_kcov_go_script() {
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
   echo 'exit 1' >> "$FAKE_BIN_DIR/make"
 
-  run "$TEST_GO_SCRIPT"
+  run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'scripts/lib/kcov'
   local expected_output=(
     'Building kcov...'
