@@ -71,11 +71,12 @@ _test() {
   else
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
     "$BASH" "$bats_path" "${tests[@]}"
+    local result="$?"
 
-    if [[ "$?" -eq 0 && "$TRAVIS_OS_NAME" == 'linux' ]]; then
+    if [[ "$result" -eq 0 && "$TRAVIS_OS_NAME" == 'linux' ]]; then
       _test_coverage "$@"
     else
-      return "$?"
+      return "$result"
     fi
   fi
 }
