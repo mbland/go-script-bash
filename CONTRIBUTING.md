@@ -57,7 +57,7 @@ painful to follow the discussion.
 If you _do_ have something to add to the conversation, or _don't_ find a
 matching issue...
 
-### File a new issue or update an existing one
+### Update an existing issue or file a new one
 
 Try to be as specific as possible about your environment and the problem you're
 observing. At a minimum, include:
@@ -75,6 +75,14 @@ Also consider using:
   [memusg](https://gist.github.com/netj/526585)
 
 ## Updating documentation
+
+If you've a passion for writing clear, accessible documentation, please don't be
+shy about sending pull requests! The documentation is just as important as the
+code, especially in this project, since the goal is to make the functionality as
+discoverable as possible through the `./go help` command.
+
+Also: _no typo is too small to fix!_ Really. Of course, batches of fixes are
+preferred, but even one nit is one nit too many.
 
 ## Environment setup
 
@@ -110,7 +118,29 @@ original.
 
 ## Testing
 
+- Continuous integration status: [![Continuous integration status](https://travis-ci.org/mbland/go-script-bash.png?branch=master)](https://travis-ci.org/mbland/go-script-bash)
+- Coverage status: [![Coverage Status](https://coveralls.io/repos/github/mbland/go-script-bash/badge.svg?branch=master)](https://coveralls.io/github/mbland/go-script-bash?branch=master)
+
 No bug fixes or new features will be accepted without accompanying tests.
+Period.
+
+Any changes that break the continuous integration build must be fixed or rolled
+back immediately.
+
+This project uses the [Bash Automated Testing System
+(Bats)](https://github.com/sstephenson/bats) to write and run tests. All tests
+and helper scripts are in the `tests/` directory and are run using the `./go
+test` command. This command has a very flexible syntax for running a subset of
+test suites (i.e. a set of test cases within individual `.bats` files or
+directories). Enabling tab completion via `./go env` is highly encouraged.
+
+Before sending your code for review, make sure to run the entire test suite via
+`./go test`. If you're on a Linux system that uses the `apt-get` package manager
+(e.g. Ubuntu, Debian), run `./go test --coverage` to make sure your changes are
+adequately covered by new and existing tests. This will install (within the
+project working directory) and run the
+[kcov](https://github.com/SimonKagstrom/kcov) tool, which is only available on
+Linux for now.
 
 ## Coding conventions
 

@@ -42,12 +42,17 @@
 #   {{go}} <your-script> --help-filter <description>
 #
 # where <description> is the header comment from <your-script> after formatting
-# and keyword substitution. You can perform any substitutions you like, and
-# paragraphs will be wrapped, but you must format any other text yourself, and
-# keyword substitutions will not be performed on the substituted text. This is
-# especially handy for dynamically injecting text based on array values, to keep
-# the text in sync automatically. It's good practice to parse tokens within `{{`
-# and `}}` as is common with templating engines, but it's not enforced.
+# and keyword substitution. You can perform any substitutions you like, with the
+# following caveats:
+#
+#   - `go`, `cmd`, and `root` will not get expanded within the replacement text.
+#   - You must fold tabular content relative to $COLUMNS.
+#     - With paragraph content, this is unnecessary.
+#
+# This feature is especially handy for dynamically injecting text based on array
+# values, to keep the text in sync automatically. It's good practice to parse
+# tokens within `{{` and `}}` as is common with templating engines, but it's not
+# enforced.
 
 _@go.usage() {
   local cmd_paths=("${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
