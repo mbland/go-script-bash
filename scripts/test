@@ -74,6 +74,8 @@ _test() {
 
     if [[ "$?" -eq 0 && "$TRAVIS_OS_NAME" == 'linux' ]]; then
       _test_coverage "$@"
+    else
+      return "$?"
     fi
   fi
 }
