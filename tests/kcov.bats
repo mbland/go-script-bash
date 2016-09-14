@@ -85,10 +85,10 @@ write_kcov_go_script() {
   assert_success "apt-get install -y ${KCOV_DEV_PACKAGES[*]}"
 
   run cat "$FAKE_BIN_DIR/cmake.out"
-  assert_success 'tests/kcov'
+  assert_success '.'
 
   run cat "$FAKE_BIN_DIR/make.out"
-  assert_success '-C tests/kcov'
+  assert_success ''
 }
 
 @test "$SUITE: clone and build fails if clone fails" {

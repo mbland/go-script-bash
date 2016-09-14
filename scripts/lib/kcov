@@ -88,10 +88,11 @@ clone_and_build_kcov() {
 
   @go.printf 'Building kcov...\n'
 
-  if ! cmake "$kcov_dir" || ! make -C "$kcov_dir"; then
-    @go.printf 'Failed to build kcov.\n' >&2
-    return 1
+  if cd "$kcov_dir" >/dev/null && cmake . && make && cd - >/dev/null; then
+    return
   fi
+  @go.printf 'Failed to build kcov.\n' >&2
+  return 1
 }
 
 check_kcov_dev_packages_installed() {
