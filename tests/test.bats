@@ -4,6 +4,11 @@
 
 load environment
 load assertions
+load script_helper
+
+teardown() {
+  remove_test_go_rootdir
+}
 
 @test "$SUITE: tab complete flags" {
   run ./go test --complete 0 '-'
@@ -64,7 +69,102 @@ _trim_expected() {
   assert_success "${expected[*]}"
 }
 
+@test "$SUITE: open EDITOR on --edit" {
+  run env EDITOR='echo' ./go test --edit test aliases 'builtins*'
+  local expected=(
+    'tests/test.bats' 'tests/aliases.bats' 'tests/builtins.bats'
+    tests/builtins/*)
+  assert_success "${expected[*]}"
+}
+
 @test "$SUITE: produce an error if any test pattern fails to match" {
   run ./go test --list test 'foo*'
   assert_failure '"foo*" does not match any .bats files in tests.'
+}
+
+@test "$SUITE: update bats submodule if not present" {
+  mkdir -p "$TEST_GO_SCRIPTS_DIR/bin"
+
+  local git_dummy="$TEST_GO_SCRIPTS_DIR/bin/git"
+  printf '#! /usr/bin/env bash\necho "GIT ARGV: $*"\n' >"$git_dummy"
+  chmod 700 "$git_dummy"
+
+  cp "$_GO_ROOTDIR/scripts/test" "$TEST_GO_SCRIPTS_DIR"
+  create_test_go_script "PATH=\"$TEST_GO_SCRIPTS_DIR/bin:\$PATH\"; @go \"\$@\""
+
+  # This will fail because we didn't create the tests/ directory, but git should
+  # have been called correctly.
+  run "$TEST_GO_SCRIPT" test --list test
+  local expected_output=(
+    'GIT ARGV: submodule update --init tests/bats'
+    'Root directory argument tests is not a directory.')
+  local IFS=$'\n'
+  assert_failure "${expected_output[*]}"
+}
+
+write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
+  # Avoid `git submodule update` by writing dummy bats.
+  local bats_dummy="$TEST_GO_ROOTDIR/tests/bats/libexec/bats"
+
+  mkdir -p "${bats_dummy%/*}" "$TEST_GO_SCRIPTS_DIR/lib"
+  echo '#! /usr/bin/env bats' >>"$bats_dummy"
+  chmod 700 "$bats_dummy"
+
+  # Stub the kcov lib to assert it's called correctly.
+  create_test_command_script 'lib/kcov' \
+    "run_kcov() { IFS=\$'\n'; echo \"\$*\"; }"
+
+  cp "$_GO_ROOTDIR/scripts/test" "$TEST_GO_SCRIPTS_DIR"
+}
+
+@test "$SUITE: coverage run" {
+  write_bats_dummy_stub_kcov_lib_and_copy_test_script
+  create_test_go_script '@go "$@"'
+
+  local test_cmd_argv=("$TEST_GO_SCRIPT" 'test' '--coverage' 'foo' 'bar/baz')
+  local expected_kcov_args=(
+    'tests/kcov'
+    'tests/coverage'
+    'go,go-core.bash,lib/,libexec/,scripts/'
+    '/tmp,tests/bats/'
+    'https://coveralls.io/github/mbland/go-script-bash'
+    'foo'
+    'bar/baz')
+
+  run env _COVERAGE_RUN= TRAVIS_OS_NAME= "${test_cmd_argv[@]}"
+  local IFS=$'\n'
+  assert_success "${expected_kcov_args[*]}"
+}
+
+# This test also makes sure the invocation doesn't cause a second recursive call
+# to `run_kcov` thanks to the `_COVERAGE_RUN` variable.  Previously, seemingly
+# successful coverage runs (added in commit
+# 4440832c257c3fa455d7d773ee56fd66c4431a19) were causing Travis failures,
+# ameliorated in commit cc284d11e010442392029afdcddc5b1c761ad9a0. These were
+# due to the `run_kcov` getting called recursively and failing because the first
+# call already created the `tests/coverage` directory.
+#
+# Here was the chain of events:
+#
+# - Travis calls `./go test`.
+# - Test suite runs and succeeds.
+# - `"$?" -eq '0' && "$TRAVIS_OS_NAME" == 'linux'` condition met.
+# - `_test_coverage` and `run_kcov` executed.
+# - `run_kcov` creates `tests/coverage` and executes `kcov ./go test`.
+#   - Test suite runs and succeeds.
+#   - `"$?" -eq '0' && "$TRAVIS_OS_NAME" == 'linux'` condition met.
+#   - `_test_coverage` and `run_kcov` executed.
+#   - `run_kcov` fails because `tests/coverage` already exists.
+# - `kcov` sends coverage info to Coveralls, but exits with an error.
+# - Travis build reports failure.
+#
+# With the `_COVERAGE_RUN` variable, the recursive call is now
+# short-circuited.
+@test "$SUITE: run coverage by default on Travis Linux" {
+  write_bats_dummy_stub_kcov_lib_and_copy_test_script
+  create_test_go_script '@go "$@"'
+
+  run env _COVERAGE_RUN= TRAVIS_OS_NAME='linux' "$TEST_GO_SCRIPT" test
+  assert_success
+  assert_line_equals 0 'tests/kcov'
 }

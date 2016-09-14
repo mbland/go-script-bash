@@ -58,8 +58,9 @@ _test() {
     git submodule update --init tests/bats
   fi
 
-  if [[ "$1" == '--coverage' ]]; then
+  if [[ "$1" == '--coverage' && "$_COVERAGE_RUN" != 'true' ]]; then
     shift
+    local -x _COVERAGE_RUN='true'
     _test_coverage "$@"
   elif [[ "$1" == '--list' ]]; then
     shift
@@ -68,16 +69,13 @@ _test() {
     shift
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
     @go 'edit' "${tests[@]}"
+  elif [[ "$TRAVIS_OS_NAME" == 'linux' ]]; then
+    # Collect coverage by default on Travis. Doesn't seem to slow anything down
+    # substantially.
+    _test '--coverage' "$@"
   else
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
     "$BASH" "$bats_path" "${tests[@]}"
-    local result="$?"
-
-    if [[ "$result" -eq 0 && "$TRAVIS_OS_NAME" == 'linux' ]]; then
-      _test_coverage "$@"
-    else
-      return "$result"
-    fi
   fi
 }
 
