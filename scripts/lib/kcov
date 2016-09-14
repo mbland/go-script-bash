@@ -9,6 +9,7 @@ declare -r KCOV_DEV_PACKAGES=(
   'libiberty-dev'
   'zlib1g-dev'
 )
+declare -r KCOV_URL='https://github.com/SimonKagstrom/kcov'
 
 run_kcov() {
   local kcov_dir="$1"
@@ -64,26 +65,29 @@ clone_and_build_kcov() {
   # The only way to be sure we've got a compatible version of kcov is to clone
   # and compile it ourselves.
   local kcov_dir="$1"
-  local kcov_url='https://github.com/SimonKagstrom/kcov'
 
   if [[ ! -d "$kcov_dir" ]]; then
-    @go.printf 'Cloning kcov repository from %s...\n' "$kcov_url"
-    git clone "$kcov_url" "$kcov_dir"
+    @go.printf 'Cloning kcov repository from %s...\n' "$KCOV_URL"
+
+    if ! git clone "$KCOV_URL" "$kcov_dir"; then
+      @go.printf "Failed to clone $KCOV_URL into $kcov_dir." >&2
+      return 1
+    fi
   fi
 
   if [[ -z "$TRAVIS_OS_NAME" ]] && ! check_kcov_dev_packages_installed; then
     @go.printf "Installing dev packages to build kcov...\n"
-    sudo apt-get install -y "${KCOV_DEV_PACKAGES[@]}"
+
+    if ! sudo apt-get install -y "${KCOV_DEV_PACKAGES[@]}"; then
+      @go.printf "Failed to install dev packages needed to build kcov." >&2
+      return 1
+    fi
   fi
 
-  pushd tests/kcov >/dev/null
   @go.printf 'Building kcov...\n'
-  cmake . && make
-  local result="$?"
-  popd >/dev/null
 
-  if [[ "$result" -ne 0 ]]; then
-    @go.printf 'Failed to build kcov; coverage run aborted.\n' >&2
+  if ! cmake "$kcov_dir" || ! make -C "$kcov_dir"; then
+    @go.printf 'Failed to build kcov.\n' >&2
     return 1
   fi
 }
@@ -92,8 +96,5 @@ check_kcov_dev_packages_installed() {
   local packages
   packages="$(dpkg-query -W -f='${Package} ${Status}\n' \
     "${KCOV_DEV_PACKAGES[@]}")"
-
-  if [[ "$?" -ne '0' || "$packages" =~ deinstall ]]; then
-    return 1
-  fi
+  [[ "$?" -eq '0' && ! "$packages" =~ deinstall ]]
 }
