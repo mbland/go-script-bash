@@ -6,8 +6,6 @@ load script_helper
 
 setup() {
   mkdir -p "$TEST_GO_ROOTDIR/bin" "$TEST_GO_SCRIPTS_DIR"
-  cp "$_GO_ROOTDIR/scripts/changes" "$TEST_GO_SCRIPTS_DIR"
-  create_test_go_script 'PATH="$_GO_ROOTDIR/bin:$PATH"' '@go "$@"'
 }
 
 teardown() {
@@ -38,26 +36,27 @@ create_fake_git() {
   run "$TEST_GO_ROOTDIR/bin/git" 'tag'
   assert_success "${versions[*]}"
 
-  run "$TEST_GO_SCRIPT" complete 1 changes ''
+  local PATH="$TEST_GO_ROOTDIR/bin:$PATH"
+  run ./go changes --complete 0 ''
   assert_success "${versions[*]}"
 
-  run "$TEST_GO_SCRIPT" complete 1 changes 'v1.0'
+  run ./go changes --complete 0 'v1.0'
   assert_success 'v1.0.0'
 
-  run "$TEST_GO_SCRIPT" complete 2 changes 'v1.0.0' 'v1.1'
+  run ./go changes --complete 1 'v1.0.0' 'v1.1'
   assert_success 'v1.1.0'
 
-  run "$TEST_GO_SCRIPT" complete 3 changes 'v1.0.0' 'v1.1.0' ''
+  run ./go changes --complete 2 'v1.0.0' 'v1.1.0' ''
   assert_failure ''
 }
 
 @test "$SUITE: error if no start ref" {
-  run "$TEST_GO_SCRIPT" changes
+  run ./go changes
   assert_failure "Start ref not specified."
 }
 
 @test "$SUITE: error if no end ref" {
-  run "$TEST_GO_SCRIPT" changes v1.0.0
+  run ./go changes v1.0.0
   assert_failure "End ref not specified."
 }
 
@@ -74,7 +73,8 @@ create_fake_git() {
   )
 
   create_fake_git "${fake_git_impl[@]}"
-  run "$TEST_GO_SCRIPT" changes v1.0.0 v1.1.0
+  local PATH="$TEST_GO_ROOTDIR/bin:$PATH"
+  run ./go changes v1.0.0 v1.1.0
   assert_success
   assert_line_matches 0 '^--pretty=format:'
   assert_line_matches 1 '^v1\.0\.0\.\.v1\.1\.0\^$'
