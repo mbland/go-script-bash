@@ -22,7 +22,7 @@ __return_from_bats_assertion() {
 
 fail() {
   set +o functrace
-  printf "STATUS: ${status}\nOUTPUT:\n${output}\n" >&2
+  printf 'STATUS: %s\nOUTPUT:\n%s\n' "$status" "$output" >&2
   __return_from_bats_assertion 1
 }
 
@@ -33,7 +33,7 @@ assert_equal() {
   local label="$3"
 
   if [[ "$expected" != "$actual" ]]; then
-    printf "%s not equal to expected value:\n  %s\n  %s\n" \
+    printf '%s not equal to expected value:\n  %s\n  %s\n' \
       "$label" "expected: '$expected'" "actual:   '$actual'" >&2
     __return_from_bats_assertion 1
   else
@@ -48,7 +48,7 @@ assert_matches() {
   local label="$3"
 
   if [[ ! "$value" =~ $pattern ]]; then
-    printf "%s does not match expected pattern:\n  %s\n  %s\n" \
+    printf '%s does not match expected pattern:\n  %s\n  %s\n' \
       "$label" "pattern: '$pattern'" "value:   '$value'" >&2
     __return_from_bats_assertion 1
   else
@@ -116,7 +116,7 @@ __assert_line() {
   fi
 
   if ! "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"; then
-    printf "OUTPUT:\n$output\n" >&2
+    printf 'OUTPUT:\n%s\n' "$output" >&2
     __return_from_bats_assertion 1
   else
     __return_from_bats_assertion

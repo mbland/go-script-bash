@@ -110,6 +110,14 @@ check_expected_output() {
     'Hello, world!'
 }
 
+@test "$SUITE: fail handles strings containing percentage signs" {
+  expect_failure "echo '% not interpreted as a format spec'" \
+    'fail' \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    '% not interpreted as a format spec'
+}
+
 @test "$SUITE: assert_equal success" {
   expect_success "echo 'Hello, world!'" \
     'assert_equal "Hello, world!" "$output" "echo result"'
@@ -290,4 +298,14 @@ check_expected_output() {
     "  value:   'Hello, world!'" \
     'OUTPUT:' \
     'Hello, world!'
+}
+
+@test "$SUITE: assert_line_matches failure handles percent signs in output" {
+  expect_failure "echo '% not interpreted as a format spec'" \
+    "assert_line_matches 0 '% interpreted as a format spec'" \
+    'line 0 does not match expected pattern:' \
+    "  pattern: '% interpreted as a format spec'" \
+    "  value:   '% not interpreted as a format spec'" \
+    'OUTPUT:' \
+    '% not interpreted as a format spec'
 }
