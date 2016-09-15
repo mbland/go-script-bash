@@ -27,12 +27,32 @@ teardown() {
 }
 
 @test "$SUITE: produce message with successful return for help command" {
+  create_test_command_script 'foo' '# Does foo stuff'
+  create_test_command_script 'bar' '# Does bar stuff'
+  create_test_command_script 'baz' '# Does baz stuff'
   run "$TEST_GO_SCRIPT" help
+
   assert_success
   assert_line_equals 0 "Usage: $TEST_GO_SCRIPT <command> [arguments...]"
+  assert_output_matches '  foo  Does foo stuff'
+  assert_output_matches '  bar  Does bar stuff'
+  assert_output_matches '  baz  Does baz stuff'
+}
+
+@test "$SUITE: produce usage message when error retrieving command summaries" {
+  run "$TEST_GO_SCRIPT" help
+
+  assert_failure
+  assert_line_equals 0 "Usage: $TEST_GO_SCRIPT <command> [arguments...]"
+
+  local expected_err="<No commands found in or error retrieving summaries "
+  expected_err+="from: $TEST_GO_SCRIPTS_DIR>"
+  assert_output_matches "$expected_err"
 }
 
 @test "$SUITE: accept -h, -help, and --help as synonyms" {
+  # Create a command to ensure a sucessful exit status.
+  create_test_command_script 'foo' '# Does foo stuff'
   run "$TEST_GO_SCRIPT" help
   assert_success
 
