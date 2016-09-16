@@ -20,7 +20,7 @@ teardown() {
 @test "$SUITE: tab complete flags, first-level tests and directories" {
   local expected=('--coverage' '--edit' '--list')
   expected+=($('./go' 'glob' '--complete' '5' \
-    '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
+    '--trim' '--ignore' 'bats' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 1 ]]
 
   run ./go test --complete 0 ''
@@ -51,7 +51,7 @@ _trim_expected() {
 
 @test "$SUITE: no arguments after --list lists all tests" {
   local expected=(
-    $('./go' 'glob' '--trim' '--ignore' 'bats/*' 'tests' '.bats'))
+    $('./go' 'glob' '--trim' '--ignore' 'bats' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 0 ]]
 
   run ./go test --list

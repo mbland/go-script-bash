@@ -20,7 +20,7 @@
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
 
-declare -r __GO_TEST_GLOB_ARGS=('--ignore' 'bats/*' 'tests' '.bats')
+declare -r __GO_TEST_GLOB_ARGS=('--ignore' 'bats' 'tests' '.bats')
 
 _test_tab_completion() {
   local word_index="$1"
