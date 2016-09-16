@@ -39,6 +39,11 @@
 # NOTE: If a <glob> produces errors, or generally doesn't do as you expect,
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
+#
+# NOTE FOR BASH 4.4: Something changed with GLOBIGNORE behavior such that
+# `GLOBIGNORE` patterns of the form `*ignore-me` no longer match arbitrarily
+# deep subdirectory prefixes. Consequently, you may need to use multiple
+# `--ignore` patterns to achieve the same effect.
 
 _@go.glob_impl() {
   local pattern="$1"

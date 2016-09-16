@@ -201,7 +201,12 @@ teardown() {
     "quux/xyzzy"
     "quux/xyzzy/frotz")
 
-  run ./go glob --ignore '*ignore-me*' --trim "$TESTS_DIR" '.bats'
+  # The `--ignore` pattern below was previously '*ignore-me*'. This worked on
+  # bash 3.2, 4.2, and 4.3. However, something changed in bash 4.4 that caused
+  # that pattern not to work at all anymore. The current pattern works for all
+  # bash versions.
+  run ./go glob --ignore 'ignore-me:*/ignore-me:foo/bar/baz/ignore-me*' \
+    --trim "$TESTS_DIR" '.bats'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
