@@ -1,14 +1,16 @@
 #! /bin/bash
 
-if [[ -d "$_GO_SCRIPTS_DIR/plugins" ]]; then
-  declare -r _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
-  shopt -s nullglob
-  declare -r _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR" "$_GO_PLUGINS_DIR"/*/bin)
-  shopt -u nullglob
-  declare -r _GO_SEARCH_PATHS=(\
-    "$_GO_CORE_DIR/libexec" "${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
-else
-  declare -r _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec" "$_GO_SCRIPTS_DIR")
+if [[ -z "${_GO_SEARCH_PATHS[*]}" ]]; then
+  if [[ -d "$_GO_SCRIPTS_DIR/plugins" ]]; then
+    declare -r _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+    shopt -s nullglob
+    declare -r _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR" "$_GO_PLUGINS_DIR"/*/bin)
+    shopt -u nullglob
+    declare -r _GO_SEARCH_PATHS=(\
+      "$_GO_CORE_DIR/libexec" "${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
+  else
+    declare -r _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec" "$_GO_SCRIPTS_DIR")
+  fi
 fi
 
 _@go.list_available_commands() {
