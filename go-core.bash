@@ -2,6 +2,7 @@
 #
 # Framework for writing "./go" scripts in Bash.
 #
+# Version: v1.0.0
 # URL: https://github.com/mbland/go-script-bash
 #
 # To use this framework, create a bash script in the root directory of your

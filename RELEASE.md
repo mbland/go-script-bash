@@ -1,4 +1,4 @@
-# go-script-bash v0.0.0
+# go-script-bash v1.0.0
 
 ## The `./go` script: a unified development environment interface
 
