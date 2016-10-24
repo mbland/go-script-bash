@@ -4,7 +4,7 @@ load ../environment
 load ../assertions
 
 setup () {
-  . 'lib/env/bash'
+  . 'lib/internal/env/bash'
 }
 
 @test "$SUITE: set and unset environment functions" {

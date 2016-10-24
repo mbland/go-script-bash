@@ -58,10 +58,10 @@ teardown() {
 }
 
 @test "$SUITE: error if shell impl doesn't contain eval line" {
-  echo '' > "$_GO_ROOTDIR/lib/env/badsh"
+  echo '' > "$_GO_ROOTDIR/lib/internal/env/badsh"
 
   run env SHELL='badsh' "$TEST_GO_SCRIPT" env
-  rm "$_GO_ROOTDIR/lib/env/badsh"
+  rm "$_GO_ROOTDIR/lib/internal/env/badsh"
 
   assert_failure
   local expected="ERROR: .*badsh must contain a line of the form "

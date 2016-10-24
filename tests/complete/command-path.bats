@@ -6,7 +6,7 @@ load ../script_helper
 load ../commands/helpers
 
 setup() {
-  create_test_go_script '. "$_GO_CORE_DIR/lib/complete"' \
+  create_test_go_script '. "$_GO_CORE_DIR/lib/internal/complete"' \
     'declare __go_complete_word_index' \
     'declare __go_cmd_path' \
     'declare __go_argv' \

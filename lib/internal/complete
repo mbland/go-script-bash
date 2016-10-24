@@ -17,7 +17,7 @@ _@go.complete_command_path() {
 
   __go_complete_word_index="$1"
   shift
-  . "$_GO_CORE_DIR/lib/path"
+  . "$_GO_CORE_DIR/lib/internal/path"
 
   if [[ "$#" -le 1 || "$__go_complete_word_index" -eq '0' ]]; then
     _@go.complete_top_level_commands "$1"

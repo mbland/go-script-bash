@@ -13,7 +13,7 @@ _@go.path() {
   if [[ "$1" == '--complete' ]]; then
     # Tab completions
     shift
-    . "$_GO_CORE_DIR/lib/complete"
+    . "$_GO_CORE_DIR/lib/internal/complete"
     _@go.complete_command_path "$@"
     return
   fi

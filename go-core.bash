@@ -125,7 +125,7 @@ declare -r _GO_CORE_URL='https://github.com/mbland/go-script-bash'
     return
   fi
 
-  . "$_GO_CORE_DIR/lib/path"
+  . "$_GO_CORE_DIR/lib/internal/path"
   local __go_cmd_path
   local __go_argv
 

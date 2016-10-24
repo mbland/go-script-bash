@@ -97,7 +97,7 @@ _@go.help_message_for_command() {
   local cmd_name="${__go_cmd_path//.d\// }"
   cmd_name="${cmd_name##*/}"
 
-  . "$_GO_CORE_DIR/lib/command_descriptions"
+  . "$_GO_CORE_DIR/lib/internal/command_descriptions"
   local __go_cmd_desc
 
   if ! _@go.command_description "$__go_cmd_path"; then
@@ -126,7 +126,7 @@ _@go.help() {
   if [[ "$1" == '--complete' ]]; then
     # Tab completions
     shift
-    . "$_GO_CORE_DIR/lib/complete"
+    . "$_GO_CORE_DIR/lib/internal/complete"
     _@go.complete_command_path "$@"
     return
   fi

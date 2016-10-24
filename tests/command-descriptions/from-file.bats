@@ -7,7 +7,7 @@ load ../script_helper
 TEST_COMMAND_SCRIPT_PATH="$TEST_GO_SCRIPTS_DIR/test-command"
 
 setup() {
-  . 'lib/command_descriptions'
+  . 'lib/internal/command_descriptions'
 
   local script='#
 # Command that does something in {{root}}

@@ -7,8 +7,8 @@ load helpers
 
 setup() {
   create_test_go_script \
-    '. "$_GO_CORE_DIR/lib/path"' \
-    '. "$_GO_CORE_DIR/lib/commands"' \
+    '. "$_GO_CORE_DIR/lib/internal/path"' \
+    '. "$_GO_CORE_DIR/lib/internal/commands"' \
     'declare __go_longest_name_len' \
     'declare __go_command_names' \
     'declare __go_command_scripts' \

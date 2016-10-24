@@ -73,7 +73,7 @@ load assertions
   run ./go builtins --summaries
   assert_success
 
-  . lib/command_descriptions
+  . lib/internal/command_descriptions
   local __go_cmd_desc=''
   local first_cmd="${builtins[0]}"
   local last_cmd="${builtins[$((${#builtins[@]} - 1))]}"

@@ -88,7 +88,7 @@ teardown() {
   # As noted in the code, this _shouldn't_ ever happen. We're doing something
   # tricky to make sure we handle it if it ever does.
   local go_script=(
-    '. "$_GO_CORE_DIR/lib/path"'
+    '. "$_GO_CORE_DIR/lib/internal/path"'
     '_@go.set_command_path_and_argv() {'
     "  __go_cmd_path='bogus/path/to/nowhere'"
     '}'

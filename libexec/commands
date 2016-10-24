@@ -23,7 +23,7 @@
 # aliases` for those.
 
 _@go.summarize_commands() {
-  . "$_GO_CORE_DIR/lib/command_descriptions"
+  . "$_GO_CORE_DIR/lib/internal/command_descriptions"
 
   local i
   local cmd_name
@@ -134,7 +134,7 @@ _@go.commands() {
     return 1
   fi
 
-  . "$_GO_CORE_DIR/lib/commands"
+  . "$_GO_CORE_DIR/lib/internal/commands"
 
   local __go_command_names
   local __go_command_scripts

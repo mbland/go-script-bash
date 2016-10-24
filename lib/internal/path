@@ -14,7 +14,7 @@ if [[ -z "${_GO_SEARCH_PATHS[*]}" ]]; then
 fi
 
 _@go.list_available_commands() {
-  . "$_GO_CORE_DIR/lib/commands"
+  . "$_GO_CORE_DIR/lib/internal/commands"
   local __go_command_names
 
   if ! _@go.find_commands "$@"; then
