@@ -40,8 +40,10 @@ function __go_glob_builtin_scripts {
   done
 }
 __go_glob_builtin_scripts
+unset __go_glob_builtin_scripts
 
 declare -r _GO_BUILTIN_CMDS=("${__go_builtin_cmds[@]}")
+unset __go_builtin_cmds
 
 _@go.builtin_summaries() {
   local cmd_name

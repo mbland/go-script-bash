@@ -33,7 +33,7 @@ if [[ "${BASH_VERSINFO[0]}" -lt '3' || "${BASH_VERSINFO[1]}" -lt '2' ]]; then
   exit 1
 fi
 
-declare -r __GO_ORIG_DIR="$PWD"
+declare __go_orig_dir="$PWD"
 cd "${0%/*}" || exit 1
 
 # Path to the project's root directory
@@ -43,10 +43,11 @@ cd "${0%/*}" || exit 1
 declare -r -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
-  cd "$__GO_ORIG_DIR/${BASH_SOURCE[0]%/*}" || exit 1
+  cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit 1
 else
   cd "${BASH_SOURCE[0]%/*}" || exit 1
 fi
+unset __go_orig_dir
 
 # Path to the ./go script framework's directory
 declare -r _GO_CORE_DIR="$PWD"
@@ -193,9 +194,7 @@ _@go.set_scripts_dir() {
 
 if ! _@go.set_scripts_dir "$@"; then
   exit 1
-fi
-
-if [[ -z "$COLUMNS" ]]; then
+elif [[ -z "$COLUMNS" ]]; then
   if command -v 'tput' >/dev/null; then
     COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then
