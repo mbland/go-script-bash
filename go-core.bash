@@ -14,8 +14,10 @@
 #   @go "$@"
 #
 # where "${0%/*}" produces the path to the project's root directory,
-# "go-core.bash" is the path to this file, and "scripts" is the path to the
-# directory holding the project's command scripts relative to the project root.
+# "/go-core.bash" is the relative path to this file, and "scripts" is the
+# relative path from the project root to the command script directory.
+#
+# See README.md for details about other available features.
 #
 # Inspired by:
 # - "In Praise of the ./go Script: Parts I and II" by Pete Hodgson
@@ -52,6 +54,21 @@ unset __go_orig_dir
 # Path to the ./go script framework's directory
 declare -r _GO_CORE_DIR="$PWD"
 cd "$_GO_ROOTDIR" || exit 1
+
+# Path to the script used to import optional library modules.
+#
+# After sourcing go-core.bash, your `./go` script, Bash command scripts, and
+# individual Bash functions can then import optional Bash library modules from
+# the core framework, from installed plugins, and from your scripts directory
+# like so:
+#
+#   . $_GO_USE_MODULES 'log'
+#
+# See the header comment from lib/internal/use for more information.
+declare -r _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
+
+# Array of modules imported via _GO_USE_MODULES
+declare _GO_IMPORTED_MODULES=()
 
 # Path to the project's script directory
 declare _GO_SCRIPTS_DIR=
@@ -208,4 +225,3 @@ elif [[ -z "$COLUMNS" ]]; then
   fi
   export COLUMNS
 fi
-
