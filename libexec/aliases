@@ -41,7 +41,7 @@ _@go.aliases() {
     return
   fi
 
-  . "$_GO_CORE_DIR/lib/argv"
+  . "$_GO_CORE_DIR/lib/internal/argv"
   local flag
 
   case "$1" in

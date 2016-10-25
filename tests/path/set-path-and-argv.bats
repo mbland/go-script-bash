@@ -6,7 +6,7 @@ load ../script_helper
 
 setup() {
   create_test_go_script \
-    '. "$_GO_CORE_DIR/lib/path"' \
+    '. "$_GO_CORE_DIR/lib/internal/path"' \
     'if ! _@go.set_command_path_and_argv "$@"; then' \
     '  exit 1' \
     'fi' \

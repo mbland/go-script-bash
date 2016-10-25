@@ -4,7 +4,7 @@ load environment
 load assertions
 
 setup() {
-  . 'lib/command_descriptions'
+  . 'lib/internal/command_descriptions'
 }
 
 @test "$SUITE: check command path passes" {

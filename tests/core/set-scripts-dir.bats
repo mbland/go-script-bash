@@ -12,7 +12,7 @@ teardown() {
   remove_test_go_rootdir
 }
 
-@test "$SUITE: scripts dir check successful" {
+@test "$SUITE: scripts dir successfully set" {
   run "$TEST_GO_SCRIPT"
   assert_success
 }

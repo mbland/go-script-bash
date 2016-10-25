@@ -44,7 +44,7 @@ _@go.complete_command() {
   local __go_argv
   local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n'$'\r'']'
 
-  . "$_GO_CORE_DIR/lib/complete"
+  . "$_GO_CORE_DIR/lib/internal/complete"
   exec 2>/dev/null
 
   if _@go.complete_command_path "$@" &&
@@ -61,7 +61,7 @@ _@go.complete_args() {
   local cmd_name="${args[0]}"
   local word="${args[$word_index]}"
 
-  . "$_GO_CORE_DIR/lib/complete"
+  . "$_GO_CORE_DIR/lib/internal/complete"
 
   if [[ "$word_index" -eq '0' ]]; then
     case "$cmd_name" in

@@ -34,7 +34,7 @@ if [[ "${BASH_VERSINFO[0]}" -lt '3' || "${BASH_VERSINFO[1]}" -lt '2' ]]; then
 fi
 
 declare __go_orig_dir="$PWD"
-cd "${0%/*}"
+cd "${0%/*}" || exit 1
 
 # Path to the project's root directory
 #
@@ -42,21 +42,33 @@ cd "${0%/*}"
 # and scripts are invoked relative to this directory.
 declare -r -x _GO_ROOTDIR="$PWD"
 
+if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
+  cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit 1
+else
+  cd "${BASH_SOURCE[0]%/*}" || exit 1
+fi
+unset __go_orig_dir
+
+# Path to the ./go script framework's directory
+declare -r _GO_CORE_DIR="$PWD"
+cd "$_GO_ROOTDIR" || exit 1
+
+# Path to the project's script directory
+declare _GO_SCRIPTS_DIR=
+
 # Path to the main ./go script in the project's root directory
 declare -r -x _GO_SCRIPT="$_GO_ROOTDIR/${0##*/}"
 
+# The name of either the ./go script itself or the shell function invoking it.
 declare -r _GO_CMD="${_GO_CMD:=$0}"
-declare -r _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 
-cd "$__go_orig_dir"
-cd "${BASH_SOURCE[0]%/*}"
-declare -r _GO_CORE_DIR="$PWD"
-cd "$_GO_ROOTDIR"
+# The URL of the framework's original source repository.
+declare -r _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 
 # Invokes printf builtin, then folds output to $COLUMNS width if 'fold' exists.
 #
-# Should be used as the last step to print to standard output, as that is more
-# efficient than calling this multiple times due to the pipe to 'fold'.
+# Should be used as the last step to print to standard output or error, as that
+# is more efficient than calling this multiple times due to the pipe to 'fold'.
 #
 # Arguments:
 #   everything accepted by the printf builtin except the '-v varname' option
@@ -114,7 +126,7 @@ cd "$_GO_ROOTDIR"
     return
   fi
 
-  . "$_GO_CORE_DIR/lib/path"
+  . "$_GO_CORE_DIR/lib/internal/path"
   local __go_cmd_path
   local __go_argv
 
@@ -155,12 +167,12 @@ _@go.run_command_script() {
   elif [[ -n "$interpreter" ]]; then
     "$interpreter" "$cmd_path" "$@"
   else
-    @go.printf "Could not parse interpreter from first line of $cmd_path.\n"
+    @go.printf "Could not parse interpreter from first line of $cmd_path.\n" >&2
     return 1
   fi
 }
 
-_@go.check_scripts_dir() {
+_@go.set_scripts_dir() {
   local scripts_dir="$_GO_ROOTDIR/$1"
 
   if [[ "$#" -ne '1' ]]; then
@@ -177,13 +189,12 @@ _@go.check_scripts_dir() {
       "directory" >&2
     return 1
   fi
+  _GO_SCRIPTS_DIR="$scripts_dir"
 }
 
-if ! _@go.check_scripts_dir "$@"; then
+if ! _@go.set_scripts_dir "$@"; then
   exit 1
-fi
-
-if [[ -z "$COLUMNS" ]]; then
+elif [[ -z "$COLUMNS" ]]; then
   if command -v 'tput' >/dev/null; then
     COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then
@@ -198,6 +209,3 @@ if [[ -z "$COLUMNS" ]]; then
   export COLUMNS
 fi
 
-cd "$1"
-declare -r _GO_SCRIPTS_DIR="$PWD"
-cd - >/dev/null

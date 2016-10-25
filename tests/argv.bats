@@ -4,7 +4,7 @@ load environment
 load assertions
 
 setup() {
-  . 'lib/argv'
+  . 'lib/internal/argv'
 }
 
 @test "$SUITE: check_flag_has_no_arguments" {

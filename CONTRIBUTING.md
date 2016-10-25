@@ -205,8 +205,8 @@ it easier to find, count, and possibly transform things.
 - Use `snake_case` for all identifiers.
 - Constants and globals should be in `ALL_CAPS`, prefixed with `_GO_`.
   - Exception: a global variable used for initialization that isn't used
-    anywhere else or intended for export should be prefixed with `__go_`, as
-    seen at the top of `libexec/builtins`:
+    anywhere else or intended for export should be all-lowercase, prefixed with
+    `__go_`, and `unset` after use, as seen at the top of `libexec/builtins`:
     ```bash
     declare __go_builtin_cmds=()
     function __go_glob_builtin_scripts {
@@ -218,8 +218,10 @@ it easier to find, count, and possibly transform things.
       done
     }
     __go_glob_builtin_scripts
+    unset __go_glob_builtin_scripts
 
     declare -r _GO_BUILTIN_CMDS=("${__go_builtin_cmds[@]}")
+    unset __go_builtin_cmds
     ```
 - Prefix API functions with `@go.`.
 - Prefix internal functions with `_@go.`.

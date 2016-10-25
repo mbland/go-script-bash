@@ -34,7 +34,7 @@ _@go.env() {
   local go_func="$1"
   local default_name="${_GO_SCRIPT##*/}"
   local shell="${SHELL##*/}"
-  local shell_impl="$_GO_CORE_DIR/lib/env/$shell"
+  local shell_impl="$_GO_CORE_DIR/lib/internal/env/$shell"
 
   if [[ ! -e "$shell_impl" ]]; then
     @go.printf "%s\n\n" "The $shell shell currently isn't supported." >&2
