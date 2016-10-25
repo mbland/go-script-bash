@@ -53,6 +53,14 @@
 # Module loading is idempotent, as the names of imported modules are added to
 # the `_GO_IMPORTED_MODULES` array and are not sourced again if their names are
 # already in the array.
+#
+# To see what modules are currently imported and their corresponding files, use:
+#
+#   for modules imported by the top-level `./go` script:
+#   {{go}} modules --imported
+#
+#   for modules imported within a Bash command script or function:
+#   @go modules --imported
 
 declare __go_module_name
 declare __go_loaded_module
