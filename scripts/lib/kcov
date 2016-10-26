@@ -1,4 +1,12 @@
 #! /bin/bash
+#
+# Builds kcov from scratch on Ubuntu to support Bash test coverage
+#
+# Exports:
+#
+#   run_kcov
+#
+# This will eventually be extracted into a plugin library of its own.
 
 declare -r KCOV_DEV_PACKAGES=(
   'binutils-dev'
