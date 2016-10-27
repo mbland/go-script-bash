@@ -1,0 +1,80 @@
+#! /bin/bash
+#
+# Imports optional Bash library modules
+#
+# Usage:
+#   .  $_GO_USE_MODULES <module> [<module>...]
+#
+# Where:
+#   <module>  The name of an optional Bash library module
+#
+# After sourcing `go-core.bash`, you can source the `_GO_USE_MODULES` script to
+# import optional library code from the core framework, from plugins, or from
+# your scripts directory. You can invoke `_GO_USE_MODULES` in your `./go`
+# script, making the module code available to all your Bash command scripts, or
+# use it in specfic Bash command scripts or Bash functions.
+#
+# This aims to be a convenient, flexible, standard, and self-documenting means
+# of reusing Bash library code that incurs no overhead if such functionality
+# isn't required by a project, just like other modern programming languages. In
+# so doing, it aims to promote the development of modular, robust, and
+# well-tested core framework extensions and other plugins without bloating
+# project scripts that have no use for the extra functionality.
+#
+# For example, the core framework logging module `lib/log` is not sourced
+# automatically by `go-core.bash`, so that scripts that don't make use of it
+# will not incur the penalty of loading that code.  However, scripts that do
+# make use of it need only invoke the following command in the `./go` script
+# immediately after sourcing `go-core.bash`, and the core logging interface is
+# then available to the rest of the `./go` script and any command scripts also
+# written in Bash:
+#
+#   . $_GO_USE_MODULES 'log'
+#
+# Alternatively, specific command scripts or individual Bash functions that
+# require the functionality can use `_GO_CORE_MODULES` on an as-needed basis,
+# rather than using it in the top-level `./go` script.
+#
+# The precedence for discovering modules is (with examples from the "Directory
+# structure" example from README.md):
+#
+#   - the `lib/` directory of the framework (`scripts/go-script-bash/lib`)
+#   - the `lib/` directory of installed plugins (`scripts/plugins/*/lib`)
+#   - the `lib/` directory in your project scripts directory (`scripts/lib`)
+#
+# For modules contained in plugin directories, you must specify the path as
+# `<plugin-name>/<module-name>`. There is no need to include the `lib/`
+# component.  For example, if you have a plugin called `foo` and it contains a
+# module file `lib/bar` (installed as `scripts/plugins/foo/lib/bar` in your
+# project repository), you could import the module via:
+#
+#   . $_GO_USE_MODULES 'foo/bar'
+#
+# Module loading is idempotent, as the names of imported modules are added to
+# the `_GO_IMPORTED_MODULES` array and are not sourced again if their names are
+# already in the array.
+
+declare __go_module_name
+declare __go_loaded_module
+
+for __go_module_name in "$@"; do
+  for __go_loaded_module in "${_GO_IMPORTED_MODULES[@]}"; do
+    if [[ "$__go_module_name" == "$__go_loaded_module" ]]; then
+      continue 2
+    fi
+  done
+
+  # Prevent self- and circular importing.
+  _GO_IMPORTED_MODULES+=("$__go_module_name")
+
+  # Convert <plugin>/<module> to _GO_SCRIPTS_DIR/plugins/<plugin>/lib/<module>
+  if ! . "$_GO_CORE_DIR/lib/$__go_module_name" 2>/dev/null &&
+     ! . "$_GO_SCRIPTS_DIR/plugins/${__go_module_name/\///lib/}" 2>/dev/null &&
+     ! . "$_GO_SCRIPTS_DIR/lib/$__go_module_name" 2>/dev/null; then
+    @go.printf "ERROR: Unknown module: $__go_module_name" >&2
+    exit 1
+  fi
+done
+
+unset __go_loaded_module
+unset __go_use_module

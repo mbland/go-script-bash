@@ -234,13 +234,17 @@ Your project structure may look something like this:
 
 ```
 project/
-  go - main go script
-  scripts/ - project scripts
+  go - main ./go script
+  scripts/ - project ./go command scripts
+    lib/ - project-specific Bash library modules (see "Modules" section)
     plugins/ - (optional) third-party command scripts (see `./go help plugins`)
+      .../
+        bin/ - plugin ./go command scripts
+        lib/ - optional Bash library modules (see "Modules" section)
     go-script-bash/
       go-core.bash - top-level functions
-      lib/ - utility functions
-      libexec/ - builtin subcommands
+      lib/ - optional Bash library modules (see "Modules" section)
+      libexec/ - builtin ./go command scripts
 ```
 
 This structure implies that the first line of your `./go` script will be:
@@ -294,6 +298,8 @@ commands.
 There are a number of possible methods available for sharing code between
 command scripts. Some possibilities are:
 
+- The generally preferred method is to use `. $_GO_USE_MODULES` to source
+  optional library modules; see the [Modules](#modules) section.
 - Include common code and constants in the top-level `./go` script, after
   sourcing `go-core.bash` and before calling `@go`.
 - Source a file in the same directory that isn't executable.
@@ -325,6 +331,19 @@ exported and available to scripts in all languages.
 
 You can add third-party plugin command scripts to the `plugins` subdirectory of
 your scripts directory. Run `./go help plugins` for more information.
+
+#### Modules
+
+You can import optional Bash library code from the core framework, third-party
+plugins, or your own project's scripts directory by sourcing the
+`$_GO_USE_MODULES` script. For example, to import the core logging utilities:
+
+```bash
+. $_GO_USE_MODULES 'log'
+```
+
+See the header comment in [lib/internal/use](lib/internal/use) for more
+information.
 
 ### Feedback and contributions
 
