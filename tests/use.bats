@@ -4,30 +4,29 @@ load environment
 load assertions
 load script_helper
 
+TEST_MODULES=(
+  "$_GO_ROOTDIR/lib/builtin-test"
+  "$TEST_GO_SCRIPTS_DIR/plugins/test-plugin/lib/plugin-test"
+  "$TEST_GO_SCRIPTS_DIR/lib/project-test"
+)
+IMPORTS=('test-plugin/plugin-test' 'project-test' 'builtin-test')
+EXPECTED=(
+  "plugin-test loaded"
+  "project-test loaded"
+  "builtin-test loaded"
+  "modules: ${IMPORTS[*]}"
+)
+
 setup() {
   create_test_go_script \
     ". \"\$_GO_USE_MODULES\" $*" \
     'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
-
-  readonly TEST_MODULES=(
-    "$_GO_ROOTDIR/lib/builtin-test"
-    "$TEST_GO_SCRIPTS_DIR/plugins/test-plugin/lib/plugin-test"
-    "$TEST_GO_SCRIPTS_DIR/lib/project-test"
-  )
 
   local module
   for module in "${TEST_MODULES[@]}"; do
     mkdir -p "${module%/*}"
     echo "echo '${module##*/}' loaded" > "$module"
   done
-
-  readonly IMPORTS=('test-plugin/plugin-test' 'project-test' 'builtin-test')
-  readonly EXPECTED=(
-    "plugin-test loaded"
-    "project-test loaded"
-    "builtin-test loaded"
-    "modules: ${IMPORTS[*]}"
-  )
 }
 
 teardown() {
