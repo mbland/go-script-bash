@@ -1,0 +1,59 @@
+#! /bin/bash
+#
+# Text formatting utilities
+#
+# Exports:
+#
+#   @go.pad_items
+#     Pads each string in an array to match the length of the longest element
+#
+#   @go.zip_items
+#     Concatenates parallel elements from each input array
+
+# Pads each string in an array to match the length of the longest element
+#
+# Arguments:
+#   $1: Name of the input array in the caller's scope
+# Outputs:
+#   __go_padded_result: The caller-declared array to which results are assigned
+@go.pad_items() {
+  local items_reference=("${1}[@]")
+  local item
+  local padding=''
+  local padding_len=0
+
+  for item in "${!items_reference}"; do
+    while [[ "${#padding}" -lt "${#item}" ]]; do
+      padding+=' '
+    done
+  done
+
+  for item in "${!items_reference}"; do
+    padding_len="$((${#padding} - ${#item}))"
+    __go_padded_result+=("${item}${padding:0:padding_len}")
+  done
+}
+
+# Concatenates parallel elements from each input array
+#
+# Will produce a number of results matching that of the left-hand input array.
+#
+# Arguments:
+#   $1: Name of the left-hand input array in the caller's scope
+#   $2: Name of the right-hand input array in the caller's scope
+#   $3: The string used as a delimiter between elements (defaults to two spaces)
+# Outputs:
+#   __go_zipped_result: The caller-declared array to which results are assigned
+@go.zip_items() {
+  local lhs_array_reference="${1}[@]"
+  local rhs_reference="$2"
+  local delimiter="${3:-  }"
+  local rhs_item_ref
+  local item
+  local i=-1
+
+  for item in "${!lhs_array_reference}"; do
+    rhs_item_ref="${rhs_reference}[$((++i))]"
+    __go_zipped_result+=("${item}${delimiter}${!rhs_item_ref}")
+  done
+}
