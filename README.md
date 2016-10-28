@@ -289,8 +289,8 @@ more about the formatting rules.
 By evaluating the value of `./go env -` within your shell, all builtin commands
 and aliases provide automatic tab completion of file, directory, and other
 arguments. If an implementation isn't available for your shell (within
-`lib/env/`), it's very easy to add one. Feel free to open an issue or, better
-yet, [send a pull request](#feedback-and-contributions)!
+`lib/internal/env/`), it's very easy to add one. Feel free to open an issue or,
+better yet, [send a pull request](#feedback-and-contributions)!
 
 To learn the API for adding tab completion to your own command scripts, run
 `./go help complete`. You can also learn by reading the scripts for the builtin
