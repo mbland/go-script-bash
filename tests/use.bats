@@ -6,7 +6,7 @@ load script_helper
 
 TEST_MODULES=(
   "$_GO_ROOTDIR/lib/builtin-test"
-  "$TEST_GO_SCRIPTS_DIR/plugins/test-plugin/lib/plugin-test"
+  "$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
   "$TEST_GO_SCRIPTS_DIR/lib/project-test"
 )
 IMPORTS=('test-plugin/plugin-test' 'project-test' 'builtin-test')

@@ -8,6 +8,7 @@ TEST_GO_ROOTDIR="$BATS_TMPDIR/test rootdir"
 TEST_GO_SCRIPT="$TEST_GO_ROOTDIR/go"
 TEST_GO_SCRIPTS_RELATIVE_DIR="scripts"
 TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
+TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 
 # The FS_MISSING_PERM_SUPPORT variable provides a generic means of determining
 # whether or not to skip certain tests, since the lack of permission support
