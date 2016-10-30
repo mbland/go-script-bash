@@ -1,0 +1,37 @@
+#! /bin/bash
+#
+# Automatic command and argument completion utilities
+#
+# Exports:
+#
+#   @go.complete_remove_completions_already_present
+#     Removes completion values already present in an argument array
+
+# Removes completion values already present in an argument array
+#
+# NOTE: The word being completed should already be removed from the argument
+# array. Save it in a separate variable, remove it from the array, then call
+# this function.
+#
+# Arguments:
+#   $1: Name of the argument array in the caller's scope
+#   $2: Name of the completion value array in the caller's scope
+#   $3: Size of the completion value array
+@go.complete_remove_completions_already_present() {
+  local argv_reference="$1"
+  local completions_reference="$2"
+  local num_completions="$3"
+  local argv_array_reference="$argv_reference[@]"
+  local arg
+  local completion_item_reference
+  local i
+
+  for arg in "${!argv_array_reference}"; do
+    for ((i=0; i != num_completions; ++i)); do
+      completion_item_reference="$completions_reference[$i]"
+      if [[ "${!completion_item_reference}" == "$arg" ]]; then
+        unset "$completions_reference[$i]"
+      fi
+    done
+  done
+}
