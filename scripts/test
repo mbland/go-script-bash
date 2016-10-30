@@ -75,7 +75,7 @@ _test() {
     _test '--coverage' "$@"
   else
     local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
-    "$BASH" "$bats_path" "${tests[@]}"
+    time "$BASH" "$bats_path" "${tests[@]}"
   fi
 }
 
