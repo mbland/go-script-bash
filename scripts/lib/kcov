@@ -54,6 +54,8 @@ run_kcov() {
   mkdir "$coverage_dir"
   printf 'Starting coverage run:\n  %s\n' "${kcov_argv[*]}"
 
+  # We redirect stderr because all the kcov coverage info will get dumped to the
+  # Travis log otherwise.
   if "${kcov_argv[@]}" 2>/dev/null; then
     if [[ "$send_to_coveralls" == 'false' ]]; then
       @go.printf 'Coverage results located in:\n  %s\n' \
