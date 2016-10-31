@@ -10,6 +10,9 @@ sometimes deploy) a software project. It is a replacement for READMEs and other
 documents that may become out-of-date, and when maintained properly, should
 provide a cohesive and discoverable interface for common project tasks.
 
+For a five-minute overview of the framework, see [Mike Bland's go-script-bash
+lightning talk at Surge 2016](https://youtu.be/WX1vrLV9mFE?t=39m48s).
+
 ### Table of contents
 
 - [Introduction](#introduction)
