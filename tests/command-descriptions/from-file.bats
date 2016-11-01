@@ -51,6 +51,19 @@ teardown() {
   remove_test_go_rootdir
 }
 
+@test "$SUITE: return error if there's an error reading" {
+  chmod ugo-r "$TEST_COMMAND_SCRIPT_PATH"
+
+  run _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
+  assert_failure
+  assert_output_matches "ERROR: problem reading $TEST_COMMAND_SCRIPT_PATH\$"
+
+  output=''
+  run _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
+  assert_failure
+  assert_output_matches "ERROR: problem reading $TEST_COMMAND_SCRIPT_PATH\$"
+}
+
 @test "$SUITE: return default text when no description is available" {
   create_test_command_script 'test-command' \
     'echo "This script has no description"'

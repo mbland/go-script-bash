@@ -91,7 +91,10 @@ _@go.command_summary() {
     fi
   done < "$cmd_path"
 
-  if [[ -z "$__go_cmd_desc" ]]; then
+  if [[ "$?" -ne '0' ]]; then
+    echo "ERROR: problem reading $cmd_path" >&2
+    return 1
+  elif [[ -z "$__go_cmd_desc" ]]; then
     __go_cmd_desc='No description available'
   fi
 }
@@ -153,7 +156,10 @@ _@go.command_description() {
     fi
   done < "$cmd_path"
 
-  if [[ -z "$__go_cmd_desc" ]]; then
+  if [[ "$?" -ne '0' ]]; then
+    echo "ERROR: problem reading $cmd_path" >&2
+    return 1
+  elif [[ -z "$__go_cmd_desc" ]]; then
     __go_cmd_desc='No description available'
   fi
 }
