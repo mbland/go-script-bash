@@ -161,6 +161,8 @@ _@go.command_description() {
     return 1
   elif [[ -z "$__go_cmd_desc" ]]; then
     __go_cmd_desc='No description available'
+  else
+    __go_cmd_desc="${__go_cmd_desc%% }"
   fi
 }
 

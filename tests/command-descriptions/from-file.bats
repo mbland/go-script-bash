@@ -70,21 +70,28 @@ teardown() {
 
   local __go_cmd_desc=''
   _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
-  assert_success
   assert_equal 'No description available' "$__go_cmd_desc" 'command summary'
 
   __go_cmd_desc=''
   _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
-  assert_success
   assert_equal 'No description available' "$__go_cmd_desc" 'command description'
 }
 
 @test "$SUITE: parse summary from command script" {
   _GO_ROOTDIR='/foo/bar'
   _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
-  assert_success
   assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
     'command summary'
+}
+
+@test "$SUITE: one-line description from command script has no trailing space" {
+  echo '# Command that does something in {{root}}' > "$TEST_COMMAND_SCRIPT_PATH"
+  _GO_ROOTDIR='/foo/bar'
+  COLUMNS=40
+
+  _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
+  assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
+    'one-line command description'
 }
 
 @test "$SUITE: parse description from command script" {
@@ -92,7 +99,6 @@ teardown() {
   _GO_ROOTDIR='/foo/bar'
   COLUMNS=40
   _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
-  assert_success
 
   local expected='Command that does something in /foo/bar
 
