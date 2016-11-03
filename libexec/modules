@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# List optional Bash modules available for import via `. $_GO_USE_MODULES`
+# List optional Bash modules available for import via `. "$_GO_USE_MODULES"`
 #
 # Usage:
 #   A list of all available plugins by class (core, plugin, project):
@@ -29,7 +29,7 @@
 #
 # Modules are reusable libraries of Bash code that may be sourced by the
 # top-level `./go` script, by individual Bash command scripts, and individual
-# Bash functions by executing `. $_GO_USE_MODULES` followed by one or more
+# Bash functions by executing `. "$_GO_USE_MODULES"` followed by one or more
 # module names.
 #
 # It's best to include each `<module-glob>` argument in single-quotes.

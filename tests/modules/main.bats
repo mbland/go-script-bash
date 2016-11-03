@@ -71,7 +71,7 @@ get_first_and_last_core_module_summaries() {
 
 @test "$SUITE: --imported" {
   create_test_go_script \
-    '. $_GO_USE_MODULES "complete" "_foo/_plugh" "_bar/_quux" "_frotz"' \
+    '. "$_GO_USE_MODULES" "complete" "_foo/_plugh" "_bar/_quux" "_frotz"' \
     '@go "$@"'
 
   # The first will be an absolute path because the script's _GO_ROOTDIR doesn't

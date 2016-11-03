@@ -62,9 +62,9 @@ cd "$_GO_ROOTDIR" || exit 1
 # the core framework, from installed plugins, and from your scripts directory
 # like so:
 #
-#   . $_GO_USE_MODULES 'log'
+#   . "$_GO_USE_MODULES" 'log'
 #
-# See the header comment from lib/internal/use for more information.
+# See `./go modules --help` for more information.
 declare -r _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
 
 # Array of modules imported via _GO_USE_MODULES
