@@ -3,16 +3,21 @@
 # Imports optional Bash library modules
 #
 # Usage:
-#   .  $_GO_USE_MODULES <module> [<module>...]
+#   .  "$_GO_USE_MODULES" <module> [<module>...]
+#
+#   NOTE: It's important to wrap `$_GO_USE_MODULES` in double-quotes to ensure
+#   the statement is portable to environments in which the file paths may
+#   contain spaces. It's good practice to wrap each `<module>` in
+#   single-quotes as well.
 #
 # Where:
 #   <module>  The name of an optional Bash library module
 #
-# After sourcing `go-core.bash`, you can source the `_GO_USE_MODULES` script to
-# import optional library code from the core framework, from plugins, or from
-# your scripts directory. You can invoke `_GO_USE_MODULES` in your `./go`
-# script, making the module code available to all your Bash command scripts, or
-# use it in specfic Bash command scripts or Bash functions.
+# After sourcing `go-core.bash`, you can source the `_GO_USE_MODULES` script
+# to import optional library code from the core framework, from plugins, or
+# from your scripts directory. You can do so in your `./go` script, making the
+# module code available to all your Bash command scripts, or use it in specfic
+# Bash command scripts or Bash functions.
 #
 # This aims to be a convenient, flexible, standard, and self-documenting means
 # of reusing Bash library code that incurs no overhead if such functionality
@@ -29,7 +34,7 @@
 # then available to the rest of the `./go` script and any command scripts also
 # written in Bash:
 #
-#   . $_GO_USE_MODULES 'log'
+#   . "$_GO_USE_MODULES" 'log'
 #
 # Alternatively, specific command scripts or individual Bash functions that
 # require the functionality can use `_GO_CORE_MODULES` on an as-needed basis,
@@ -48,11 +53,19 @@
 # module file `lib/bar` (installed as `scripts/plugins/foo/lib/bar` in your
 # project repository), you could import the module via:
 #
-#   . $_GO_USE_MODULES 'foo/bar'
+#   . "$_GO_USE_MODULES" 'foo/bar'
 #
 # Module loading is idempotent, as the names of imported modules are added to
 # the `_GO_IMPORTED_MODULES` array and are not sourced again if their names are
 # already in the array.
+#
+# To see what modules are currently imported and their corresponding files, use:
+#
+#   for modules imported by the top-level `./go` script:
+#   {{go}} modules --imported
+#
+#   for modules imported within a Bash command script or function:
+#   @go modules --imported
 
 declare __go_module_name
 declare __go_loaded_module

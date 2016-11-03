@@ -345,8 +345,7 @@ plugins, or your own project's scripts directory by sourcing the
 . $_GO_USE_MODULES 'log'
 ```
 
-See the header comment in [lib/internal/use](lib/internal/use) for more
-information.
+Run `./go help modules` and `./go modules --help` for more information.
 
 ### Feedback and contributions
 
