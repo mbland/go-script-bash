@@ -104,16 +104,15 @@ _trim_expected() {
 
 write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
   # Avoid `git submodule update` by writing dummy bats.
-  local bats_dummy="$TEST_GO_ROOTDIR/tests/bats/libexec/bats"
-
-  mkdir -p "${bats_dummy%/*}" "$TEST_GO_SCRIPTS_DIR/lib"
-  echo '#! /usr/bin/env bats' >>"$bats_dummy"
-  chmod 700 "$bats_dummy"
+  create_bats_test_script "tests/bats/libexec/bats"
 
   # Stub the kcov lib to assert it's called correctly.
   create_test_command_script 'lib/kcov' \
     "run_kcov() { IFS=\$'\n'; echo \"\$*\"; }"
 
+  if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then
+    mkdir "$TEST_GO_SCRIPTS_DIR"
+  fi
   cp "$_GO_ROOTDIR/scripts/test" "$TEST_GO_SCRIPTS_DIR"
 }
 

@@ -1,0 +1,151 @@
+#! /bin/bash
+#
+# Variables and functions for writing Bats tests
+#
+# The recommended way to make these helpers available is to create an
+# 'environment.bash' file in the top-level test directory containing the
+# following lines:
+#
+#   . "path/to/bats/helpers"
+#   set_bats_suite_name "${BASH_SOURCE[0]%/*}"
+#
+# Then have each Bats test file load the environment file and start each of
+# its test cases with "$SUITE":
+#
+#   load environment
+#
+#   @test "$SUITE: test some condition" {
+#     # ...
+#   }
+#
+# It's recommended you use BATS_TEST_ROOTDIR as the root directory for all
+# temporary files, as it contains a space to help ensure that most shell
+# variables are quoted correctly. The create_bats_test_dirs() and
+# create_bats_test_script() functions will create this directory automatically.
+#
+# If you create BATS_TEST_ROOTDIR directly or use one of the functions mentioned
+# above, make sure your Bats teardown() function calls remove_bats_test_dirs(),
+# as Bats will not cleanup BATS_TEST_ROOTDIR automatically (even though it's a
+# subdirectory of BATS_TMPDIR):
+#
+#   teardown() {
+#     remove_bats_test_dirs
+#   }
+#
+
+# A subdirectory of BATS_TMPDIR that contains a space.
+#
+# Using this path instead of BATS_TMPDIR directly helps ensure that shell
+# variables are quoted properly in most places.
+BATS_TEST_ROOTDIR="$BATS_TMPDIR/test rootdir"
+
+# Sets the global SUITE variable based on the path of the test file.
+#
+# To make Bats output easier to follow, call this function and ensure that each
+# @test declaration starts with "$SUITE: ".
+#
+# Arguments:
+#   $1:  Path to the project's top-level test directory
+set_bats_test_suite_name() {
+  local test_rootdir="$(cd "$1" && echo "$PWD")"
+  local relative_filename="${BATS_TEST_FILENAME#$test_rootdir/}"
+  readonly SUITE="${relative_filename%.bats}"
+}
+
+# Creates BATS_TEST_ROOTDIR and subdirectories
+#
+# When using this function, make sure to call remove_bats_test_dirs() from
+# teardown().
+#
+# Arguments:
+#   $@:  Paths of subdirectories relative to BATS_TEST_ROOTDIR
+create_bats_test_dirs() {
+  local dirs_to_create=()
+  local test_dir
+
+  for test_dir in "${@/#/$BATS_TEST_ROOTDIR/}"; do
+    if [[ ! -d "$test_dir" ]]; then
+      dirs_to_create+=("$test_dir")
+    fi
+  done
+
+  if [[ "${#dirs_to_create[@]}" -ne '0' ]]; then
+    mkdir -p "${dirs_to_create[@]}"
+  fi
+}
+
+# Creates a test script relative to BATS_TEST_ROOTDIR
+#
+# If the first line of the script does not start with '#!', the first line of
+# the resulting script will be '#! /usr/bin/env bash'
+#
+# When using this function, make sure to call remove_bats_test_dirs() from
+# teardown().
+#
+# Arguments:
+#   $1:   Path of the script relative to BATS_TEST_ROOTDIR
+#   ...:  Lines comprising the script
+create_bats_test_script() {
+  local script="$1"
+  shift
+  local script_dir="${script%/*}"
+
+  if [[ -z "$script" ]]; then
+    echo "No test script specified" >&2
+    exit 1
+  elif [[ "$script_dir" == "$script" ]]; then
+    script_dir=''
+  fi
+
+  create_bats_test_dirs "$script_dir"
+  script="$BATS_TEST_ROOTDIR/$script"
+  rm -f "$script"
+
+  if [[ "${1:0:2}" != '#!' ]]; then
+    echo "#! /usr/bin/env bash" >"$script"
+  fi
+
+  local IFS=$'\n'
+  echo "$*" >> "$script"
+  chmod 700 "$script"
+}
+
+# Recursively removes BATS_TEST_ROOTDIR and its subdirectories
+#
+# Call this from teardown(), as Bats will not remove $BATS_TMPDIR and everything
+# in it automatically.
+remove_bats_test_dirs() {
+  if [[ -d "$BATS_TEST_ROOTDIR" ]]; then
+    chmod -R u+rwx "$BATS_TEST_ROOTDIR"
+    rm -rf "$BATS_TEST_ROOTDIR"
+  fi
+}
+
+# Determine if the host file system supports Unix file permissions
+#
+# The FS_MISSING_PERM_SUPPORT variable provides a generic means of determining
+# whether or not to skip certain tests, since the lack of permission support
+# prevents some code paths from ever getting executed.
+#
+# On Windows, MINGW64- and MSYS2-based file systems are mounted with the 'noacl'
+# attribute, which prevents chmod from having any effect. These file systems
+# do automatically mark files beginning with '#!' as executable, however,
+# which is why certain test scripts may contain only those characters when
+# testing permission conditions.
+#
+# Also, directories on these file systems are always readable and executable.
+fs_missing_permission_support() {
+  if [[ -z "$FS_MISSING_PERMISSION_SUPPORT" ]]; then
+    local check_perms_file="$BATS_TMPDIR/fs-missing-permission-support-test"
+    touch "$check_perms_file"
+    chmod 700 "$check_perms_file"
+    if [[ ! -x "$check_perms_file" ]]; then
+      export FS_MISSING_PERMISSION_SUPPORT="true"
+    else
+      export FS_MISSING_PERMISSION_SUPPORT="false"
+    fi
+    rm "$check_perms_file"
+  fi
+
+  [[ "$FS_MISSING_PERMISSION_SUPPORT" == 'true' ]]
+}

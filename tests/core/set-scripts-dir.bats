@@ -32,7 +32,7 @@ teardown() {
   local expected='ERROR: command script directory '
   expected+="$TEST_GO_SCRIPTS_DIR does not exist"
 
-  rmdir "$TEST_GO_SCRIPTS_DIR"
+  rm -rf "$TEST_GO_SCRIPTS_DIR"
   run "$TEST_GO_SCRIPT"
   assert_failure "$expected"
 }

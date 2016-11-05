@@ -167,13 +167,20 @@ get_first_and_last_core_module_summaries() {
   # Note that there is no leading space, the padding is relative to the length
   # of the longest module name overall, and there are no separate sections
   # delimited by back-to-back newlines. Bats trims the final newline.
-  assert_output_matches "${CORE_MODULES[0]} +${CORE_MODULES_PATHS[0]}"$'\n'
-  assert_output_matches $'\n'"$LAST_CORE_MODULE +$LAST_CORE_MODULE_PATH"$'\n'
-  assert_output_matches $'\n'"_bar/_plugh  scripts/plugins/_bar/lib/_plugh"$'\n'
-  assert_output_matches $'\n'"_foo/_quux   scripts/plugins/_foo/lib/_quux"$'\n'
-  assert_output_matches $'\n'"_foo/_xyzzy  scripts/plugins/_foo/lib/_xyzzy"$'\n'
-  assert_output_matches $'\n'"_frobozz     scripts/lib/_frobozz"$'\n'
-  assert_output_matches $'\n'"_frotz       scripts/lib/_frotz$"
+  assert_output_matches \
+    "${CORE_MODULES[0]}  +${CORE_MODULES_PATHS[0]}"$'\n'
+  assert_output_matches \
+    $'\n'"$LAST_CORE_MODULE  +$LAST_CORE_MODULE_PATH"$'\n'
+  assert_output_matches \
+    $'\n'"_bar/_plugh  +scripts/plugins/_bar/lib/_plugh"$'\n'
+  assert_output_matches \
+    $'\n'"_foo/_quux   +scripts/plugins/_foo/lib/_quux"$'\n'
+  assert_output_matches \
+    $'\n'"_foo/_xyzzy  +scripts/plugins/_foo/lib/_xyzzy"$'\n'
+  assert_output_matches \
+    $'\n'"_frobozz     +scripts/lib/_frobozz"$'\n'
+  assert_output_matches \
+    $'\n'"_frotz       +scripts/lib/_frotz$"
 
   assert_equal "$TOTAL_NUM_MODULES" "${#lines[@]}"
 }
@@ -210,13 +217,13 @@ get_first_and_last_core_module_summaries() {
   # of the longest module name overall, and there are no separate sections
   # delimited by back-to-back newlines. Bats trims the final newline.
   get_first_and_last_core_module_summaries
-  assert_output_matches "${CORE_MODULES[0]} +$FIRST_CORE_MOD_SUMMARY"$'\n'
-  assert_output_matches $'\n'"$LAST_CORE_MODULE +$LAST_CORE_MOD_SUMMARY"$'\n'
-  assert_output_matches $'\n'"_bar/_plugh  Summary for _bar/_plugh"$'\n'
-  assert_output_matches $'\n'"_foo/_quux   Summary for _foo/_quux"$'\n'
-  assert_output_matches $'\n'"_foo/_xyzzy  Summary for _foo/_xyzzy"$'\n'
-  assert_output_matches $'\n'"_frobozz     Summary for _frobozz"$'\n'
-  assert_output_matches $'\n'"_frotz       Summary for _frotz$"
+  assert_output_matches "${CORE_MODULES[0]}  +$FIRST_CORE_MOD_SUMMARY"$'\n'
+  assert_output_matches $'\n'"$LAST_CORE_MODULE  +$LAST_CORE_MOD_SUMMARY"$'\n'
+  assert_output_matches $'\n'"_bar/_plugh  +Summary for _bar/_plugh"$'\n'
+  assert_output_matches $'\n'"_foo/_quux   +Summary for _foo/_quux"$'\n'
+  assert_output_matches $'\n'"_foo/_xyzzy  +Summary for _foo/_xyzzy"$'\n'
+  assert_output_matches $'\n'"_frobozz     +Summary for _frobozz"$'\n'
+  assert_output_matches $'\n'"_frotz       +Summary for _frotz$"
 
   assert_equal "$TOTAL_NUM_MODULES" "${#lines[@]}"
 }

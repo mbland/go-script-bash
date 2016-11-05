@@ -6,20 +6,20 @@ load script_helper
 
 setup() {
   create_test_go_script '@go "$@"'
+  mkdir "$TEST_GO_PLUGINS_DIR"
 }
 
 teardown() {
   remove_test_go_rootdir
 }
 
-@test "$SUITE: tab completion" {
+@test "$SUITE: tab completion returns error if no plugins dir" {
+  rmdir "$TEST_GO_PLUGINS_DIR"
   run "$TEST_GO_SCRIPT" plugins --complete 0 ''
   assert_failure ''
+}
 
-  local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
-  mkdir "$plugins_dir"
-  create_test_command_script "plugins/foo"
-
+@test "$SUITE: tab completion returns flags if plugins dir present" {
   run "$TEST_GO_SCRIPT" plugins --complete 0 ''
   local expected=('--paths' '--summaries')
   local IFS=$'\n'
@@ -35,23 +35,19 @@ teardown() {
 }
 
 @test "$SUITE: error if no plugins present" {
-  local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
-  mkdir "$plugins_dir"
-
   run "$TEST_GO_SCRIPT" plugins
   assert_failure ''
 }
 
 @test "$SUITE: show plugin info" {
-  local plugins_dir="$TEST_GO_SCRIPTS_DIR/plugins"
-  mkdir -p "$plugins_dir/bar/bin" "$plugins_dir/plugh/bin"
+  mkdir -p "$TEST_GO_PLUGINS_DIR/bar/bin" "$TEST_GO_PLUGINS_DIR/plugh/bin"
 
   local plugins=(
-    'plugins/bar/bin/bar'
-    'plugins/bar/bin/baz'
-    'plugins/foo'
-    'plugins/plugh/bin/plugh'
-    'plugins/xyzzy')
+    'bar/bin/bar'
+    'bar/bin/baz'
+    'foo'
+    'plugh/bin/plugh'
+    'xyzzy')
   local plugin
   local longest_plugin_len=0
   local plugin_path
@@ -59,9 +55,7 @@ teardown() {
   local IFS=$'\n'
 
   for plugin in "${plugins[@]}"; do
-    create_test_command_script "$plugin"
-    summary="Does ${plugin##*/} stuff"
-    echo "# $summary" >> "$TEST_GO_SCRIPTS_DIR/$plugin"
+    create_test_command_script "plugins/$plugin" "# Does ${plugin##*/} stuff"
 
     plugin="${plugin##*/}"
     if [[ "$longest_plugin_len" -lt "${#plugin}" ]]; then
