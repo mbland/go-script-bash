@@ -7,6 +7,7 @@ load assertions
 load script_helper
 
 teardown() {
+  restore_stubbed_core_modules
   remove_test_go_rootdir
 }
 
@@ -107,7 +108,7 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
   create_bats_test_script "tests/bats/libexec/bats"
 
   # Stub the kcov lib to assert it's called correctly.
-  create_test_command_script 'lib/kcov' \
+  create_core_module_stub 'kcov-ubuntu' \
     "run_kcov() { IFS=\$'\n'; echo \"\$*\"; }"
 
   if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then
@@ -127,6 +128,8 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
     'go,go-core.bash,lib/,libexec/,scripts/'
     '/tmp,tests/bats/'
     'https://coveralls.io/github/mbland/go-script-bash'
+    "$TEST_GO_SCRIPT"
+    'test'
     'foo'
     'bar/baz')
 

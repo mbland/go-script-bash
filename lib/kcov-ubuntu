@@ -5,10 +5,12 @@
 # Exports:
 #
 #   run_kcov
+#     Downloads and compiles kcov if necessary, then runs tests under kcov
 #
-# This will eventually be extracted into a plugin library of its own.
+# This may eventually be extracted into a plugin library of its own, which is
+# why its exported functions don't contain a `@go.` prefix.
 
-declare -r KCOV_DEV_PACKAGES=(
+declare -r __KCOV_DEV_PACKAGES=(
   'binutils-dev'
   'cmake'
   'libcurl4-openssl-dev'
@@ -17,8 +19,26 @@ declare -r KCOV_DEV_PACKAGES=(
   'libiberty-dev'
   'zlib1g-dev'
 )
-declare -r KCOV_URL='https://github.com/SimonKagstrom/kcov'
+declare -r __KCOV_URL='https://github.com/SimonKagstrom/kcov'
 
+# Downloads and compiles kcov if necessary, then runs tests under kcov
+#
+# The reason this function exists is because the kcov distribution available via
+# apt-get on Travis CI is out-of-date and doesn't support the features needed to
+# collect Bash coverage and send it to Coveralls.
+#
+# First this function will check for apt-get and whether the coverage output dir
+# ($2) is already present. Then it will clone the kcov repository and build it
+# from source if the binary isn't already present. Once the binary is in place,
+# it will run kcov using the supplied patterns and arguments.
+#
+# Arguments:
+#   $1:   The directory into which to clone and build kcov
+#   $2:   The coverage output directory; it must not already exist
+#   $3:   The kcov --include-pattern argument value
+#   $4:   The kcov --exclude-pattern argument value
+#   $5:   The Coveralls URL for the project (appears in successful output)
+#   ...:  Arguments to run the test executable
 run_kcov() {
   local kcov_dir="$1"
   local coverage_dir="$2"
@@ -36,7 +56,7 @@ run_kcov() {
     @go.printf '%s %s\n' "The $coverage_dir directory already exists." \
       'Please move or remove this directory first.' >&2
     return 1
-  elif ! ( [[ -f "$kcov_path" ]] || clone_and_build_kcov "$kcov_dir" ); then
+  elif ! ( [[ -f "$kcov_path" ]] || __clone_and_build_kcov "$kcov_dir" ); then
     return 1
   fi
 
@@ -49,8 +69,7 @@ run_kcov() {
     kcov_flags+=("--coveralls-id=$TRAVIS_JOB_ID")
   fi
 
-  local kcov_argv=(
-    "$kcov_path" "${kcov_flags[@]}" "$coverage_dir" "$_GO_SCRIPT" 'test' "$@")
+  local kcov_argv=("$kcov_path" "${kcov_flags[@]}" "$coverage_dir" "$@")
   mkdir "$coverage_dir"
   printf 'Starting coverage run:\n  %s\n' "${kcov_argv[*]}"
 
@@ -58,8 +77,7 @@ run_kcov() {
   # Travis log otherwise.
   if "${kcov_argv[@]}" 2>/dev/null; then
     if [[ "$send_to_coveralls" == 'false' ]]; then
-      @go.printf 'Coverage results located in:\n  %s\n' \
-        "$_GO_ROOTDIR/$coverage_dir"
+      @go.printf 'Coverage results located in:\n  %s\n' "$PWD/$coverage_dir"
     else
       @go.printf 'Coverage results sent to:\n  %s\n' "$coveralls_url"
     fi
@@ -69,26 +87,32 @@ run_kcov() {
   fi
 }
 
-clone_and_build_kcov() {
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+__clone_and_build_kcov() {
   # The only way to be sure we've got a compatible version of kcov is to clone
   # and compile it ourselves.
   local kcov_dir="$1"
 
   if [[ ! -d "$kcov_dir" ]]; then
-    @go.printf 'Cloning kcov repository from %s...\n' "$KCOV_URL"
+    @go.printf 'Cloning kcov repository from %s...\n' "$__KCOV_URL"
 
-    if ! git clone "$KCOV_URL" "$kcov_dir"; then
-      @go.printf "Failed to clone $KCOV_URL into $kcov_dir." >&2
+    if ! git clone "$__KCOV_URL" "$kcov_dir"; then
+      @go.printf "Failed to clone $__KCOV_URL into $kcov_dir." >&2
       return 1
     fi
   fi
 
   # Travis uses the "addons > apt > packages" property from .travis.yml to
   # install packages before the test suite is run, so no need to check here.
-  if [[ -z "$TRAVIS_OS_NAME" ]] && ! check_kcov_dev_packages_installed; then
+  if [[ -z "$TRAVIS_OS_NAME" ]] && ! __check_kcov_dev_packages_installed; then
     @go.printf "Installing dev packages to build kcov...\n"
 
-    if ! sudo apt-get install -y "${KCOV_DEV_PACKAGES[@]}"; then
+    if ! sudo apt-get install -y "${__KCOV_DEV_PACKAGES[@]}"; then
       @go.printf "Failed to install dev packages needed to build kcov." >&2
       return 1
     fi
@@ -103,9 +127,9 @@ clone_and_build_kcov() {
   return 1
 }
 
-check_kcov_dev_packages_installed() {
+__check_kcov_dev_packages_installed() {
   local packages
   packages="$(dpkg-query -W -f='${Package} ${Status}\n' \
-    "${KCOV_DEV_PACKAGES[@]}")"
+    "${__KCOV_DEV_PACKAGES[@]}")"
   [[ "$?" -eq '0' && ! "$packages" =~ deinstall ]]
 }

@@ -47,11 +47,10 @@ teardown() {
 }
 
 write_kcov_go_script() {
-  local go_script=(
-    ". \"$_GO_ROOTDIR/scripts/lib/kcov\""
-    "PATH=\"$FAKE_BIN_DIR:\$PATH\""
-    "$@")
-  create_test_go_script "${go_script[@]}"
+  create_test_go_script \
+    ". \"\$_GO_USE_MODULES\" 'kcov-ubuntu'" \
+    "PATH=\"$FAKE_BIN_DIR:\$PATH\"" \
+    "$@"
 }
 
 write_kcov_dummy() {
@@ -62,24 +61,24 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: check dev packages installed" {
-  write_kcov_go_script check_kcov_dev_packages_installed
+  write_kcov_go_script '__check_kcov_dev_packages_installed'
   run "$TEST_GO_SCRIPT"
   assert_success ''
 
   run cat "$FAKE_BIN_DIR/dpkg-query.out"
-  . 'scripts/lib/kcov'
-  assert_success "-W -f=\${Package} \${Status}\\n ${KCOV_DEV_PACKAGES[*]}"
+  . 'lib/kcov-ubuntu'
+  assert_success "-W -f=\${Package} \${Status}\\n ${__KCOV_DEV_PACKAGES[*]}"
 }
 
 @test "$SUITE: check dev packages fails on dpkg-query error" {
-  write_kcov_go_script check_kcov_dev_packages_installed
+  write_kcov_go_script '__check_kcov_dev_packages_installed'
   echo 'exit 1' >>"$FAKE_BIN_DIR/dpkg-query"
   run "$TEST_GO_SCRIPT"
   assert_failure ''
 }
 
 @test "$SUITE: check dev packages fails if a package deinstalled" {
-  write_kcov_go_script check_kcov_dev_packages_installed
+  write_kcov_go_script '__check_kcov_dev_packages_installed'
   echo 'echo deinstall' >>"$FAKE_BIN_DIR/dpkg-query"
   run "$TEST_GO_SCRIPT"
   assert_failure ''
@@ -87,26 +86,26 @@ write_kcov_dummy() {
 
 @test "$SUITE: clone and build" {
   local go_script=(
-    'check_kcov_dev_packages_installed() { return 1; }'
-    'clone_and_build_kcov tests/kcov')
+    '__check_kcov_dev_packages_installed() { return 1; }'
+    '__clone_and_build_kcov tests/kcov')
   local IFS=$'\n'
   write_kcov_go_script "${go_script[*]}"
   echo 'mkdir -p "$3"' >> "$FAKE_BIN_DIR/git"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
-  . 'scripts/lib/kcov'
+  . 'lib/kcov-ubuntu'
   local expected_output=(
-    "Cloning kcov repository from $KCOV_URL..."
+    "Cloning kcov repository from $__KCOV_URL..."
     'Installing dev packages to build kcov...'
     'Building kcov...')
   assert_success "${expected_output[*]}"
 
   run cat "$FAKE_BIN_DIR/git.out"
-  assert_success "clone $KCOV_URL tests/kcov"
+  assert_success "clone $__KCOV_URL tests/kcov"
 
   run cat "$FAKE_BIN_DIR/sudo.out"
   IFS=' '
-  assert_success "apt-get install -y ${KCOV_DEV_PACKAGES[*]}"
+  assert_success "apt-get install -y ${__KCOV_DEV_PACKAGES[*]}"
 
   run cat "$FAKE_BIN_DIR/cmake.out"
   assert_success '.'
@@ -116,26 +115,26 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: clone and build fails if clone fails" {
-  write_kcov_go_script 'clone_and_build_kcov tests/kcov'
+  write_kcov_go_script '__clone_and_build_kcov tests/kcov'
   echo 'exit 1' >> "$FAKE_BIN_DIR/git"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
-  . 'scripts/lib/kcov'
+  . 'lib/kcov-ubuntu'
   local expected_output=(
-    "Cloning kcov repository from $KCOV_URL..."
-    "Failed to clone $KCOV_URL into tests/kcov.")
+    "Cloning kcov repository from $__KCOV_URL..."
+    "Failed to clone $__KCOV_URL into tests/kcov.")
   local IFS=$'\n'
   assert_failure "${expected_output[*]}"
 }
 
 @test "$SUITE: clone and build fails if install fails" {
-  write_kcov_go_script 'clone_and_build_kcov tests/kcov'
+  write_kcov_go_script '__clone_and_build_kcov tests/kcov'
   echo 'exit 1' >>"$FAKE_BIN_DIR/dpkg-query"
   echo 'exit 1' >> "$FAKE_BIN_DIR/sudo"
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
-  . 'scripts/lib/kcov'
+  . 'lib/kcov-ubuntu'
   local expected_output=(
     'Installing dev packages to build kcov...'
     'Failed to install dev packages needed to build kcov.')
@@ -144,12 +143,12 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: clone and build fails if cmake fails" {
-  write_kcov_go_script 'clone_and_build_kcov tests/kcov'
+  write_kcov_go_script '__clone_and_build_kcov tests/kcov'
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
   echo 'exit 1' >> "$FAKE_BIN_DIR/cmake"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
-  . 'scripts/lib/kcov'
+  . 'lib/kcov-ubuntu'
   local expected_output=(
     'Building kcov...'
     'Failed to build kcov.')
@@ -158,12 +157,12 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: clone and build fails if make fails" {
-  write_kcov_go_script 'clone_and_build_kcov tests/kcov'
+  write_kcov_go_script '__clone_and_build_kcov tests/kcov'
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
   echo 'exit 1' >> "$FAKE_BIN_DIR/make"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
-  . 'scripts/lib/kcov'
+  . 'lib/kcov-ubuntu'
   local expected_output=(
     'Building kcov...'
     'Failed to build kcov.')
@@ -173,8 +172,8 @@ write_kcov_dummy() {
 
 @test "$SUITE: clone and build doesn't install dev packages on Travis" {
   local go_script=(
-    'check_kcov_dev_packages_installed() { return 1; }'
-    'clone_and_build_kcov tests/kcov')
+    '__check_kcov_dev_packages_installed() { return 1; }'
+    '__clone_and_build_kcov tests/kcov')
   local IFS=$'\n'
   write_kcov_go_script "${go_script[*]}"
 
@@ -201,7 +200,8 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: fail to run kcov if not present and can't be built" {
-  write_kcov_go_script 'clone_and_build_kcov() { echo "KCOV: $*"; return 1; }' \
+  write_kcov_go_script \
+    '__clone_and_build_kcov() { echo "KCOV: $*"; return 1; }' \
     "run_kcov ${RUN_KCOV_ARGV[*]}"
   run "$TEST_GO_SCRIPT"
   assert_failure "KCOV: $KCOV_DIR"
@@ -209,7 +209,8 @@ write_kcov_dummy() {
 
 @test "$SUITE: success when kcov already built" {
   write_kcov_dummy "IFS=\$'\\n'; echo \"\$*\""
-  write_kcov_go_script "run_kcov ${RUN_KCOV_ARGV[*]} foo bar/baz"
+  write_kcov_go_script \
+    "run_kcov ${RUN_KCOV_ARGV[*]} \"$TEST_GO_SCRIPT\" test foo bar/baz"
 
   local kcov_argv=("${KCOV_ARGV_START[@]}" "$KCOV_COVERAGE_DIR"
     "$TEST_GO_SCRIPT" 'test' 'foo' 'bar/baz')
@@ -227,12 +228,12 @@ write_kcov_dummy() {
 
 @test "$SUITE: success after building kcov" {
   local go_script=(
-    'clone_and_build_kcov() {'
+    '__clone_and_build_kcov() {'
     "  mkdir -p '${KCOV_PATH%/*}'"
     "  printf '#! /usr/bin/env bash\n' >'$KCOV_PATH'"
     "  chmod 700 '$KCOV_PATH'"
     '}'
-    "run_kcov ${RUN_KCOV_ARGV[*]} foo bar/baz")
+    "run_kcov ${RUN_KCOV_ARGV[*]} \"$TEST_GO_SCRIPT\" test foo bar/baz")
   write_kcov_go_script "${go_script[@]}"
 
   local kcov_argv=("${KCOV_ARGV_START[@]}" "$KCOV_COVERAGE_DIR"
@@ -250,7 +251,8 @@ write_kcov_dummy() {
 
 @test "$SUITE: failure if kcov returns an error status" {
   write_kcov_dummy "printf 'Oh noes!\n' >&2; exit 1"
-  write_kcov_go_script "run_kcov ${RUN_KCOV_ARGV[*]} foo bar/baz"
+  write_kcov_go_script \
+    "run_kcov ${RUN_KCOV_ARGV[*]} \"$TEST_GO_SCRIPT\" test foo bar/baz"
 
   local kcov_argv=("${KCOV_ARGV_START[@]}" "$KCOV_COVERAGE_DIR"
     "$TEST_GO_SCRIPT" 'test' 'foo' 'bar/baz')
@@ -266,7 +268,8 @@ write_kcov_dummy() {
 
 @test "$SUITE: send results to Coveralls when running on Travis" {
   write_kcov_dummy
-  write_kcov_go_script "run_kcov ${RUN_KCOV_ARGV[*]} foo bar/baz"
+  write_kcov_go_script \
+    "run_kcov ${RUN_KCOV_ARGV[*]} \"$TEST_GO_SCRIPT\" test foo bar/baz"
 
   local kcov_argv=("${KCOV_ARGV_START[@]}"
     "--coveralls-id=666" "$KCOV_COVERAGE_DIR"
@@ -289,8 +292,9 @@ write_kcov_dummy() {
     "$KCOV_INCLUDE_PATTERNS"
     "$KCOV_EXCLUDE_PATTERNS")
   write_kcov_dummy
-  # Note that the coveage_url argument is the empty string.
-  write_kcov_go_script "run_kcov ${run_kcov_argv[*]} '' foo bar/baz"
+  # Note that the coverage_url argument is the empty string.
+  write_kcov_go_script \
+    "run_kcov ${run_kcov_argv[*]} '' \"$TEST_GO_SCRIPT\" test foo bar/baz"
 
   local kcov_argv=("${KCOV_ARGV_START[@]}" "$KCOV_COVERAGE_DIR"
     "$TEST_GO_SCRIPT" 'test' 'foo' 'bar/baz')
