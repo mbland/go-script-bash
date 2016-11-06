@@ -1,8 +1,6 @@
 #! /usr/bin/env bats
 
 load ../environment
-load ../assertions
-load ../script_helper
 
 TEST_COMMAND_SCRIPT_PATH="$TEST_GO_SCRIPTS_DIR/test-command"
 

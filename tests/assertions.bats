@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
 
 TEST_SCRIPT="$BATS_TMPDIR/do_test.bats"
 FAILING_TEST_SCRIPT="$BATS_TMPDIR/fail.bash"

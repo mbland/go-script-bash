@@ -1,8 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
-load script_helper
 
 FAKE_BIN_DIR="$TEST_GO_ROOTDIR/fake-bin"
 KCOV_DIR='tests/kcov'

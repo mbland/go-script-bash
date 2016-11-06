@@ -3,8 +3,6 @@
 # Tests for scripts/test.
 
 load environment
-load assertions
-load script_helper
 
 teardown() {
   restore_stubbed_core_modules

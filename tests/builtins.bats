@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
 
 @test "$SUITE: no args lists all builtin commands" {
   run ./go 'builtins'

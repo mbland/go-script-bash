@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
 
 @test "$SUITE: with no arguments, list all aliases" {
   run ./go aliases
