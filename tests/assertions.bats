@@ -75,6 +75,7 @@ run_test_script() {
     "$@"
     '}')
 
+  mkdir -p "${TEST_SCRIPT%/*}"
   local IFS=$'\n'
   echo "${lines[*]}" > "$TEST_SCRIPT"
   chmod 700 "$TEST_SCRIPT"
@@ -111,6 +112,16 @@ check_expected_output() {
     'STATUS: 0' \
     'OUTPUT:' \
     '% not interpreted as a format spec'
+}
+
+@test "$SUITE: fail uses the supplied reason message" {
+  expect_failure "echo 'Hello, world!'" \
+    'fail "You say \"Goodbye,\" while I say \"Hello...\""' \
+    'failed for the following reason:' \
+    '  You say "Goodbye," while I say "Hello..."' \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    'Hello, world!'
 }
 
 @test "$SUITE: assert_equal success" {

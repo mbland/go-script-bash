@@ -2,8 +2,29 @@
 #
 # Assertions for Bats tests
 #
-# Felt the need for this after several Travis breakages without helpful output,
-# then stole some inspiration from rbenv/test/test_helper.bash.
+# Provides detailed output for assertion failures, which is especially helpful
+# when running as part of a continuous integration suite.
+#
+# The recommended way to make these assertions available is to create an
+# 'environment.bash' file in the top-level test directory containing the
+# following line:
+#
+#   . "path/to/bats-assertions"
+#
+# Then have each Bats test file load the environment file. This environment file
+# can contain any other custom helper functions or assertions to fit your
+# project.
+#
+# If none of the assertions suit your needs, you can use the fail() function to
+# provide a custom error message. For example, to validate that the command
+# output does _not_ match a regular expression:
+#
+#   local pattern="what is this i don't even"
+#   if [[ "$output" =~ $pattern ]]; then
+#     fail "output should not match: '$pattern'"
+#   fi
+#
+# The assertions borrow inspiration from rbenv/test/test_helper.bash.
 
 __return_from_bats_assertion() {
   local result="${1:-0}"
@@ -22,6 +43,11 @@ __return_from_bats_assertion() {
 
 fail() {
   set +o functrace
+  local reason="$1"
+
+  if [[ -n "$reason" ]]; then
+    printf 'failed for the following reason:\n  %s\n' "$reason" >&2
+  fi
   printf 'STATUS: %s\nOUTPUT:\n%s\n' "$status" "$output" >&2
   __return_from_bats_assertion 1
 }
