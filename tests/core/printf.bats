@@ -28,3 +28,10 @@ teardown() {
   assert_success "$TEST_TEXT"
   assert_equal '1' "${#lines[@]}" 'number of output lines'
 }
+
+@test "$SUITE: escape percent signs if only one argument" {
+  local test_text='This contains a suffix deletion: ${FOO%/*}'
+  create_test_go_script '@go.printf "$@"'
+  run "$TEST_GO_SCRIPT" "$test_text"
+  assert_success "$test_text"
+}

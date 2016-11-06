@@ -90,10 +90,17 @@ declare -r _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 # Arguments:
 #   everything accepted by the printf builtin except the '-v varname' option
 @go.printf() {
+  local format="$1"
+  shift
+
+  if [[ "$#" -eq 0 ]]; then
+    format="${format//\%/%%}"
+  fi
+
   if command -v fold >/dev/null; then
-    printf "$@" | fold -s -w $COLUMNS
+    printf "$format" "$@" | fold -s -w $COLUMNS
   else
-    printf "$@"
+    printf "$format" "$@"
   fi
 }
 
