@@ -2,8 +2,9 @@
 #
 # Common setup for all tests
 
-. "$_GO_ROOTDIR/tests/assertions.bash"
+. "$_GO_ROOTDIR/lib/bats/assertions"
 . "$_GO_ROOTDIR/lib/bats/helpers"
+
 set_bats_test_suite_name "${BASH_SOURCE[0]%/*}"
 
 # Avoid having to fold our test strings. Tests that verify folding behavior will

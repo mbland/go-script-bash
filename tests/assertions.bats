@@ -2,15 +2,11 @@
 
 load environment
 
-TEST_SCRIPT="$BATS_TMPDIR/do_test.bats"
-FAILING_TEST_SCRIPT="$BATS_TMPDIR/fail.bash"
-
-setup() {
-  cp "$BATS_TEST_DIRNAME/assertions.bash" "$BATS_TMPDIR"
-}
+TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
+FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
 
 teardown() {
-  rm -f "$TEST_SCRIPT" "$BATS_TMPDIR/assertions.bash" "$FAILING_TEST_SCRIPT"
+  rm -f "$TEST_SCRIPT" "$FAILING_TEST_SCRIPT"
 }
 
 expect_success() {
@@ -74,7 +70,7 @@ expect_failure() {
 
 run_test_script() {
   local lines=('#! /usr/bin/env bats'
-    "load assertions"
+    "load '$_GO_CORE_DIR/lib/bats/assertions'"
     "@test \"$BATS_TEST_DESCRIPTION\" {"
     "$@"
     '}')
