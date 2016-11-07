@@ -150,11 +150,6 @@ check_expected_output() {
     "  value:   'Hello, world!'"
 }
 
-@test "$SUITE: assert_output success if null expected value" {
-  expect_success ':' \
-    'assert_output'
-}
-
 @test "$SUITE: assert_output success" {
   expect_success "echo 'Hello, world!'" \
     "assert_output 'Hello, world!'"
@@ -184,7 +179,7 @@ check_expected_output() {
 @test "$SUITE: assert_output fails if more than one argument" {
   expect_failure "echo 'Hello, world!'" \
     "assert_output 'Hello,' 'world!'" \
-    'ERROR: assert_output takes only one argument'
+    'ERROR: assert_output takes exactly one argument'
 }
 
 @test "$SUITE: assert_output_matches success" {

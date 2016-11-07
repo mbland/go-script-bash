@@ -9,7 +9,7 @@
 # 'environment.bash' file in the top-level test directory containing the
 # following line:
 #
-#   . "path/to/bats-assertions"
+#   . "path/to/bats/assertions"
 #
 # Then have each Bats test file load the environment file. This environment file
 # can contain any other custom helper functions or assertions to fit your
@@ -26,21 +26,13 @@
 #
 # The assertions borrow inspiration from rbenv/test/test_helper.bash.
 
-__return_from_bats_assertion() {
-  local result="${1:-0}"
-
-  if [[ "${BATS_CURRENT_STACK_TRACE[0]}" =~ $BASH_SOURCE ]]; then
-    unset "BATS_CURRENT_STACK_TRACE[0]"
-  fi
-
-  if [[ "${BATS_PREVIOUS_STACK_TRACE[0]}" =~ $BASH_SOURCE ]]; then
-    unset "BATS_PREVIOUS_STACK_TRACE[0]"
-  fi
-
-  set -o functrace
-  return "$result"
-}
-
+# Unconditionally returns a failing status
+#
+# Will print an optional failure reason, the Bats 'run' command exit status, and
+# the output from the 'run' command, all to standard error.
+#
+# Arguments:
+#   $1:  (optional) Reason to include in the failure output
 fail() {
   set +o functrace
   local reason="$1"
@@ -52,6 +44,12 @@ fail() {
   __return_from_bats_assertion 1
 }
 
+# Compares two values for equality
+#
+# Arguments:
+#   $1: The expected value
+#   $2: The actual value to evaluate
+#   $3: A label explaining the value being evaluated
 assert_equal() {
   set +o functrace
   local expected="$1"
@@ -67,6 +65,12 @@ assert_equal() {
   fi
 }
 
+# Validates whether a value matches a regular expression
+#
+# Arguments:
+#   $1: The regular expression to match against the value
+#   $2: The value to match
+#   $3: A label explaining the value being matched
 assert_matches() {
   set +o functrace
   local pattern="$1"
@@ -82,35 +86,37 @@ assert_matches() {
   fi
 }
 
-__assert_output() {
-  local assertion="$1"
-  shift
-
-  if [[ "$#" -eq '0' ]]; then
-    __return_from_bats_assertion
-  elif [[ "$#" -ne 1 ]]; then
-    echo "ERROR: ${FUNCNAME[1]} takes only one argument" >&2
-    __return_from_bats_assertion 1
-  else
-    "$assertion" "$1" "$output" 'output'
-  fi
-}
-
+# Validates that the Bats $output value is equal to the expected value
+#
+# Arguments:
+#   $1: The expected value for $output
 assert_output() {
   set +o functrace
   __assert_output 'assert_equal' "$@"
 }
 
+# Validates that the Bats $output value matches a regular expression
+#
+# Arguments:
+#   $1: The regular expression to match against $output
 assert_output_matches() {
   set +o functrace
   __assert_output 'assert_matches' "$@"
 }
 
+# Validates that the Bats $status value is equal to the expected value
+#
+# Arguments:
+#   $1: The expected value for $status
 assert_status() {
   set +o functrace
   assert_equal "$1" "$status" "exit status"
 }
 
+# Validates that 'run' returned success and $output equals the expected value
+#
+# Arguments:
+#   $1: The regular expression to match against $output
 assert_success() {
   set +o functrace
   if [[ "$status" -ne '0' ]]; then
@@ -121,6 +127,10 @@ assert_success() {
   fi
 }
 
+# Validates that 'run' returned an error and $output equals the expected value
+#
+# Arguments:
+#   $1: The regular expression to match against $output
 assert_failure() {
   set +o functrace
   if [[ "$status" -eq '0' ]]; then
@@ -131,6 +141,55 @@ assert_failure() {
   fi
 }
 
+# Validates that a specific line from $line equals the expected value
+#
+# Arguments:
+#   $1: The index into $line identifying the line to evaluate
+#   $2: The expected value for ${line[$1]}
+assert_line_equals() {
+  set +o functrace
+  __assert_line 'assert_equal' "$@"
+}
+
+# Validates that a specific line from $line equals the expected value
+#
+# Arguments:
+#   $1: The index into $line identifying the line to match
+#   $2: The regular expression to match against ${line[$1]}
+assert_line_matches() {
+  set +o functrace
+  __assert_line 'assert_matches' "$@"
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# Common implementation for assertions that evaluate the Bats $output variable
+#
+# Arguments:
+#   $1: The assertion to execute
+#   $2: The assertion argument signifying the expected outcome for $output
+__assert_output() {
+  local assertion="$1"
+  local constraint="$2"
+
+  if [[ "$#" -ne 2 ]]; then
+    echo "ERROR: ${FUNCNAME[1]} takes exactly one argument" >&2
+    __return_from_bats_assertion 1
+  else
+    "$assertion" "$constraint" "$output" 'output'
+  fi
+}
+
+# Common implementation for assertions that evaluate the Bats $line variable
+#
+# Arguments:
+#   $1: The assertion to execute
+#   $2: The index into $line identifying the line to evaluate
+#   $3: The assertion argument signifying the expected outcome for ${line[$2]}
 __assert_line() {
   local assertion="$1"
   local lineno="$2"
@@ -149,12 +208,37 @@ __assert_line() {
   fi
 }
 
-assert_line_equals() {
-  set +o functrace
-  __assert_line 'assert_equal' "$@"
-}
+# Scrubs the Bats stacks of references to functions from this file
+#
+# This helps ensure that Bats failure messages only contain the location at
+# which an assertion was called, rather than containing stack trace information
+# about the assertion implementation itself.
+#
+# Bats sets 'functrace' to make sure failing commands are pinpointed. This is
+# almost always the desired behavior, except that we don't actually want a stack
+# trace showing assertion implementation details. When it does, it produces a
+# bit of mental overhead when reviewing test failures to identify the location
+# of the failing assertion in the test case itself.
+#
+# Notice that each public assertion function starts with 'set +o functrace', and
+# this function ends with 'set -o functrace'. However, just calling 'set +o
+# functrace' still leaves the function, file, and line number where the
+# assertion was defined in the Bats failure output. Plus, we want to ensure that
+# 'set -o functrace' goes back into effect once the assertion has finished.
+#
+# Arguments:
+#   $1:  Return value of the calling assertion; defaults to 0
+__return_from_bats_assertion() {
+  local result="${1:-0}"
 
-assert_line_matches() {
-  set +o functrace
-  __assert_line 'assert_matches' "$@"
+  if [[ "${BATS_CURRENT_STACK_TRACE[0]}" =~ $BASH_SOURCE ]]; then
+    unset "BATS_CURRENT_STACK_TRACE[0]"
+  fi
+
+  if [[ "${BATS_PREVIOUS_STACK_TRACE[0]}" =~ $BASH_SOURCE ]]; then
+    unset "BATS_PREVIOUS_STACK_TRACE[0]"
+  fi
+
+  set -o functrace
+  return "$result"
 }
