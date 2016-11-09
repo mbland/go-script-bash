@@ -33,16 +33,33 @@ teardown() {
   assert_success 'Can use @go.printf'
 }
 
-@test "$SUITE: run perl script" {
+# Since Bash scripts are sourced, and have access to these variables regardless,
+# we use Perl to ensure they are are exported to new processes that run command
+# scripts in languages other than Bash.
+@test "$SUITE: run perl script; _GO_* variables are exported" {
   if ! command -v perl; then
     skip 'perl not installed'
   fi
 
-  echo '#!/bin/perl' >"$TEST_COMMAND_SCRIPT_PATH"
-  echo 'printf("%s", join(" ", @ARGV))' >>"$TEST_COMMAND_SCRIPT_PATH"
+  local script=(
+    '#!/bin/perl'
+    'foreach my $env_var (sort keys %ENV) {'
+    '  if ($env_var =~ /^_GO_/) {'
+    '    printf("%s: %s\n", $env_var, $ENV{$env_var});'
+    '  }'
+    '}')
 
-  run "$TEST_GO_SCRIPT" test-command Can run perl
-  assert_success 'Can run perl'
+  local expected=("_GO_CMD: $TEST_GO_SCRIPT"
+    "_GO_CORE_DIR: $_GO_CORE_DIR"
+    "_GO_CORE_URL: $_GO_CORE_URL"
+    "_GO_ROOTDIR: $TEST_GO_ROOTDIR"
+    "_GO_SCRIPT: $TEST_GO_SCRIPT"
+    "_GO_SCRIPTS_DIR: $TEST_GO_SCRIPTS_DIR")
+
+  create_test_command_script 'test-command' "${script[@]}"
+  run "$TEST_GO_SCRIPT" test-command
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
 }
 
 @test "$SUITE: produce error if script doesn't contain an interpreter line" {
