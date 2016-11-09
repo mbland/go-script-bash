@@ -54,7 +54,11 @@ __create_test_script() {
   local line
 
   __create_test_dirs
-  echo "#! /usr/bin/env bash" >"$script"
+  rm -f "$script"
+
+  if [[ "${1:0:2}" != '#!' ]]; then
+    echo "#! /usr/bin/env bash" >"$script"
+  fi
 
   for line in "$@"; do
     echo "$line" >>"$script"

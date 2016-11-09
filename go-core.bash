@@ -42,6 +42,11 @@ cd "${0%/*}" || exit 1
 #
 # This is directory containing the main ./go script. All functions, commands,
 # and scripts are invoked relative to this directory.
+#
+# NOTE:
+# ----
+# This and other variables are exported, so that command scripts written in
+# languages other than Bash (and hence run in new processes) can access them.
 declare -r -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
@@ -52,7 +57,7 @@ fi
 unset __go_orig_dir
 
 # Path to the ./go script framework's directory
-declare -r _GO_CORE_DIR="$PWD"
+declare -r -x _GO_CORE_DIR="$PWD"
 cd "$_GO_ROOTDIR" || exit 1
 
 # Path to the script used to import optional library modules.
@@ -65,22 +70,27 @@ cd "$_GO_ROOTDIR" || exit 1
 #   . "$_GO_USE_MODULES" 'log'
 #
 # See `./go modules --help` for more information.
+#
+# NOTE:
+# ----
+# This and some other variables are _not_ exported, since they are specific to
+# Bash command scripts, which are sourced into the ./go script process itself.
 declare -r _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
 
 # Array of modules imported via _GO_USE_MODULES
 declare _GO_IMPORTED_MODULES=()
 
 # Path to the project's script directory
-declare _GO_SCRIPTS_DIR=
+declare -x _GO_SCRIPTS_DIR=
 
 # Path to the main ./go script in the project's root directory
 declare -r -x _GO_SCRIPT="$_GO_ROOTDIR/${0##*/}"
 
 # The name of either the ./go script itself or the shell function invoking it.
-declare -r _GO_CMD="${_GO_CMD:=$0}"
+declare -r -x _GO_CMD="${_GO_CMD:=$0}"
 
 # The URL of the framework's original source repository.
-declare -r _GO_CORE_URL='https://github.com/mbland/go-script-bash'
+declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 
 # Invokes printf builtin, then folds output to $COLUMNS width if 'fold' exists.
 #
@@ -90,10 +100,17 @@ declare -r _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 # Arguments:
 #   everything accepted by the printf builtin except the '-v varname' option
 @go.printf() {
+  local format="$1"
+  shift
+
+  if [[ "$#" -eq 0 ]]; then
+    format="${format//\%/%%}"
+  fi
+
   if command -v fold >/dev/null; then
-    printf "$@" | fold -s -w $COLUMNS
+    printf "$format" "$@" | fold -s -w $COLUMNS
   else
-    printf "$@"
+    printf "$format" "$@"
   fi
 }
 
