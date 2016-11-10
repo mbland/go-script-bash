@@ -229,17 +229,16 @@ _@go.set_scripts_dir() {
 if ! _@go.set_scripts_dir "$@"; then
   exit 1
 elif [[ -z "$COLUMNS" ]]; then
-  if command -v 'tput' >/dev/null && [[ -n "$TERM" ]]; then
-    echo "TERM: $TERM" >&2
-    COLUMNS="$(tput cols)"
+  if command -v 'tput' >/dev/null; then
+    # On Travis, $TERM is set to 'dumb', but tput still fails.
+    COLUMNS="$(tput cols 2>/dev/null)"
   elif command -v 'mode.com' >/dev/null; then
     COLUMNS="$(mode.com) con:"
     shopt -s extglob
     COLUMNS="${COLUMNS##*Columns:+( )}"
     shopt -u extglob
     COLUMNS="${COLUMNS%%[ $'\r'$'\n']*}"
-  else
-    COLUMNS=80
   fi
-  export COLUMNS
+
+  export COLUMNS="${COLUMNS:-80}"
 fi
