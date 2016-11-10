@@ -50,7 +50,7 @@ teardown() {
 
   local expected=("_GO_CMD: $TEST_GO_SCRIPT"
     "_GO_CMD_ARGV: foo,bar,baz quux,xyzzy"
-    "_GO_CMD_NAME: test-command"
+    "_GO_CMD_NAME: test-command,test-subcommand"
     "_GO_CORE_DIR: $_GO_CORE_DIR"
     "_GO_CORE_URL: $_GO_CORE_URL"
     "_GO_IMPORTED_MODULES: complete,format"
@@ -60,8 +60,8 @@ teardown() {
     "_GO_SEARCH_PATHS: $_GO_CORE_DIR/libexec,$TEST_GO_SCRIPTS_DIR"
     "_GO_USE_MODULES: $_GO_CORE_DIR/lib/internal/use")
 
-  create_test_command_script 'test-command' "${script[@]}"
-  run "$TEST_GO_SCRIPT" test-command foo bar 'baz quux' xyzzy
+  create_test_command_script 'test-command.d/test-subcommand' "${script[@]}"
+  run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -84,15 +84,15 @@ teardown() {
 
   local expected=("_GO_CMD: $TEST_GO_SCRIPT"
     "_GO_CMD_ARGV: foo"$'\0'"bar"$'\0'"baz quux"$'\0'"xyzzy"
-    "_GO_CMD_NAME: test-command"
+    "_GO_CMD_NAME: test-command"$'\0'"test-subcommand"
     "_GO_CORE_DIR: $_GO_CORE_DIR"
     "_GO_CORE_URL: $_GO_CORE_URL"
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR"
     "_GO_SCRIPT: $TEST_GO_SCRIPT"
     "_GO_SCRIPTS_DIR: $TEST_GO_SCRIPTS_DIR")
 
-  create_test_command_script 'test-command' "${script[@]}"
-  run "$TEST_GO_SCRIPT" test-command foo bar 'baz quux' xyzzy
+  create_test_command_script 'test-command.d/test-subcommand' "${script[@]}"
+  run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
