@@ -140,3 +140,26 @@ Indented lines that look like tables (there are two or more adjacent spaces afte
   # '[args...]' above.
   assert_equal "$expected" "$__go_cmd_desc" 'command description'
 }
+
+@test "$SUITE: format subcommand description" {
+  mkdir -p "$TEST_GO_SCRIPTS_DIR/root-command.d/node-command.d"
+  create_test_command_script 'root-command.d/node-command.d/leaf-command' '#
+# Leaf command that does something in {{root}}
+#
+# Usage: {{go}} {{cmd}} [args...]
+
+echo The command script starts now.
+'
+
+  local _GO_CMD='test-go'
+  local expected=("Leaf command that does something in $_GO_ROOTDIR"
+    ''
+    "Usage: $_GO_CMD root-command node-command leaf-command [args...]"
+    '')
+  local __go_cmd_desc
+  _@go.command_description \
+    "$TEST_GO_SCRIPTS_DIR/root-command.d/node-command.d/leaf-command"
+
+  local IFS=$'\n'
+  assert_equal "${expected[*]}" "$__go_cmd_desc"
+}

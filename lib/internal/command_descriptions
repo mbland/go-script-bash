@@ -68,17 +68,16 @@ _@go.format_summary() {
 
 _@go.command_summary() {
   local cmd_path="$1"
+  local __go_cmd_name
   __go_cmd_desc=''
 
-  if ! _@go.check_command_path "$cmd_path"; then
+  if ! _@go.check_command_path_and_parse_command_name "$cmd_path"; then
     return 1
   fi
 
   local line
   local summary=''
   local summary_pattern='^# [[:alnum:]]'
-  local cmd_name="${1##*/}"
-  cmd_name="${cmd_name//\// }"
 
   while read -r line; do
     line="${line%$'\r'}"
@@ -103,9 +102,10 @@ _@go.command_summary() {
 # way less hacky/more readable.
 _@go.command_description() {
   local cmd_path="$1"
+  local __go_cmd_name
   __go_cmd_desc=''
 
-  if ! _@go.check_command_path "$cmd_path"; then
+  if ! _@go.check_command_path_and_parse_command_name "$cmd_path"; then
     return 1
   fi
 
@@ -116,8 +116,6 @@ _@go.command_description() {
   local preformatted_pattern='^#    *[[:graph:]]'
   local summary_item
   local summary
-  local cmd_name="${1##*/}"
-  cmd_name="${cmd_name//\// }"
 
   while read -r line; do
     line="${line%$'\r'}"
@@ -168,12 +166,13 @@ _@go.command_description() {
 
 _@go.filter_description_line() {
   line="${line//\{\{go\}\}/$_GO_CMD}"
-  line="${line//\{\{cmd\}\}/${cmd_name}}"
+  line="${line//\{\{cmd\}\}/${__go_cmd_name}}"
   line="${line//\{\{root\}\}/$_GO_ROOTDIR}"
 }
 
-_@go.check_command_path() {
+_@go.check_command_path_and_parse_command_name() {
   local cmd_path="$1"
+  local subcommand_pattern='/([^/]+\.d/.*)'
 
   if [[ -z "$cmd_path" ]]; then
     echo "ERROR: no command script specified" >&2
@@ -181,5 +180,9 @@ _@go.check_command_path() {
   elif [[ ! -e "$cmd_path" ]]; then
     echo "ERROR: command script \"$cmd_path\" does not exist" >&2
     return 1
+  elif [[ "$cmd_path" =~ $subcommand_pattern ]]; then
+    __go_cmd_name="${BASH_REMATCH[1]//.d\// }"
+  else
+    __go_cmd_name="${cmd_path##*/}"
   fi
 }

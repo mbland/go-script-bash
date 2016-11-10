@@ -2,23 +2,54 @@
 
 load environment
 load assertions
+load script_helper
 
 setup() {
   . 'lib/internal/command_descriptions'
 }
 
-@test "$SUITE: check command path passes" {
-  run _@go.check_command_path go
-  assert_success ''
+teardown() {
+  rm -rf "$TEST_GO_ROOTDIR"
+}
+
+create_cmd_path_and_name_go_script() {
+  create_test_go_script \
+    ". '$_GO_CORE_DIR/lib/internal/command_descriptions'" \
+    'declare __go_cmd_name' \
+    'if _@go.check_command_path_and_parse_command_name "$@"; then' \
+    '  echo "__go_cmd_name: $__go_cmd_name"' \
+    'else' \
+    '  exit 1' \
+    'fi'
+}
+
+@test "$SUITE: check command path and parse command name passes" {
+  create_cmd_path_and_name_go_script
+  create_test_command_script 'foo'
+  run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_DIR/foo"
+  assert_success '__go_cmd_name: foo'
+}
+
+@test "$SUITE: check sub-command path and parse command name passes" {
+  create_cmd_path_and_name_go_script
+  create_test_command_script 'foo'
+  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
+  create_test_command_script 'foo.d/bar'
+  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d"
+  create_test_command_script 'foo.d/bar.d/baz'
+  run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz"
+  assert_success '__go_cmd_name: foo bar baz'
 }
 
 @test "$SUITE: check command path errors if no path is specified" {
-  run _@go.check_command_path
+  create_cmd_path_and_name_go_script
+  run "$TEST_GO_SCRIPT"
   assert_failure 'ERROR: no command script specified'
 }
 
 @test "$SUITE: check command path errors if the path doesn't exist" {
-  run _@go.check_command_path foobar
+  create_cmd_path_and_name_go_script
+  run "$TEST_GO_SCRIPT" foobar
   assert_failure 'ERROR: command script "foobar" does not exist'
 }
 
@@ -34,7 +65,7 @@ setup() {
 
 @test "$SUITE: filter description line" {
   local _GO_CMD='test-go'
-  local cmd_name='test-command'
+  local __go_cmd_name='test-command'
 
   local line='The script is {{go}}, '
   line+='the command is {{cmd}}, and '
