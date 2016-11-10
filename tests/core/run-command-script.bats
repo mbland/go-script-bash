@@ -33,6 +33,39 @@ teardown() {
   assert_success 'Can use @go.printf'
 }
 
+@test "$SUITE: _GO_* variables are set" {
+  local script=(
+    '. "$_GO_USE_MODULES" "complete" "format"'
+    'local array_decl_pattern="declare -a"'
+    'for go_var in "${!_GO_@}"; do'
+    '  # Tip from https://stackoverflow.com/questions/14525296/#27254437'
+    '  if [[ "$(declare -p "$go_var")" =~ $array_decl_pattern ]]; then'
+    '    local arr_ref="$go_var[*]"'
+    '    local IFS=,'
+    '    echo "$go_var: ${!arr_ref}"'
+    '  else'
+    '    echo "$go_var: ${!go_var}"'
+    '  fi'
+    'done')
+
+  local expected=("_GO_CMD: $TEST_GO_SCRIPT"
+    "_GO_CMD_ARGV: foo,bar,baz quux,xyzzy"
+    "_GO_CMD_NAME: test-command"
+    "_GO_CORE_DIR: $_GO_CORE_DIR"
+    "_GO_CORE_URL: $_GO_CORE_URL"
+    "_GO_IMPORTED_MODULES: complete,format"
+    "_GO_ROOTDIR: $TEST_GO_ROOTDIR"
+    "_GO_SCRIPT: $TEST_GO_SCRIPT"
+    "_GO_SCRIPTS_DIR: $TEST_GO_SCRIPTS_DIR"
+    "_GO_SEARCH_PATHS: $_GO_CORE_DIR/libexec,$TEST_GO_SCRIPTS_DIR"
+    "_GO_USE_MODULES: $_GO_CORE_DIR/lib/internal/use")
+
+  create_test_command_script 'test-command' "${script[@]}"
+  run "$TEST_GO_SCRIPT" test-command foo bar 'baz quux' xyzzy
+  local IFS=$'\n'
+  assert_success "${expected[*]}"
+}
+
 # Since Bash scripts are sourced, and have access to these variables regardless,
 # we use Perl to ensure they are are exported to new processes that run command
 # scripts in languages other than Bash.
@@ -50,6 +83,8 @@ teardown() {
     '}')
 
   local expected=("_GO_CMD: $TEST_GO_SCRIPT"
+    "_GO_CMD_ARGV: foo"$'\0'"bar"$'\0'"baz quux"$'\0'"xyzzy"
+    "_GO_CMD_NAME: test-command"
     "_GO_CORE_DIR: $_GO_CORE_DIR"
     "_GO_CORE_URL: $_GO_CORE_URL"
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR"
@@ -57,7 +92,7 @@ teardown() {
     "_GO_SCRIPTS_DIR: $TEST_GO_SCRIPTS_DIR")
 
   create_test_command_script 'test-command' "${script[@]}"
-  run "$TEST_GO_SCRIPT" test-command
+  run "$TEST_GO_SCRIPT" test-command foo bar 'baz quux' xyzzy
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }

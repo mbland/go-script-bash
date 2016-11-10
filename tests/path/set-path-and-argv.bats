@@ -11,7 +11,8 @@ setup() {
     '  exit 1' \
     'fi' \
     'echo "PATH: $__go_cmd_path"' \
-    'echo "ARGV: ${__go_argv[@]}"'
+    'echo "NAME: ${__go_cmd_name[*]}"' \
+    'echo "ARGV: ${__go_argv[*]}"'
 }
 
 teardown() {
@@ -33,7 +34,8 @@ teardown() {
   run "$TEST_GO_SCRIPT" "${builtin_cmd##*/}" '--exists' 'ls'
   assert_success
   assert_line_equals 0 "PATH: $builtin_cmd"
-  assert_line_equals 1 'ARGV: --exists ls'
+  assert_line_equals 1 "NAME: ${builtin_cmd##*/}"
+  assert_line_equals 2 'ARGV: --exists ls'
 }
 
 @test "$SUITE: list available commands if command not found" {
@@ -53,7 +55,8 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
   assert_success
   assert_line_equals 0 "PATH: $TEST_GO_SCRIPTS_DIR/foobar"
-  assert_line_equals 1 'ARGV: baz quux'
+  assert_line_equals 1 'NAME: foobar'
+  assert_line_equals 2 'ARGV: baz quux'
 }
 
 @test "$SUITE: empty string argument is not an error" {
@@ -64,7 +67,8 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'foobar' '' 'baz' 'quux'
   assert_success
   assert_line_equals 0 "PATH: $TEST_GO_SCRIPTS_DIR/foobar"
-  assert_line_equals 1 'ARGV:  baz quux'
+  assert_line_equals 1 'NAME: foobar'
+  assert_line_equals 2 'ARGV:  baz quux'
 }
 
 @test "$SUITE: error if top-level command name is a directory" {
@@ -95,7 +99,8 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
   assert_success
   assert_line_equals 0 "PATH: $TEST_GO_SCRIPTS_DIR/foobar.d/baz"
-  assert_line_equals 1 'ARGV: quux'
+  assert_line_equals 1 'NAME: foobar baz'
+  assert_line_equals 2 'ARGV: quux'
 }
 
 @test "$SUITE: error if subcommand name is a directory" {
