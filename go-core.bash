@@ -230,6 +230,7 @@ if ! _@go.set_scripts_dir "$@"; then
   exit 1
 elif [[ -z "$COLUMNS" ]]; then
   if command -v 'tput' >/dev/null && [[ -n "$TERM" ]]; then
+    echo "TERM: $TERM" >&2
     COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then
     COLUMNS="$(mode.com) con:"
