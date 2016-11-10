@@ -27,3 +27,12 @@ teardown() {
   run env COLUMNS= PATH= "$BASH" "$TEST_GO_SCRIPT"
   assert_success '80'
 }
+
+@test "$SUITE: default to 80 columns if \$TERM not set on systems with tput" {
+  if ! command -v 'tput' >/dev/null; then
+    skip 'tput not available on this system'
+  fi
+
+  run env COLUMNS= TERM= "$TEST_GO_SCRIPT"
+  assert_success '80'
+}

@@ -108,7 +108,7 @@ declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
   fi
 
   if command -v fold >/dev/null; then
-    printf "$format" "$@" | fold -s -w $COLUMNS
+    printf "$format" "$@" | fold -s -w "$COLUMNS"
   else
     printf "$format" "$@"
   fi
@@ -229,7 +229,7 @@ _@go.set_scripts_dir() {
 if ! _@go.set_scripts_dir "$@"; then
   exit 1
 elif [[ -z "$COLUMNS" ]]; then
-  if command -v 'tput' >/dev/null; then
+  if command -v 'tput' >/dev/null && [[ -n "$TERM" ]]; then
     COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then
     COLUMNS="$(mode.com) con:"
