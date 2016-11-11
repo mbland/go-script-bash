@@ -250,9 +250,9 @@ _@go.set_scripts_dir() {
 if ! _@go.set_scripts_dir "$@"; then
   exit 1
 elif [[ -z "$COLUMNS" ]]; then
-  if command -v 'tput' >/dev/null; then
-    # On Travis, $TERM is set to 'dumb', but tput still fails.
-    COLUMNS="$(tput cols 2>/dev/null)"
+  # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
+  if command -v 'tput' >/dev/null && tput cols >/dev/null 2>&1; then
+    COLUMNS="$(tput cols)"
   elif command -v 'mode.com' >/dev/null; then
     COLUMNS="$(mode.com) con:"
     shopt -s extglob
