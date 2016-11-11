@@ -1,8 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
-load script_helper
 
 setup() {
   mkdir -p "$TEST_GO_ROOTDIR/bin" "$TEST_GO_SCRIPTS_DIR"

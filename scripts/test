@@ -36,12 +36,12 @@ _test_tab_completion() {
 }
 
 _test_coverage() {
-  . "$_GO_USE_MODULES" 'kcov'
+  . "$_GO_USE_MODULES" 'kcov-ubuntu'
   run_kcov "tests/kcov" "tests/coverage" \
     'go,go-core.bash,lib/,libexec/,scripts/' \
     '/tmp,tests/bats/' \
     'https://coveralls.io/github/mbland/go-script-bash' \
-    "$@"
+    "$_GO_SCRIPT" 'test' "$@"
 }
 
 _test() {

@@ -1,17 +1,12 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
 
-TEST_SCRIPT="$BATS_TMPDIR/do_test.bats"
-FAILING_TEST_SCRIPT="$BATS_TMPDIR/fail.bash"
-
-setup() {
-  cp "$BATS_TEST_DIRNAME/assertions.bash" "$BATS_TMPDIR"
-}
+TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
+FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
 
 teardown() {
-  rm -f "$TEST_SCRIPT" "$BATS_TMPDIR/assertions.bash" "$FAILING_TEST_SCRIPT"
+  rm -f "$TEST_SCRIPT" "$FAILING_TEST_SCRIPT"
 }
 
 expect_success() {
@@ -75,11 +70,12 @@ expect_failure() {
 
 run_test_script() {
   local lines=('#! /usr/bin/env bats'
-    "load assertions"
+    "load '$_GO_CORE_DIR/lib/bats/assertions'"
     "@test \"$BATS_TEST_DESCRIPTION\" {"
     "$@"
     '}')
 
+  mkdir -p "${TEST_SCRIPT%/*}"
   local IFS=$'\n'
   echo "${lines[*]}" > "$TEST_SCRIPT"
   chmod 700 "$TEST_SCRIPT"
@@ -118,6 +114,16 @@ check_expected_output() {
     '% not interpreted as a format spec'
 }
 
+@test "$SUITE: fail uses the supplied reason message" {
+  expect_failure "echo 'Hello, world!'" \
+    'fail "You say \"Goodbye,\" while I say \"Hello...\""' \
+    'failed for the following reason:' \
+    '  You say "Goodbye," while I say "Hello..."' \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    'Hello, world!'
+}
+
 @test "$SUITE: assert_equal success" {
   expect_success "echo 'Hello, world!'" \
     'assert_equal "Hello, world!" "$output" "echo result"'
@@ -142,11 +148,6 @@ check_expected_output() {
     'echo result does not match expected pattern:' \
     "  pattern: 'e, w'" \
     "  value:   'Hello, world!'"
-}
-
-@test "$SUITE: assert_output success if null expected value" {
-  expect_success ':' \
-    'assert_output'
 }
 
 @test "$SUITE: assert_output success" {
@@ -178,7 +179,7 @@ check_expected_output() {
 @test "$SUITE: assert_output fails if more than one argument" {
   expect_failure "echo 'Hello, world!'" \
     "assert_output 'Hello,' 'world!'" \
-    'ERROR: assert_output takes only one argument'
+    'ERROR: assert_output takes exactly one argument'
 }
 
 @test "$SUITE: assert_output_matches success" {

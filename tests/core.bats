@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
 
 @test "$SUITE: check exported global constants" {
   assert_equal "$PWD" "$_GO_ROOTDIR" 'working dir'

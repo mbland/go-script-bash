@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
 
 @test "$SUITE: open file with EDITOR" {
   run env EDITOR='echo' ./go edit foo/bar/baz

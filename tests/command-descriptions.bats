@@ -1,8 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
-load script_helper
 
 setup() {
   . 'lib/internal/command_descriptions'
@@ -32,10 +30,6 @@ create_cmd_path_and_name_go_script() {
 
 @test "$SUITE: check sub-command path and parse command name passes" {
   create_cmd_path_and_name_go_script
-  create_test_command_script 'foo'
-  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
-  create_test_command_script 'foo.d/bar'
-  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d"
   create_test_command_script 'foo.d/bar.d/baz'
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz"
   assert_success '__go_cmd_name: foo bar baz'

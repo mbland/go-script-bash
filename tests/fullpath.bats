@@ -1,8 +1,6 @@
 #! /usr/bin/env bats
 
 load environment
-load assertions
-load script_helper
 
 teardown() {
   remove_test_go_rootdir

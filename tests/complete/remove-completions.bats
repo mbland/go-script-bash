@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load ../environment
-load ../assertions
 
 . "$_GO_ROOTDIR/lib/complete"
 

@@ -1,8 +1,6 @@
 #! /usr/bin/env bats
 
 load ../environment
-load ../assertions
-load ../script_helper
 
 TESTS_DIR="$TEST_GO_ROOTDIR/tests"
 
