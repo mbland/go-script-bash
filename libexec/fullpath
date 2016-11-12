@@ -15,14 +15,7 @@ _@go.fullpath_tab_completion() {
   local word="${args[$word_index]}"
 
   if [[ "$word_index" -eq '0' ]]; then
-    local err_count=0
-    if ! compgen -W '--existing' -- "$word"; then
-      ((++err_count))
-    fi
-    if ! compgen -f -- "$word"; then
-      ((++err_count))
-    fi
-    return $((err_count != 2 ? 0 : 1))
+    echo '--existing'
   fi
   compgen -f -- "$word"
 }

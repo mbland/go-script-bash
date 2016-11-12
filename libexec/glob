@@ -189,17 +189,12 @@ _@go.glob_tab_completion() {
   if ! _@go.glob_tab_completion_parse_argv "$@"; then
     return 1
   elif [[ "$__go_glob_complete_flags_only" == 'true' ]]; then
-    compgen -W "${__go_glob_flags[*]}" -- "$__go_glob_complete_word"
+    echo "${__go_glob_flags[@]}"
     return
   elif [[ -z "$__go_glob_rootdir" ]]; then
-    local err_count=0
-    if ! compgen -W "${__go_glob_flags[*]}" -- "$__go_glob_complete_word"; then
-      ((++err_count))
-    fi
-    if ! compgen -d -- "$__go_glob_complete_word"; then
-      ((++err_count))
-    fi
-    return $((err_count != 2 ? 0 : 1))
+    echo "${__go_glob_flags[@]}"
+    compgen -d -- "$__go_glob_complete_word"
+    return
   fi
 
   local __go_glob_matches=()

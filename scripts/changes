@@ -19,11 +19,7 @@ _changes() {
     if [[ "$word_index" -gt 1 ]]; then
       return 1
     fi
-    shift
-    shift
-
-    local args=("$@")
-    compgen -W "$(git tag)" -- "${args[$word_index]}"
+    git tag
     return
   fi
 
