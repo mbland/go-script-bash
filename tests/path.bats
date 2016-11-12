@@ -13,14 +13,14 @@ teardown() {
 @test "$SUITE: tab completion" {
   local subcommands=('plugh' 'quux' 'xyzzy')
   create_parent_and_subcommands foo "${subcommands[@]}"
-  run "$TEST_GO_SCRIPT" path --complete 0 'foo'
+  run "$TEST_GO_SCRIPT" complete 1 path 'foo'
   assert_success 'foo'
 
   local IFS=$'\n'
-  run "$TEST_GO_SCRIPT" path --complete 1 'foo' ''
+  run "$TEST_GO_SCRIPT" complete 2 path 'foo' ''
   assert_success "${subcommands[*]}"
 
-  run "$TEST_GO_SCRIPT" path --complete 1 'foo' 'q'
+  run "$TEST_GO_SCRIPT" complete 2 path 'foo' 'q'
   assert_success 'quux'
 }
 

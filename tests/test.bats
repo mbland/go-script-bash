@@ -10,7 +10,7 @@ teardown() {
 }
 
 @test "$SUITE: tab complete flags" {
-  run ./go test --complete 0 '-'
+  run ./go complete 1 test '-'
   local expected=('--coverage' '--edit' '--list')
   local IFS=$'\n'
   assert_success "${expected[*]}"
@@ -22,14 +22,14 @@ teardown() {
     '--trim' '--ignore' 'bats' 'tests' '.bats'))
   [[ "${#expected[@]}" -ne 1 ]]
 
-  run ./go test --complete 0 ''
+  run ./go complete 1 test ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: tab completion matches test file and matching directory" {
   expected=('core' 'core/')
-  run ./go test --complete 0 'core'
+  run ./go complete 1 test 'core'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -43,7 +43,7 @@ _trim_expected() {
   local expected=(tests/core/*.bats)
   _trim_expected
 
-  run ./go test --complete 0 'core/'
+  run ./go complete 1 test 'core/'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }

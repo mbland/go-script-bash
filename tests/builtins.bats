@@ -13,14 +13,14 @@ load environment
   local expected=('--exists' '--summaries')
   local IFS=$'\n'
 
-  run ./go builtins --complete 0 ''
+  run ./go complete 1 builtins ''
   assert_success "${expected[*]}"
 
-  run ./go builtins --complete 0 -
+  run ./go complete 1 builtins -
   assert_success "${expected[*]}"
 
-  run ./go builtins --complete 1 --exists
-  assert_success ''
+  run ./go complete 2 builtins --exists
+  assert_failure ''
 }
 
 @test "$SUITE: return true if a builtin command exists, false if not" {
