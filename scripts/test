@@ -19,9 +19,31 @@
 # NOTE: If the <glob> produces errors, or generally doesn't do as you expect,
 # you may need to include it in quotes so it isn't expanded by the shell
 # _before_ executing the {{cmd}} command.
+#
+# This command script can serve as a template for your own project's test
+# script. Copy it into your project's script directory and customize as needed.
 
-declare -r __GO_TEST_GLOB_ARGS=('--ignore' 'bats' 'tests' '.bats')
+# These variables are documented in the comments of the functions that use them
+# below.
+declare -r _GO_TEST_DIR='tests'
+declare -r _GO_TEST_GLOB_ARGS=('--ignore' 'bats' "$_GO_TEST_DIR" '.bats')
+declare -r _GO_BATS_DIR="$_GO_TEST_DIR/bats"
+declare -r _GO_BATS_PATH="$_GO_BATS_DIR/libexec/bats"
+declare -r _GO_COVERALLS_URL='https://coveralls.io/github/mbland/go-script-bash'
 
+# Provides command line argument completion
+#
+# Emits the standard --coverage, --edit, and --list flags and uses '@go glob' to
+# produce a list of test name completions based on test file names.
+#
+# See './go help complete' for information on the argument completion protocol.
+#
+# Globals:
+#   _GO_TEST_GLOB_ARGS  An array of arguments to '@go glob' to select Bats tests
+#
+# Arguments:
+#   $1:   Zero-based index of the word to be completed from the remaining args
+#   ...:  Array of remaining command line arguments
 _test_tab_completion() {
   local word_index="$1"
   shift
@@ -31,20 +53,51 @@ _test_tab_completion() {
       return
     fi
   fi
-  @go 'glob' '--complete' "$((word_index + ${#__GO_TEST_GLOB_ARGS[@]}))" \
-    "${__GO_TEST_GLOB_ARGS[@]}" "$@"
+  @go 'glob' '--complete' "$((word_index + ${#_GO_TEST_GLOB_ARGS[@]}))" \
+    "${_GO_TEST_GLOB_ARGS[@]}" "$@"
 }
 
+# Reinvokes the test command script using kcov to collect test coverage data
+#
+# Currently only supported on Ubuntu Linux, via the core kcov-ubuntu module.
+#
+# Globals:
+#   _GO_COVERALLS_URL  The project's Coveralls URL; appears in Travis output
+#
+# Arguments:
+#   $@: Command line arguments for the command script run under kcov
 _test_coverage() {
   . "$_GO_USE_MODULES" 'kcov-ubuntu'
-  run_kcov "tests/kcov" "tests/coverage" \
+  run_kcov "$_GO_TEST_DIR/kcov" \
+    "$_GO_TEST_DIR/coverage" \
     'go,go-core.bash,lib/,libexec/,scripts/' \
-    '/tmp,tests/bats/' \
-    'https://coveralls.io/github/mbland/go-script-bash' \
-    "$_GO_SCRIPT" 'test' "$@"
+    "/tmp,$_GO_TEST_DIR/bats/" \
+    "$_GO_COVERALLS_URL" \
+    "$_GO_SCRIPT" "${_GO_CMD_NAME[@]}" "$@"
 }
 
-_test() {
+# Parses command-line flags and arguments and executes Bats and Kcov
+#
+# The first argument can be one of the following flags:
+#
+#   --complete  Perform tab completion; see `{{go}} help complete` for details
+#   --coverage  Collect test coverage data using kcov (Linux only)
+#   --list      List test suite names without executing them
+#   --edit      Open matching test files using `{{go}} edit`
+#
+# If the argument list following is empty, or if it is only one of the flags
+# above (aside from `--complete`), all Bats test files are matched.
+#
+# Globals:
+#   _GO_TEST_DIR        Test directory, relative to _GO_ROOTDIR
+#   _GO_TEST_GLOB_ARGS  An array of arguments to '@go glob' to select Bats tests
+#   _GO_BATS_DIR        Bats submodule path, relative to _GO_ROOTDIR
+#   _GO_BATS_PATH       The path to your project's Bats installation
+#
+# Arguments:
+#   $1:   One of the flags defined above, or the first test glob pattern
+#   ...:  Remaining test glob patterns
+_test_main() {
   if [[ "$1" == '--complete' ]]; then
     # Tab completions
     shift
@@ -52,31 +105,29 @@ _test() {
     return
   fi
 
-  local bats_path='tests/bats/libexec/bats'
-
-  if [[ ! -f "$bats_path" ]]; then
-    git submodule update --init tests/bats
+  if [[ ! -f "$_GO_BATS_PATH" ]]; then
+    git submodule update --init "$_GO_BATS_DIR"
   fi
 
-  if [[ "$1" == '--coverage' && "$_COVERAGE_RUN" != 'true' ]]; then
+  if [[ "$1" == '--coverage' && "$__COVERAGE_RUN" != 'true' ]]; then
     shift
-    local -x _COVERAGE_RUN='true'
+    local -x __COVERAGE_RUN='true'
     _test_coverage "$@"
   elif [[ "$1" == '--list' ]]; then
     shift
-    @go 'glob' '--trim' "${__GO_TEST_GLOB_ARGS[@]}" "$@"
+    @go 'glob' '--trim' "${_GO_TEST_GLOB_ARGS[@]}" "$@"
   elif [[ "$1" == '--edit' ]]; then
     shift
-    local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
+    local tests=($(@go 'glob' "${_GO_TEST_GLOB_ARGS[@]}" "$@"))
     @go 'edit' "${tests[@]}"
-  elif [[ "$_COVERAGE_RUN" != 'true' && "$TRAVIS_OS_NAME" == 'linux' ]]; then
+  elif [[ "$__COVERAGE_RUN" != 'true' && "$TRAVIS_OS_NAME" == 'linux' ]]; then
     # Collect coverage by default on Travis. Doesn't seem to slow anything down
     # substantially.
-    _test '--coverage' "$@"
+    _test_main '--coverage' "$@"
   else
-    local tests=($(@go 'glob' "${__GO_TEST_GLOB_ARGS[@]}" "$@"))
-    time "$BASH" "$bats_path" "${tests[@]}"
+    local tests=($(@go 'glob' "${_GO_TEST_GLOB_ARGS[@]}" "$@"))
+    time "$BASH" "$_GO_BATS_PATH" "${tests[@]}"
   fi
 }
 
-_test "$@"
+_test_main "$@"

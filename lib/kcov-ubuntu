@@ -23,6 +23,8 @@ declare -r __KCOV_URL='https://github.com/SimonKagstrom/kcov'
 
 # Downloads and compiles kcov if necessary, then runs tests under kcov
 #
+# On Travis CI, the results will be posted to Coveralls.
+#
 # The reason this function exists is because the kcov distribution available via
 # apt-get on Travis CI is out-of-date and doesn't support the features needed to
 # collect Bash coverage and send it to Coveralls.
@@ -37,7 +39,7 @@ declare -r __KCOV_URL='https://github.com/SimonKagstrom/kcov'
 #   $2:   The coverage output directory; it must not already exist
 #   $3:   The kcov --include-pattern argument value
 #   $4:   The kcov --exclude-pattern argument value
-#   $5:   The Coveralls URL for the project (appears in successful output)
+#   $5:   The Coveralls URL for the project; appears in Travis output on success
 #   ...:  Arguments to run the test executable
 run_kcov() {
   local kcov_dir="$1"

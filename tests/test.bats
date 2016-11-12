@@ -131,13 +131,13 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
     'foo'
     'bar/baz')
 
-  run env _COVERAGE_RUN= TRAVIS_OS_NAME= "${test_cmd_argv[@]}"
+  run env __COVERAGE_RUN= TRAVIS_OS_NAME= "${test_cmd_argv[@]}"
   local IFS=$'\n'
   assert_success "${expected_kcov_args[*]}"
 }
 
 # This test also makes sure the invocation doesn't cause a second recursive call
-# to `run_kcov` thanks to the `_COVERAGE_RUN` variable.  Previously, seemingly
+# to `run_kcov` thanks to the `__COVERAGE_RUN` variable.  Previously, seemingly
 # successful coverage runs (added in commit
 # 4440832c257c3fa455d7d773ee56fd66c4431a19) were causing Travis failures,
 # ameliorated in commit cc284d11e010442392029afdcddc5b1c761ad9a0. These were
@@ -158,13 +158,12 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
 # - `kcov` sends coverage info to Coveralls, but exits with an error.
 # - Travis build reports failure.
 #
-# With the `_COVERAGE_RUN` variable, the recursive call is now
-# short-circuited.
+# With the `__COVERAGE_RUN` variable, the recursive call is now short-circuited.
 @test "$SUITE: run coverage by default on Travis Linux" {
   write_bats_dummy_stub_kcov_lib_and_copy_test_script
   create_test_go_script '@go "$@"'
 
-  run env _COVERAGE_RUN= TRAVIS_OS_NAME='linux' "$TEST_GO_SCRIPT" test
+  run env __COVERAGE_RUN= TRAVIS_OS_NAME='linux' "$TEST_GO_SCRIPT" test
   assert_success
   assert_line_equals 0 'tests/kcov'
 }
