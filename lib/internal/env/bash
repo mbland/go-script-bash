@@ -3,7 +3,7 @@
 # eval "$(%s env -)"
 
 __go_func() {
-  unset COMP_WORDS[0]
+  unset 'COMP_WORDS[0]'
   COMPREPLY=($("$_GO_SCRIPT" 'complete' "$((COMP_CWORD-1))" "${COMP_WORDS[@]}"))
   cd "$_GO_ROOTDIR"
 }
