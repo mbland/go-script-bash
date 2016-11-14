@@ -13,7 +13,7 @@ _@go.complete_top_level_commands() {
 #
 # An error return status indicates that argument completion is finished.
 #
-# It may omit potential completion values to standard output regardless of the
+# It may emit potential completion values to standard output regardless of the
 # return status.
 _@go.complete_command_path() {
   if [[ "$#" -eq 0 ]]; then
