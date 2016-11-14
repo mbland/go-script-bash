@@ -356,7 +356,7 @@ _@go.modules_tab_completion() {
     completions+=("${__go_modules_listing[@]}")
     @go.complete_remove_completions_already_present \
       'args' 'completions' "${#completions[@]}"
-    compgen -W "${completions[*]}" -- "$word"
+    echo "${completions[@]}"
   else
     # Shouldn't happen, since modules_produce_listing isn't parsing summaries.
     return 1

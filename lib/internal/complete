@@ -1,15 +1,20 @@
 #! /bin/bash
 
 _@go.complete_top_level_commands() {
-  local cmd_name="$1"
-  local all_commands=()
-  all_commands+=($(_@go.source_builtin 'aliases'))
-  all_commands+=($(_@go.source_builtin 'commands'))
-
-  local IFS=$'\n'
-  compgen -W "${all_commands[*]}" -- "$cmd_name"
+  _@go.source_builtin 'aliases'
+  _@go.source_builtin 'commands'
 }
 
+# A successful return status from this function is a signal that __go_cmd_path
+# is set and that the caller should run the following to produce more
+# completion values (provided it contains a '# Tab completions' comment):
+#
+#   "$__go_cmd_path" --complete "$__go_complete_word_index" "${__go_argv[@]}"
+#
+# An error return status indicates that argument completion is finished.
+#
+# It may omit potential completion values to standard output regardless of the
+# return status.
 _@go.complete_command_path() {
   if [[ "$#" -eq 0 ]]; then
     return 1
@@ -20,8 +25,8 @@ _@go.complete_command_path() {
   . "$_GO_CORE_DIR/lib/internal/path"
 
   if [[ "$#" -le 1 || "$__go_complete_word_index" -eq '0' ]]; then
-    _@go.complete_top_level_commands "$1"
-    return
+    _@go.complete_top_level_commands
+    return 1
   elif ! _@go.set_command_path_and_argv "$@"; then
     return 1
   fi
@@ -30,7 +35,7 @@ _@go.complete_command_path() {
   if [[ "$__go_complete_word_index" -lt '0' ]]; then
     # This (sub)command itself is the completion target.
     echo "${__go_cmd_path##*/}"
-    return
+    return 1
 
   elif [[ "$__go_complete_word_index" -eq '0' ]]; then
     # Complete subcommand scripts.
@@ -41,10 +46,6 @@ _@go.complete_command_path() {
         subcommands+=("${c##*/}")
       fi
     done
-    compgen -W "${subcommands[*]}" -- "${__go_argv[$__go_complete_word_index]}"
-
-    # We want to return success because the caller may only be interested in
-    # completing as much of an otherwise valid subcommand as possible.
-    return 0
+    echo "${subcommands[@]}"
   fi
 }

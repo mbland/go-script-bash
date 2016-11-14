@@ -10,17 +10,17 @@ load environment
 }
 
 @test "$SUITE: tab completions" {
-  run ./go aliases --complete 0 ''
+  run ./go complete 1 aliases ''
   assert_success '--exists'
 
-  run ./go aliases --complete 0 -
+  run ./go complete 1 aliases -
   assert_success '--exists'
 
-  run ./go aliases --complete 1 --exists
-  assert_success ''
+  run ./go complete 2 aliases --exists
+  assert_failure ''
 
-  run ./go aliases --complete 1 cd --exists
-  assert_success ''
+  run ./go complete 2 aliases cd --exists
+  assert_failure ''
 }
 
 @test "$SUITE: error on unknown flag" {

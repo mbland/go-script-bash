@@ -48,7 +48,7 @@ _test_tab_completion() {
   local word_index="$1"
   shift
   if [[ "$word_index" -eq '0' ]]; then
-    compgen -W '--coverage --edit --list' -- "$1"
+    echo '--coverage' '--edit' '--list'
     if [[ "${1:0:1}" == '-' ]]; then
       return
     fi

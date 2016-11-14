@@ -19,35 +19,35 @@ teardown() {
 }
 
 @test "$SUITE: tab completions" {
-  run "$TEST_GO_SCRIPT" commands --complete 0
+  run "$TEST_GO_SCRIPT" complete 1 commands ''
   local flags=('--paths' '--summaries')
   local expected=("${flags[@]}" "${BUILTIN_CMDS[@]}")
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$TEST_GO_SCRIPT" commands --complete 0 --
+  run "$TEST_GO_SCRIPT" complete 1 commands --
   local flags=('--paths' '--summaries')
   assert_success "${flags[*]}"
 
-  run "$TEST_GO_SCRIPT" commands --complete 0 --p
+  run "$TEST_GO_SCRIPT" complete 1 commands --p
   local flags=('--paths')
   assert_success '--paths'
 
-  run "$TEST_GO_SCRIPT" commands --complete 0 --foo
+  run "$TEST_GO_SCRIPT" complete 1 commands --foo
   assert_failure
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 --paths
+  run "$TEST_GO_SCRIPT" complete 2 commands --paths
   assert_success "${BUILTIN_CMDS[*]}"
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 --summaries
+  run "$TEST_GO_SCRIPT" complete 2 commands --summaries
   assert_success "${BUILTIN_CMDS[*]}"
 }
 
 @test "$SUITE: no tab completions for or after search paths" {
-  run "$TEST_GO_SCRIPT" commands --complete 0 "$TEST_GO_SCRIPTS_DIR"
+  run "$TEST_GO_SCRIPT" complete 1 commands "$TEST_GO_SCRIPTS_DIR"
   assert_failure
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 "$TEST_GO_SCRIPTS_DIR"
+  run "$TEST_GO_SCRIPT" complete 2 commands "$TEST_GO_SCRIPTS_DIR"
   assert_failure
 }
 
@@ -62,18 +62,18 @@ teardown() {
     create_test_command_script "foo.d/$subcommand"
   done
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 foo
+  run "$TEST_GO_SCRIPT" complete 2 commands foo
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 foo b
+  run "$TEST_GO_SCRIPT" complete 2 commands foo b
   expected=('bar' 'baz')
   assert_success "${expected[*]}"
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 foo g
+  run "$TEST_GO_SCRIPT" complete 2 commands foo g
   assert_failure
 
-  run "$TEST_GO_SCRIPT" commands --complete 2 foo bar
+  run "$TEST_GO_SCRIPT" complete 3 commands foo bar
   assert_failure
 }
 
@@ -88,12 +88,12 @@ teardown() {
     create_test_command_script "foo.d/$subcommand"
   done
 
-  run "$TEST_GO_SCRIPT" commands --complete 0 '' foo
+  run "$TEST_GO_SCRIPT" complete 1 commands '' foo
   expected=('--paths' '--summaries')
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$TEST_GO_SCRIPT" commands --complete 1 foo '' bar
+  run "$TEST_GO_SCRIPT" complete 2 commands foo '' bar
   assert_failure
 }
 

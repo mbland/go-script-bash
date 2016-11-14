@@ -94,12 +94,9 @@ _@go.commands_tab_completions() {
   shift
 
   if [[ "$word_index" -eq '0' ]]; then
-    local flag_result=0
-    if ! compgen -W '--paths --summaries' -- "$1"; then
-      ((++flag_result))
-    fi
+    echo '--paths' '--summaries'
     if [[ "${1:0:1}" == '-' || "$#" -gt 1 ]]; then
-      return $flag_result
+      return
     fi
   fi
 
@@ -115,8 +112,7 @@ _@go.commands_tab_completions() {
   if [[ "$word_index" -lt "$last_arg_index" ]]; then
     return 1
   fi
-  compgen -W "$(_@go.commands "${args[@]:0:$word_index}")" -- \
-    "${args[$word_index]}"
+  _@go.commands "${args[@]:0:$word_index}"
 }
 
 _@go.commands() {

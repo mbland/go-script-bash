@@ -11,16 +11,16 @@ teardown() {
 }
 
 @test "$SUITE: tab completions" {
-  run "$TEST_GO_SCRIPT" env --complete 0
+  run "$TEST_GO_SCRIPT" complete 1 env ''
   assert_success '-'
 
-  run "$TEST_GO_SCRIPT" env --complete 0 '-'
+  run "$TEST_GO_SCRIPT" complete 1 env '-'
   assert_success '-'
 
-  run "$TEST_GO_SCRIPT" env --complete 0 '--foo'
+  run "$TEST_GO_SCRIPT" complete 1 env '--foo'
   assert_failure ''
 
-  run "$TEST_GO_SCRIPT" env --complete 1 '-' 'invalid'
+  run "$TEST_GO_SCRIPT" complete 2 env '-' 'invalid'
   assert_failure ''
 }
 

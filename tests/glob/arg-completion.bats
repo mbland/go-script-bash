@@ -16,112 +16,107 @@ teardown() {
   local expected=('--trim' '--ignore')
   expected+=($(compgen -d))
 
-  run ./go glob --complete 0
+  run ./go complete 1 glob ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: first argument" {
   local expected=('--trim' '--ignore')
-  expected+=($(compgen -d))
 
-  run ./go glob --complete 0 ''
+  run ./go complete 1 glob '-'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  expected=('--trim' '--ignore')
-  run ./go glob --complete 0 '-'
-  assert_success "${expected[*]}"
-
-  run ./go glob --complete 0 '--t'
+  run ./go complete 1 glob '--t'
   assert_success '--trim'
 
-  run ./go glob --complete 0 '--i'
+  run ./go complete 1 glob '--i'
   assert_success '--ignore'
 
   expected=($(compgen -f -- 'li'))
   [[ "${#expected[@]}" -ne '0' ]]
-  run ./go glob --complete 0 'li'
+  run ./go complete 1 glob 'li'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: completion omits flags already present" {
   local expected=('--ignore' $(compgen -d))
-  run ./go glob --complete 1 '--trim'
+  run ./go complete 2 glob '--trim' ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run ./go glob --complete 1 '--trim' '-'
+  run ./go complete 2 glob  '--trim' '-'
   assert_success '--ignore'
 
   expected[0]='--trim'
-  run ./go glob --complete 2 '--ignore' 'foo*:bar*'
+  run ./go complete 3 glob '--ignore' 'foo*:bar*' ''
   assert_success "${expected[*]}"
 
-  run ./go glob --complete 2 '--ignore' 'foo*:bar*' '-'
+  run ./go complete 3 glob '--ignore' 'foo*:bar*' '-'
   assert_success '--trim'
 
   unset expected[0]
-  run ./go glob --complete 3 '--ignore' 'foo*:bar*' '--trim'
+  run ./go complete 4 glob '--ignore' 'foo*:bar*' '--trim' ''
   assert_success "${expected[*]}"
 
   expected=($(compgen -f -- 'li'))
   [[ "${#expected[@]}" -ne '0' ]]
-  run ./go glob --complete 3 '--ignore' 'foo*:bar*' '--trim' 'li'
+  run ./go complete 4 glob '--ignore' 'foo*:bar*' '--trim' 'li'
   assert_success "${expected[*]}"
 }
 
 @test "$SUITE: argument does not complete if previous is --ignore" {
   # The next argument should be the GLOBIGNORE value.
-  run ./go glob --complete 1 '--ignore'
+  run ./go complete 2 glob '--ignore' ''
   assert_failure ''
 
-  run ./go glob --complete 2 '--trim' '--ignore'
+  run ./go complete 3 glob '--trim' '--ignore' ''
   assert_failure ''
 
-  run ./go glob --complete 1 '--ignore' '' 'tests'
+  run ./go complete 2 glob '--ignore' '' 'tests'
   assert_failure
 }
 
 @test "$SUITE: argument does not complete if previous is root dir" {
   # The next argument should be the suffix pattern.
-  run ./go glob --complete 1 'tests'
+  run ./go complete 2 glob 'tests' ''
   assert_failure ''
 
-  run ./go glob --complete 2 '--trim' 'tests'
+  run ./go complete 3 glob '--trim' 'tests' ''
   assert_failure ''
 
-  run ./go glob --complete 4 '--trim' '--ignore' 'foo*:bar*' 'tests'
+  run ./go complete 5 glob '--trim' '--ignore' 'foo*:bar*' 'tests' ''
   assert_failure ''
 }
 
 @test "$SUITE: arguments before flags only complete other flags" {
-  run ./go glob --complete 0 '' '--trim'
+  run ./go complete 1 glob '' '--trim'
   assert_success '--ignore'
 
-  run ./go glob --complete 0 '' '--ignore'
+  run ./go complete 1 glob '' '--ignore'
   assert_success '--trim'
 }
 
 @test "$SUITE: complete flags before rootdir" {
   local expected=('--trim' '--ignore')
-  run ./go glob --complete 0 '' 'tests'
+  run ./go complete 1 glob '' 'tests'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run ./go glob --complete 1 '--trim' '' 'tests'
+  run ./go complete 2 glob '--trim' '' 'tests'
   assert_success '--ignore'
 
-  run ./go glob --complete 2 '--ignore' 'foo*:bar*' '' 'tests'
+  run ./go complete 3 glob '--ignore' 'foo*:bar*' '' 'tests'
   assert_success '--trim'
 }
 
 @test "$SUITE: complete rootdir" {
-  run ./go glob --complete 0 'tests'
+  run ./go complete 1 glob 'tests'
   assert_success 'tests'
 
   local expected=($(compgen -d 'tests/'))
-  run ./go glob --complete 0 'tests/'
+  run ./go complete 1 glob 'tests/'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -130,18 +125,18 @@ teardown() {
   touch "$TESTS_DIR"/{foo,bar,baz}.bats
   local expected=('bar' 'baz' 'foo')
 
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run ./go glob --complete 3 '--trim' "$TESTS_DIR" '.bats'
+  run ./go complete 4 glob '--trim' "$TESTS_DIR" '.bats' ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run ./go glob --complete 3 "$TESTS_DIR" '.bats' 'foo'
+  run ./go complete 4 glob "$TESTS_DIR" '.bats' 'foo' ''
   assert_success "${expected[*]}"
 
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats' '' 'foo'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' '' 'foo'
   assert_success "${expected[*]}"
 }
 
@@ -152,7 +147,7 @@ teardown() {
     "$TESTS_DIR"/baz/plugh.bats
   local expected=('bar/' 'baz/' 'foo/')
 
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -162,7 +157,7 @@ teardown() {
   touch "$TESTS_DIR"/foo{,/bar,/baz}.bats
   local expected=('foo' 'foo/')
 
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats' 'f'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' 'f'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -172,7 +167,7 @@ teardown() {
   touch "$TESTS_DIR"/foo{,/bar,/baz}.bats
   local expected=('foo/bar' 'foo/baz')
 
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo/'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' 'foo/'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -182,7 +177,7 @@ teardown() {
   touch "$TESTS_DIR"/foo/{bar,baz}.bats
 
   local expected=('foo/bar' 'foo/baz')
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo/'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' 'foo/'
   local IFS=$'\n'
   assert_success "${expected[*]}"
 }
@@ -192,20 +187,20 @@ teardown() {
   touch "$TESTS_DIR"/{foo/quux,bar/xyzzy,baz/plugh,baz/xyzzy}.bats
 
   # Remember that --ignore will add the rootdir to all the patterns.
-  run ./go glob --complete 4 '--ignore' "foo/*:bar/*:baz/pl*" \
-    "$TESTS_DIR" '.bats'
+  run ./go complete 5 glob '--ignore' "foo/*:bar/*:baz/pl*" \
+    "$TESTS_DIR" '.bats' ''
   local IFS=$'\n'
   assert_success 'baz/xyzzy'
 
   # Make sure the --ignore argument has any quotes removed, as the shell will
   # not expand any command line arguments or unquote them during completion.
-  run ./go glob --complete 4 '--ignore' "'foo/*:bar/*:baz/pl*'" \
-    "$TESTS_DIR" '.bats'
+  run ./go complete 5 glob '--ignore' "'foo/*:bar/*:baz/pl*'" \
+    "$TESTS_DIR" '.bats' ''
   assert_success 'baz/xyzzy'
 }
 
 @test "$SUITE: return error if no matches" {
-  run ./go glob --complete 2 "$TESTS_DIR" '.bats' 'foo'
+  run ./go complete 3 glob "$TESTS_DIR" '.bats' 'foo'
   assert_failure
 }
 

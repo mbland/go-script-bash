@@ -69,13 +69,13 @@ _@go.complete_args() {
       echo '-h'
       ;;
     -he*)
-      compgen -W "-help" -- "$1"
+      echo '-help'
       ;;
     -|--*)
-      compgen -W "--help" -- "$1"
+      echo '--help'
       ;;
     *)
-      _@go.complete_top_level_commands "$1"
+      compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name"
       ;;
     esac
     return

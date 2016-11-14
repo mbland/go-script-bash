@@ -10,16 +10,16 @@ teardown() {
   local expected=('--existing')
   expected+=($(compgen -f))
 
-  run ./go fullpath --complete 0
+  run ./go complete 1 fullpath ''
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run ./go fullpath --complete 0 '-'
+  run ./go complete 1 fullpath '-'
   assert_success '--existing'
 
   expected=($(compgen -f -- 'li'))
   [[ "${#expected[@]}" -ne '0' ]]
-  run ./go fullpath --complete 0 'li'
+  run ./go complete 1 fullpath 'li'
   assert_success "${expected[*]}"
 }
 

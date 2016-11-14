@@ -13,17 +13,17 @@ teardown() {
 
 @test "$SUITE: tab completion returns error if no plugins dir" {
   rmdir "$TEST_GO_PLUGINS_DIR"
-  run "$TEST_GO_SCRIPT" plugins --complete 0 ''
+  run "$TEST_GO_SCRIPT" complete 1 plugins ''
   assert_failure ''
 }
 
 @test "$SUITE: tab completion returns flags if plugins dir present" {
-  run "$TEST_GO_SCRIPT" plugins --complete 0 ''
+  run "$TEST_GO_SCRIPT" complete 1 plugins ''
   local expected=('--paths' '--summaries')
   local IFS=$'\n'
   assert_success "${expected[*]}"
 
-  run "$TEST_GO_SCRIPT" plugins --complete 0 '--paths'
+  run "$TEST_GO_SCRIPT" complete 1 plugins '--paths'
   assert_success '--paths'
 }
 

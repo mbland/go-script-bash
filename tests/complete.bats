@@ -110,10 +110,7 @@ teardown() {
   create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  # Tab completions' \
-    '  local index="$2"' \
-    '  shift; shift' \
-    '  local args=("$@")' \
-    '  compgen -W "bar baz quux" -- "${args[$index]}"' \
+    '  echo "bar" "baz" "quux"' \
     'fi'
 
   run "$TEST_GO_SCRIPT" complete 0 foo
@@ -138,10 +135,7 @@ teardown() {
 @test "$SUITE: command script completion not detected without comment" {
   create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
-    '  local index="$2"' \
-    '  shift; shift' \
-    '  local args=("$@")' \
-    '  compgen -W "bar baz quux" -- "${args[$index]}"' \
+    '  echo "bar" "baz" "quux"' \
     'fi'
 
   run "$TEST_GO_SCRIPT" complete 0 foo
@@ -155,10 +149,7 @@ teardown() {
   create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  # Tab completions' \
-    '  local index="$2"' \
-    '  shift; shift' \
-    '  local args=("$@")' \
-    '  compgen -W "baz quux" -- "${args[$index]}"' \
+    '  echo "baz" "quux"' \
     'fi'
 
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
@@ -166,10 +157,7 @@ teardown() {
   create_test_command_script foo.d/bar \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  # Tab completions' \
-    '  local index="$2"' \
-    '  shift; shift' \
-    '  local args=("$@")' \
-    '  compgen -W "plugh xyzzy" -- "${args[$index]}"' \
+    '  echo "plugh" "xyzzy"' \
     'fi'
 
   run "$TEST_GO_SCRIPT" complete 0 foo
