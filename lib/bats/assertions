@@ -124,6 +124,8 @@ assert_success() {
     fail
   elif [[ "$#" -ne 0 ]]; then
     assert_output "$@"
+  else
+    __return_from_bats_assertion
   fi
 }
 
@@ -138,6 +140,8 @@ assert_failure() {
     fail
   elif [[ "$#" -ne 0 ]]; then
     assert_output "$@"
+  else
+    __return_from_bats_assertion
   fi
 }
 
