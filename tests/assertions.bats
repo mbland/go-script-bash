@@ -22,6 +22,13 @@ expect_success() {
     return 1
   fi
 
+  eval $assertion || :
+
+  if [[ ! "$-" =~ T ]]; then
+    printf "The assertion did not reset \`set -o functrace\`: $-" >&2
+    return 1
+  fi
+
   run_test_script "  run $command" "  $assertion"
 
   if [[ "$status" -ne 0 ]]; then
@@ -46,6 +53,13 @@ expect_failure() {
   if [[ "$status" -eq '0' ]]; then
     printf "In process: expected failure, but succeeded\nOutput:\n%s\n" \
       "$output" >&2
+    return 1
+  fi
+
+  eval $assertion || :
+
+  if [[ ! "$-" =~ T ]]; then
+    printf "The assertion did not reset \`set -o functrace\`: $-" >&2
     return 1
   fi
 
