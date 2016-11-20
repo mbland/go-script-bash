@@ -7,6 +7,12 @@ run_log_script() {
   run "$TEST_GO_SCRIPT"
 }
 
+# For tests that run command scripts via @go, set _GO_CMD to make sure that's
+# the variable included in the log.
+test-go() {
+  env _GO_CMD="$FUNCNAME" "$TEST_GO_SCRIPT" "$@"
+}
+
 format_label() {
   local label="$1"
 

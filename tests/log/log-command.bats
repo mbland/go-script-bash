@@ -7,12 +7,6 @@ teardown() {
   remove_test_go_rootdir
 }
 
-# For tests that run command scripts via @go, set _GO_CMD to make sure that's
-# the variable included in the log.
-test-go() {
-  env _GO_CMD="$FUNCNAME" "$TEST_GO_SCRIPT" "$@"
-}
-
 @test "$SUITE: log single command" {
   run_log_script '@go.log_command echo Hello, World!'
   assert_success

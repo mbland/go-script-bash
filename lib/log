@@ -18,6 +18,9 @@
 #   @go.critical_section_end
 #     Cause @go.log_command to log ERROR on error
 #
+#   @go.setup_project
+#     Runs the project's 'setup' script and logs the result
+#
 # See the function comments for each of the above for further information.
 
 # Set this if you want to force terminal-formatted output from @go.log.
@@ -249,6 +252,66 @@ declare __GO_CRITICAL_SECTION=0
       @go.log FATAL "$exit_status" "$cmd_string"
     fi
     @go.log ERROR "$exit_status" "$cmd_string"
+  fi
+}
+
+# Runs the project's setup script and logs the result.
+#
+# Helps with automating and logging project setup steps upon running the ./go
+# script in a freshly-cloned repository for the first time, and providing the
+# user with useful hints on how to use the ./go script upon success.
+#
+# If the setup script returns an error, the process will exit with the status
+# code returned by the script.
+#
+# For example, in a Node.js project, your ./go script may include the following:
+#
+#   export PATH="node_modules/.bin:$PATH"
+#   if [[ ! -d 'node_modules' ]]; then
+#     @go.setup_project 'setup'
+#   else
+#     @go "$@"
+#   fi
+#
+# And your `$_GO_SCRIPTS_DIR/setup` script may include (assuming your own `test`
+# script as well):
+#
+#   @go.critical_section_begin
+#   @go.log_command npm install
+#   @go.log_command @go test
+#   @go.critical_section_end
+#
+# Arguments:
+#   $1:   The path of setup script relative to the project scripts directory
+#   ...:  Any arguments to pass through to the 'setup' script
+@go.setup_project() {
+  local setup_script="$_GO_SCRIPTS_DIR/$1"
+  local setup_status
+  shift
+
+  @go.log START Project setup in "$_GO_ROOTDIR"
+
+  if [[ ! -f "$setup_script" ]]; then
+    @go.log FATAL "Create $setup_script before invoking $FUNCNAME."
+  elif  [[ ! -x "$setup_script" ]]; then
+    @go.log FATAL "$setup_script is not executable."
+  fi
+
+  @go.log RUN "${setup_script#$_GO_ROOTDIR/}" "$@"
+  _@go.run_command_script "$setup_script" "$@"
+  setup_status="$?"
+
+  if [[ "$setup_status" -ne '0' ]]; then
+    @go.log FATAL "$setup_status" "Project setup failed"
+  fi
+
+  @go.log FINISH Project setup successful
+  @go.log INFO "Run \`$0 help\` to see the available commands."
+
+  if [[ "$_GO_CMD" == "$0" ]]; then
+    @go.log INFO \
+      "Run \`$0 help env\` to see how to set up your shell environment" \
+      'for this project.'
   fi
 }
 
