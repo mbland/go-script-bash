@@ -6,6 +6,9 @@
 #   @go.log
 #     Outputs a log line; supports terminal formatting and format stripping
 #
+#   @go.add_or_update_log_level
+#     Modifies existing log level labels, formatting, and file descriptors
+#
 # See the function comments for each of the above for further information.
 
 # Set this if you want to force terminal-formatted output from @go.log.
@@ -16,6 +19,8 @@
 declare _GO_LOG_FORMATTING="$_GO_LOG_FORMATTING"
 
 # Default log level labels
+#
+# DO NOT UPDATE DIRECTLY: Use @go.add_or_update_log_level instead.
 declare _GO_LOG_LEVELS=(
   'INFO'
   'RUN'
@@ -134,6 +139,49 @@ declare __GO_LOG_LEVELS_FORMATTED=()
     exit "$exit_status"
   fi
   return "$exit_status"
+}
+
+# Adds a new log level or updates an existing one.
+#
+# If you wish to keep the existing format code or file descriptor, specify
+# 'keep' as the second argument or third argument, respectively.
+#
+# Arguments:
+#   $1: The log level label
+#   $2: The terminal format code that should precede the label
+#   $3: The file descriptor to which to output level messages (defaults to 1)
+@go.add_or_update_log_level() {
+  local log_level="$1"
+  local format_code="$2"
+  local level_fd="${3:-1}"
+
+  if [[ -n "$__GO_LOG_INIT" ]]; then
+    @go.log 'FATAL' "Can't set logging level $log_level; already initialized"
+  elif [[ "$level_fd" != 'keep' && ! "$level_fd" =~ ^[1-9]+[0-9]*$ ]]; then
+    @go.log FATAL "File descriptor $level_fd for $log_level must be > 0"
+  elif ! echo -n 2>/dev/null >&"$level_fd"; then
+    @go.log FATAL "File descriptor $level_fd for $log_level isn't open"
+  fi
+
+  local __go_log_level_index=0
+  if ! _@go.log_level_index "$log_level"; then
+    if [[ "$format_code" == 'keep' || "$level_fd" == 'keep' ]]; then
+      @go.log FATAL "Can't keep defaults for nonexistent log level $log_level"
+    fi
+    _GO_LOG_LEVELS+=("$log_level")
+    __GO_LOG_LEVELS_FORMAT_CODES+=("$format_code")
+    __GO_LOG_LEVELS_FILE_DESCRIPTORS+=("$level_fd")
+    return
+  fi
+
+  _GO_LOG_LEVELS[$__go_log_level_index]="$log_level"
+
+  if [[ "$format_code" != 'keep' ]]; then
+    __GO_LOG_LEVELS_FORMAT_CODES[$__go_log_level_index]="$format_code"
+  fi
+  if [[ "$level_fd" != 'keep' ]]; then
+    __GO_LOG_LEVELS_FILE_DESCRIPTORS[$__go_log_level_index]="$level_fd"
+  fi
 }
 
 # --------------------------------

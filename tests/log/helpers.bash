@@ -82,7 +82,7 @@ assert_log_equals() {
 
   for ((i=0; $# != 0; ++i)); do
     expected_line="$(__expected_log_line "$1" "$2")"
-    if ! assert_equal "${lines[$i]}" "$expected_line" "line $i"; then
+    if ! assert_equal "$expected_line" "${lines[$i]}" "line $i"; then
       ((++num_errors))
     fi
     set +o functrace
