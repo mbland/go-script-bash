@@ -71,6 +71,7 @@ assert_log_equals() {
   local expected_line
   local num_errors=0
   local remaining_lines=0
+  local __go_log_level_index
   local i
 
   . "$_GO_CORE_DIR/lib/log"
@@ -81,16 +82,21 @@ assert_log_equals() {
   done
 
   for ((i=0; $# != 0; ++i)); do
-    expected_line="$(__expected_log_line "$1" "$2")"
+    if _@go.log_level_index "$1" || [[ "$1" =~ ^\\e\[ ]]; then
+      expected_line="$(__expected_log_line "$1" "$2")"
+      if ! shift 2; then
+        echo "ERROR: Wrong number of arguments for log line $i." >&2
+        return 1
+      fi
+    else
+      expected_line="$1"
+      shift
+    fi
+
     if ! assert_equal "$expected_line" "${lines[$i]}" "line $i"; then
       ((++num_errors))
     fi
     set +o functrace
-
-    if ! shift 2; then
-      echo "ERROR: Wrong number of arguments for log line $i." >&2
-      return 1
-    fi
   done
 
   if ! __all_output_consumed "$i"; then

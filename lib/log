@@ -9,6 +9,15 @@
 #   @go.add_or_update_log_level
 #     Modifies existing log level labels, formatting, and file descriptors
 #
+#   @go.log_command
+#     Logs a command and its outcome
+#
+#   @go.critical_section_begin
+#     Causes @go.log_command to log FATAL on error
+#
+#   @go.critical_section_end
+#     Cause @go.log_command to log ERROR on error
+#
 # See the function comments for each of the above for further information.
 
 # Set this if you want to force terminal-formatted output from @go.log.
@@ -17,6 +26,11 @@
 # descriptor is not a terminal. Can be set either in the script or on the
 # command line.
 declare _GO_LOG_FORMATTING="$_GO_LOG_FORMATTING"
+
+# If not empty, @go.log_command will only print the command and not execute it.
+#
+# Can be set either in the script or on the command line.
+declare _GO_DRY_RUN="$_GO_DRY_RUN"
 
 # Default log level labels
 #
@@ -58,12 +72,15 @@ declare __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
 # DO NOT EDIT: Initialized by @go.log
 declare __GO_LOG_LEVELS_FORMATTED=()
 
+# Set by @go.critical_section_{begin,end}
+declare __GO_CRITICAL_SECTION=0
+
 # Outputs a single log line that may contain terminal control characters.
 #
 # Usage:
 #
 #   @go.log <log-level> args...
-#   @go.log <ERROR|FATAL> <exit-status|''> args...
+#   @go.log <ERROR|FATAL> [exit-status] args...
 #
 # Where:
 #
@@ -181,6 +198,53 @@ declare __GO_LOG_LEVELS_FORMATTED=()
   fi
   if [[ "$level_fd" != 'keep' ]]; then
     __GO_LOG_LEVELS_FILE_DESCRIPTORS[$__go_log_level_index]="$level_fd"
+  fi
+}
+
+# Sets @go.log_command to log FATAL when its command exits with an error status.
+@go.critical_section_begin() {
+  ((++__GO_CRITICAL_SECTION))
+}
+
+# Sets @go.log_command to log ERROR when its command exits with an error status.
+@go.critical_section_end() {
+  if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
+    ((--__GO_CRITICAL_SECTION))
+  fi
+}
+
+# Logs the specified command and its outcome.
+#
+# By default it will log ERROR and return the command's exit status on failure.
+# In between calls to @go.critical_section_begin and @go.critical_section_end,
+# it will instead log FATAL and exit the process with the command's status code.
+#
+# `./go` script commands can be invoked using `@go`.
+#
+# Arguments:
+#   $@: The command and its arguments to log and execute
+@go.log_command() {
+  local args=("$@")
+  local cmd_string="${args[*]}"
+  local exit_status
+
+  if [[ "${args[0]}" == '@go' ]]; then
+    cmd_string="$_GO_CMD ${args[*]:1}"
+  fi
+  @go.log RUN "$cmd_string"
+
+  if [[ -n "$_GO_DRY_RUN" ]]; then
+    return
+  fi
+
+  "${args[@]}"
+  exit_status="$?"
+
+  if [[ "$exit_status" -ne '0' ]]; then
+    if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
+      @go.log FATAL "$exit_status" "$cmd_string"
+    fi
+    @go.log ERROR "$exit_status" "$cmd_string"
   fi
 }
 
