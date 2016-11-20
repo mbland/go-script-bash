@@ -1,0 +1,245 @@
+#! /bin/bash
+#
+# Standard logging
+#
+# Exports:
+#   @go.log
+#     Outputs a log line; supports terminal formatting and format stripping
+#
+# See the function comments for each of the above for further information.
+
+# Set this if you want to force terminal-formatted output from @go.log.
+#
+# @go.log will remove terminal formatting codes by default when the output file
+# descriptor is not a terminal. Can be set either in the script or on the
+# command line.
+declare _GO_LOG_FORMATTING="$_GO_LOG_FORMATTING"
+
+# Default log level labels
+declare _GO_LOG_LEVELS=(
+  'INFO'
+  'RUN'
+  'WARN'
+  'ERROR'
+  'FATAL'
+  'START'
+  'FINISH'
+)
+
+# Default log level terminal format codes
+declare __GO_LOG_LEVELS_FORMAT_CODES=(
+  '\e[1m\e[36m'
+  '\e[1m\e[35m'
+  '\e[1m\e[33m'
+  '\e[1m\e[31m'
+  '\e[1m\e[31m'
+  '\e[1m\e[32m'
+  '\e[1m\e[32m'
+)
+
+# Default log level output file descriptors
+#
+# '1' is standard output and '2' is standard error.
+declare __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
+  '1'
+  '1'
+  '1'
+  '2'
+  '2'
+  '1'
+  '1'
+)
+
+# DO NOT EDIT: Initialized by @go.log
+declare __GO_LOG_LEVELS_FORMATTED=()
+
+# Outputs a single log line that may contain terminal control characters.
+#
+# Usage:
+#
+#   @go.log <log-level> args...
+#   @go.log <ERROR|FATAL> <exit-status|''> args...
+#
+# Where:
+#
+#   <log-level>    A label from _GO_LOG_LEVELS
+#   <exit-status>  The exit status number to return from an ERROR or FATAL call
+#   args...        Arguments comprising the log record text
+#
+# Will automatically format the '<log-level>' label if writing to the terminal
+# or _GO_LOG_FORMATTING is set. Will automatically strip format codes from the
+# remaining arguments if not writing to the terminal and _GO_LOG_FORMATTING is
+# empty.
+#
+# If the first argument is ERROR or FATAL, the second argument is the exit
+# status, and the remainder of the arguments comprise the log record. The exit
+# status will be appended to the log record if it is not the empty string.
+#
+# ERROR will cause @go.log to return the exit status; FATAL will exit the
+# process with the exit status. If the exit status is the empty string, it will
+# default to 1.
+#
+# If you want to add a custom log level, or change an existing log level, do so
+# using @go.add_or_update_log_level before the first call to @go.log, most
+# likely in your ./go script.
+#
+# Arguments:
+#   $1: log level label; will be converted to all-uppercase
+#   $2: exit status if $1 is ERROR or FATAL; first log record element otherwise
+#   $3..$#: remainder of the log record
+@go.log() {
+  local args=("$@")
+  local log_level="${args[0]^^}"
+  local formatted_log_level
+  local level_fd=1
+  local exit_status=0
+  local close_code='\e[0m'
+  local echo_mode='-e'
+
+  unset 'args[0]'
+  _@go.log_init
+
+  local __go_log_level_index=0
+  if ! _@go.log_level_index "$log_level"; then
+    @go.log ERROR "Unknown log level $log_level; defaulting to WARN"
+    @go.log WARN "${args[@]}"
+    return 1
+  fi
+
+  formatted_log_level="${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
+  level_fd="${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$__go_log_level_index]}"
+
+  if [[ "$log_level" =~ ERROR|FATAL ]]; then
+    exit_status="${args[1]}"
+
+    if [[ -n "$exit_status" && "$exit_status" =~ ^-?[0-9]+$ ]]; then
+      unset 'args[1]'
+      args+=("(exit status $exit_status)")
+    else
+      exit_status=1
+    fi
+  fi
+
+  if [[ ! -t "$level_fd" && -z "$_GO_LOG_FORMATTING" ]]; then
+    echo_mode='-E'
+    args=("${args[@]//\\e\[[0-9]m}")
+    args=("${args[@]//\\e\[[0-9][0-9]m}")
+    args=("${args[@]//\\e\[[0-9][0-9][0-9]m}")
+    close_code=''
+  fi
+
+  echo "$echo_mode" "$formatted_log_level ${args[*]}$close_code" >&"$level_fd"
+
+  if [[ "$log_level" == FATAL ]]; then
+    exit "$exit_status"
+  fi
+  return "$exit_status"
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# Initializes the logging system variables
+#
+# May be called multiple times; initialization will only happen once.
+_@go.log_init() {
+  if [[ -z "$__GO_LOG_INIT" ]]; then
+    _@go.log_format_level_labels
+    readonly __GO_LOG_INIT='done'
+  fi
+}
+
+# Assigns formatted log level labels to __GO_LOG_LEVELS_FORMATTED.
+#
+# If `_GO_LOG_FORMATTING` is not empty, or the file descriptor corresponding to
+# a log level corresponds to a terminal, this will assign a corresponding value
+# wrapped by terminal formatting codes to __GO_LOG_LEVELS_FORMATTED. Otherwise
+# the original label value is assigned.
+#
+# Each element of `__GO_LOG_LEVELS_FORMATTED` will also be padded with trailing
+# spaces so that each element will be the same length.
+#
+# Globals:
+#   _GO_LOG_LEVELS:                    List of valid log level labels
+#   _GO_LOG_FORMATTING                 If set, always produce formatted labels
+#   __GO_LOG_LEVELS_FORMAT_CODES:      Terminal format codes for each log level
+#   __GO_LOG_LEVELS_FILE_DESCRIPTORS:  Output descriptors for each log level
+#   __GO_LOG_LEVELS_FORMATTED:         Formatted labels
+_@go.log_format_level_labels() {
+  local num_levels="${#_GO_LOG_LEVELS[@]}"
+  local label_length
+  local longest_label_length
+  local padding=''
+  local log_level
+  local padding_len
+  local level_var
+  local level_fd
+  local i
+
+  for ((i=0; i != num_levels; ++i)); do
+    label_length="${#_GO_LOG_LEVELS[$i]}"
+    if [[ "$label_length" -gt "$longest_label_length" ]]; then
+      longest_label_length="$label_length"
+    fi
+  done
+
+  for ((i=0; i != longest_label_length; ++i)); do
+    padding+=' '
+  done
+
+  for ((i=0; i != num_levels; ++i)); do
+    log_level="${_GO_LOG_LEVELS[$i]}"
+    padding_len="$((${#padding} - ${#log_level}))"
+    level_fd="${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$i]}"
+
+    if [[ -n "$_GO_LOG_FORMATTING" || -t "$level_fd" ]]; then
+      log_level="${__GO_LOG_LEVELS_FORMAT_CODES[$i]}$log_level\e[0m"
+    fi
+    __GO_LOG_LEVELS_FORMATTED[$i]="${log_level}${padding:0:$padding_len}"
+  done
+}
+
+# Sets the index into the __GO_LOG arrays for the specified label
+#
+#
+# Globals:
+#   __go_log_level_index:  Variable into which the label's index will be stored
+#
+# Arguments:
+#   $1:  The log level label to look up
+#
+# Returns:
+#   0:  if the label exists
+#   1:  if the label does not exist
+_@go.log_level_index() {
+  local i
+  for ((i=0; i != "${#_GO_LOG_LEVELS[@]}"; ++i)); do
+    if [[ "${_GO_LOG_LEVELS[$i]}" == "$1" ]]; then
+      __go_log_level_index="$i"
+      return
+    fi
+  done
+  return 1
+}
+
+# Sanity check that the __GO_LOG arrays are all of the same size
+#
+# Will cause the process to exit with an error message and status if not.
+_@go.log_load() {
+  local num_levels="${#_GO_LOG_LEVELS[@]}"
+
+  if [[ "${#__GO_LOG_LEVELS_FORMAT_CODES[@]}" != "$num_levels" ]]; then
+    echo "Should have $num_levels log level format codes," \
+      "only have ${#__GO_LOG_LEVELS_FORMAT_CODES[@]}" >&2
+    exit 1
+  elif [[ "${#__GO_LOG_LEVELS_FILE_DESCRIPTORS[@]}" != "$num_levels" ]]; then
+    echo "Should have $num_levels log level file descriptors," \
+      "only have ${#__GO_LOG_LEVELS_FILE_DESCRIPTORS[@]}" >&2
+    exit 1
+  fi
+}
+
+_@go.log_load
