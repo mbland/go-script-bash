@@ -7,6 +7,12 @@ teardown() {
   remove_test_go_rootdir
 }
 
+# For tests that run command scripts via @go, set _GO_CMD to make sure that's
+# the variable included in the log.
+test-go() {
+  env _GO_CMD="$FUNCNAME" "$TEST_GO_SCRIPT" "$@"
+}
+
 @test "$SUITE: log single command" {
   run_log_script '@go.log_command echo Hello, World!'
   assert_success
@@ -176,6 +182,54 @@ teardown() {
     'Hello, World!' \
     RUN 'failing_function foo bar baz' \
     ERROR 'failing_function foo bar baz (exit status 127)' \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)'
+}
+
+@test "$SUITE: log and run command script using @go" {
+  create_test_go_script ". \"\$_GO_USE_MODULES\" 'log'" \
+    '@go.log_command @go project-command-script "$@"'
+
+  create_test_command_script 'project-command-script' 'echo $*'
+
+  run test-go Hello, World!
+  assert_success
+  assert_log_equals RUN 'test-go project-command-script Hello, World!' \
+    'Hello, World!'
+}
+
+@test "$SUITE: critical section in parent script applies to @go script" {
+  create_test_go_script ". \"\$_GO_USE_MODULES\" 'log'" \
+    '@go.critical_section_begin' \
+    '@go.log_command @go project-command-script "$@"' \
+    '@go.critical_section_end' \
+    '@go.log_command Should not get this far.'
+
+  create_test_command_script 'project-command-script' \
+    'failing_function() { return 127; }' \
+    '@go.log_command failing_function "$@"'
+
+  run test-go foo bar baz
+  assert_failure
+  assert_log_equals RUN 'test-go project-command-script foo bar baz' \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)'
+}
+
+@test "$SUITE: critical section in command script applies to parent script" {
+  create_test_go_script ". \"\$_GO_USE_MODULES\" 'log'" \
+    '@go.log_command @go project-command-script "$@"' \
+    '@go.log_command Should not get this far.'
+
+  create_test_command_script 'project-command-script' \
+    'failing_function() { return 127; }' \
+    '@go.critical_section_begin' \
+    '@go.log_command failing_function "$@"' \
+    '@go.critical_section_end'
+
+  run test-go foo bar baz
+  assert_failure
+  assert_log_equals RUN 'test-go project-command-script foo bar baz' \
     RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)'
 }

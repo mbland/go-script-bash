@@ -219,7 +219,11 @@ declare __GO_CRITICAL_SECTION=0
 # In between calls to @go.critical_section_begin and @go.critical_section_end,
 # it will instead log FATAL and exit the process with the command's status code.
 #
-# `./go` script commands can be invoked using `@go`.
+# `./go` script commands can be invoked using `@go`. Note that this means all of
+# the logging variables and flags set in parent commands apply directly to `@go`
+# commands written in Bash, but not other languages. Most notably, the state of
+# the critical section flag will be shared between parent and child Bash
+# scripts.
 #
 # Arguments:
 #   $@: The command and its arguments to log and execute
