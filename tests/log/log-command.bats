@@ -95,6 +95,29 @@ teardown() {
     RUN 'echo Goodbye, World!'
 }
 
+@test "$SUITE: critical section in function" {
+  # This reproduces a bug whereby @go.critical_section_end will return an error
+  # status because of its decrementing a variable to zero, resulting in an ERROR
+  # log for `critical subsection`.
+  run_log_script 'failing_function() { return 127; }' \
+    'critical_subsection() {' \
+    '  @go.critical_section_begin' \
+    '  @go.log_command echo $*' \
+    '  @go.critical_section_end' \
+    '}' \
+    '@go.log_command critical_subsection Hello, World!' \
+    '@go.log_command failing_function foo bar baz' \
+    '@go.log_command echo We made it!'
+  assert_success
+  assert_log_equals RUN 'critical_subsection Hello, World!' \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN 'failing_function foo bar baz' \
+    ERROR 'failing_function foo bar baz (exit status 127)' \
+    RUN 'echo We made it!' \
+    'We made it!'
+}
+
 @test "$SUITE: nested critical sections" {
   run_log_script 'failing_function() { return 127; }' \
     'critical_subsection() {' \

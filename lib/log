@@ -213,6 +213,7 @@ declare __GO_CRITICAL_SECTION=0
 @go.critical_section_end() {
   if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
     ((--__GO_CRITICAL_SECTION))
+    return 0
   fi
 }
 
