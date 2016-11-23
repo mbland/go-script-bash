@@ -15,6 +15,10 @@ teardown() {
 }
 
 @test "$SUITE: fail if the 'setup' script isn't executable" {
+  if fs_missing_permission_support; then
+    skip "Can't trigger condition on this file system"
+  fi
+
   create_test_command_script 'setup' 'echo $*'
   chmod 600 "$TEST_GO_SCRIPTS_DIR/setup"
 
