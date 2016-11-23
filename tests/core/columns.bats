@@ -26,13 +26,15 @@ teardown() {
   assert_success '80'
 }
 
-@test "$SUITE: default to 80 columns if tput fails" {
-  if ! command -v 'tput' >/dev/null; then
-    skip 'tput not available on this system'
+@test "$SUITE: default to 80 columns if tput fails or use mode.com on Windows" {
+  local expected_cols='80'
+
+  if [[ "$(mode.com con)" =~ Columns:\ +([0-9]+) ]]; then
+    expected_cols="${BASH_REMATCH[1]}"
   fi
 
   # One way to cause tput to fail is to set `$TERM` to null. On Travis it's set
   # to 'dumb', but tput fails anyway. The code now defaults to 80 on all errors.
   run env COLUMNS= TERM= "$TEST_GO_SCRIPT"
-  assert_success '80'
+  assert_success "$expected_cols"
 }
