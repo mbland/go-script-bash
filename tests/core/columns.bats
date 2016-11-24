@@ -13,10 +13,9 @@ setup() {
   create_bats_test_script 'go' \
     'exec 27>&1 2>/dev/null' \
     'if exec 1>/dev/tty; then' \
-    '  exec 2>/dev/tty' \
-    'else' \
-    '  exec 2>&1' \
+    '  :' \
     'fi' \
+    'exec 2>&1' \
     ". '$_GO_ROOTDIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     'exec 1>&27 27>&- 2>&1' \
     'echo "$COLUMNS"'
@@ -54,10 +53,9 @@ teardown() {
   # See the comment in setup() for context on the redirection shenanigans.
   exec 27>&1 2>/dev/null
   if exec 1>/dev/tty; then
-    exec 2>/dev/tty
-  else
-    exec 2>&1
+    :
   fi
+  exec 2>&1
 
   local expected_cols="$(env COLUMNS= tput cols)"
   exec 1>&27 27>&- 2>&1
