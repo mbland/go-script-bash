@@ -35,7 +35,7 @@ _changes() {
   fi
 
   git log '--pretty=format:%h %an <%ae>%n        %s%n' \
-    "${start_ref}..${end_ref}^"
+    "${start_ref}..${end_ref}"
 }
 
 _changes "$@"

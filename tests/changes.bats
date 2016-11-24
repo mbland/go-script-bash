@@ -75,5 +75,5 @@ create_fake_git() {
   run ./go changes v1.0.0 v1.1.0
   assert_success
   assert_line_matches 0 '^--pretty=format:'
-  assert_line_matches 1 '^v1\.0\.0\.\.v1\.1\.0\^$'
+  assert_line_matches 1 '^v1\.0\.0\.\.v1\.1\.0$'
 }
