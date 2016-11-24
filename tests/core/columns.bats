@@ -6,8 +6,17 @@ setup() {
   # We want standard output and standard error to be connected to the actual
   # terminal to make sure `tput cols` isn't automatically defaulting to 80.
   # Thankfully Bash creates the /dev/tty pseudo file on our behalf on Windows.
+  #
+  # On OS X on Travis, however, /dev/tty exists, but assigning a file
+  # descriptor to it results in a `/dev/tty: Device not configured` error.
+  # Hence the standard error dance.
   create_bats_test_script 'go' \
-    'exec 27>&1 >/dev/tty 2>&1' \
+    'exec 27>&1 2>/dev/null' \
+    'if exec 1>/dev/tty; then' \
+    '  exec 2>/dev/tty' \
+    'else' \
+    '  exec 2>&1' \
+    'fi' \
     ". '$_GO_ROOTDIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     'exec 1>&27 27>&- 2>&1' \
     'echo "$COLUMNS"'
@@ -43,7 +52,13 @@ teardown() {
   fi
 
   # See the comment in setup() for context on the redirection shenanigans.
-  exec 27>&1 >/dev/tty 2>&1
+  exec 27>&1 2>/dev/null
+  if exec 1>/dev/tty; then
+    exec 2>/dev/tty
+  else
+    exec 2>&1
+  fi
+
   local expected_cols="$(env COLUMNS= tput cols)"
   exec 1>&27 27>&- 2>&1
 
