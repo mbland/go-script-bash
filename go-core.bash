@@ -250,9 +250,11 @@ _@go.set_scripts_dir() {
 if ! _@go.set_scripts_dir "$@"; then
   exit 1
 elif [[ -z "$COLUMNS" ]]; then
-  if [[ "$(tput cols 2>/dev/null)" =~ ^[0-9]+$ ]]; then
-    COLUMNS="${BASH_REMATCH[0]}"
-  elif [[ "$(mode.com 'con' 2>/dev/null)" =~ Columns:\ +([0-9]+) ]]; then
+  # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
+  if command -v tput >/dev/null && tput cols >/dev/null 2>&1; then
+    COLUMNS="$(tput cols)"
+  elif command -v mode.com >/dev/null &&
+    [[ "$(mode.com 'con')" =~ Columns:\ +([0-9]+) ]]; then
     COLUMNS="${BASH_REMATCH[1]}"
   fi
   export COLUMNS="${COLUMNS:-80}"

@@ -27,7 +27,7 @@ TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
 TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 
 create_test_go_script() {
-  create_bats_test_script "go" \
+  create_bats_test_script 'go' \
     ". '$_GO_ROOTDIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     "$@"
 
