@@ -176,6 +176,52 @@ assert_line_matches() {
   __assert_line 'assert_matches' "$@"
 }
 
+# Validates that each output line equals each corresponding argument
+#
+# Also ensures there are no more and no fewer lines of output than expected.
+#
+# Arguments:
+#   $@: Values to compare to each element of `${lines[@]}` for equality
+assert_lines_equal() {
+  set +o functrace
+  local expected=("$@")
+  local num_lines="${#expected[@]}"
+  local lines_diff="$((${#lines[@]} - num_lines))"
+  local num_errors=0
+  local i
+
+  for ((i=0; i != ${#expected[@]}; ++i)); do
+    if ! assert_equal "${expected[$i]}" "${lines[$i]}" "line $i"; then
+      ((++num_errors))
+    fi
+    set +o functrace
+  done
+
+  if [[ "$lines_diff" -gt '0' ]]; then
+    if [[ "$lines_diff" -eq '1' ]]; then
+      echo "There is one more line of output than expected:" >&2
+    else
+      echo "There are $lines_diff more lines of output than expected:" >&2
+    fi
+    local IFS=$'\n'
+    echo "${lines[*]:$num_lines}" >&2
+    ((++num_errors))
+
+  elif [[ "$lines_diff" -lt '0' ]]; then
+    lines_diff="$((-lines_diff))"
+    if [[ "$lines_diff" -eq '1' ]]; then
+      echo "There is one fewer line of output than expected." >&2
+    else
+      echo "There are $lines_diff fewer lines of output than expected." >&2
+    fi
+    ((++num_errors))
+  fi
+
+  if [[ "$num_errors" -ne '0' ]]; then
+    __return_from_bats_assertion 1
+  fi
+}
+
 # Scrubs the Bats stacks of functions from the assertion source file
 #
 # You must ensure that `set +o functrace` is in effect prior to calling this

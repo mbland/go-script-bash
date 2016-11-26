@@ -324,3 +324,74 @@ check_expected_output() {
     'OUTPUT:' \
     '% not interpreted as a format spec'
 }
+
+@test "$SUITE: assert_lines_equal" {
+  expect_success "printf 'foo\nbar\nbaz\n'" \
+    "assert_lines_equal 'foo' 'bar' 'baz'"
+}
+
+@test "$SUITE: assert_lines_equal failure" {
+  expect_failure "printf 'foo\nbar\nbaz\n'" \
+    "assert_lines_equal 'foo' 'quux' 'baz'" \
+    'line 1 not equal to expected value:' \
+    "  expected: 'quux'" \
+    "  actual:   'bar'"
+}
+
+@test "$SUITE: assert_lines_equal failure due to one output line too many" {
+  expect_failure "printf 'foo\nbar\nbaz\nquux\n'" \
+    "assert_lines_equal 'foo' 'bar' 'baz'" \
+    'There is one more line of output than expected:' \
+    'quux'
+}
+
+@test "$SUITE: assert_lines_equal failure from bad matches and too many lines" {
+  expect_failure "printf 'foo\nbar\nbaz\nquux\nxyzzy\nplugh\n'" \
+    "assert_lines_equal 'frobozz' 'frotz' 'blorple'" \
+    'line 0 not equal to expected value:' \
+    "  expected: 'frobozz'" \
+    "  actual:   'foo'" \
+    'line 1 not equal to expected value:' \
+    "  expected: 'frotz'" \
+    "  actual:   'bar'" \
+    'line 2 not equal to expected value:' \
+    "  expected: 'blorple'" \
+    "  actual:   'baz'" \
+    'There are 3 more lines of output than expected:' \
+    'quux' \
+    'xyzzy' \
+    'plugh'
+}
+
+@test "$SUITE: assert_lines_equal failure due to one output line too few" {
+  expect_failure "printf 'foo\nbar\nbaz\n'" \
+    "assert_lines_equal 'foo' 'bar' 'baz' 'quux'" \
+    'line 3 not equal to expected value:' \
+    "  expected: 'quux'" \
+    "  actual:   ''" \
+    'There is one fewer line of output than expected.'
+}
+
+@test "$SUITE: assert_lines_equal failure from bad matches and too few lines" {
+  expect_failure "printf 'foo\nbar\nbaz\n'" \
+    "assert_lines_equal 'frobozz' 'frotz' 'blorple' 'quux' 'xyzzy' 'plugh'" \
+    'line 0 not equal to expected value:' \
+    "  expected: 'frobozz'" \
+    "  actual:   'foo'" \
+    'line 1 not equal to expected value:' \
+    "  expected: 'frotz'" \
+    "  actual:   'bar'" \
+    'line 2 not equal to expected value:' \
+    "  expected: 'blorple'" \
+    "  actual:   'baz'" \
+    'line 3 not equal to expected value:' \
+    "  expected: 'quux'" \
+    "  actual:   ''" \
+    'line 4 not equal to expected value:' \
+    "  expected: 'xyzzy'" \
+    "  actual:   ''" \
+    'line 5 not equal to expected value:' \
+    "  expected: 'plugh'" \
+    "  actual:   ''" \
+    'There are 3 fewer lines of output than expected.'
+}

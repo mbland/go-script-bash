@@ -46,37 +46,11 @@ __expected_log_line() {
   fi
 }
 
-__all_output_consumed() {
-  local index="$1"
-  local remaining_lines="$((${#lines[@]} - index))"
-
-  if [[ "$remaining_lines" -gt '0' ]]; then
-    if [[ "$remaining_lines" -eq '1' ]]; then
-      echo "There is one more line of output than expected:" >&2
-    else
-      echo "There are $remaining_lines more lines of output than expected:" >&2
-    fi
-    local IFS=$'\n'
-    echo "${lines[*]:$index}" >&2
-    return 1
-
-  elif [[ "$remaining_lines" -lt '0' ]]; then
-    remaining_lines="$((-remaining_lines))"
-    if [[ "$remaining_lines" -eq '1' ]]; then
-      echo "There is one fewer line of output than expected." >&2
-    else
-      echo "There are $remaining_lines fewer lines of output than expected." >&2
-    fi
-    return 1
-  fi
-}
-
 assert_log_equals() {
+  set +o functrace
   local level
   local padding=''
-  local expected_line
-  local num_errors=0
-  local remaining_lines=0
+  local expected=()
   local __go_log_level_index
   local i
 
@@ -89,27 +63,20 @@ assert_log_equals() {
 
   for ((i=0; $# != 0; ++i)); do
     if _@go.log_level_index "$1" || [[ "$1" =~ ^\\e\[ ]]; then
-      expected_line="$(__expected_log_line "$1" "$2")"
+      expected+=("$(__expected_log_line "$1" "$2")")
       if ! shift 2; then
         echo "ERROR: Wrong number of arguments for log line $i." >&2
-        return 1
+        return_from_bats_assertion "$BASH_SOURCE" 1
+        return
       fi
     else
-      expected_line="$1"
+      expected+=("$1")
       shift
     fi
-
-    if ! assert_equal "$expected_line" "${lines[$i]}" "line $i"; then
-      ((++num_errors))
-    fi
-    set +o functrace
   done
 
-  if ! __all_output_consumed "$i"; then
-    ((++num_errors))
-  fi
-
-  if [[ "$num_errors" -ne '0' ]]; then
+  if ! assert_lines_equal "${expected[@]}"; then
+    set +o functrace
     return_from_bats_assertion "$BASH_SOURCE" 1
   fi
 }
