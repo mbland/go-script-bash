@@ -52,6 +52,8 @@ teardown() {
     "_GO_CORE_DIR: $_GO_CORE_DIR"
     "_GO_CORE_URL: $_GO_CORE_URL"
     "_GO_IMPORTED_MODULES: complete,format"
+    "_GO_PLUGINS_DIR: "
+    "_GO_PLUGINS_PATHS: "
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR"
     "_GO_SCRIPT: $TEST_GO_SCRIPT"
     "_GO_SCRIPTS_DIR: $TEST_GO_SCRIPTS_DIR"
@@ -86,8 +88,7 @@ teardown() {
     "_GO_CORE_DIR: $_GO_CORE_DIR"
     "_GO_CORE_URL: $_GO_CORE_URL"
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR"
-    "_GO_SCRIPT: $TEST_GO_SCRIPT"
-    "_GO_SCRIPTS_DIR: $TEST_GO_SCRIPTS_DIR")
+    "_GO_SCRIPT: $TEST_GO_SCRIPT")
 
   create_test_command_script 'test-command.d/test-subcommand' "${script[@]}"
   run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy

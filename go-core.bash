@@ -81,7 +81,7 @@ declare -r _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
 declare _GO_IMPORTED_MODULES=()
 
 # Path to the project's script directory
-declare -x _GO_SCRIPTS_DIR=
+declare _GO_SCRIPTS_DIR=
 
 # Path to the main ./go script in the project's root directory
 declare -r -x _GO_SCRIPT="$_GO_ROOTDIR/${0##*/}"
@@ -104,6 +104,16 @@ declare -x _GO_CMD_ARGV=
 
 # The URL of the framework's original source repository.
 declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
+
+# The directory in which plugins are installed.
+declare _GO_PLUGINS_DIR=
+
+# Directories containing executable plugin scripts.
+declare _GO_PLUGINS_PATHS=()
+
+# Directories that are searched for executable command scripts. After they are
+# initialized, _GO_PLUGINS_PATHS and _GO_SCRIPTS_DIR will be added.
+declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
 
 # Invokes printf builtin, then folds output to $COLUMNS width if 'fold' exists.
 #
