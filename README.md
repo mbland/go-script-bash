@@ -327,8 +327,11 @@ The `@go` and `@go.printf` functions are available to command scripts written in
 Bash, as Bash command scripts are sourced rather than run using another language
 interpreter.
 
-The `_GO_ROOTDIR`, `_GO_SCRIPT`, and `COLUMNS` environment variables are
-exported and available to scripts in all languages.
+A number of global variables defined and documented in `go-core.bash`, all
+starting with the prefix `_GO_`, are exported as environment variables and
+available to scripts in all languages (along with the global `COLUMNS`
+environment variable). Run `./go vars` to see them all along with their values,
+and run `./go help vars` for more details.
 
 #### Plugins
 

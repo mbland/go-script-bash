@@ -6,7 +6,7 @@ load environment
   run ./go 'builtins'
   assert_success
   assert_line_equals 0 "aliases" "first builtin"
-  assert_line_equals -1 "unenv" "last builtin"
+  assert_line_equals -1 "vars" "last builtin"
 }
 
 @test "$SUITE: tab completions" {

@@ -47,6 +47,7 @@ cd "${0%/*}" || exit 1
 # ----
 # This and other variables are exported, so that command scripts written in
 # languages other than Bash (and hence run in new processes) can access them.
+# See `./go vars` and `./go help vars`.
 declare -r -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
@@ -75,6 +76,7 @@ cd "$_GO_ROOTDIR" || exit 1
 # ----
 # This and some other variables are _not_ exported, since they are specific to
 # Bash command scripts, which are sourced into the ./go script process itself.
+# See `./go vars` and `./go help vars`.
 declare -r _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
 
 # Array of modules imported via _GO_USE_MODULES
@@ -221,18 +223,22 @@ _@go.run_command_script() {
   interpreter="${interpreter%% *}"
 
   if [[ "$interpreter" == 'bash' || "$interpreter" == 'sh' ]]; then
-    _GO_CMD_NAME=("${__go_cmd_name[@]}")
-    _GO_CMD_ARGV=("$@")
+    if [[ -z "$_GO_CMD_NAME" ]]; then
+      _GO_CMD_NAME=("${__go_cmd_name[@]}")
+      _GO_CMD_ARGV=("$@")
+    fi
     . "$cmd_path" "$@"
   elif [[ -z "$interpreter" ]]; then
     @go.printf "Could not parse interpreter from first line of $cmd_path.\n" >&2
     return 1
   else
-    local origIFS="$IFS"
-    local IFS=$'\0'
-    _GO_CMD_NAME="${__go_cmd_name[*]}"
-    _GO_CMD_ARGV="$*"
-    IFS="$origIFS"
+    if [[ -z "$_GO_CMD_NAME" ]]; then
+      local origIFS="$IFS"
+      local IFS=$'\0'
+      _GO_CMD_NAME="${__go_cmd_name[*]}"
+      _GO_CMD_ARGV="$*"
+      IFS="$origIFS"
+    fi
     "$interpreter" "$cmd_path" "$@"
   fi
 }
