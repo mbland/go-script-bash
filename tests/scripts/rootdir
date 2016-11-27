@@ -1,9 +1,0 @@
-#! /bin/bash
-#
-# Emit the project's root directory
-
-rootdir() {
-  echo "$_GO_ROOTDIR"
-}
-
-rootdir
