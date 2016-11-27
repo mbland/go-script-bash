@@ -90,4 +90,4 @@ for __go_module_name in "$@"; do
 done
 
 unset __go_loaded_module
-unset __go_use_module
+unset __go_module_name
