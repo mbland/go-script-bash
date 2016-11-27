@@ -24,16 +24,22 @@
 #     fail "output should not match: '$pattern'"
 #   fi
 #
-# Alternatively, write your own assertion functions starting with:
+# Alternatively, write your own assertion function with the following as the
+# first line:
 #
 #   set +o functrace
 #
-# and then make sure every return path calls:
+# and then make sure every return path ends with the following (possibly
+# followed by a `return` statement, if not at the end of the function):
 #
 #   return_from_bats_assertion "$return_status" "$BASH_SOURCE"
 #
 # You may wish to wrap `return_from_bats_assertion` in a local helper function
 # to avoid having to specify `$BASH_SOURCE` everywhere.
+#
+# Also note that if your assertion function calls other assertion functions, you
+# should call `set +o functrace` after every one of them. See the implementation
+# of `assert_lines_equal` for an example.
 #
 # The assertions borrow inspiration from rbenv/test/test_helper.bash.
 

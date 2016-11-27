@@ -2,9 +2,6 @@
 #
 # Framework for writing "./go" scripts in Bash.
 #
-# Version: v1.0.0
-# URL: https://github.com/mbland/go-script-bash
-#
 # To use this framework, create a bash script in the root directory of your
 # project to act as the main './go' script. This script need not be named 'go',
 # but it must contain the following as the first and last executable lines,
@@ -35,6 +32,18 @@ if [[ "${BASH_VERSINFO[0]}" -lt '3' || "${BASH_VERSINFO[1]}" -lt '2' ]]; then
   exit 1
 fi
 
+# The version of the framework
+#
+# NOTE:
+# ----
+# This and other variables are exported, so that command scripts written in
+# languages other than Bash (and hence run in new processes) can access them.
+# See `./go vars` and `./go help vars`.
+declare -r -x _GO_CORE_VERSION='v1.0.0'
+
+# The URL of the framework's original source repository
+declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
+
 declare __go_orig_dir="$PWD"
 cd "${0%/*}" || exit 1
 
@@ -42,12 +51,6 @@ cd "${0%/*}" || exit 1
 #
 # This is directory containing the main ./go script. All functions, commands,
 # and scripts are invoked relative to this directory.
-#
-# NOTE:
-# ----
-# This and other variables are exported, so that command scripts written in
-# languages other than Bash (and hence run in new processes) can access them.
-# See `./go vars` and `./go help vars`.
 declare -r -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
@@ -103,9 +106,6 @@ declare -x _GO_CMD_NAME=
 # When exported to scripts not written in bash, the array is converted to a
 # string with the arguments delimited by the ASCII NUL character ($'\0').
 declare -x _GO_CMD_ARGV=
-
-# The URL of the framework's original source repository.
-declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 
 # The directory in which plugins are installed.
 declare _GO_PLUGINS_DIR=

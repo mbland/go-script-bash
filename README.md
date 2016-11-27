@@ -342,13 +342,45 @@ your scripts directory. Run `./go help plugins` for more information.
 
 You can import optional Bash library code from the core framework, third-party
 plugins, or your own project's scripts directory by sourcing the
-`$_GO_USE_MODULES` script. For example, to import the core logging utilities:
+`_GO_USE_MODULES` script. For example, to import the core logging utilities:
 
 ```bash
-. $_GO_USE_MODULES 'log'
+. "$_GO_USE_MODULES" 'log'
 ```
 
 Run `./go help modules` and `./go modules --help` for more information.
+
+#### Logging
+
+The core library `log` module provides functions for standard logging
+facilities. For example:
+
+```bash
+@go.log INFO Hello, World!
+@go.log ERROR Goodbye, World!
+```
+
+For more information, run `./go modules --help log`.
+
+#### Bats test assertions and helpers
+
+The assertions and helpers from the test suite have been extracted into the
+`lib/bats/assertions` and `lib/bats/helpers` libraries. While these are not
+modules you can import with `_GO_USE_MODULES`, they are completely independent
+of the rest of the core framework and you may source them in your own Bats
+tests. (Whether or not these will ever become a separate library remains an open
+question.)
+
+Read the comments from each file for more information.
+
+#### `kcov-ubuntu` module for test coverage on Linux
+
+The `kcov-ubuntu` module provides the `run_kcov` function that will download and
+compile [kcov](https://github.com/SimonKagstrom/kcov), then run `kcov` with the
+original `./go` command line arguments to collect test coverage. Only available
+on Ubuntu Linux for now, hence the name. Run `./go modules --help kcov-ubuntu`
+for more information and see `scripts/test` for an example of how it may be
+used.
 
 ### Feedback and contributions
 
