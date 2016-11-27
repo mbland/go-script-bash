@@ -21,7 +21,25 @@
 #   @go.setup_project
 #     Runs the project's 'setup' script and logs the result
 #
-# See the function comments for each of the above for further information.
+# The log level labels are formatted when output to a terminal, and formatting
+# can be forced when writing to a pipe or file by setting `_GO_LOG_FORMATTING`.
+#
+# `@go.log ERROR` will return an error code, so you may use it in conditional
+# statements. `@go.log FATAL` will exit the process.
+#
+# You can pass entire commands to the `@go.log_command` function, which will
+# provide log messages upon startup and completion. Upon error, it will log the
+# status and return an error code, so you may use it in conditional statements.
+# Wrapping blocks of `@go.log_command` invocations in
+# `@go.critical_section_begin` and `@go.critical_section_end` will cause any
+# errors to log `FATAL`. Setting `_GO_DRY_RUN` will log the commands without
+# executing them.
+#
+# The `@go.setup_project` function provides a convenient wrapper for running
+# first-time project setup scripts. It logs the start and finish of the setup
+# script, and provides helpful hints on running the `./go` script upon success.
+#
+# See the function and variable comments from this file for further information.
 
 # Set this if you want to force terminal-formatted output from @go.log.
 #
@@ -228,6 +246,10 @@ declare __GO_CRITICAL_SECTION=0
 # commands written in Bash, but not other languages. Most notably, the state of
 # the critical section flag will be shared between parent and child Bash
 # scripts.
+#
+# Globals:
+#   _GO_DRY_RUN:           Will log commands without running them
+#   __GO_CRITICAL_SECTION: Will log FATAL on error
 #
 # Arguments:
 #   $@: The command and its arguments to log and execute
