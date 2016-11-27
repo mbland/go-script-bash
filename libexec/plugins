@@ -18,24 +18,15 @@
 # contain a `bin/` subdirectory containing its command scripts.
 
 _@go.plugins_pathspec() {
-  if [[ -z "$_GO_PLUGINS_DIR" ]]; then
-    return 1
-  fi
-
-  local plugins_paths=("$_GO_PLUGINS_DIR" "$_GO_PLUGINS_DIR"/*/bin)
-
-  if [[ "${plugins_paths[1]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
-    unset 'plugins_paths[1]'
-  fi
-
   local IFS=':'
-  __go_plugins_pathspec="${plugins_paths[*]}"
+  __go_plugins_pathspec="${_GO_PLUGINS_PATHS[*]}"
 }
 
 _@go.plugins() {
   local __go_plugins_pathspec
+  _@go.plugins_pathspec
 
-  if _@go.plugins_pathspec; then
+  if [[ -n "$__go_plugins_pathspec" ]]; then
     # Tab completions
     _@go.source_builtin 'commands' "$@" "$__go_plugins_pathspec"
   else
