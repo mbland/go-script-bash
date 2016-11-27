@@ -54,7 +54,7 @@ setup () {
   cd 'scripts'
   __go_func
   assert_equal 'awk' "${COMPREPLY[0]}" 'first alias'
-  assert_equal 'unenv' "${COMPREPLY[$((${#COMPREPLY[@]} - 1))]}" 'last builtin'
+  assert_equal 'vars' "${COMPREPLY[$((${#COMPREPLY[@]} - 1))]}" 'last builtin'
   assert_equal "$_GO_ROOTDIR" "$PWD" 'current working dir'
   cd -
 }

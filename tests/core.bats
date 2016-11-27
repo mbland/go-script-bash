@@ -77,5 +77,5 @@ load environment
   assert_line_equals 0 'Unknown command: foobar'
   assert_line_equals 1 'Available commands are:'
   assert_line_equals 2 '  aliases'
-  assert_line_equals -1 '  unenv'
+  assert_line_equals -1 '  vars'
 }
