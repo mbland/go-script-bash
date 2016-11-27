@@ -11,9 +11,11 @@ teardown() {
   remove_test_go_rootdir
 }
 
-# Bash 3.2 single quotes each array value, causing the assertion to fail. Yeah.
+# Some versions of Bash single quote each array value, causing the assertion to
+# fail. Yeah.
 quotify_expected() {
-  if [[ "${BASH_VERSINFO[0]}" -eq '3' ]]; then
+  local test_array=()
+  if [[ "$(declare -p test_array)" == "declare -a test_array='()'" ]]; then
     # Oh, and using a single quote directly causes an error. Yep.
     local quote="'"
     expected=("${expected[@]/=(/=${quote}(}")
