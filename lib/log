@@ -137,7 +137,6 @@ declare __GO_CRITICAL_SECTION=0
   local level_fd=1
   local exit_status=0
   local close_code='\e[0m'
-  local echo_mode='-e'
 
   unset 'args[0]'
   _@go.log_init
@@ -164,14 +163,13 @@ declare __GO_CRITICAL_SECTION=0
   fi
 
   if [[ ! -t "$level_fd" && -z "$_GO_LOG_FORMATTING" ]]; then
-    echo_mode='-E'
     args=("${args[@]//\\e\[[0-9]m}")
     args=("${args[@]//\\e\[[0-9][0-9]m}")
     args=("${args[@]//\\e\[[0-9][0-9][0-9]m}")
     close_code=''
   fi
 
-  echo "$echo_mode" "$formatted_log_level ${args[*]}$close_code" >&"$level_fd"
+  printf "$formatted_log_level ${args[*]}$close_code\n" >&"$level_fd"
 
   if [[ "$log_level" == FATAL ]]; then
     exit "$exit_status"

@@ -39,7 +39,7 @@ __expected_log_line() {
     stripped_level="${stripped_level//\\e\[[0-9][0-9]m}"
     stripped_level="${stripped_level//\\e\[[0-9][0-9][0-9]m}"
     level="${level}${padding:0:$((${#padding} - ${#stripped_level}))}"
-    echo -e "$level $message\e[0m"
+    printf "$level $message\e[0m\n"
   else
     level="${level}${padding:0:$((${#padding} - ${#level}))}"
     echo "$level $message"

@@ -49,7 +49,7 @@ teardown() {
     '@go.log FOOBAR Hello, World!'
   assert_success ''
 
-  local expected="$(echo -e "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m")"
+  local expected="$(printf "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m\n")"
   assert_equal "$expected" "$(< "$TEST_GO_ROOTDIR/logfile")" 'log file output'
 }
 
@@ -57,14 +57,14 @@ teardown() {
   run_log_script "@go.add_or_update_log_level FOOBAR '$INFO_FORMAT'" \
     '_GO_LOG_FORMATTING=true' \
     '@go.log FOOBAR Hello, World!'
-  assert_success "$(echo -e "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m")"
+  assert_success "$(printf "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m\n")"
 }
 
 @test "$SUITE: update format of existing log level" {
   run_log_script "@go.add_or_update_log_level INFO '$START_FORMAT' keep" \
     '_GO_LOG_FORMATTING=true' \
     '@go.log INFO Hello, World!'
-  assert_success "$(echo -e "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m")"
+  assert_success "$(printf "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
 }
 
 @test "$SUITE: update file descriptor of existing log level" {
@@ -74,7 +74,7 @@ teardown() {
     '@go.log INFO Hello, World!'
   assert_success ''
   
-  local expected="$(echo -e "${INFO_FORMAT}INFO\e[0m   Hello, World!\e[0m")"
+  local expected="$(printf "${INFO_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
   assert_equal "$expected" "$(< "$TEST_GO_ROOTDIR/logfile")" 'log file output'
 }
 
@@ -85,6 +85,6 @@ teardown() {
     '@go.log INFO Hello, World!'
   assert_success ''
 
-  local expected="$(echo -e "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m")"
+  local expected="$(printf "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
   assert_equal "$expected" "$(< "$TEST_GO_ROOTDIR/logfile")" 'log file output'
 }
