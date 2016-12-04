@@ -195,8 +195,8 @@ scripts can be in any other interpreted language.__
 First you'll need a copy of this framework available in your project sources.
 Archives are available at:
 
-- https://github.com/mbland/go-script-bash/archive/v1.1.0.tar.gz
-- https://github.com/mbland/go-script-bash/archive/v1.1.0.zip
+- https://github.com/mbland/go-script-bash/archive/v1.1.1.tar.gz
+- https://github.com/mbland/go-script-bash/archive/v1.1.1.zip
 
 You can also add this repository to your project as a [`Git
 submodule`](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
