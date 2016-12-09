@@ -96,9 +96,9 @@ _@go.fetch_file_impl() {
   if ! "${dl_cmd[@]}" "$url" 2>"$errfile"; then
     errmsg="$(< "$errfile")"
     printf '%s\n' "$errmsg" >&2
-    @go.printf 'Failed to download: %s' "$url" >&2
+    @go.printf 'Failed to download using %s: %s' "${dl_cmd[0]}" "$url" >&2
 
-    if [[ "${dl_cmd[0]}" == 'wget' && "$errmsg" =~ Unsupported\ scheme ]]; then
+    if [[ "${dl_cmd[0]}" != 'curl' ]]; then
       @go.printf 'Consider installing `curl` and trying again.\n' >&2
     fi
 

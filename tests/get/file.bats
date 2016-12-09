@@ -153,7 +153,8 @@ teardown() {
 @test "$SUITE: show failure message if curl fails" {
   stub_program_in_path 'curl' 'printf "Oh noes!\n" >&2' 'exit 1'
   run "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
-  assert_failure 'Oh noes!' 'Failed to download: http://localhost/foobar.txt'
+  assert_failure 'Oh noes!' \
+    'Failed to download using curl: http://localhost/foobar.txt'
 }
 
 @test "$SUITE: use real curl to copy a local file" {
@@ -202,10 +203,11 @@ teardown() {
   PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" \
     get file -f - "$source_path"
 
-  # Note that `wget` uses "smart" quotes around `file` on some platforms, so we
-  # have to use a regex.
+  # Note that `wget` uses "smart" quotes around `file` on some platforms, and
+  # has a completely different error message on others (e.g. Busybox/Arch
+  # Linux), so we have to use a regex.
   assert_failure
-  assert_lines_match "^file://$source_path: Unsupported scheme .file.\.$" \
-    "^Failed to download: file://$source_path$" \
+  assert_lines_match "file://$source_path" \
+    "^Failed to download using wget: file://$source_path$" \
     '^Consider installing `curl` and trying again\.$'
 }
