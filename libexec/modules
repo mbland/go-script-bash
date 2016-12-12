@@ -43,7 +43,7 @@
 #   'f*/'    All modules in all plugins that begin with 'f'
 #   'f*/b*'  Modules beginning with 'b' in all plugins that begin with 'f'
 #
-# For detailed information about the module system, run `{{go}} {{cmd}} help`
+# For detailed information about the module system, run `{{go}} {{cmd}} --help`
 # without a `<module-name>` argument.
 
 _@go.modules_help() {
