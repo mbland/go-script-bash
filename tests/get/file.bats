@@ -41,6 +41,47 @@ teardown() {
   assert_failure 'Please install curl or wget before running "get file".'
 }
 
+@test "$SUITE: prefer curl to wget" {
+  stub_program_in_path 'curl' 'printf "curl found\n"'
+  stub_program_in_path 'wget' 'printf "wget found\n"'
+  run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
+  assert_success
+  assert_line_matches 0 'curl found'
+}
+
+@test "$SUITE: override preference with _GO_GET_FILE_DOWNLOAD_COMMAND" {
+  stub_program_in_path 'curl' 'printf "curl found\n"'
+  stub_program_in_path 'wget' 'printf "wget found\n"'
+  _GO_GET_FILE_DOWNLOAD_COMMAND='wget' \
+    run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
+  assert_success
+  assert_line_matches 0 'wget found'
+}
+
+@test "$SUITE: _GO_GET_FILE_DOWNLOAD_COMMAND accepts absolute paths" {
+  stub_program_in_path 'curl' 'printf "curl found\n"'
+  stub_program_in_path 'wget' 'printf "wget found\n"'
+  _GO_GET_FILE_DOWNLOAD_COMMAND="$BATS_TEST_BINDIR/wget" \
+    run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
+  assert_success
+  assert_line_matches 0 'wget found'
+}
+
+@test "$SUITE: fail if _GO_GET_FILE_DOWNLOAD_COMMAND not found" {
+  _GO_GET_FILE_DOWNLOAD_COMMAND='foobar' \
+    run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
+  assert_failure 'Download program not found on this system: foobar' \
+    'Please install curl or wget before running "get file".'
+}
+
+@test "$SUITE: fail if _GO_GET_FILE_DOWNLOAD_COMMAND not supported" {
+  stub_program_in_path 'foobar' 'printf "foobar found\n"'
+  _GO_GET_FILE_DOWNLOAD_COMMAND='foobar' \
+    run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
+  assert_failure 'Download program not supported: foobar' \
+    'Please install curl or wget before running "get file".'
+}
+
 @test "$SUITE: curl called with correct args with URL only" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
   PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
@@ -51,16 +92,14 @@ teardown() {
 
 @test "$SUITE: curl called with correct args with output file" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
-    -f barbaz.txt http://localhost/foobar.txt
+  run "$TEST_GO_SCRIPT" get file -f barbaz.txt http://localhost/foobar.txt
   assert_success '-L -o barbaz.txt http://localhost/foobar.txt' \
     'Downloaded "http://localhost/foobar.txt" as: barbaz.txt'
 }
 
 @test "$SUITE: curl called with correct args for standard output" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
-    -f - http://localhost/foobar.txt
+  run "$BASH" "$TEST_GO_SCRIPT" get file -f - http://localhost/foobar.txt
   assert_success '-L http://localhost/foobar.txt'
 }
 
@@ -68,7 +107,7 @@ teardown() {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
   mkdir -p "$TEST_GO_ROOTDIR"
   printf '' >"$TEST_GO_ROOTDIR/foobar.txt"
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file -f - foobar.txt
+  run "$BASH" "$TEST_GO_SCRIPT" get file -f - foobar.txt
   assert_success "-L file://$TEST_GO_ROOTDIR/foobar.txt"
 }
 
@@ -76,14 +115,13 @@ teardown() {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
   mkdir -p "$TEST_GO_ROOTDIR"
   printf '' >"$TEST_GO_ROOTDIR/foobar.txt"
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file -f - \
-    "$TEST_GO_ROOTDIR/foobar.txt"
+  run "$BASH" "$TEST_GO_SCRIPT" get file -f - "$TEST_GO_ROOTDIR/foobar.txt"
   assert_success "-L file://$TEST_GO_ROOTDIR/foobar.txt"
 }
 
 @test "$SUITE: wget called with correct args with URL only" {
   stub_program_in_path 'wget' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
+  _GO_GET_FILE_DOWNLOAD_COMMAND='wget' run "$BASH" "$TEST_GO_SCRIPT" get file \
     http://localhost/foobar.txt
   assert_success '-O foobar.txt http://localhost/foobar.txt' \
     'Downloaded "http://localhost/foobar.txt" as: foobar.txt'
@@ -91,7 +129,7 @@ teardown() {
 
 @test "$SUITE: wget called with correct args with output file" {
   stub_program_in_path 'wget' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
+  _GO_GET_FILE_DOWNLOAD_COMMAND='wget' run "$BASH" "$TEST_GO_SCRIPT" get file \
     -f barbaz.txt http://localhost/foobar.txt
   assert_success '-O barbaz.txt http://localhost/foobar.txt' \
     'Downloaded "http://localhost/foobar.txt" as: barbaz.txt'
@@ -99,7 +137,7 @@ teardown() {
 
 @test "$SUITE: wget called with correct args for standard output" {
   stub_program_in_path 'wget' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
+  _GO_GET_FILE_DOWNLOAD_COMMAND='wget' run "$BASH" "$TEST_GO_SCRIPT" get file \
     -f - http://localhost/foobar.txt
   assert_success '-O - http://localhost/foobar.txt'
 }
@@ -107,15 +145,14 @@ teardown() {
 @test "$SUITE: curl called with existing output directory" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
   mkdir -p "$TEST_GO_ROOTDIR/bazquux"
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
-    -f bazquux http://localhost/foobar.txt
+  run "$BASH" "$TEST_GO_SCRIPT" get file -f bazquux http://localhost/foobar.txt
   assert_success '-L -o bazquux/foobar.txt http://localhost/foobar.txt' \
     'Downloaded "http://localhost/foobar.txt" as: bazquux/foobar.txt'
 }
 
 @test "$SUITE: curl called with new output directory" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
+  run "$BASH" "$TEST_GO_SCRIPT" get file \
     -f bazquux/xyzzyplugh.txt http://localhost/foobar.txt
   assert_success '-L -o bazquux/xyzzyplugh.txt http://localhost/foobar.txt' \
     'Downloaded "http://localhost/foobar.txt" as: bazquux/xyzzyplugh.txt'
@@ -124,8 +161,7 @@ teardown() {
 @test "$SUITE: fail if file already exists" {
   stub_program_in_path 'curl' 'echo Should not see this'
   printf '' >"$TEST_GO_ROOTDIR/foobar.txt"
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
-    http://localhost/foobar.txt
+  run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
   assert_failure 'File already exists; not overwriting: foobar.txt'
 }
 
@@ -135,7 +171,7 @@ teardown() {
   stub_program_in_path 'curl' 'echo Should not see this'
   chmod ugo-w "$TEST_GO_ROOTDIR"
 
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
+  run "$BASH" "$TEST_GO_SCRIPT" get file \
     -f bad-parent/innocent-child.txt http://localhost/foobar.txt
   assert_failure
   assert_output_matches \
@@ -149,8 +185,7 @@ teardown() {
   mkdir -p "$TEST_GO_ROOTDIR/barbaz"
   chmod ugo-w "$TEST_GO_ROOTDIR/barbaz"
 
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
-    -f barbaz http://localhost/foobar.txt
+  run "$BASH" "$TEST_GO_SCRIPT" get file -f barbaz http://localhost/foobar.txt
   assert_failure "You don't have permission to write to download dir: barbaz"
 }
 
@@ -190,21 +225,13 @@ teardown() {
 @test "$SUITE: show failure message if real wget fails" {
   skip_if_system_missing 'wget'
 
-  # We have to use a stub and manipulate `PATH` since `./go get` will try to use
-  # `curl` first. The setup below is predicated on the notion that `wget` will
-  # be installed somewhere other than `/bin`.
-  if [[ -x '/bin/wget' ]]; then
-    skip "can't stub out system wget"
-  fi
-  stub_program_in_path 'wget' "$(command -v 'wget') \"\$@\""
-
   # It turns out that `wget` isn't equipped to handle `file://` URLs, so we
   # produce a real failure by trying to fetch a local file.
   local source_path="$TEST_GO_ROOTDIR/hello.txt"
 
   mkdir -p "$TEST_GO_ROOTDIR"
   printf 'Hello, World!\n' >"$source_path"
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" \
+  _GO_GET_FILE_DOWNLOAD_COMMAND='wget' run "$BASH" "$TEST_GO_SCRIPT" \
     get file -f - "$source_path"
 
   # Note that `wget` uses "smart" quotes around `file` on some platforms, and

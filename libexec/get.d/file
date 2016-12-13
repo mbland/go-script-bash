@@ -30,7 +30,7 @@
 # Arguments:
 #   word_index:  Index of the item to complete from the command line arg array
 #   ...:         Command line argument array
-_@go.fetch_file_tab_completions() {
+_@go.get_file_tab_completions() {
   local word_index="$1"
   shift
 
@@ -46,6 +46,56 @@ _@go.fetch_file_tab_completions() {
   esac
 }
 
+# Determines the download program to use and builds the command line
+#
+# Globals:
+#   _GO_GET_FILE_DOWNLOAD_COMMAND:  Overrides automatic program detection
+#   __go_get_file_download_cmd:     Caller-declared result array
+#
+# Arguments:
+#   filename:  Name of the file to download
+#
+# Returns:
+#   Zero if a suitable program was detected and `__go_get_file_download_cmd`
+#     was successfully built, nonzero otherwise
+_@go.get_file_download_command() {
+  local filename="$1"
+  local dl_cmd="$_GO_GET_FILE_DOWNLOAD_COMMAND"
+  local supported=('curl' 'wget')
+
+  if [[ -z "$dl_cmd" ]]; then
+    for dl_cmd in "${supported[@]}"; do
+      if command -v "$dl_cmd" >/dev/null; then
+        break
+      fi
+      dl_cmd=''
+    done
+  elif ! command -v "$dl_cmd" >/dev/null; then
+    @go.printf 'Download program not found on this system: %s\n' "$dl_cmd" >&2
+    dl_cmd=''
+  fi
+
+  case "${dl_cmd##*/}" in
+  curl)
+    __go_get_file_download_cmd=("$dl_cmd" '-L')
+    if [[ -n "$filename" ]]; then
+      __go_get_file_download_cmd+=('-o' "$filename")
+    fi
+    ;;
+  wget)
+    __go_get_file_download_cmd=("$dl_cmd" '-O' "${filename:--}")
+    ;;
+  *)
+    if [[ -n "$dl_cmd" ]]; then
+      @go.printf 'Download program not supported: %s\n' "$dl_cmd" >&2
+    fi
+    @go.printf 'Please install curl or wget before running "%s".' \
+      "${_GO_CMD_NAME[*]}" >&2
+    return 1
+    ;;
+  esac
+}
+
 # Implements the script behavior per the top-level description
 #
 # If `filename` is empty, the content will be directed to standard output and
@@ -55,25 +105,16 @@ _@go.fetch_file_tab_completions() {
 #   download_dir:  Directory into which to download the file, if not stdout
 #   filename:      Name of the file to save to `download_dir`, if not stdout
 #   url:           URL of the file ot download
-_@go.fetch_file_impl() {
+_@go.get_file_impl() {
   local download_dir="$1"
   local filename="$2"
   local url="$3"
   local result='0'
-  local dl_cmd=()
-  local errfile="${url##*/}.fetch-error"
+  local errfile="${url##*/}.get-error"
   local errmsg
 
-  if command -v curl >/dev/null; then
-    dl_cmd=('curl' '-L')
-    if [[ -n "$filename" ]]; then
-      dl_cmd+=('-o' "$filename")
-    fi
-  elif command -v wget >/dev/null; then
-    dl_cmd=('wget' '-O' "${filename:--}")
-  else
-    @go.printf 'Please install curl or wget before running "%s".' \
-      "${_GO_CMD_NAME[*]}" >&2
+  local __go_get_file_download_cmd=()
+  if ! _@go.get_file_download_command "$filename"; then
     return 1
   fi
 
@@ -90,15 +131,16 @@ _@go.fetch_file_impl() {
         "$download_dir" >&2
       return 1
     fi
-    errfile="${filename}.fetch-error"
+    errfile="${filename}.get-error"
   fi
 
-  if ! "${dl_cmd[@]}" "$url" 2>"$errfile"; then
+  if ! "${__go_get_file_download_cmd[@]}" "$url" 2>"$errfile"; then
     errmsg="$(< "$errfile")"
     printf '%s\n' "$errmsg" >&2
-    @go.printf 'Failed to download using %s: %s' "${dl_cmd[0]}" "$url" >&2
+    @go.printf 'Failed to download using %s: %s' \
+      "${__go_get_file_download_cmd[0]}" "$url" >&2
 
-    if [[ "${dl_cmd[0]}" != 'curl' ]]; then
+    if [[ "${__go_get_file_download_cmd[0]}" != 'curl' ]]; then
       @go.printf 'Consider installing `curl` and trying again.\n' >&2
     fi
 
@@ -115,10 +157,10 @@ _@go.fetch_file_impl() {
   return "$result"
 }
 
-# Parses the command line flags before invoking _@go.fetch_file_impl
+# Parses the command line flags before invoking _@go.get_file_impl
 #
 # The arguments are the same as in the script description.
-_@go.fetch_file() {
+_@go.get_file() {
   local url
   local download_dir
   local filename
@@ -127,7 +169,7 @@ _@go.fetch_file() {
   case "$1" in
   --complete)
     # Tab completions
-    _@go.fetch_file_tab_completions "${@:2}"
+    _@go.get_file_tab_completions "${@:2}"
     return
     ;;
   -f)
@@ -159,7 +201,7 @@ _@go.fetch_file() {
     fi
     url="file://${url}"
   fi
-  _@go.fetch_file_impl "$download_dir" "$filename" "$url"
+  _@go.get_file_impl "$download_dir" "$filename" "$url"
 }
 
-_@go.fetch_file "$@"
+_@go.get_file "$@"
