@@ -78,7 +78,7 @@ teardown() {
 
   local expected=("${IMPORTS[0]##*/} loaded"
     "${TEST_MODULES[1]}: line 2: This: command not found"
-    "ERROR: Module contains errors: ${TEST_MODULES[1]}")
+    "ERROR: Module import failed for: ${TEST_MODULES[1]}")
   local IFS=$'\n'
   assert_failure "${expected[*]}"
 }
