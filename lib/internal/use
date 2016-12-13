@@ -68,6 +68,7 @@
 #   @go modules --imported
 
 declare __go_module_name
+declare __go_module_file
 declare __go_loaded_module
 
 for __go_module_name in "$@"; do
@@ -77,17 +78,28 @@ for __go_module_name in "$@"; do
     fi
   done
 
-  # Prevent self- and circular importing.
+  # Prevent self- and circular importing by registering name before sourcing.
   _GO_IMPORTED_MODULES+=("$__go_module_name")
+  __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
 
-  # Convert <plugin>/<module> to _GO_SCRIPTS_DIR/plugins/<plugin>/lib/<module>
-  if ! . "$_GO_CORE_DIR/lib/$__go_module_name" 2>/dev/null &&
-     ! . "$_GO_SCRIPTS_DIR/plugins/${__go_module_name/\///lib/}" 2>/dev/null &&
-     ! . "$_GO_SCRIPTS_DIR/lib/$__go_module_name" 2>/dev/null; then
+  if [[ ! -f "$__go_module_file" ]]; then
+    # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
+    __go_module_file="$_GO_SCRIPTS_DIR/plugins/${__go_module_name/\///lib/}"
+  fi
+  if [[ ! -f "$__go_module_file" ]]; then
+    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
+  fi
+  if [[ ! -f "$__go_module_file" ]]; then
     @go.printf "ERROR: Unknown module: $__go_module_name" >&2
+    exit 1
+  fi
+
+  if ! . "$__go_module_file"; then
+    @go.printf "ERROR: Module contains errors: $__go_module_file" >&2
     exit 1
   fi
 done
 
 unset __go_loaded_module
+unset __go_module_file
 unset __go_module_name

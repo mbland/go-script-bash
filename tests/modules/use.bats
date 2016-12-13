@@ -71,3 +71,14 @@ teardown() {
   local IFS=$'\n'
   assert_success "${EXPECTED[*]}"
 }
+
+@test "$SUITE: error if module contains errors" {
+  echo "This is a totally broken module." >> "${TEST_MODULES[1]}"
+  run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
+
+  local expected=("${IMPORTS[0]##*/} loaded"
+    "${TEST_MODULES[1]}: line 2: This: command not found"
+    "ERROR: Module contains errors: ${TEST_MODULES[1]}")
+  local IFS=$'\n'
+  assert_failure "${expected[*]}"
+}
