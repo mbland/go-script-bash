@@ -139,6 +139,20 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
   fi
 }
 
+# Prints the stack trace at the point of the call.
+#
+# Arguments:
+#   omit_caller: If set, this function's caller is removed from the output
+@go.print_stack_trace() {
+  local start_index="${1:+2}"
+  local i
+
+  for ((i=${start_index:-1}; i != ${#FUNCNAME[@]}; ++i)); do
+    @go.printf '  %s:%s %s\n' "${BASH_SOURCE[$i]}" "${BASH_LINENO[$((i-1))]}" \
+      "${FUNCNAME[$i]}"
+  done
+}
+
 # Main driver of ./go script functionality.
 #
 # Arguments:

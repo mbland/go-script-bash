@@ -310,6 +310,8 @@ it easier to find, count, and possibly transform things.
 
 - Use `@go.printf` for most console output to ensure that the text fits the
   terminal width.
+- Use `@go.print_stack_trace` to provide a detailed error message as
+  appropriate, usually before calling `exit 1`.
 
 ### Gotchas
 

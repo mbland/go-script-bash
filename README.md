@@ -323,9 +323,9 @@ Any script in any language can invoke other command scripts by running
 `./go <command> [args..]`. In Bash, however, you can also invoke the `@go`
 function directly as `@go <command> [args...]`.
 
-The `@go` and `@go.printf` functions are available to command scripts written in
-Bash, as Bash command scripts are sourced rather than run using another language
-interpreter.
+The `@go`, `@go.printf`, and `@go.print_stack_trace` functions are available to
+command scripts written in Bash, as Bash command scripts are sourced rather than
+run using another language interpreter.
 
 A number of global variables defined and documented in `go-core.bash`, all
 starting with the prefix `_GO_`, are exported as environment variables and
