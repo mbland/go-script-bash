@@ -25,7 +25,11 @@ teardown() {
   run "$TEST_GO_SCRIPT" get file --complete 0
   assert_success '-f'
 
-  local expected=("$TEST_GO_ROOTDIR"/*)
+  local expected
+  local item
+  while IFS= read -r item; do
+    expected+=("$item")
+  done <<<"$(compgen -f -- "$TEST_GO_ROOTDIR/")"
   test_join $'\n' expected "${expected[@]#$TEST_GO_ROOTDIR/}"
 
   run "$TEST_GO_SCRIPT" get file --complete 1 -f
