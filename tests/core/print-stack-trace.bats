@@ -1,6 +1,7 @@
 #! /usr/bin/env bats
 
 load ../environment
+load helpers
 
 teardown() {
   remove_test_go_rootdir
@@ -88,15 +89,14 @@ teardown() {
     'bar_func'
 
   run "$TEST_GO_SCRIPT" foo
-
-  local go_core_pattern="$_GO_CORE_DIR/go-core.bash:[0-9]+"
   assert_success
-  assert_line_equals  0 "  $TEST_GO_SCRIPTS_DIR/foo.d/bar:5 source"
-  assert_line_matches 1 "  $go_core_pattern _@go.run_command_script"
-  assert_line_matches 2 "  $go_core_pattern @go"
-  assert_line_equals  3 "  $TEST_GO_SCRIPTS_DIR/foo:3 foo_func"
-  assert_line_equals  4 "  $TEST_GO_SCRIPTS_DIR/foo:5 source"
-  assert_line_matches 5 "  $go_core_pattern _@go.run_command_script"
-  assert_line_matches 6 "  $go_core_pattern @go"
-  assert_line_equals  7 "  $TEST_GO_SCRIPT:3 main"
+  set_go_core_stack_trace_components
+
+  local IFS=$'\n'
+  assert_lines_equal "  $TEST_GO_SCRIPTS_DIR/foo.d/bar:5 source" \
+    "${_GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "  $TEST_GO_SCRIPTS_DIR/foo:3 foo_func" \
+    "  $TEST_GO_SCRIPTS_DIR/foo:5 source" \
+    "${_GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "  $TEST_GO_SCRIPT:3 main"
 }
