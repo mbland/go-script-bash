@@ -81,3 +81,92 @@ create_parent_and_subcommands() {
 remove_test_go_rootdir() {
   remove_bats_test_dirs
 }
+
+# Get the stack trace of a line from a file or function as it would appear in
+# @go.print_stack_trace output.
+#
+# Arguments:
+#   haystack_file:  File containing the line
+#   function_name:  Function in which the line appears, 'main', or 'source'
+#   needle_line:    Line for which to produce a stack trace line
+stack_trace_item() {
+  # Seriously, it's faster to create a script containing a `for` or `while read`
+  # loop over a file and run it as a new process than it is to run it in-process
+  # under Bats. Haven't yet figured out why.
+  create_bats_test_script 'stack-trace-item' \
+    "$(declare -f __stack_trace_item_impl)" \
+    '__stack_trace_item_impl "$@"'
+  "$BATS_TEST_ROOTDIR/stack-trace-item" "$@"
+}
+
+log_command_stack_trace_item() {
+  if [[ -z "$LOG_COMMAND_STACK_TRACE_ITEM" ]]; then
+    export LOG_COMMAND_STACK_TRACE_ITEM="$(stack_trace_item \
+      "$_GO_CORE_DIR/lib/log" '@go.log_command' '  "${args[@]}"')"
+  fi
+  echo "$LOG_COMMAND_STACK_TRACE_ITEM"
+}
+
+# Call this before using "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" to inject
+# entries from go-core.bash into your expected stack trace output.
+set_go_core_stack_trace_components() {
+  local go_core_file="$_GO_CORE_DIR/go-core.bash"
+  local stack_item
+  local IFS=$'\n'
+
+  if [[ "${#GO_CORE_STACK_TRACE_COMPONENTS[@]}" -eq '0' ]]; then
+    create_test_go_script '@go "$@"'
+    create_test_command_script 'print-stack-trace' '@go.print_stack_trace'
+
+    for stack_item in $("$TEST_GO_SCRIPT" 'print-stack-trace'); do
+      if [[ "$stack_item" =~ $go_core_file ]]; then
+        GO_CORE_STACK_TRACE_COMPONENTS+=("$stack_item")
+      elif [[ "${#_GO_CORE_STACK_TRACE_COMPONENTS[@]}" -ne '0' ]]; then
+        return
+      fi
+    done
+    export GO_CORE_STACK_TRACE_COMPONENTS
+  fi
+}
+
+__stack_trace_item_impl() {
+  local haystack_file="$1"
+  local function_name="$2"
+  local function_pattern="^$function_name\\(\\) ?{\$"
+  local needle="$3"
+  local skip
+  local inside_function
+  local lineno=0
+  local line
+  local result=1
+
+  if [[ "$function_name" == 'main' || "$function_name" == 'source' ]]; then
+    inside_function='false'
+  fi
+
+  local IFS=$'\n'
+  while read -r line; do
+    ((++lineno))
+    if [[ -n "$skip" ]]; then
+      if [[ "$line" == '}' ]]; then
+        skip=
+      fi
+    elif [[ -z "$inside_function" && "$line" =~ $function_pattern ]]; then
+      inside_function='true'
+    elif [[ "$line" =~ ()\ {$ ]]; then
+      skip='true'
+    elif [[ "$inside_function" == 'true' && "$line" == '}' ]]; then
+      break
+    elif [[ "$line" == "$needle" ]]; then
+      result=0
+      break
+    fi
+  done <"$haystack_file"
+
+  if [[ "$result" -eq '0' ]]; then
+    echo "  $haystack_file:$lineno $function_name"
+  else
+    printf "ERROR: Line not found in $function_name: \"$needle\"\nat:\n" >&2
+  fi
+  return "$result"
+}

@@ -96,6 +96,9 @@ declare __GO_LOG_LEVELS_FORMATTED=()
 # Set by @go.critical_section_{begin,end}
 declare __GO_CRITICAL_SECTION=0
 
+# DO NOT EDIT: Determines number of stack trace levels to skip for FATAL logs.
+declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
+
 # Outputs a single log line that may contain terminal control characters.
 #
 # Usage:
@@ -171,7 +174,8 @@ declare __GO_CRITICAL_SECTION=0
 
   printf "$formatted_log_level ${args[*]}$close_code\n" >&"$level_fd"
 
-  if [[ "$log_level" == FATAL ]]; then
+  if [[ "$log_level" == 'FATAL' ]]; then
+    @go.print_stack_trace "$__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS" >&2
     exit "$exit_status"
   fi
   return "$exit_status"
@@ -190,18 +194,21 @@ declare __GO_CRITICAL_SECTION=0
   local log_level="$1"
   local format_code="$2"
   local level_fd="${3:-1}"
+  ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
 
   if [[ -n "$__GO_LOG_INIT" ]]; then
-    @go.log 'FATAL' "Can't set logging level $log_level; already initialized"
+    @go.log FATAL "Can't set logging level $log_level; already initialized"
   elif [[ "$level_fd" != 'keep' && ! "$level_fd" =~ ^[1-9]+[0-9]*$ ]]; then
     @go.log FATAL "File descriptor $level_fd for $log_level must be > 0"
   elif ! echo -n 2>/dev/null >&"$level_fd"; then
     @go.log FATAL "File descriptor $level_fd for $log_level isn't open"
   fi
+  ((--__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
 
   local __go_log_level_index=0
   if ! _@go.log_level_index "$log_level"; then
     if [[ "$format_code" == 'keep' || "$level_fd" == 'keep' ]]; then
+      ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
       @go.log FATAL "Can't keep defaults for nonexistent log level $log_level"
     fi
     _GO_LOG_LEVELS+=("$log_level")
@@ -270,6 +277,7 @@ declare __GO_CRITICAL_SECTION=0
 
   if [[ "$exit_status" -ne '0' ]]; then
     if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
+      ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
       @go.log FATAL "$exit_status" "$cmd_string"
     fi
     @go.log ERROR "$exit_status" "$cmd_string"
@@ -312,17 +320,20 @@ declare __GO_CRITICAL_SECTION=0
 
   @go.log START Project setup in "$_GO_ROOTDIR"
 
+  ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
   if [[ ! -f "$setup_script" ]]; then
     @go.log FATAL "Create $setup_script before invoking $FUNCNAME."
   elif  [[ ! -x "$setup_script" ]]; then
     @go.log FATAL "$setup_script is not executable."
   fi
+  ((--__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
 
   @go.log RUN "${setup_script#$_GO_ROOTDIR/}" "$@"
   _@go.run_command_script "$setup_script" "$@"
   setup_status="$?"
 
   if [[ "$setup_status" -ne '0' ]]; then
+    ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
     @go.log FATAL "$setup_status" "Project setup failed"
   fi
 

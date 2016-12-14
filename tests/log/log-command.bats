@@ -29,7 +29,8 @@ teardown() {
     '@go.critical_section_end'
   assert_failure
   assert_log_equals RUN 'failing_function foo bar baz' \
-    FATAL 'failing_function foo bar baz (exit status 127)'
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPT:6 main"
 }
 
 @test "$SUITE: log single failing command without executing during dry run" {
@@ -79,7 +80,8 @@ teardown() {
   assert_log_equals RUN 'echo Hello, World!' \
     'Hello, World!' \
     RUN "failing_function foo bar baz" \
-    FATAL 'failing_function foo bar baz (exit status 127)'
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPT:7 main"
 }
 
 @test "$SUITE: log multiple commands without executing during dry run" {
@@ -179,7 +181,8 @@ teardown() {
     RUN 'echo Hello, World!' \
     'Hello, World!' \
     RUN 'failing_function foo bar baz' \
-    FATAL 'failing_function foo bar baz (exit status 127)'
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPT:12 main"
 }
 
 @test "$SUITE: critical section counter does not go below zero" {
@@ -200,7 +203,8 @@ teardown() {
     RUN 'failing_function foo bar baz' \
     ERROR 'failing_function foo bar baz (exit status 127)' \
     RUN 'failing_function foo bar baz' \
-    FATAL 'failing_function foo bar baz (exit status 127)'
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPT:12 main"
 }
 
 @test "$SUITE: log and run command script using @go" {
@@ -228,9 +232,14 @@ teardown() {
 
   run test-go foo bar baz
   assert_failure
+  set_go_core_stack_trace_components
   assert_log_equals RUN 'test-go project-command-script foo bar baz' \
     RUN 'failing_function foo bar baz' \
-    FATAL 'failing_function foo bar baz (exit status 127)'
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPTS_DIR/project-command-script:3 source" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "$(log_command_stack_trace_item)" \
+    "  $TEST_GO_SCRIPT:5 main"
 }
 
 @test "$SUITE: critical section in command script applies to parent script" {
@@ -246,7 +255,12 @@ teardown() {
 
   run test-go foo bar baz
   assert_failure
+  set_go_core_stack_trace_components
   assert_log_equals RUN 'test-go project-command-script foo bar baz' \
     RUN 'failing_function foo bar baz' \
-    FATAL 'failing_function foo bar baz (exit status 127)'
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPTS_DIR/project-command-script:4 source" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "$(log_command_stack_trace_item)" \
+    "  $TEST_GO_SCRIPT:4 main"
 }
