@@ -1,6 +1,6 @@
-# go-script-bash v1.1.2
+# go-script-bash v1.2.0
 
-This is a bugfix release.
+This release adds a stack trace feature to the public API.
 
 ## The `./go` script: a unified development environment interface
 
@@ -16,27 +16,19 @@ This software is made available as [Open Source software](https://opensource.org
 
 ## What's new in this release
 
-### modules: Improved error handling for `. "$_GO_USE_MODULES"`
+### Print stack traces
 
-Previously, the `$_GO_USE_MODULES` script would report an `Unknown module:` error in every error case, even if the module existed but failed for another reason ([Issue #25](https://github.com/mbland/go-script-bash/issues/25)). The module's standard error would also get redirected to `/dev/null`, which made diagnosis even more difficult.
+The `@go.print_stack_trace` function is now part of the public API. Its original use case  was to provide more helpful error messages from `.  "$_GO_USE_MODULES"`, but it's generally useful. See the function comments in `go-core.bash` and `./go test --edit core/print-stack-trace` for more information.
 
-Now any modules that actually exist but return an error when imported will be identified as such, rather than being reported as unknown, and standard error isn't redirected at all ([PR #26](https://github.com/mbland/go-script-bash/pull/26)).
-
-## Changes since v1.1.1
+## Changes since v1.1.2
 
 <pre>
-22bace2 Mike Bland <mbland@acm.org>
-        Merge pull request #26 from mbland/module-import
+fb6f3ae Mike Bland <mbland@acm.org>
+        Merge pull request #27 from mbland/stack-trace
 
-8833762 Mike Bland <mbland@acm.org>
-        use: Improve module import error message
+30790c9 Mike Bland <mbland@acm.org>
+        use: Show stack trace when an import fails
 
-4bb94e2 Mike Bland <mbland@acm.org>
-        use: Nest module file path tests
-
-92bc468 Mike Bland <mbland@acm.org>
-        use: Detect module path before sourcing
-
-5ea7820 Mike Bland <mbland@acm.org>
-        modules: Fix incorrect help text
+8563f4d Mike Bland <mbland@acm.org>
+        core: Add @go.print_stack_trace to public API
 </pre>
