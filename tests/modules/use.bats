@@ -45,7 +45,11 @@ teardown() {
 
 @test "$SUITE: error if nonexistent module specified" {
   run "$TEST_GO_SCRIPT" 'bogus-test-module'
-  assert_failure 'ERROR: Unknown module: bogus-test-module'
+
+  local expected=('ERROR: Module bogus-test-module not found at:'
+    "  $TEST_GO_SCRIPT:3 main")
+  local IFS=$'\n'
+  assert_failure "${expected[*]}"
 }
 
 @test "$SUITE: import modules successfully" {
@@ -73,12 +77,33 @@ teardown() {
 }
 
 @test "$SUITE: error if module contains errors" {
-  echo "This is a totally broken module." >> "${TEST_MODULES[1]}"
+  local module="${IMPORTS[1]}"
+  local module_file="${TEST_MODULES[2]}"
+
+  echo "This is a totally broken module." > "$module_file"
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
 
   local expected=("${IMPORTS[0]##*/} loaded"
-    "${TEST_MODULES[1]}: line 2: This: command not found"
-    "ERROR: Module import failed for: ${TEST_MODULES[1]}")
+    "$module_file: line 1: This: command not found"
+    "ERROR: Failed to import $module module from $module_file at:"
+    "  $TEST_GO_SCRIPT:3 main")
+  local IFS=$'\n'
+  assert_failure "${expected[*]}"
+}
+
+@test "$SUITE: error if module returns an error" {
+  local module="${IMPORTS[1]}"
+  local module_file="${TEST_MODULES[2]}"
+  local error_message='These violent delights have violent ends...'
+
+  echo "echo '$error_message' >&2" > "$module_file"
+  echo "return 1" >> "$module_file"
+  run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
+
+  local expected=("${IMPORTS[0]##*/} loaded"
+    "$error_message"
+    "ERROR: Failed to import $module module from $module_file at:"
+    "  $TEST_GO_SCRIPT:3 main")
   local IFS=$'\n'
   assert_failure "${expected[*]}"
 }
