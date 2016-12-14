@@ -53,7 +53,8 @@ teardown() {
     '  @go.log INFO This line should be unreachable.' \
     'fi'
   assert_failure
-  assert_log_equals FATAL 'Hello, World!'
+  assert_log_equals FATAL 'Hello, World!' \
+    "  $TEST_GO_SCRIPT:4 main"
 }
 
 @test "$SUITE: show status on FATAL if supplied" {
@@ -62,7 +63,8 @@ teardown() {
     '  @go.log INFO This line should be unreachable.' \
     'fi'
   assert_failure
-  assert_log_equals FATAL 'Hello, World! (exit status 127)'
+  assert_log_equals FATAL 'Hello, World! (exit status 127)' \
+    "  $TEST_GO_SCRIPT:4 main"
 }
 
 @test "$SUITE: exit with error if num format codes != num log levels" {
