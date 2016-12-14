@@ -91,7 +91,7 @@ for __go_module_name in "$@"; do
 
       if [[ ! -f "$__go_module_file" ]]; then
         @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
-        @go.print_stack_trace omit_caller >&2
+        @go.print_stack_trace 1 >&2
         exit 1
       fi
     fi
@@ -100,7 +100,7 @@ for __go_module_name in "$@"; do
   if ! . "$__go_module_file"; then
     @go.printf 'ERROR: Failed to import %s module from %s at:\n' \
       "$__go_module_name" "$__go_module_file" >&2
-    @go.print_stack_trace omit_caller >&2
+    @go.print_stack_trace 1 >&2
     exit 1
   fi
 done
