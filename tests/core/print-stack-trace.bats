@@ -1,7 +1,6 @@
 #! /usr/bin/env bats
 
 load ../environment
-load helpers
 
 teardown() {
   remove_test_go_rootdir
@@ -94,9 +93,9 @@ teardown() {
 
   local IFS=$'\n'
   assert_lines_equal "  $TEST_GO_SCRIPTS_DIR/foo.d/bar:5 source" \
-    "${_GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "  $TEST_GO_SCRIPTS_DIR/foo:3 foo_func" \
     "  $TEST_GO_SCRIPTS_DIR/foo:5 source" \
-    "${_GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "  $TEST_GO_SCRIPT:3 main"
 }
