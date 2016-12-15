@@ -1,6 +1,6 @@
-# go-script-bash v1.2.0
+# go-script-bash v1.2.1
 
-This release adds a stack trace feature to the public API.
+This release enhances the public stack trace feature and adds it to `@go.log FATAL` output.
 
 ## The `./go` script: a unified development environment interface
 
@@ -16,19 +16,31 @@ This software is made available as [Open Source software](https://opensource.org
 
 ## What's new in this release
 
-### Print stack traces
+### Make `@go.print_stack_trace` take a numerical `skip_callers` argument
 
-The `@go.print_stack_trace` function is now part of the public API. Its original use case  was to provide more helpful error messages from `.  "$_GO_USE_MODULES"`, but it's generally useful. See the function comments in `go-core.bash` and `./go test --edit core/print-stack-trace` for more information.
+Previously `@go.print_stack_trace` would only skip the immediate caller if the first argument was not null. Now it enforces that the number be a positive integer, in order to skip over the specified number of callers while printing the stack trace. This was done to support better `@go.log FATAL` output, described below.
 
-## Changes since v1.1.2
+Normally an API change like this would warrant a major version bump, but since the impact should be minimal, it any potential for impact exists at all, it's included in this patch release.
+
+### Include stack trace output on `@go.log FATAL` conditions
+
+`@go.log FATAL` now prints a stack trace before exiting the process, since such information is generally useful under `FATAL` conditions. Every function in the `log` module that calls `@go.log FATAL` removes itself from the stack trace, so the top of the stack shows the location of the user code that triggered the condition, rather than the location of the `log` module function. 
+
+## Changes since v1.2.0
 
 <pre>
-fb6f3ae Mike Bland <mbland@acm.org>
-        Merge pull request #27 from mbland/stack-trace
+b2ad688 Mike Bland <mbland@acm.org>
+        Merge pull request #28 from mbland/stack-trace
 
-30790c9 Mike Bland <mbland@acm.org>
-        use: Show stack trace when an import fails
+965782d Mike Bland <mbland@acm.org>
+        log: Add stack trace to FATAL output
 
-8563f4d Mike Bland <mbland@acm.org>
-        core: Add @go.print_stack_trace to public API
+a0f4413 Mike Bland <mbland@acm.org>
+        stack-trace: Move, add helpers to environment.bash
+
+cd57da0 Mike Bland <mbland@acm.org>
+        print-stack-trace: Add go-core stack test helper
+
+8424338 Mike Bland <mbland@acm.org>
+        print_stack_trace: Make skip_callers arg numerical
 </pre>

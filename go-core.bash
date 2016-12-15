@@ -39,7 +39,7 @@ fi
 # This and other variables are exported, so that command scripts written in
 # languages other than Bash (and hence run in new processes) can access them.
 # See `./go vars` and `./go help vars`.
-declare -r -x _GO_CORE_VERSION='v1.2.0'
+declare -r -x _GO_CORE_VERSION='v1.2.1'
 
 # The URL of the framework's original source repository
 declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
