@@ -48,10 +48,16 @@ fi
   local file_path_or_fd="$1"
   local mode="$2"
   local fd_var_reference="$3"
+  local malicious_input_pattern='(\`|\$\(|[^\][";]|&&|\|\|)'
   local bash_mode
   local i
 
-  if [[ "$file_path_or_fd" =~ ^[0-9]+$ ]]; then
+  if [[ "$file_path_or_fd" =~ $malicious_input_pattern ]]; then
+    printf 'Bad file_path_or_fd argument \"%s\" to %s at:\n' \
+      "$file_path_or_fd" "$FUNCNAME" >&2
+    @go.print_stack_trace '1' >&2
+    exit 1
+  elif [[ "$file_path_or_fd" =~ ^[0-9]+$ ]]; then
     file_path_or_fd="&$file_path_or_fd"
   else
     file_path_or_fd="\"$file_path_or_fd\""
@@ -79,6 +85,11 @@ fi
 
   if [[ -z "$fd_var_reference" ]]; then
     echo "No variable reference given for the resulting file descriptor." >&2
+    @go.print_stack_trace '1' >&2
+    exit 1
+  elif [[ "$fd_var_reference" =~ $malicious_input_pattern ]]; then
+    printf 'Bad fd_var_reference argument \"%s\" to %s at:\n' \
+      "$fd_var_reference" "$FUNCNAME" >&2
     @go.print_stack_trace '1' >&2
     exit 1
   fi
@@ -156,12 +167,16 @@ fi
   fi
 
   for fd in "$@"; do
-    close_fd_strings+=("$fd>&-")
+    if [[ ! "$fd" =~ ^[1-9][0-9]*$ ]]; then
+      echo "Bad file descriptor \"$fd\" at:" >&2
+      @go.print_stack_trace '1' >&2
+      return 1
+    elif ! eval "exec $fd>&-"; then
+      # Believe it or not, this case seems impossible to trigger given the $fd
+      # check above. Keeping it despite not being able to cover it with a test.
+      echo "Failed to close file descriptor \"$fd\" at:" >&2
+      @go.print_stack_trace '1' >&2
+      return 1
+    fi
   done
-
-  if ! eval "exec ${close_fd_strings[*]}"; then
-    echo "Failed to close one or more file descriptors: $* at:" >&2
-    @go.print_stack_trace '1' >&2
-    return 1
-  fi
 }

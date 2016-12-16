@@ -137,6 +137,33 @@ create_file_open_test_go_script() {
   assert_failure "${expected[*]}"
 }
 
+try_malicious_file_path_argument() {
+  local malicious="$1"
+  create_file_open_test_go_script \
+    "@go.open_file_or_duplicate_fd '$malicious' 'r' 'read_fd'"
+  run "$TEST_GO_SCRIPT" "$FILE_PATH"
+
+  local err_msg="Bad file_path_or_fd argument \"$malicious\" to "
+  err_msg+='@go.open_file_or_duplicate_fd at:'
+
+  local expected=("$err_msg"
+    "  $TEST_GO_SCRIPT:5 main")
+  local IFS=$'\n'
+  assert_failure "${expected[*]}"
+}
+
+@test "$SUITE: malicious file path contains \`" {
+  try_malicious_file_path_argument '`echo SURPRISE >&2; echo $file_path`'
+}
+
+@test "$SUITE: malicious file path contains \$(" {
+  try_malicious_file_path_argument '$(echo SURPRISE >&2; echo $file_path)'
+}
+
+@test "$SUITE: malicious file path contains unescaped \"" {
+  try_malicious_file_path_argument '$file_path"; echo "SURPRISE'
+}
+
 @test "$SUITE: error if mode is unknown" {
   create_file_open_test_go_script \
     '@go.open_file_or_duplicate_fd "$file_path" "bogus" "bogus_fd"'
@@ -158,6 +185,41 @@ create_file_open_test_go_script() {
     "  $TEST_GO_SCRIPT:5 main")
   local IFS=$'\n'
   assert_failure "${expected[*]}"
+}
+
+try_malicious_var_ref_argument() {
+  local malicious="$1"
+  create_file_open_test_go_script \
+    "@go.open_file_or_duplicate_fd \"\$file_path\" 'r' '$malicious'"
+  run "$TEST_GO_SCRIPT" "$FILE_PATH"
+
+  local err_msg="Bad fd_var_reference argument \"$malicious\" to "
+  err_msg+='@go.open_file_or_duplicate_fd at:'
+
+  local expected=("$err_msg"
+    "  $TEST_GO_SCRIPT:5 main")
+  local IFS=$'\n'
+  assert_failure "${expected[*]}"
+}
+
+@test "$SUITE: malicious variable reference contains \`" {
+  try_malicious_var_ref_argument '`echo SURPRISE >&2; echo read_fd`'
+}
+
+@test "$SUITE: malicious variable reference contains \$(" {
+  try_malicious_var_ref_argument '$(echo SURPRISE >&2; echo read_fd)'
+}
+
+@test "$SUITE: malicious variable reference contains ;" {
+  try_malicious_var_ref_argument 'echo SURPRISE >&2; read_fd'
+}
+
+@test "$SUITE: malicious variable reference contains &&" {
+  try_malicious_var_ref_argument 'echo SURPRISE >&2 && read_fd'
+}
+
+@test "$SUITE: malicious variable reference contains ||" {
+  try_malicious_var_ref_argument '[[ 0 -eq 1 ]] || read_fd'
 }
 
 @test "$SUITE: error if the file descriptor can't be opened" {
