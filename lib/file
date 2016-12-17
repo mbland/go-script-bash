@@ -19,7 +19,13 @@ declare -r _GO_MAX_FILE_DESCRIPTORS="${_GO_MAX_FILE_DESCRIPTORS:-256}"
 # DO NOT EDIT: First file descriptor attempted by @go.open_file_or_duplicate_fd
 declare -r __GO_START_FD='3'
 
-if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ ^[1-9][0-9]*$ ||
+# DO NOT EDIT: Pattern used to validate file descriptor parameters
+declare -r __GO_FILE_DESCRIPTOR_PATTERN='^[1-9][0-9]*$'
+
+# DO NOT EDIT: Pattern used to validate file path and variable name parameters
+declare -r __GO_VALIDATE_INPUT_PATTERN='[^\][`";$()&|<>'$'\n'$'\r'']'
+
+if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
   "$_GO_MAX_FILE_DESCRIPTORS" -le "$__GO_START_FD" ]]; then
   printf "_GO_MAX_FILE_DESCRIPTORS is %s, must be a number greater than %d.\n" \
     "\"$_GO_MAX_FILE_DESCRIPTORS\"" "$__GO_START_FD" >&2
@@ -48,16 +54,15 @@ fi
   local file_path_or_fd="$1"
   local mode="$2"
   local fd_var_reference="$3"
-  local malicious_input_pattern='([^\][`";]|\$\(|&&|\|\|)'
   local bash_mode
   local i
 
-  if [[ "$file_path_or_fd" =~ $malicious_input_pattern ]]; then
+  if [[ "$file_path_or_fd" =~ $__GO_VALIDATE_INPUT_PATTERN ]]; then
     printf 'Bad file_path_or_fd argument \"%s\" to %s at:\n' \
       "$file_path_or_fd" "$FUNCNAME" >&2
     @go.print_stack_trace '1' >&2
     exit 1
-  elif [[ "$file_path_or_fd" =~ ^[0-9]+$ ]]; then
+  elif [[ "$file_path_or_fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
     file_path_or_fd="&$file_path_or_fd"
   else
     file_path_or_fd="\"$file_path_or_fd\""
@@ -87,7 +92,7 @@ fi
     echo "No variable reference given for the resulting file descriptor." >&2
     @go.print_stack_trace '1' >&2
     exit 1
-  elif [[ "$fd_var_reference" =~ $malicious_input_pattern ]]; then
+  elif [[ "$fd_var_reference" =~ $__GO_VALIDATE_INPUT_PATTERN ]]; then
     printf 'Bad fd_var_reference argument \"%s\" to %s at:\n' \
       "$fd_var_reference" "$FUNCNAME" >&2
     @go.print_stack_trace '1' >&2
@@ -135,7 +140,7 @@ fi
   shift
 
   for output_fd in "${output_fds[@]}"; do
-    if [[ ! "$output_fd" =~ ^[1-9][0-9]*$ ]]; then
+    if [[ ! "$output_fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
       echo "Invalid file descriptor value \"$output_fd\" for $FUNCNAME at:" >&2
       @go.print_stack_trace '1' >&2
       exit 1
@@ -167,7 +172,7 @@ fi
   fi
 
   for fd in "$@"; do
-    if [[ ! "$fd" =~ ^[1-9][0-9]*$ ]]; then
+    if [[ ! "$fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
       echo "Bad file descriptor \"$fd\" at:" >&2
       @go.print_stack_trace '1' >&2
       return 1
