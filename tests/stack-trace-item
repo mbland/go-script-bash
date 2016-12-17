@@ -1,0 +1,46 @@
+#! /usr/bin/env bash
+#
+# Implements the `stack_trace_item` function from environment.bash
+
+__stack_trace_item() {
+  local haystack_file="$1"
+  local function_name="$2"
+  local function_pattern="^$function_name\\(\\) ?{\$"
+  local needle="$3"
+  local skip
+  local inside_function
+  local lineno=0
+  local line
+
+  if [[ "$function_name" == 'main' || "$function_name" == 'source' ]]; then
+    inside_function='false'
+  fi
+
+  # For Windows compatibility, we have to set `IFS=` to preserve leading
+  # spaces, and then strip off the trailing carriage return (the newline is
+  # already chomped off).
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+    ((++lineno))
+
+    if [[ -n "$skip" ]]; then
+      if [[ "$line" == '}' ]]; then
+        skip=
+      fi
+    elif [[ -z "$inside_function" && "$line" =~ $function_pattern ]]; then
+      inside_function='true'
+    elif [[ "$line" =~ ()\ {$ ]]; then
+      skip='true'
+    elif [[ "$inside_function" == 'true' && "$line" == '}' ]]; then
+      break
+    elif [[ "$line" == "$needle" ]]; then
+      echo "  $haystack_file:$lineno $function_name"
+      return
+    fi
+  done <"$haystack_file"
+
+  printf "ERROR: Line not found in $function_name: \"$needle\"\nat:\n" >&2
+  return 1
+}
+
+__stack_trace_item "$@"
