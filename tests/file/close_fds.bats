@@ -12,16 +12,16 @@ create_close_fds_test_script() {
     'declare fds=()' \
     'declare fd' \
     "$@" \
-    '@go.close_fds "${fds[@]}"' \
-    'declare result="$?"' \
-    '' \
-    'for fd in "${fds[@]}"; do' \
-    '  if [[ -e "/dev/fd/$fd" ]]; then' \
-    '    echo "/dev/fd/$fd" >&2' \
-    '    result=1' \
-    '  fi' \
-    'done' \
-    'exit "$result"'
+    'if @go.close_fds "${fds[@]}"; then' \
+    '  for fd in "${fds[@]}"; do' \
+    '    if [[ -e "/dev/fd/$fd" ]]; then' \
+    '      echo "/dev/fd/$fd" >&2' \
+    '      exit 1' \
+    '    fi' \
+    '  done' \
+    'else' \
+    '  exit 1' \
+    'fi'
 }
 
 @test "$SUITE: error if no file descriptor arguments" {
@@ -34,21 +34,31 @@ create_close_fds_test_script() {
   assert_failure "${expected[*]}"
 }
 
-@test "$SUITE: successfully close stdin, stdout, and stderr" {
+@test "$SUITE: successfully close file descriptors" {
   create_close_fds_test_script \
-    'fds+=(0 1 2)'
+    'declare read_fd_0' \
+    'declare read_fd_1' \
+    'declare read_fd_2' \
+    '@go.open_file_or_duplicate_fd "/dev/stdin" "r" "read_fd_0"' \
+    '@go.open_file_or_duplicate_fd "/dev/stdin" "r" "read_fd_1"' \
+    '@go.open_file_or_duplicate_fd "/dev/stdin" "r" "read_fd_2"' \
+    'fds+=("$read_fd_0" "$read_fd_1" "$read_fd_2")'
   run "$TEST_GO_SCRIPT"
   assert_success ''
 }
 
 @test "$SUITE: error if an argument isn't a file descriptor" {
+  local malicious='\$(echo SURPRISE >&2; echo 1)'
   create_close_fds_test_script \
-    'fds+=(-1)'
+    'declare read_fd_0' \
+    'declare read_fd_2' \
+    '@go.open_file_or_duplicate_fd "/dev/stdin" "r" "read_fd_0"' \
+    '@go.open_file_or_duplicate_fd "/dev/stdin" "r" "read_fd_2"' \
+    "fds+=(\"\$read_fd_0\" '$malicious' \"\$read_fd_2\")"
   run "$TEST_GO_SCRIPT"
 
-  assert_failure
-  assert_line_matches -2 \
-    "Failed to close one or more file descriptors: -1 at:"
-  assert_line_matches -1 \
-    "  $TEST_GO_SCRIPT:7 main"
+  local expected=("Bad file descriptor \"$malicious\" at:"
+    "  $TEST_GO_SCRIPT:11 main")
+  local IFS=$'\n'
+  assert_failure "${expected[*]}"
 }
