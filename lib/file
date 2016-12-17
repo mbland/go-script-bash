@@ -48,7 +48,7 @@ fi
   local file_path_or_fd="$1"
   local mode="$2"
   local fd_var_reference="$3"
-  local malicious_input_pattern='(\`|\$\(|[^\][";]|&&|\|\|)'
+  local malicious_input_pattern='([^\][`";]|\$\(|&&|\|\|)'
   local bash_mode
   local i
 
