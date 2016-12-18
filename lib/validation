@@ -1,0 +1,23 @@
+#! /usr/bin/env bash
+#
+# Input validation
+#
+# Exports:
+#   @go.validate_input
+#     Ensures input parameters do not contain control or metacharacters
+
+# Pattern used to validate file path and variable name parameters
+declare -r __GO_VALIDATE_INPUT_PATTERN='[^\][`";$()&|<>'$'\n'$'\r'']'
+
+# Ensures input parameters do not contain control or metacharacters
+#
+# This is useful to prevent `eval` from either throwing errors or executing
+# code from malicious input values. 
+#
+# Arguments:
+#   input_value:  The value to examine for invalid characters
+# Returns:
+#   0 on success; nonzero on failure
+@go.validate_input() {
+  [[ ! "$1" =~ $__GO_VALIDATE_INPUT_PATTERN ]]
+}

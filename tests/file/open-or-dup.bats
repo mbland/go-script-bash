@@ -137,43 +137,19 @@ create_file_open_test_go_script() {
   assert_failure "${expected[*]}"
 }
 
-assert_validates_file_path_or_fd_argument() {
-  set +o functrace
-  local file_path_or_fd="$1"
+@test "$SUITE: validates file_path_or_fd contains no meta or control chars" {
+  create_file_open_test_go_script \
+    "@go.open_file_or_duplicate_fd \"\$FILE_PATH_OR_FD\" 'r' 'read_fd'"
 
-  if [[ ! -e "$TEST_GO_SCRIPT" ]]; then
-    create_file_open_test_go_script \
-      "@go.open_file_or_duplicate_fd \"\$FILE_PATH_OR_FD\" 'r' 'read_fd'"
-  fi
+  local file_path_or_fd="\`echo SURPRISE >&2\`$FILE_PATH"
   FILE_PATH_OR_FD="$file_path_or_fd" run "$TEST_GO_SCRIPT"
 
   local err_msg="Bad file_path_or_fd argument \"$file_path_or_fd\" to "
   err_msg+='@go.open_file_or_duplicate_fd at:'
-
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
   local IFS=$'\n'
-  if ! assert_failure "${expected[*]}"; then
-    set +o functrace
-    return_from_bats_assertion "$BASH_SOURCE" 1
-  fi
-}
-
-@test "$SUITE: validates file_path_or_fd contains no meta or control chars" {
-  assert_validates_file_path_or_fd_argument 'foo`bar'
-  assert_validates_file_path_or_fd_argument 'foo"bar'
-  assert_validates_file_path_or_fd_argument 'foo;bar'
-  assert_validates_file_path_or_fd_argument 'foo$bar'
-  assert_validates_file_path_or_fd_argument 'foo(bar'
-  assert_validates_file_path_or_fd_argument 'foo)bar'
-  assert_validates_file_path_or_fd_argument 'foo&bar'
-  assert_validates_file_path_or_fd_argument 'foo|bar'
-  assert_validates_file_path_or_fd_argument 'foo<bar'
-  assert_validates_file_path_or_fd_argument 'foo>bar'
-  assert_validates_file_path_or_fd_argument 'foo'$'\n''bar'
-  assert_validates_file_path_or_fd_argument 'foo'$'\r''bar'
-  assert_validates_file_path_or_fd_argument "\`echo SURPRISE >&2\`$FILE_PATH"
-  assert_validates_file_path_or_fd_argument "$FILE_PATH\"; echo 'SURPRISE'"
+  assert_failure "${expected[*]}"
 }
 
 @test "$SUITE: error if mode is unknown" {
@@ -199,42 +175,19 @@ assert_validates_file_path_or_fd_argument() {
   assert_failure "${expected[*]}"
 }
 
-assert_validates_var_ref_argument() {
-  set +o functrace
-  local var_ref="$1"
+@test "$SUITE: validates variable reference contains no meta or control chars" {
+  create_file_open_test_go_script \
+    "@go.open_file_or_duplicate_fd \"\$file_path\" 'r' \"\$VAR_REF\""
 
-  if [[ ! -e "$TEST_GO_SCRIPT" ]]; then
-    create_file_open_test_go_script \
-      "@go.open_file_or_duplicate_fd \"\$file_path\" 'r' \"\$VAR_REF\""
-  fi
+  local var_ref='echo SURPRISE'$'\n''read_fd'
   VAR_REF="$var_ref" run "$TEST_GO_SCRIPT"
 
   local err_msg="Bad fd_var_reference argument \"$var_ref\" to "
   err_msg+='@go.open_file_or_duplicate_fd at:'
-
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
   local IFS=$'\n'
-  if ! assert_failure "${expected[*]}"; then
-    set +o functrace
-    return_from_bats_assertion "$BASH_SOURCE" 1
-  fi
-}
-
-@test "$SUITE: validates variable reference contains no meta or control chars" {
-  assert_validates_var_ref_argument 'foo`bar'
-  assert_validates_var_ref_argument 'foo"bar'
-  assert_validates_var_ref_argument 'foo;bar'
-  assert_validates_var_ref_argument 'foo$bar'
-  assert_validates_var_ref_argument 'foo(bar'
-  assert_validates_var_ref_argument 'foo)bar'
-  assert_validates_var_ref_argument 'foo&bar'
-  assert_validates_var_ref_argument 'foo|bar'
-  assert_validates_var_ref_argument 'foo<bar'
-  assert_validates_var_ref_argument 'foo>bar'
-  assert_validates_var_ref_argument 'foo'$'\n''bar'
-  assert_validates_var_ref_argument 'foo'$'\r''bar'
-  assert_validates_var_ref_argument 'echo SURPRISE'$'\n''read_fd'
+  assert_failure "${expected[*]}"
 }
 
 @test "$SUITE: error opening file path with escaped \`" {
