@@ -22,9 +22,6 @@ declare -r __GO_START_FD='3'
 # DO NOT EDIT: Pattern used to validate file descriptor parameters
 declare -r __GO_FILE_DESCRIPTOR_PATTERN='^[1-9][0-9]*$'
 
-# DO NOT EDIT: Pattern used to validate file path and variable name parameters
-declare -r __GO_VALIDATE_INPUT_PATTERN='[^\][`";$()&|<>'$'\n'$'\r'']'
-
 if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
   "$_GO_MAX_FILE_DESCRIPTORS" -le "$__GO_START_FD" ]]; then
   printf "_GO_MAX_FILE_DESCRIPTORS is %s, must be a number greater than %d.\n" \
@@ -32,6 +29,8 @@ if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
   @go.print_stack_trace '2' >&2
   exit 1
 fi
+
+. "$_GO_USE_MODULES" 'validation'
 
 # Opens a file or duplicates an existing descriptor, and returns the new fd.
 #
@@ -57,7 +56,7 @@ fi
   local bash_mode
   local i
 
-  if [[ "$file_path_or_fd" =~ $__GO_VALIDATE_INPUT_PATTERN ]]; then
+  if ! @go.validate_input "$file_path_or_fd"; then
     printf 'Bad file_path_or_fd argument \"%s\" to %s at:\n' \
       "$file_path_or_fd" "$FUNCNAME" >&2
     @go.print_stack_trace '1' >&2
@@ -92,7 +91,7 @@ fi
     echo "No variable reference given for the resulting file descriptor." >&2
     @go.print_stack_trace '1' >&2
     exit 1
-  elif [[ "$fd_var_reference" =~ $__GO_VALIDATE_INPUT_PATTERN ]]; then
+  elif ! @go.validate_input "$fd_var_reference"; then
     printf 'Bad fd_var_reference argument \"%s\" to %s at:\n' \
       "$fd_var_reference" "$FUNCNAME" >&2
     @go.print_stack_trace '1' >&2
