@@ -6,6 +6,9 @@
 #   @go.log
 #     Outputs a log line; supports terminal formatting and format stripping
 #
+#   @go.log_timestamp
+#     Prints a timestamp using _GO_LOG_TIMESTAMP_FORMAT (strftime format)
+#
 #   @go.add_or_update_log_level
 #     Modifies existing log level labels, formatting, and file descriptors
 #
@@ -40,6 +43,12 @@
 # script, and provides helpful hints on running the `./go` script upon success.
 #
 # See the function and variable comments from this file for further information.
+
+# A strftime-compatible date/time format string used to prefix log messages with
+# a timestamp. E.g.: '%Y-%m-%d %H:%M:%S'
+#
+# If left undefined, log messages are not prefixed with timestamps.
+declare _GO_LOG_TIMESTAMP_FORMAT
 
 # Set this if you want to force terminal-formatted output from @go.log.
 #
@@ -140,6 +149,7 @@ declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
   local level_fd=1
   local exit_status=0
   local close_code='\e[0m'
+  local log_msg
 
   unset 'args[0]'
   _@go.log_init
@@ -172,13 +182,38 @@ declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
     close_code=''
   fi
 
-  printf "$formatted_log_level ${args[*]}$close_code\n" >&"$level_fd"
+  # Remove leading space if the timestamp is empty.
+  log_msg="$(@go.log_timestamp) $formatted_log_level ${args[*]}$close_code\n"
+  log_msg="${log_msg# }"
+  printf "$log_msg" >&"$level_fd"
 
   if [[ "$log_level" == 'FATAL' ]]; then
     @go.print_stack_trace "$__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS" >&2
     exit "$exit_status"
   fi
   return "$exit_status"
+}
+
+# Prints a timestamp using _GO_LOG_TIMESTAMP_FORMAT (strftime format)
+#
+# Prints nothing if:
+#   - _GO_LOG_TIMESTAMP_FORMAT isn't set
+#   - _GO_LOG_TIMESTAMP_FORMAT is set, but both the builtin
+#     `printf '%(datefmt)T'` format and `date` command are missing
+#
+# Globals:
+#   _GO_LOG_TIMESTAMP_FORMAT:  A strftime-compatible format string
+@go.log_timestamp() {
+  _@go.log_init
+
+  case "$__GO_LOG_TIMESTAMP_IMPL" in
+  printf)
+    printf "%($_GO_LOG_TIMESTAMP_FORMAT)T"
+    ;;
+  date)
+    date "+$_GO_LOG_TIMESTAMP_FORMAT"
+    ;;
+  esac
 }
 
 # Adds a new log level or updates an existing one.
@@ -357,10 +392,27 @@ declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 #
 # May be called multiple times; initialization will only happen once.
 _@go.log_init() {
-  if [[ -z "$__GO_LOG_INIT" ]]; then
-    _@go.log_format_level_labels
-    readonly __GO_LOG_INIT='done'
+  if [[ -n "$__GO_LOG_INIT" ]]; then
+    return
   fi
+
+  _@go.log_format_level_labels
+
+  if [[ -z "$__GO_LOG_TIMESTAMP_IMPL" ]]; then
+    if [[ -z "$_GO_LOG_TIMESTAMP_FORMAT" ]]; then
+      export __GO_LOG_TIMESTAMP_IMPL='none'
+    elif printf "%('%Y')T" &>/dev/null; then
+      export __GO_LOG_TIMESTAMP_IMPL='printf'
+    elif command -v 'date' >/dev/null; then
+      export __GO_LOG_TIMESTAMP_IMPL='date'
+    else
+      export __GO_LOG_TIMESTAMP_IMPL='none'
+      __GO_LOG_INIT='done' @go.log WARN \
+        Builtin timestamps not supported and date command not found.
+    fi
+  fi
+
+  readonly __GO_LOG_INIT='done'
 }
 
 # Assigns formatted log level labels to __GO_LOG_LEVELS_FORMATTED.
