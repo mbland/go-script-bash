@@ -90,8 +90,8 @@ teardown() {
 }
 
 @test "$SUITE: log messages prefixed with timestamp if supported" {
-  create_test_go_script '. "$_GO_USE_MODULES" log' \
-    '_GO_LOG_TIMESTAMP_FORMAT="%M:%S"' \
+  create_test_go_script '_GO_LOG_TIMESTAMP_FORMAT="%M:%S"' \
+    '. "$_GO_USE_MODULES" log' \
     '@go.log INFO Timestamp me!'
 
   # Force the timestamp to be unavailable if relying upon the date command.

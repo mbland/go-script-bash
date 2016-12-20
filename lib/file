@@ -14,13 +14,13 @@
 
 # Maximum number of file descriptors to attempt opening. May be overridden by
 # the user.
-declare -r _GO_MAX_FILE_DESCRIPTORS="${_GO_MAX_FILE_DESCRIPTORS:-256}"
+readonly _GO_MAX_FILE_DESCRIPTORS="${_GO_MAX_FILE_DESCRIPTORS:-256}"
 
 # DO NOT EDIT: First file descriptor attempted by @go.open_file_or_duplicate_fd
-declare -r __GO_START_FD='3'
+readonly __GO_START_FD='3'
 
 # DO NOT EDIT: Pattern used to validate file descriptor parameters
-declare -r __GO_FILE_DESCRIPTOR_PATTERN='^[1-9][0-9]*$'
+readonly __GO_FILE_DESCRIPTOR_PATTERN='^[1-9][0-9]*$'
 
 if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
   "$_GO_MAX_FILE_DESCRIPTORS" -le "$__GO_START_FD" ]]; then

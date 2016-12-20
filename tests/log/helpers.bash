@@ -17,8 +17,8 @@ format_label() {
   local label="$1"
 
   if [[ -z "$__GO_LOG_INIT" ]]; then
-    . "$_GO_CORE_DIR/lib/log"
     _GO_LOG_FORMATTING='true'
+    . "$_GO_CORE_DIR/lib/log"
     _@go.log_init
   fi
 
@@ -78,5 +78,7 @@ assert_log_equals() {
   if ! assert_lines_equal "${expected[@]}"; then
     set +o functrace
     return_from_bats_assertion "$BASH_SOURCE" 1
+  else
+    return_from_bats_assertion "$BASH_SOURCE"
   fi
 }

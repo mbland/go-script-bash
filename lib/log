@@ -48,24 +48,24 @@
 # a timestamp. E.g.: '%Y-%m-%d %H:%M:%S'
 #
 # If left undefined, log messages are not prefixed with timestamps.
-declare _GO_LOG_TIMESTAMP_FORMAT
+readonly _GO_LOG_TIMESTAMP_FORMAT="$_GO_LOG_TIMESTAMP_FORMAT"
 
 # Set this if you want to force terminal-formatted output from @go.log.
 #
 # @go.log will remove terminal formatting codes by default when the output file
 # descriptor is not a terminal. Can be set either in the script or on the
 # command line.
-declare _GO_LOG_FORMATTING="$_GO_LOG_FORMATTING"
+readonly _GO_LOG_FORMATTING="$_GO_LOG_FORMATTING"
 
 # If not empty, @go.log_command will only print the command and not execute it.
 #
 # Can be set either in the script or on the command line.
-declare _GO_DRY_RUN="$_GO_DRY_RUN"
+readonly _GO_DRY_RUN="$_GO_DRY_RUN"
 
 # Default log level labels
 #
 # DO NOT UPDATE DIRECTLY: Use @go.add_or_update_log_level instead.
-declare _GO_LOG_LEVELS=(
+export _GO_LOG_LEVELS=(
   'INFO'
   'RUN'
   'WARN'
@@ -76,7 +76,7 @@ declare _GO_LOG_LEVELS=(
 )
 
 # Default log level terminal format codes
-declare __GO_LOG_LEVELS_FORMAT_CODES=(
+export __GO_LOG_LEVELS_FORMAT_CODES=(
   '\e[1m\e[36m'
   '\e[1m\e[35m'
   '\e[1m\e[33m'
@@ -89,7 +89,7 @@ declare __GO_LOG_LEVELS_FORMAT_CODES=(
 # Default log level output file descriptors
 #
 # '1' is standard output and '2' is standard error.
-declare __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
+export __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
   '1'
   '1'
   '1'
@@ -100,13 +100,13 @@ declare __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
 )
 
 # DO NOT EDIT: Initialized by @go.log
-declare __GO_LOG_LEVELS_FORMATTED=()
+export __GO_LOG_LEVELS_FORMATTED=()
 
 # Set by @go.critical_section_{begin,end}
-declare __GO_CRITICAL_SECTION=0
+export __GO_CRITICAL_SECTION=0
 
 # DO NOT EDIT: Determines number of stack trace levels to skip for FATAL logs.
-declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
+export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 
 # Outputs a single log line that may contain terminal control characters.
 #
@@ -404,18 +404,16 @@ _@go.log_init() {
 
   _@go.log_format_level_labels
 
-  if [[ -z "$__GO_LOG_TIMESTAMP_IMPL" ]]; then
-    if [[ -z "$_GO_LOG_TIMESTAMP_FORMAT" ]]; then
-      export __GO_LOG_TIMESTAMP_IMPL='none'
-    elif printf "%('%Y')T" &>/dev/null; then
-      export __GO_LOG_TIMESTAMP_IMPL='printf'
-    elif command -v 'date' >/dev/null; then
-      export __GO_LOG_TIMESTAMP_IMPL='date'
-    else
-      export __GO_LOG_TIMESTAMP_IMPL='none'
-      __GO_LOG_INIT='done' @go.log WARN \
-        Builtin timestamps not supported and date command not found.
-    fi
+  if [[ -z "$_GO_LOG_TIMESTAMP_FORMAT" ]]; then
+    readonly __GO_LOG_TIMESTAMP_IMPL='none'
+  elif printf "%('%Y')T" &>/dev/null; then
+    readonly __GO_LOG_TIMESTAMP_IMPL='printf'
+  elif command -v 'date' >/dev/null; then
+    readonly __GO_LOG_TIMESTAMP_IMPL='date'
+  else
+    readonly __GO_LOG_TIMESTAMP_IMPL='none'
+    __GO_LOG_INIT='done' @go.log WARN \
+      Builtin timestamps not supported and date command not found.
   fi
 
   readonly __GO_LOG_INIT='done'
