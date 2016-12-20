@@ -145,11 +145,10 @@ declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 @go.log() {
   local args=("$@")
   local log_level="${args[0]^^}"
-  local formatted_log_level
-  local level_fd=1
   local exit_status=0
-  local close_code='\e[0m'
   local log_msg
+  local unformatted_log_msg
+  local level_fd
 
   unset 'args[0]'
   _@go.log_init
@@ -160,9 +159,6 @@ declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
     @go.log WARN "${args[@]}"
     return 1
   fi
-
-  formatted_log_level="${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
-  level_fd="${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$__go_log_level_index]}"
 
   if [[ "$log_level" =~ ERROR|FATAL ]]; then
     exit_status="${args[1]}"
@@ -175,20 +171,30 @@ declare __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
     fi
   fi
 
-  if [[ ! -t "$level_fd" && -z "$_GO_LOG_FORMATTING" ]]; then
-    args=("${args[@]//\\e\[[0-9]m}")
-    args=("${args[@]//\\e\[[0-9][0-9]m}")
-    args=("${args[@]//\\e\[[0-9][0-9][0-9]m}")
-    close_code=''
-  fi
-
   # Remove leading space if the timestamp is empty.
-  log_msg="$(@go.log_timestamp) $formatted_log_level ${args[*]}$close_code\n"
-  log_msg="${log_msg# }"
-  printf "$log_msg" >&"$level_fd"
+  log_msg="$(@go.log_timestamp) "
+  log_msg="${log_msg# }${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
+  log_msg="${log_msg} ${args[*]}\\e[0m\\n"
+
+  for level_fd in $(_@go.log_level_file_descriptors "$__go_log_level_index"); do
+    if [[ ! -t "$level_fd" && -z "$_GO_LOG_FORMATTING" ]]; then
+      if [[ -z "$unformatted_log_msg" ]]; then
+        unformatted_log_msg="${log_msg//\\e\[[0-9]m}"
+        unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9]m}"
+        unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9][0-9]m}"
+      fi
+      printf "$unformatted_log_msg" >&"$level_fd"
+    else
+      printf "$log_msg" >&"$level_fd"
+    fi
+
+    if [[ "$log_level" == 'FATAL' ]]; then
+      @go.print_stack_trace "$__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS" \
+        >&"$level_fd"
+    fi
+  done
 
   if [[ "$log_level" == 'FATAL' ]]; then
-    @go.print_stack_trace "$__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS" >&2
     exit "$exit_status"
   fi
   return "$exit_status"
@@ -456,13 +462,24 @@ _@go.log_format_level_labels() {
   for ((i=0; i != num_levels; ++i)); do
     log_level="${_GO_LOG_LEVELS[$i]}"
     padding_len="$((${#padding} - ${#log_level}))"
-    level_fd="${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$i]}"
 
-    if [[ -n "$_GO_LOG_FORMATTING" || -t "$level_fd" ]]; then
-      log_level="${__GO_LOG_LEVELS_FORMAT_CODES[$i]}$log_level\e[0m"
-    fi
+    for level_fd in $(_@go.log_level_file_descriptors "$i"); do
+      if [[ -n "$_GO_LOG_FORMATTING" || -t "$level_fd" ]]; then
+        log_level="${__GO_LOG_LEVELS_FORMAT_CODES[$i]}$log_level\e[0m"
+        break
+      fi
+    done
     __GO_LOG_LEVELS_FORMATTED[$i]="${log_level}${padding:0:$padding_len}"
   done
+}
+
+# Returns the set of file descriptors for the specified log level index.
+#
+# Arguments:
+#   index:  A log level index returned from _@go.log_level_index
+_@go.log_level_file_descriptors() {
+  local IFS=','
+  echo ${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$1]}
 }
 
 # Sets the index into the __GO_LOG arrays for the specified label
