@@ -50,9 +50,8 @@ teardown() {
 }
 
 @test "$SUITE: add new log level" {
-  run_log_script 'exec 27>logfile' \
+  _GO_LOG_FORMATTING='true' run_log_script 'exec 27>logfile' \
     "@go.add_or_update_log_level FOOBAR '$INFO_FORMAT' 27" \
-    '_GO_LOG_FORMATTING=true' \
     '@go.log FOOBAR Hello, World!'
   assert_success ''
 
@@ -61,23 +60,23 @@ teardown() {
 }
 
 @test "$SUITE: add new log level defaulting to standard output" {
-  run_log_script "@go.add_or_update_log_level FOOBAR '$INFO_FORMAT'" \
-    '_GO_LOG_FORMATTING=true' \
+  _GO_LOG_FORMATTING='true' run_log_script \
+    "@go.add_or_update_log_level FOOBAR '$INFO_FORMAT'" \
     '@go.log FOOBAR Hello, World!'
   assert_success "$(printf "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m\n")"
 }
 
 @test "$SUITE: update format of existing log level" {
-  run_log_script "@go.add_or_update_log_level INFO '$START_FORMAT' keep" \
-    '_GO_LOG_FORMATTING=true' \
+  _GO_LOG_FORMATTING='true' run_log_script \
+    "@go.add_or_update_log_level INFO '$START_FORMAT' keep" \
     '@go.log INFO Hello, World!'
   assert_success "$(printf "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
 }
 
 @test "$SUITE: update file descriptor of existing log level" {
-  run_log_script 'exec 27>logfile' \
+  _GO_LOG_FORMATTING='true' run_log_script \
+    'exec 27>logfile' \
     '@go.add_or_update_log_level INFO keep 27' \
-    '_GO_LOG_FORMATTING=true' \
     '@go.log INFO Hello, World!'
   assert_success ''
   
@@ -86,9 +85,9 @@ teardown() {
 }
 
 @test "$SUITE: update format and file descriptor of existing log level" {
-  run_log_script 'exec 27>logfile' \
+  _GO_LOG_FORMATTING='true' run_log_script \
+    'exec 27>logfile' \
     "@go.add_or_update_log_level INFO '$START_FORMAT' 27" \
-    '_GO_LOG_FORMATTING=true' \
     '@go.log INFO Hello, World!'
   assert_success ''
 

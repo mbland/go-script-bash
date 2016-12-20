@@ -181,7 +181,7 @@ Linux for now.
 
 The following are intended to prevent too-compact code:
 
-- Declare only one variable per `declare` or `local` line.
+- Declare only one item per `declare`, `local`, `export`, or `readonly` call.
   - _Note:_ This also helps avoid subtle bugs, as trying to initialize one
     variable using the value of another declared in the same statement will
     not do what you may expect. The initialization of the first variable will
@@ -263,13 +263,26 @@ it easier to find, count, and possibly transform things.
 
 - Declare all constants near the top of the file using `declare -r`.
   - Exception: `declare` is not available in test files run using `bats`.
+  - Exception: In module code (i.e. code imported via `. "$_GO_USE_MODULES"`),
+    use `readonly` instead. Otherwise if a module is imported into a function,
+    variables declared with `declare` will go out of scope after the first
+    function call, and will not be redefined for subsequent calls, causing
+    errors.
 - Avoid globals; but if you must, declare all globals near the top of the file,
   outside of any function, using `declare`.
   - Exception: `declare` is not available in test files run using `bats`.
+  - Exception: In module code (i.e. code imported via `. "$_GO_USE_MODULES"`),
+    use `export` instead. See the note above regarding `declare -r` and
+    `readonly` for details.
 - Declare all variables inside functions using `local`.
   - Exception: If an internal function needs to return more than one distinct
     result value, or an array of values, it should use _undeclared_ variables
     prefixed with `__go_`, and all callers should declare these variables as
+    local variables.
+  - Exception: If a function needs to set a one-time initialization flag, it
+    may declare that value using `readonly`.
+- Declare temporary file-level variables using `declare`. Use `unset` to remove
+  them when finished.
 - Don't use `local -r`, as a readonly local variable in one scope can cause a
   conflict when it calls a function that declares a `local` variable of the same
   name.

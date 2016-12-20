@@ -10,7 +10,7 @@
 # This may eventually be extracted into a plugin library of its own, which is
 # why its exported functions don't contain a `@go.` prefix.
 
-declare -r __KCOV_DEV_PACKAGES=(
+readonly __KCOV_DEV_PACKAGES=(
   'binutils-dev'
   'cmake'
   'libcurl4-openssl-dev'
@@ -19,7 +19,7 @@ declare -r __KCOV_DEV_PACKAGES=(
   'libiberty-dev'
   'zlib1g-dev'
 )
-declare -r __KCOV_URL='https://github.com/SimonKagstrom/kcov'
+readonly __KCOV_URL='https://github.com/SimonKagstrom/kcov'
 
 # Downloads and compiles kcov if necessary, then runs tests under kcov
 #

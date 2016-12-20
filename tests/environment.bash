@@ -16,15 +16,13 @@ COLUMNS=1000
 # function.
 unset -v _GO_CMD
 
-# Somehow the 'declare' command doesn't work with the bats 'load' command, so
-# contrary to the rules in CONTRIBUTING.md, we don't use it here. Also,
 # TEST_GO_ROOTDIR contains a space to help ensure that variables are quoted
 # properly in most places.
-TEST_GO_ROOTDIR="$BATS_TEST_ROOTDIR"
-TEST_GO_SCRIPT="$TEST_GO_ROOTDIR/go"
-TEST_GO_SCRIPTS_RELATIVE_DIR="scripts"
-TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
-TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
+readonly TEST_GO_ROOTDIR="$BATS_TEST_ROOTDIR"
+readonly TEST_GO_SCRIPT="$TEST_GO_ROOTDIR/go"
+readonly TEST_GO_SCRIPTS_RELATIVE_DIR="scripts"
+readonly TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
+readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 
 create_test_go_script() {
   create_bats_test_script 'go' \

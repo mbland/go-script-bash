@@ -14,8 +14,7 @@ teardown() {
 }
 
 @test "$SUITE: log INFO with formatting" {
-  run_log_script "_GO_LOG_FORMATTING='true'" \
-    '@go.log INFO Hello, World!'
+  _GO_LOG_FORMATTING='true' run_log_script '@go.log INFO Hello, World!'
   assert_success
   assert_log_equals "$(format_label INFO)" 'Hello, World!'
 }
