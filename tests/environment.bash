@@ -16,6 +16,11 @@ COLUMNS=1000
 # function.
 unset -v _GO_CMD
 
+# Clear all user-definable `readonly` variables (and potentially user-definable
+# `export` variables) module variables to avoid interference with test
+# conditions.
+unset -v _GO_MAX_FILE_DESCRIPTORS "${!_GO_LOG@}" "${!__GO_LOG@}"
+
 # TEST_GO_ROOTDIR contains a space to help ensure that variables are quoted
 # properly in most places.
 readonly TEST_GO_ROOTDIR="$BATS_TEST_ROOTDIR"

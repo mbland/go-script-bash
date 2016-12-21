@@ -274,6 +274,9 @@ it easier to find, count, and possibly transform things.
   - Exception: In module code (i.e. code imported via `. "$_GO_USE_MODULES"`),
     use `export` instead. See the note above regarding `declare -r` and
     `readonly` for details.
+  - _Gotcha:_ Never initialize an array on the same line as an `export` or
+    `declare -g` statement. See [the Gotchas section](#gotchas) below for more
+    details.
 - Declare all variables inside functions using `local`.
   - Exception: If an internal function needs to return more than one distinct
     result value, or an array of values, it should use _undeclared_ variables
@@ -333,6 +336,13 @@ it easier to find, count, and possibly transform things.
   variable on one line and perform the substitution on another. If you don't,
   the exit status will always indicate success, as it is the status of the
   `local` declaration, not the command substitution.
+- To work around a bug in some versions of Bash whereby arrays declared with
+  `declare -g` or `export` and initialized in the same statement eventually go
+  out of scope, always `export` the array name on one line and initialize it the
+  next line. See:
+  - https://lists.gnu.org/archive/html/bug-bash/2012-06/msg00068.html
+  - ftp://ftp.gnu.org/gnu/bash/bash-4.2-patches/bash42-025
+  - http://lists.gnu.org/archive/html/help-bash/2012-03/msg00078.html
 
 ## Open Source License
 

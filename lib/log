@@ -33,6 +33,13 @@
 # `@go.log ERROR` will return an error code, so you may use it in conditional
 # statements. `@go.log FATAL` will exit the process.
 #
+# The `_GO_LOG_LEVEL_FILTER` variable sets the minimum priority for logged
+# messages (defaulting to `RUN`), and the `_GO_LOG_CONSOLE_FILTER` variable
+# allows users to set the minimum priority specific to console output without
+# affecting the priority for file output. These variables must be set before `.
+# "$_GO_IMPORT_MODULES" 'log'`, either within a file or on the command line.
+# They cannot be changed once the module is imported.
+#
 # You can pass entire commands to the `@go.log_command` function, which will
 # provide log messages upon startup and completion. Upon error, it will log the
 # status and return an error code, so you may use it in conditional statements.
@@ -53,6 +60,19 @@
 # If left undefined, log messages are not prefixed with timestamps.
 readonly _GO_LOG_TIMESTAMP_FORMAT="$_GO_LOG_TIMESTAMP_FORMAT"
 
+# The lowest level of log messages to send to the console
+#
+# This will override _GO_LOG_LEVEL_FILTER for console outputs, i.e. file
+# descriptors less than 2 or that output to a terminal. The reason for file
+# descriptors less than 2 is to support piping standard output and standard
+# error into another command.
+readonly _GO_LOG_CONSOLE_FILTER="${_GO_LOG_CONSOLE_FILTER}"
+
+# The lowest level of log messages to send to all outputs
+#
+# Overridden by _GO_LOG_CONSOLE_FILTER for console outputs.
+readonly _GO_LOG_LEVEL_FILTER="${_GO_LOG_LEVEL_FILTER:-RUN}"
+
 # Set this if you want to force terminal-formatted output from @go.log.
 #
 # @go.log will remove terminal formatting codes by default when the output file
@@ -67,46 +87,59 @@ readonly _GO_DRY_RUN="$_GO_DRY_RUN"
 
 # Default log level labels
 #
+# These are in priority order. The _GO_LOG_CONSOLE_FILTER and
+# _GO_LOG_LEVEL_FILTER variables determine the lowest-priority messages sent to
+# the console or to all outputs, respectively.
+#
+# FATAL messages are always the highest priority, and will always be emitted.
+#
 # DO NOT UPDATE DIRECTLY: Use @go.add_or_update_log_level instead.
-export _GO_LOG_LEVELS=(
-  'INFO'
+export _GO_LOG_LEVELS
+_GO_LOG_LEVELS=(
+  'DEBUG'
   'RUN'
+  'START'
+  'FINISH'
+  'INFO'
   'WARN'
   'ERROR'
   'FATAL'
-  'START'
-  'FINISH'
 )
 
 # Default log level terminal format codes
-export __GO_LOG_LEVELS_FORMAT_CODES=(
-  '\e[1m\e[36m'
+export __GO_LOG_LEVELS_FORMAT_CODES
+__GO_LOG_LEVELS_FORMAT_CODES=(
+  '\e[1m\e[30;47m'
   '\e[1m\e[35m'
+  '\e[1m\e[32m'
+  '\e[1m\e[32m'
+  '\e[1m\e[36m'
   '\e[1m\e[33m'
   '\e[1m\e[31m'
   '\e[1m\e[31m'
-  '\e[1m\e[32m'
-  '\e[1m\e[32m'
 )
 
 # Default log level output file descriptors
 #
 # '1' is standard output and '2' is standard error.
-export __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
+export __GO_LOG_LEVELS_FILE_DESCRIPTORS
+__GO_LOG_LEVELS_FILE_DESCRIPTORS=(
+  '1'
+  '1'
+  '1'
   '1'
   '1'
   '1'
   '2'
   '2'
-  '1'
-  '1'
 )
 
 # DO NOT EDIT: Initialized by @go.log
-export __GO_LOG_LEVELS_FORMATTED=()
+export __GO_LOG_LEVELS_FORMATTED
+__GO_LOG_LEVELS_FORMATTED=()
 
 # Set by @go.critical_section_{begin,end}
-export __GO_CRITICAL_SECTION=0
+export __GO_LOG_CRITICAL_SECTION=0
 
 # DO NOT EDIT: Determines number of stack trace levels to skip for FATAL logs.
 export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
@@ -180,6 +213,10 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
   log_msg="${log_msg} ${args[*]}\\e[0m\\n"
 
   for level_fd in $(_@go.log_level_file_descriptors "$__go_log_level_index"); do
+    if ! _@go.log_level_meets_priority "$__go_log_level_index" "$level_fd"; then
+      continue
+    fi
+
     if [[ ! -t "$level_fd" && -z "$_GO_LOG_FORMATTING" ]]; then
       if [[ -z "$unformatted_log_msg" ]]; then
         unformatted_log_msg="${log_msg//\\e\[[0-9]m}"
@@ -313,13 +350,13 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 
 # Sets @go.log_command to log FATAL when its command exits with an error status.
 @go.critical_section_begin() {
-  ((++__GO_CRITICAL_SECTION))
+  ((++__GO_LOG_CRITICAL_SECTION))
 }
 
 # Sets @go.log_command to log ERROR when its command exits with an error status.
 @go.critical_section_end() {
-  if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
-    ((--__GO_CRITICAL_SECTION))
+  if [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
+    ((--__GO_LOG_CRITICAL_SECTION))
     return 0
   fi
 }
@@ -337,8 +374,8 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 # scripts.
 #
 # Globals:
-#   _GO_DRY_RUN:           Will log commands without running them
-#   __GO_CRITICAL_SECTION: Will log FATAL on error
+#   _GO_DRY_RUN:                 Will log commands without running them
+#   __GO_LOG_CRITICAL_SECTION:   Will log FATAL on error
 #
 # Arguments:
 #   $@: The command and its arguments to log and execute
@@ -360,7 +397,7 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
   exit_status="$?"
 
   if [[ "$exit_status" -ne '0' ]]; then
-    if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
+    if [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
       ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
       @go.log FATAL "$exit_status" "$cmd_string"
     fi
@@ -445,6 +482,8 @@ _@go.log_init() {
     return
   fi
 
+  readonly __GO_LOG_INIT='done'
+  ((__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS+=2))
   _@go.log_format_level_labels
 
   if [[ -z "$_GO_LOG_TIMESTAMP_FORMAT" ]]; then
@@ -455,11 +494,25 @@ _@go.log_init() {
     readonly __GO_LOG_TIMESTAMP_IMPL='date'
   else
     readonly __GO_LOG_TIMESTAMP_IMPL='none'
-    __GO_LOG_INIT='done' @go.log WARN \
-      Builtin timestamps not supported and date command not found.
+    @go.log WARN Builtin timestamps not supported and date command not found.
   fi
 
-  readonly __GO_LOG_INIT='done'
+  local __go_log_level_index
+  if _@go.log_level_index "$_GO_LOG_LEVEL_FILTER"; then
+    readonly __GO_LOG_PRIORITY="$__go_log_level_index"
+  else
+    @go.log FATAL "Invalid _GO_LOG_LEVEL_FILTER: $_GO_LOG_LEVEL_FILTER"
+  fi
+
+  if [[ -n "$_GO_LOG_CONSOLE_FILTER" ]]; then
+    if _@go.log_level_index "$_GO_LOG_CONSOLE_FILTER"; then
+      readonly __GO_LOG_CONSOLE_PRIORITY="$__go_log_level_index"
+    else
+      @go.log FATAL "Invalid _GO_LOG_CONSOLE_FILTER: $_GO_LOG_CONSOLE_FILTER"
+    fi
+  fi
+
+  ((__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS-=2))
 }
 
 # Assigns formatted log level labels to __GO_LOG_LEVELS_FORMATTED.
@@ -544,6 +597,26 @@ _@go.log_level_index() {
     fi
   done
   return 1
+}
+
+# Checks whether the log message is of sufficient priority to emit
+#
+# Arguments:
+#   level:     A log level index returned from _@go.log_level_index
+#   level_fd:  A file descriptor corresponding to the log level
+# Returns:
+#   zero if the log level is of sufficient priority, nonzero otherwise
+_@go.log_level_meets_priority() {
+  local level="$1"
+  local level_fd="$2"
+  local priority="$__GO_LOG_PRIORITY"
+
+  if [[ ( "$level_fd" -le 2 || -t "$level_fd" ) &&
+        -n "$__GO_LOG_CONSOLE_PRIORITY" ]]; then
+    priority="$__GO_LOG_CONSOLE_PRIORITY"
+  fi
+
+  [[ "$level" -ge "$priority" ]]
 }
 
 # Sanity check that the __GO_LOG arrays are all of the same size
