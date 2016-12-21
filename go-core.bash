@@ -77,12 +77,19 @@ cd "$_GO_ROOTDIR" || exit 1
 #
 # NOTE:
 # ----
+# Though this variable is exported, _GO_IMPORTED_MODULES is not. This is because
+# bash scripts that are launched in a new process (such as Bats tests) may still
+# use the _GO_USE_MODULES mechanism, but will not share the same set of loaded
+# modules as the parent process.
+declare -r -x _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
+
+# Array of modules imported via _GO_USE_MODULES
+#
+# NOTE:
+# ----
 # This and some other variables are _not_ exported, since they are specific to
 # Bash command scripts, which are sourced into the ./go script process itself.
 # See `./go vars` and `./go help vars`.
-declare -r _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
-
-# Array of modules imported via _GO_USE_MODULES
 declare _GO_IMPORTED_MODULES=()
 
 # Path to the project's script directory
