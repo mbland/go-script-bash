@@ -106,7 +106,7 @@ export __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
 export __GO_LOG_LEVELS_FORMATTED=()
 
 # Set by @go.critical_section_{begin,end}
-export __GO_CRITICAL_SECTION=0
+export __GO_LOG_CRITICAL_SECTION=0
 
 # DO NOT EDIT: Determines number of stack trace levels to skip for FATAL logs.
 export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
@@ -313,13 +313,13 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 
 # Sets @go.log_command to log FATAL when its command exits with an error status.
 @go.critical_section_begin() {
-  ((++__GO_CRITICAL_SECTION))
+  ((++__GO_LOG_CRITICAL_SECTION))
 }
 
 # Sets @go.log_command to log ERROR when its command exits with an error status.
 @go.critical_section_end() {
-  if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
-    ((--__GO_CRITICAL_SECTION))
+  if [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
+    ((--__GO_LOG_CRITICAL_SECTION))
     return 0
   fi
 }
@@ -337,8 +337,8 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 # scripts.
 #
 # Globals:
-#   _GO_DRY_RUN:           Will log commands without running them
-#   __GO_CRITICAL_SECTION: Will log FATAL on error
+#   _GO_DRY_RUN:                 Will log commands without running them
+#   __GO_LOG_CRITICAL_SECTION:   Will log FATAL on error
 #
 # Arguments:
 #   $@: The command and its arguments to log and execute
@@ -360,7 +360,7 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
   exit_status="$?"
 
   if [[ "$exit_status" -ne '0' ]]; then
-    if [[ "$__GO_CRITICAL_SECTION" -ne '0' ]]; then
+    if [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
       ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
       @go.log FATAL "$exit_status" "$cmd_string"
     fi
