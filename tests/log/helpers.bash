@@ -13,14 +13,21 @@ test-go() {
   env _GO_CMD="$FUNCNAME" "$TEST_GO_SCRIPT" "$@"
 }
 
+# Note that this must be called before any other log assertion, because it needs
+# to set _GO_LOG_FORMATTING before importing the `log` module.
 format_label() {
   local label="$1"
 
-  if [[ -z "$__GO_LOG_INIT" ]]; then
-    _GO_LOG_FORMATTING='true'
-    . "$_GO_CORE_DIR/lib/log"
-    _@go.log_init
+  if [[ -n "$__GO_LOG_INIT" ]]; then
+    echo "$FUNCNAME must be called before any other function or assertion" \
+      "that calls \`. \$_GO_USE_MODULES 'log'\` because it needs to set" \
+      "\`_GO_LOG_FORMATTING\`." >&2
+      return 1
   fi
+
+  _GO_LOG_FORMATTING='true'
+  . "$_GO_USE_MODULES" 'log'
+  _@go.log_init
 
   local __go_log_level_index=0
   if ! _@go.log_level_index "$label"; then
@@ -53,8 +60,10 @@ assert_log_equals() {
   local expected=()
   local __go_log_level_index
   local i
+  local result=0
 
-  . "$_GO_CORE_DIR/lib/log"
+  . "$_GO_USE_MODULES" 'log'
+
   for level in "${_GO_LOG_LEVELS[@]}"; do
     while [[ "${#padding}" -lt "${#level}" ]]; do
       padding+=' '
@@ -76,9 +85,26 @@ assert_log_equals() {
   done
 
   if ! assert_lines_equal "${expected[@]}"; then
-    set +o functrace
-    return_from_bats_assertion "$BASH_SOURCE" 1
-  else
-    return_from_bats_assertion "$BASH_SOURCE"
+    result=1
   fi
+  set +o functrace
+  return_from_bats_assertion "$BASH_SOURCE" "$result"
+}
+
+assert_log_file_equals() {
+  local log_file="$1"
+  shift
+  local origIFS="$IFS"
+  local IFS=$'\n'
+  local log_content=($(< "$log_file"))
+  local result=0
+
+  run echo "${log_content[*]}"
+  IFS="$origIFS"
+
+  if ! assert_log_equals "$@"; then
+    result=1
+  fi
+  set +o functrace
+  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }
