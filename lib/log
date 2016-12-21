@@ -94,7 +94,8 @@ readonly _GO_DRY_RUN="$_GO_DRY_RUN"
 # FATAL messages are always the highest priority, and will always be emitted.
 #
 # DO NOT UPDATE DIRECTLY: Use @go.add_or_update_log_level instead.
-export _GO_LOG_LEVELS=(
+export _GO_LOG_LEVELS
+_GO_LOG_LEVELS=(
   'DEBUG'
   'RUN'
   'START'
@@ -106,7 +107,8 @@ export _GO_LOG_LEVELS=(
 )
 
 # Default log level terminal format codes
-export __GO_LOG_LEVELS_FORMAT_CODES=(
+export __GO_LOG_LEVELS_FORMAT_CODES
+__GO_LOG_LEVELS_FORMAT_CODES=(
   '\e[1m\e[30;47m'
   '\e[1m\e[35m'
   '\e[1m\e[32m'
@@ -120,7 +122,8 @@ export __GO_LOG_LEVELS_FORMAT_CODES=(
 # Default log level output file descriptors
 #
 # '1' is standard output and '2' is standard error.
-export __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
+export __GO_LOG_LEVELS_FILE_DESCRIPTORS
+__GO_LOG_LEVELS_FILE_DESCRIPTORS=(
   '1'
   '1'
   '1'
@@ -132,7 +135,8 @@ export __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
 )
 
 # DO NOT EDIT: Initialized by @go.log
-export __GO_LOG_LEVELS_FORMATTED=()
+export __GO_LOG_LEVELS_FORMATTED
+__GO_LOG_LEVELS_FORMATTED=()
 
 # Set by @go.critical_section_{begin,end}
 export __GO_LOG_CRITICAL_SECTION=0
