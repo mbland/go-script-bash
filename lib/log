@@ -12,6 +12,9 @@
 #   @go.add_or_update_log_level
 #     Modifies existing log level labels, formatting, and file descriptors
 #
+#   @go.log_add_output_file
+#     Add an additional output file for log messages
+#
 #   @go.log_command
 #     Logs a command and its outcome
 #
@@ -266,6 +269,46 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
   if [[ "$level_fd" != 'keep' ]]; then
     __GO_LOG_LEVELS_FILE_DESCRIPTORS[$__go_log_level_index]="$level_fd"
   fi
+}
+
+# Add an additional output file for log messages.
+#
+# If `log_levels` is not specified, the file will be opened for all existing log
+# levels. If it is specified:
+#
+#   - any levels not yet in `_GO_LOG_LEVELS` will be created
+#   - each level will write to `output_file` in addition to existing output fds
+#
+# Arguments:
+#   output_file:  Path to the additional log file; will be opened for appending
+#   log_level:    Comma-separated log levels to send output to output_file
+@go.log_add_output_file() {
+  local output_file="$1"
+  local log_level="$2"
+  local output_fd
+  local levels=()
+  local level
+  local __go_log_level_index
+
+  . "$_GO_USE_MODULES" 'file'
+  @go.open_file_or_duplicate_fd "$output_file" 'a' 'output_fd'
+
+  if [[ -n "$log_level" ]]; then
+    local origIFS="$IFS"
+    local IFS=','
+    levels=($log_level)
+    IFS="$origIFS"
+  else
+    levels=("${_GO_LOG_LEVELS[@]}")
+  fi
+
+  for level in "${levels[@]}"; do
+    if _@go.log_level_index "$level"; then
+      __GO_LOG_LEVELS_FILE_DESCRIPTORS[$__go_log_level_index]+=",$output_fd"
+    else
+      @go.add_or_update_log_level "$level" '' "$output_fd"
+    fi
+  done
 }
 
 # Sets @go.log_command to log FATAL when its command exits with an error status.
