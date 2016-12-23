@@ -207,10 +207,10 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
     fi
   fi
 
-  # Remove leading space if the timestamp is empty.
   log_msg="$(@go.log_timestamp) "
+  # Remove leading space if the timestamp is empty.
   log_msg="${log_msg# }${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
-  log_msg="${log_msg} ${args[*]}\\e[0m\\n"
+  log_msg="${log_msg} ${args[*]}\\e[0m"
 
   local __go_log_level_file_descriptors=()
   _@go.log_level_file_descriptors "$__go_log_level_index"
@@ -226,9 +226,9 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
         unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9]m}"
         unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9][0-9]m}"
       fi
-      printf "$unformatted_log_msg" >&"$level_fd"
+      printf '%b\n' "$unformatted_log_msg" >&"$level_fd"
     else
-      printf "$log_msg" >&"$level_fd"
+      printf '%b\n' "$log_msg" >&"$level_fd"
     fi
 
     if [[ "$log_level" == 'FATAL' ]]; then
