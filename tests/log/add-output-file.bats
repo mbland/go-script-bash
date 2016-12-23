@@ -26,11 +26,7 @@ run_log_script_and_assert_status_and_output() {
     return
   fi
 
-  local origIFS="$IFS"
-  IFS=$'\n'
-  local test_script=($(< "$TEST_GO_SCRIPT"))
-  IFS="$origIFS"
-  TEST_SCRIPT_LINES="${#test_script[@]}"
+  TEST_SCRIPT_LINES="$(num_test_script_lines)"
 
   local expected=(INFO 'FYI'
     RUN   'echo foo'

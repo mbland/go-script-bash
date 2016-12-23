@@ -128,3 +128,10 @@ set_go_core_stack_trace_components() {
     export GO_CORE_STACK_TRACE_COMPONENTS
   fi
 }
+
+# Prints the number of lines in `TEST_GO_SCRIPT`.
+num_test_script_lines() {
+  IFS=$'\n'
+  local test_script=($(< "$TEST_GO_SCRIPT"))
+  echo "${#test_script[@]}"
+}
