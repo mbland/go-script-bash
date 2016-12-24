@@ -99,12 +99,17 @@ stack_trace_item() {
   "${BASH_SOURCE%/*}/stack-trace-item" "$@"
 }
 
-log_command_stack_trace_item() {
-  if [[ -z "$LOG_COMMAND_STACK_TRACE_ITEM" ]]; then
-    export LOG_COMMAND_STACK_TRACE_ITEM="$(stack_trace_item \
-      "$_GO_CORE_DIR/lib/log" '@go.log_command' '  "${args[@]}"')"
+set_log_command_stack_trace_items() {
+  if [[ "${#LOG_COMMAND_STACK_TRACE_ITEMS[@]}" -eq '0' ]]; then
+    export LOG_COMMAND_STACK_TRACE_ITEMS
+    LOG_COMMAND_STACK_TRACE_ITEMS=(
+      "$(stack_trace_item "$_GO_CORE_DIR/lib/log" '_@go.log_command_invoke' \
+        '  "${__go_log_command_args[@]}" 2>&1')"
+        # For some reason, with the process redirection at the end of the
+        # `while` loop, the stack trace reports the opening line of the function
+        # definition, not the actual `done < <(_@go.log_command_invoke)` line.
+      "$(stack_trace_item "$_GO_CORE_DIR/lib/log" '@go.log_command')")
   fi
-  echo "$LOG_COMMAND_STACK_TRACE_ITEM"
 }
 
 # Call this before using "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" to inject

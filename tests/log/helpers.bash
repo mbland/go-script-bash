@@ -2,13 +2,17 @@
 #
 # Helper functions for `lib/log` tests.
 
-run_log_script() {
+create_log_script(){
   create_test_go_script \
     ". \"\$_GO_USE_MODULES\" 'log'" \
     'if [[ -n "$TEST_LOG_FILE" ]]; then' \
     '  @go.log_add_output_file "$TEST_LOG_FILE"' \
     'fi' \
     "$@"
+}
+
+run_log_script() {
+  create_log_script "$@"
   run "$TEST_GO_SCRIPT"
 }
 
