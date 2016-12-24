@@ -112,20 +112,25 @@ log_command_stack_trace_item() {
 set_go_core_stack_trace_components() {
   local go_core_file="$_GO_CORE_DIR/go-core.bash"
   local stack_item
+  local script="$TEST_GO_ROOTDIR/generate-go-core-stack-trace"
   local IFS=$'\n'
 
   if [[ "${#GO_CORE_STACK_TRACE_COMPONENTS[@]}" -eq '0' ]]; then
-    create_test_go_script '@go "$@"'
+    create_bats_test_script "${script#$TEST_GO_ROOTDIR}" \
+      ". '$_GO_ROOTDIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
+      '@go "$@"'
     create_test_command_script 'print-stack-trace' '@go.print_stack_trace'
 
-    for stack_item in $("$TEST_GO_SCRIPT" 'print-stack-trace'); do
+    for stack_item in $("$script" 'print-stack-trace'); do
       if [[ "$stack_item" =~ $go_core_file ]]; then
         GO_CORE_STACK_TRACE_COMPONENTS+=("$stack_item")
       elif [[ "${#_GO_CORE_STACK_TRACE_COMPONENTS[@]}" -ne '0' ]]; then
         return
       fi
     done
+    rm "$script" "$TEST_GO_SCRIPTS_DIR/print-stack-trace"
     export GO_CORE_STACK_TRACE_COMPONENTS
+
   fi
 }
 
@@ -134,4 +139,17 @@ num_test_script_lines() {
   IFS=$'\n'
   local test_script=($(< "$TEST_GO_SCRIPT"))
   echo "${#test_script[@]}"
+}
+
+# Prints a stack trace line from `TEST_GO_SCRIPT`.
+#
+# Arguments:
+#   offset:    Subtracted from `num_test_script_lines` to get the line number;
+#                defaults to '0'
+#   function:  Name of the function expected in the stack trace; defaults to
+#                'main'
+test_script_stack_trace_item() {
+  local line="$(($(num_test_script_lines) - ${1:-0}))"
+  local function="${2:-main}"
+  echo "  ${TEST_GO_SCRIPT}:${line} ${function}"
 }

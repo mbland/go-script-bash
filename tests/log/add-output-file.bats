@@ -3,8 +3,6 @@
 load ../environment
 load helpers
 
-TEST_SCRIPT_LINES=
-
 teardown() {
   remove_test_go_rootdir
 }
@@ -26,14 +24,12 @@ run_log_script_and_assert_status_and_output() {
     return
   fi
 
-  TEST_SCRIPT_LINES="$(num_test_script_lines)"
-
   local expected=(INFO 'FYI'
     RUN   'echo foo'
     WARN  'watch out'
     ERROR 'uh-oh'
     FATAL 'oh noes!'
-    "  $TEST_GO_SCRIPT:$TEST_SCRIPT_LINES main")
+    "$(test_script_stack_trace_item)")
 
   if ! assert_log_equals "${expected[@]}"; then
     set +o functrace
@@ -90,7 +86,7 @@ run_log_script_and_assert_status_and_output() {
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
   assert_matches '^FATAL +oh noes!$' "${error_log[1]}" 'FATAL log message'
-  assert_equal "  $TEST_GO_SCRIPT:$TEST_SCRIPT_LINES main" "${error_log[2]}" \
+  assert_equal "$(test_script_stack_trace_item)" "${error_log[2]}" \
     'FATAL stack trace'
 }
 
@@ -116,6 +112,6 @@ run_log_script_and_assert_status_and_output() {
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
   assert_matches '^FATAL +oh noes!$' "${error_log[1]}" 'FATAL log message'
-  assert_equal "  $TEST_GO_SCRIPT:$TEST_SCRIPT_LINES main" "${error_log[2]}" \
+  assert_equal "$(test_script_stack_trace_item)" "${error_log[2]}" \
     'FATAL stack trace'
 }
