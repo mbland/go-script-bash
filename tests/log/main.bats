@@ -13,10 +13,30 @@ teardown() {
   assert_log_equals INFO 'Hello, World!'
 }
 
-@test "$SUITE: log INFO with formatting" {
-  _GO_LOG_FORMATTING='true' run_log_script '@go.log INFO Hello, World!'
+@test "$SUITE: log INFO with formatting and proper termination at end of line" {
+  _GO_LOG_FORMATTING='true' run_log_script \
+    '@go.log INFO "\e[1m\e[36mHello, World!"' \
+    'echo Goodbye, World!'
   assert_success
-  assert_log_equals "$(format_label INFO)" 'Hello, World!'
+  assert_log_equals \
+    "$(format_label INFO)" '\e[1m\e[36mHello, World!' \
+    'Goodbye, World!'
+}
+
+@test "$SUITE: log INFO with message formatting stripped" {
+  run_log_script \
+    '@go.log INFO "\e[1m\e[36mHello, World!"' \
+    'echo Goodbye, World!'
+  assert_success
+  assert_log_equals \
+    INFO 'Hello, World!' \
+    'Goodbye, World!'
+}
+
+@test "$SUITE: log INFO handle '%' in message arguments (issues 47, 55)" {
+  run_log_script '@go.log INFO Timestamp is "%Y-%m-%d %H:%M:%S"'
+  assert_success
+  assert_log_equals INFO 'Timestamp is %Y-%m-%d %H:%M:%S'
 }
 
 @test "$SUITE: log WARN and return error if log level is unknown" {

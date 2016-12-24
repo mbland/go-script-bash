@@ -207,12 +207,15 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
     fi
   fi
 
-  # Remove leading space if the timestamp is empty.
   log_msg="$(@go.log_timestamp) "
+  # Remove leading space if the timestamp is empty.
   log_msg="${log_msg# }${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
-  log_msg="${log_msg} ${args[*]}\\e[0m\\n"
+  log_msg="${log_msg} ${args[*]}\\e[0m"
 
-  for level_fd in $(_@go.log_level_file_descriptors "$__go_log_level_index"); do
+  local __go_log_level_file_descriptors=()
+  _@go.log_level_file_descriptors "$__go_log_level_index"
+
+  for level_fd in "${__go_log_level_file_descriptors[@]}"; do
     if ! _@go.log_level_meets_priority "$__go_log_level_index" "$level_fd"; then
       continue
     fi
@@ -223,9 +226,9 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
         unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9]m}"
         unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9][0-9]m}"
       fi
-      printf "$unformatted_log_msg" >&"$level_fd"
+      printf '%b\n' "$unformatted_log_msg" >&"$level_fd"
     else
-      printf "$log_msg" >&"$level_fd"
+      printf '%b\n' "$log_msg" >&"$level_fd"
     fi
 
     if [[ "$log_level" == 'FATAL' ]]; then
@@ -557,7 +560,10 @@ _@go.log_format_level_labels() {
     log_level="${_GO_LOG_LEVELS[$i]}"
     padding_len="$((${#padding} - ${#log_level}))"
 
-    for level_fd in $(_@go.log_level_file_descriptors "$i"); do
+    local __go_log_level_file_descriptors=()
+    _@go.log_level_file_descriptors "$i"
+
+    for level_fd in "${__go_log_level_file_descriptors[@]}"; do
       if [[ -n "$_GO_LOG_FORMATTING" || -t "$level_fd" ]]; then
         log_level="${__GO_LOG_LEVELS_FORMAT_CODES[$i]}$log_level\e[0m"
         break
@@ -569,11 +575,14 @@ _@go.log_format_level_labels() {
 
 # Returns the set of file descriptors for the specified log level index.
 #
+# Globals:
+#   __go_log_level_file_descriptors:  Variable into which fds will be stored
+#
 # Arguments:
-#   index:  A log level index returned from _@go.log_level_index
+#   log_level_index:  A log level index returned from _@go.log_level_index
 _@go.log_level_file_descriptors() {
   local IFS=','
-  echo ${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$1]}
+  __go_log_level_file_descriptors=(${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$1]})
 }
 
 # Sets the index into the __GO_LOG arrays for the specified label
