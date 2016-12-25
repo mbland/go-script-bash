@@ -42,18 +42,34 @@ format_label() {
   echo "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
 }
 
+__parse_log_level_label() {
+  local level="$1"
+  local try_level="$level"
+  if [[ "${level:0:3}" == '\e[' ]]; then
+    try_level="${try_level//\\e\[[0-9]m}"
+    try_level="${try_level//\\e\[[0-9][0-9]m}"
+    try_level="${try_level//\\e\[[0-9][0-9][0-9]m}"
+    try_level="${try_level%% *}"
+  fi
+
+  if ! _@go.log_level_index "$try_level"; then
+    return 1
+  fi
+  __log_level_label="$level"
+
+  # If it's a label formatted with `format_label`, it's already padded.
+  if [[ "${level:0:3}" != '\e[' ]]; then
+    __log_level_label+="${__padding:0:$((${#__padding} - ${#try_level}))}"
+  fi
+}
+
 __expected_log_line() {
   local level="$1"
   local message="$2"
 
   if [[ "${level:0:3}" == '\e[' ]]; then
-    stripped_level="${level//\\e\[[0-9]m}"
-    stripped_level="${stripped_level//\\e\[[0-9][0-9]m}"
-    stripped_level="${stripped_level//\\e\[[0-9][0-9][0-9]m}"
-    level="${level}${padding:0:$((${#padding} - ${#stripped_level}))}"
     printf '%b\n' "$level $message\e[0m"
   else
-    level="${level}${padding:0:$((${#padding} - ${#level}))}"
     printf '%b\n' "$level $message"
   fi
 }
@@ -61,23 +77,23 @@ __expected_log_line() {
 assert_log_equals() {
   set +o functrace
   local level
-  local padding=''
+  local __padding=''
+  local __log_level_label
   local expected=()
-  local __go_log_level_index
   local i
   local result=0
 
   . "$_GO_USE_MODULES" 'log'
 
   for level in "${_GO_LOG_LEVELS[@]}"; do
-    while [[ "${#padding}" -lt "${#level}" ]]; do
-      padding+=' '
+    while [[ "${#__padding}" -lt "${#level}" ]]; do
+      __padding+=' '
     done
   done
 
   for ((i=0; $# != 0; ++i)); do
-    if _@go.log_level_index "$1" || [[ "$1" =~ ^\\e\[ ]]; then
-      expected+=("$(__expected_log_line "$1" "$2")")
+    if __parse_log_level_label "$1"; then
+      expected+=("$(__expected_log_line "$__log_level_label" "$2")")
       if ! shift 2; then
         echo "ERROR: Wrong number of arguments for log line $i." >&2
         return_from_bats_assertion "$BASH_SOURCE" 1
