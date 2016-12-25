@@ -330,6 +330,11 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
   local level
   local __go_log_level_index
 
+  if [[ -n "$__GO_LOG_INIT" ]]; then
+    @go.log FATAL "Can't add new output file $output_file;" \
+      "logging already initialized"
+  fi
+
   . "$_GO_USE_MODULES" 'file'
   @go.open_file_or_duplicate_fd "$output_file" 'a' 'output_fd'
 
