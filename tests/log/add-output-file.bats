@@ -39,6 +39,21 @@ run_log_script_and_assert_status_and_output() {
   fi
 }
 
+@test "$SUITE: exit if adding output file after logging already initiaized" {
+  local log_file="$TEST_GO_ROOTDIR/all.log"
+
+  run_log_script \
+    "@go.log INFO Hello, World!" \
+    "@go.log_add_output_file '$log_file'"
+  assert_failure
+  assert_log_equals \
+    INFO 'Hello, World!' \
+    FATAL "Can't add new output file $log_file; logging already initialized" \
+    "$(stack_trace_item "$_GO_CORE_DIR/lib/log" '@go.log_add_output_file' \
+      "    @go.log FATAL \"Can't add new output file \$output_file;\" \\")" \
+    "$(test_script_stack_trace_item)"
+}
+
 @test "$SUITE: add an output file for all log levels" {
   run_log_script_and_assert_status_and_output \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/all.log'"
