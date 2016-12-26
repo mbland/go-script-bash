@@ -73,7 +73,7 @@ teardown() {
     'fi'
   assert_failure
   assert_log_equals FATAL 'Hello, World!' \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item 2)"
 }
 
 @test "$SUITE: show status on FATAL if supplied" {
@@ -83,7 +83,7 @@ teardown() {
     'fi'
   assert_failure
   assert_log_equals FATAL 'Hello, World! (exit status 127)' \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item 2)"
 }
 
 @test "$SUITE: exit with error if num format codes != num log levels" {

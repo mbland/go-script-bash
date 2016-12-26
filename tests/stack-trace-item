@@ -5,8 +5,8 @@
 __stack_trace_item() {
   local haystack_file="$1"
   local function_name="$2"
-  local function_pattern="^$function_name\\(\\) ?{\$"
-  local needle="$3"
+  local function_opening="$function_name() {"
+  local needle="${3:-$function_opening}"
   local skip
   local inside_function
   local lineno=0
@@ -27,7 +27,11 @@ __stack_trace_item() {
       if [[ "$line" == '}' ]]; then
         skip=
       fi
-    elif [[ -z "$inside_function" && "$line" =~ $function_pattern ]]; then
+    elif [[ -z "$inside_function" && "$line" == $function_opening ]]; then
+      if [[ "$line" == "$needle" ]]; then
+        echo "  $haystack_file:$lineno $function_name"
+        return
+      fi
       inside_function='true'
     elif [[ "$line" =~ ()\ {$ ]]; then
       skip='true'

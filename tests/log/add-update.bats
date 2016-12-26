@@ -16,21 +16,21 @@ teardown() {
   assert_failure
   assert_log_equals INFO 'Hello, World!' \
     FATAL "Can't set logging level INFO; already initialized" \
-    "  $TEST_GO_SCRIPT:5 main"
+    "$(test_script_stack_trace_item)"
 }
 
 @test "$SUITE: fail if file descriptor isn't a positive integer" {
   run_log_script '@go.add_or_update_log_level INFO keep 0'
   assert_failure
   assert_log_equals FATAL "File descriptor 0 for INFO must be > 0" \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item)"
 }
 
 @test "$SUITE: fail if file descriptor isn't open" {
   run_log_script '@go.add_or_update_log_level INFO keep 27'
   assert_failure
   assert_log_equals FATAL "File descriptor 27 for INFO isn't open" \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item)"
 }
 
 @test "$SUITE: fail if keeping the format code for a nonexistent level" {
@@ -38,7 +38,7 @@ teardown() {
   assert_failure
   assert_log_equals \
     FATAL "Can't keep defaults for nonexistent log level FOOBAR" \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item)"
 }
 
 @test "$SUITE: fail if keeping the file descriptor for a nonexistent level" {
@@ -46,7 +46,7 @@ teardown() {
   assert_failure
   assert_log_equals \
     FATAL "Can't keep defaults for nonexistent log level FOOBAR" \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item)"
 }
 
 @test "$SUITE: add new log level" {

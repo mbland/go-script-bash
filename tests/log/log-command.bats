@@ -30,7 +30,7 @@ teardown() {
   assert_failure
   assert_log_equals RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "  $TEST_GO_SCRIPT:6 main"
+    "$(test_script_stack_trace_item 1)"
 }
 
 @test "$SUITE: log single failing command without executing during dry run" {
@@ -81,7 +81,7 @@ teardown() {
     'Hello, World!' \
     RUN "failing_function foo bar baz" \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "  $TEST_GO_SCRIPT:7 main"
+    "$(test_script_stack_trace_item 2)"
 }
 
 @test "$SUITE: log multiple commands without executing during dry run" {
@@ -182,7 +182,7 @@ teardown() {
     'Hello, World!' \
     RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "  $TEST_GO_SCRIPT:12 main"
+    "$(test_script_stack_trace_item 2)"
 }
 
 @test "$SUITE: critical section counter does not go below zero" {
@@ -204,7 +204,7 @@ teardown() {
     ERROR 'failing_function foo bar baz (exit status 127)' \
     RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "  $TEST_GO_SCRIPT:12 main"
+    "$(test_script_stack_trace_item 2)"
 }
 
 @test "$SUITE: log and run command script using @go" {
@@ -239,7 +239,7 @@ teardown() {
     "  $TEST_GO_SCRIPTS_DIR/project-command-script:3 source" \
     "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "$(log_command_stack_trace_item)" \
-    "  $TEST_GO_SCRIPT:5 main"
+    "$(test_script_stack_trace_item 2)"
 }
 
 @test "$SUITE: critical section in command script applies to parent script" {
@@ -262,5 +262,5 @@ teardown() {
     "  $TEST_GO_SCRIPTS_DIR/project-command-script:4 source" \
     "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "$(log_command_stack_trace_item)" \
-    "  $TEST_GO_SCRIPT:4 main"
+    "$(test_script_stack_trace_item 1)"
 }
