@@ -39,7 +39,7 @@
 #
 # Also note that if your assertion function calls other assertion functions, you
 # should call `set +o functrace` after every one of them. See the implementation
-# of `assert_lines_equal` for an example.
+# of `__assert_lines` for an example.
 #
 # The assertions borrow inspiration from rbenv/test/test_helper.bash.
 
@@ -242,7 +242,7 @@ assert_line_equals() {
   __assert_line 'assert_equal' "$@"
 }
 
-# Validates that a specific line from $line equals the expected value
+# Validates that a specific line from $line matches the expected value
 #
 # Arguments:
 #   $1: The index into $line identifying the line to match
@@ -260,44 +260,7 @@ assert_line_matches() {
 #   $@: Values to compare to each element of `${lines[@]}` for equality
 assert_lines_equal() {
   set +o functrace
-  local expected=("$@")
-  local num_lines="${#expected[@]}"
-  local lines_diff="$((${#lines[@]} - num_lines))"
-  local num_errors=0
-  local i
-
-  for ((i=0; i != ${#expected[@]}; ++i)); do
-    if ! assert_equal "${expected[$i]}" "${lines[$i]}" "line $i"; then
-      ((++num_errors))
-    fi
-    set +o functrace
-  done
-
-  if [[ "$lines_diff" -gt '0' ]]; then
-    if [[ "$lines_diff" -eq '1' ]]; then
-      echo "There is one more line of output than expected:" >&2
-    else
-      echo "There are $lines_diff more lines of output than expected:" >&2
-    fi
-    local IFS=$'\n'
-    echo "${lines[*]:$num_lines}" >&2
-    ((++num_errors))
-
-  elif [[ "$lines_diff" -lt '0' ]]; then
-    lines_diff="$((-lines_diff))"
-    if [[ "$lines_diff" -eq '1' ]]; then
-      echo "There is one fewer line of output than expected." >&2
-    else
-      echo "There are $lines_diff fewer lines of output than expected." >&2
-    fi
-    ((++num_errors))
-  fi
-
-  if [[ "$num_errors" -ne '0' ]]; then
-    __return_from_bats_assertion 1
-  else
-    __return_from_bats_assertion
-  fi
+  __assert_lines 'assert_equal' "$@"
 }
 
 # Scrubs the Bats stacks of functions from the assertion source file
@@ -379,6 +342,58 @@ __assert_line() {
   fi
 
   if ! "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"; then
+    if [[ -z "$__bats_assert_line_suppress_output" ]]; then
+      printf 'OUTPUT:\n%s\n' "$output" >&2
+    fi
+    __return_from_bats_assertion 1
+  else
+    __return_from_bats_assertion
+  fi
+}
+
+# Common implementation for assertions that evaluate every element of `$lines`
+#
+# Arguments:
+#   assertion:  The assertion to execute
+#   ...:        Assertion constraints for each corresponding element of $lines
+__assert_lines() {
+  local assertion="$1"
+  shift
+  local expected=("$@")
+  local num_lines="${#expected[@]}"
+  local lines_diff="$((${#lines[@]} - num_lines))"
+  local __bats_assert_line_suppress_output='true'
+  local num_errors=0
+  local i
+
+  for ((i=0; i != ${#expected[@]}; ++i)); do
+    if ! __assert_line "$assertion" "$i" "${expected[$i]}"; then
+      ((++num_errors))
+    fi
+    set +o functrace
+  done
+
+  if [[ "$lines_diff" -gt '0' ]]; then
+    if [[ "$lines_diff" -eq '1' ]]; then
+      echo "There is one more line of output than expected:" >&2
+    else
+      echo "There are $lines_diff more lines of output than expected:" >&2
+    fi
+    local IFS=$'\n'
+    echo "${lines[*]:$num_lines}" >&2
+    ((++num_errors))
+
+  elif [[ "$lines_diff" -lt '0' ]]; then
+    lines_diff="$((-lines_diff))"
+    if [[ "$lines_diff" -eq '1' ]]; then
+      echo "There is one fewer line of output than expected." >&2
+    else
+      echo "There are $lines_diff fewer lines of output than expected." >&2
+    fi
+    ((++num_errors))
+  fi
+
+  if [[ "$num_errors" -ne '0' ]]; then
     printf 'OUTPUT:\n%s\n' "$output" >&2
     __return_from_bats_assertion 1
   else

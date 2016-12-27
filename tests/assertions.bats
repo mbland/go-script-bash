@@ -353,13 +353,22 @@ check_expected_output() {
     "assert_lines_equal 'foo' 'quux' 'baz'" \
     'line 1 not equal to expected value:' \
     "  expected: 'quux'" \
-    "  actual:   'bar'"
+    "  actual:   'bar'" \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz'
 }
 
 @test "$SUITE: assert_lines_equal failure due to one output line too many" {
   expect_failure "printf 'foo\nbar\nbaz\nquux\n'" \
     "assert_lines_equal 'foo' 'bar' 'baz'" \
     'There is one more line of output than expected:' \
+    'quux' \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz' \
     'quux'
 }
 
@@ -378,6 +387,13 @@ check_expected_output() {
     'There are 3 more lines of output than expected:' \
     'quux' \
     'xyzzy' \
+    'plugh' \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz' \
+    'quux' \
+    'xyzzy' \
     'plugh'
 }
 
@@ -387,7 +403,11 @@ check_expected_output() {
     'line 3 not equal to expected value:' \
     "  expected: 'quux'" \
     "  actual:   ''" \
-    'There is one fewer line of output than expected.'
+    'There is one fewer line of output than expected.' \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz'
 }
 
 @test "$SUITE: assert_lines_equal failure from bad matches and too few lines" {
@@ -411,7 +431,11 @@ check_expected_output() {
     'line 5 not equal to expected value:' \
     "  expected: 'plugh'" \
     "  actual:   ''" \
-    'There are 3 fewer lines of output than expected.'
+    'There are 3 fewer lines of output than expected.' \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz'
 }
 
 @test "$SUITE: fail_if fails when assertion unknown" {
