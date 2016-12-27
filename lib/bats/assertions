@@ -63,6 +63,74 @@ fail() {
   __return_from_bats_assertion 1
 }
 
+# Negates the expected outcome of an assertion from this file.
+#
+# The first argument should be the name of an assertion from this file _without_
+# the `assert_` prefix. For example:
+#
+#   fail_if equal 'foo' 'bar' "Some values we don't expect to be equal"
+#
+# This is essentially the same as the following, but `fail_if` provides more
+# context for the failure:
+#
+#   ! assert_equal 'foo' 'bar' "Some values we don't expect to be equal"
+#
+# Arguments:
+#   assertion:  The name of the assertion to negate minus the `_assert_` prefix
+#   ...:        The arguments to the assertion being negated
+fail_if() {
+  set +o functrace
+  local assertion="assert_${1}"
+  shift
+  local label
+  local operation='equal'
+  local constraints=()
+  local constraint
+  local i
+  local __bats_fail_suppress_output='true'
+
+  if [[ "$assertion" =~ _match ]]; then
+    operation='match'
+  fi
+
+  case "$assertion" in
+  assert_equal|assert_matches)
+    label="$3"
+    constraints=("$1")
+    ;;
+  assert_output*|assert_status)
+    label="${assertion#assert_}"
+    label="${label%_*}"
+    constraints=("$1")
+    ;;
+  assert_line_*)
+    label="line $1"
+    constraints=("$2")
+    ;;
+  assert_lines_*)
+    __bats_fail_suppress_output=
+    label="lines"
+    constraints=("${@}")
+    ;;
+  *)
+    printf "Unknown assertion: '%s'\n" "$assertion" >&2
+    __return_from_bats_assertion '1'
+    return 1
+  esac
+
+  if ! "$assertion" "$@" &>/dev/null; then
+    set +o functrace
+    __return_from_bats_assertion '0'
+    return
+  fi
+  set +o functrace
+
+  for ((i=0; i != ${#constraints[@]}; ++i)); do
+    constraint+=$'\n'"  '${constraints[$i]}'"
+  done
+  fail "Expected $label not to $operation:$constraint"
+}
+
 # Compares two values for equality
 #
 # Arguments:
