@@ -16,7 +16,7 @@
 #     Add an additional output file for log messages
 #
 #   @go.log_command
-#     Logs a command and its outcome
+#     Logs the specified command, its stdout and stderr, and its outcome
 #
 #   @go.critical_section_begin
 #     Causes @go.log_command to log FATAL on error
@@ -384,7 +384,9 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   fi
 }
 
-# Logs the specified command and its outcome.
+# Logs the specified command, its stdout and stderr, and its outcome.
+#
+# The command string and the command output are logged at the `RUN` level.
 #
 # By default it will log ERROR and return the command's exit status on failure.
 # In between calls to @go.critical_section_begin and @go.critical_section_end,
