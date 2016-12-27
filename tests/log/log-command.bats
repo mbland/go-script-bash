@@ -14,14 +14,12 @@ teardown() {
 
 @test "$SUITE: log single command" {
   run_log_script '@go.log_command echo Hello, World!'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'echo Hello, World!'
-    'Hello, World!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'echo Hello, World!' \
+    'Hello, World!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: logging to a file doesn't repeat lines or skip other log files" {
@@ -35,16 +33,14 @@ teardown() {
     "@go.log_add_output_file '$info_log' INFO" \
     '@go.log INFO Invoking _GO_SCRIPT: $_GO_SCRIPT' \
     '@go.log_command function_that_logs_info echo Hello, World!'
+
   assert_success
-
-  local expected_log_lines=(
-    INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT"
-    RUN  'function_that_logs_info echo Hello, World!'
-    INFO 'echo Hello, World!'
-    'Hello, World!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
+    RUN  'function_that_logs_info echo Hello, World!' \
+    INFO 'echo Hello, World!' \
+    'Hello, World!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
   assert_log_file_equals "$info_log" \
     INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
     INFO 'echo Hello, World!'
@@ -57,15 +53,13 @@ teardown() {
       '  exit 127' \
       '}' \
       '@go.log_command failing_function foo bar baz'
+
   assert_failure
-
-  local expected_log_lines=(
-    RUN 'failing_function foo bar baz'
-    '\e[1mfoo bar baz\e[0m'
-    ERROR 'failing_function foo bar baz (exit status 127)')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'failing_function foo bar baz' \
+    '\e[1mfoo bar baz\e[0m' \
+    ERROR 'failing_function foo bar baz (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log failing command to standard error with formatting" {
@@ -78,16 +72,14 @@ teardown() {
       '  exit 127' \
       '}' \
       '@go.log_command failing_function foo bar baz'
+
   assert_failure
-
-  local expected_log_lines=(
-    "$formatted_run_level_label" 'failing_function foo bar baz'
-    "$(printf '%b' '\e[1mfoo bar baz\e[0m')"
-    "$formatted_error_level_label"
-      'failing_function foo bar baz (exit status 127)')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    "$formatted_run_level_label" 'failing_function foo bar baz' \
+    "$(printf '%b' '\e[1mfoo bar baz\e[0m')" \
+    "$formatted_error_level_label" \
+      'failing_function foo bar baz (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log single failing command in critical section" {
@@ -95,44 +87,40 @@ teardown() {
     '@go.critical_section_begin' \
     '@go.log_command failing_function foo bar baz' \
     '@go.critical_section_end'
+
   assert_failure
-
-  local expected_log_lines=(
-    RUN 'failing_function foo bar baz'
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "$(test_script_stack_trace_item 1)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "$(test_script_stack_trace_item 1)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log single failing command without executing during dry run" {
   _GO_DRY_RUN='true' run_log_script \
     'failing_function() { return 127; }' \
     '@go.log_command failing_function foo bar baz'
-  assert_success
 
-  assert_log_equals RUN 'failing_function foo bar baz'
-  assert_log_file_equals "$TEST_LOG_FILE" \
+  assert_success
+  assert_log_equals \
     RUN 'failing_function foo bar baz'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log multiple commands" {
   run_log_script '@go.log_command echo Hello, World!' \
     "@go.log_command echo I don\'t know why you say goodbye," \
     '@go.log_command echo while I say hello...'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN "echo I don't know why you say goodbye,"
-    "I don't know why you say goodbye,"
-    RUN "echo while I say hello..."
-    "while I say hello...")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN "echo I don't know why you say goodbye," \
+    "I don't know why you say goodbye," \
+    RUN "echo while I say hello..." \
+    "while I say hello..."
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log multiple commands, second one fails" {
@@ -140,18 +128,16 @@ teardown() {
     '@go.log_command echo Hello, World!' \
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command echo Goodbye, World!'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN "failing_function foo bar baz"
-    ERROR 'failing_function foo bar baz (exit status 127)'
-    RUN "echo Goodbye, World!"
-    "Goodbye, World!")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN "failing_function foo bar baz" \
+    ERROR 'failing_function foo bar baz (exit status 127)' \
+    RUN "echo Goodbye, World!" \
+    "Goodbye, World!"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log multiple commands, second one fails in critical section" {
@@ -161,17 +147,15 @@ teardown() {
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command echo Goodbye, World!' \
     '@go.critical_section_end'
+
   assert_failure
-
-  local expected_log_lines=(
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN "failing_function foo bar baz"
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "$(test_script_stack_trace_item 2)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'echo Hello, World!'\
+    'Hello, World!' \
+    RUN "failing_function foo bar baz" \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "$(test_script_stack_trace_item 2)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log multiple commands without executing during dry run" {
@@ -180,15 +164,13 @@ teardown() {
     '@go.log_command echo Hello, World!' \
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command echo Goodbye, World!'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'echo Hello, World!'
-    RUN "failing_function foo bar baz"
-    RUN 'echo Goodbye, World!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'echo Hello, World!' \
+    RUN "failing_function foo bar baz" \
+    RUN 'echo Goodbye, World!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: critical section in function" {
@@ -204,19 +186,17 @@ teardown() {
     '@go.log_command critical_subsection Hello, World!' \
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command echo We made it!'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'critical_subsection Hello, World!'
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN 'failing_function foo bar baz'
-    ERROR 'failing_function foo bar baz (exit status 127)'
-    RUN 'echo We made it!'
-    'We made it!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'critical_subsection Hello, World!' \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN 'failing_function foo bar baz' \
+    ERROR 'failing_function foo bar baz (exit status 127)' \
+    RUN 'echo We made it!' \
+    'We made it!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: nested critical sections" {
@@ -231,19 +211,17 @@ teardown() {
     '@go.critical_section_end' \
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command echo We made it!'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'critical_subsection Hello, World!'
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN 'failing_function foo bar baz'
-    ERROR 'failing_function foo bar baz (exit status 127)'
-    RUN 'echo We made it!'
-    'We made it!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'critical_subsection Hello, World!' \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN 'failing_function foo bar baz' \
+    ERROR 'failing_function foo bar baz (exit status 127)' \
+    RUN 'echo We made it!' \
+    'We made it!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: nested critical sections dry run" {
@@ -261,15 +239,13 @@ teardown() {
     '@go.critical_section_end' \
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command echo We made it!'
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'critical_subsection Hello, World!'
-    RUN 'failing_function foo bar baz'
-    RUN 'echo We made it!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'critical_subsection Hello, World!' \
+    RUN 'failing_function foo bar baz' \
+    RUN 'echo We made it!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: critical section is reentrant" {
@@ -284,18 +260,16 @@ teardown() {
     '@go.log_command failing_function foo bar baz' \
     '@go.critical_section_end' \
     "@go.log_command echo We shouldn\'t make it this far..."
+
   assert_failure
-
-  local expected_log_lines=(
-    RUN 'critical_subsection Hello, World!'
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN 'failing_function foo bar baz'
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "$(test_script_stack_trace_item 2)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'critical_subsection Hello, World!' \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "$(test_script_stack_trace_item 2)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: critical section counter does not go below zero" {
@@ -310,19 +284,17 @@ teardown() {
     '@go.log_command failing_function foo bar baz' \
     '@go.log_command Should not get this far' \
     '@go.critical_section_end'
+
   assert_failure
-
-  local expected_log_lines=(
-    RUN 'echo Hello, World!'
-    'Hello, World!'
-    RUN 'failing_function foo bar baz'
-    ERROR 'failing_function foo bar baz (exit status 127)'
-    RUN 'failing_function foo bar baz'
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "$(test_script_stack_trace_item 2)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'echo Hello, World!' \
+    'Hello, World!' \
+    RUN 'failing_function foo bar baz' \
+    ERROR 'failing_function foo bar baz (exit status 127)' \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "$(test_script_stack_trace_item 2)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: log and run command script using @go" {
@@ -332,14 +304,12 @@ teardown() {
   create_test_command_script 'project-command-script' 'echo $*'
 
   run test-go Hello, World!
+
   assert_success
-
-  local expected_log_lines=(
-    RUN 'test-go project-command-script Hello, World!'
-    'Hello, World!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'test-go project-command-script Hello, World!' \
+    'Hello, World!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: critical section in parent script applies to command script" {
@@ -358,17 +328,15 @@ teardown() {
   set_go_core_stack_trace_components
   set_log_command_stack_trace_items
 
-  local expected_log_lines=(
-    RUN 'test-go project-command-script foo bar baz'
-    RUN 'failing_function foo bar baz'
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "  $TEST_GO_SCRIPTS_DIR/project-command-script:3 source"
-    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}"
-    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}"
-    "$(test_script_stack_trace_item 2)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'test-go project-command-script foo bar baz' \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPTS_DIR/project-command-script:3 source" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
+    "$(test_script_stack_trace_item 2)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: critical section in command script applies to parent script" {
@@ -387,17 +355,15 @@ teardown() {
   set_go_core_stack_trace_components
   set_log_command_stack_trace_items
 
-  local expected_log_lines=(
-    RUN 'test-go project-command-script foo bar baz'
-    RUN 'failing_function foo bar baz'
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "  $TEST_GO_SCRIPTS_DIR/project-command-script:4 source"
-    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}"
-    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}"
-    "$(test_script_stack_trace_item 1)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN 'test-go project-command-script foo bar baz' \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPTS_DIR/project-command-script:4 source" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
+    "$(test_script_stack_trace_item 1)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: exit/fatal status pattern applies only when last line printed" {
@@ -411,7 +377,7 @@ teardown() {
   assert_success
   # Note that the "fake" exit status lines gets swallowed.
   assert_log_equals RUN 'test-go project-command-script'
-  assert_log_file_equals "$TEST_LOG_FILE" RUN 'test-go project-command-script'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: capture sourced script exit status when not from @go.log FATAL" {
@@ -424,17 +390,15 @@ teardown() {
     'exit 127'
 
   run test-go
-  assert_failure
 
   # Note that the `@go.log_command` and `go-core.bash` items aren't in the stack
   # trace.
-  local expected_log_lines=(
-    RUN ". $TEST_GO_SCRIPTS_RELATIVE_DIR/sourced-script"
-    FATAL ". $TEST_GO_SCRIPTS_RELATIVE_DIR/sourced-script (exit status 127)"
-    "$(test_script_stack_trace_item 1)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_failure
+  assert_log_equals \
+    RUN ". $TEST_GO_SCRIPTS_RELATIVE_DIR/sourced-script" \
+    FATAL ". $TEST_GO_SCRIPTS_RELATIVE_DIR/sourced-script (exit status 127)" \
+    "$(test_script_stack_trace_item 1)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: exit status from subcommand in other language" {
@@ -453,16 +417,14 @@ teardown() {
     'exit 127;'
 
   run test-go perl-command-script foo bar baz
+
   assert_failure
-
-  local expected_log_lines=(
-    RUN "test-go perl-command-script foo bar baz"
-    'foo bar baz'
-    FATAL "test-go perl-command-script foo bar baz (exit status 127)"
-    "$(test_script_stack_trace_item 1)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    RUN "test-go perl-command-script foo bar baz" \
+    'foo bar baz' \
+    FATAL "test-go perl-command-script foo bar baz (exit status 127)" \
+    "$(test_script_stack_trace_item 1)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: fatal status for subcommand of command in another language" {
@@ -503,21 +465,19 @@ teardown() {
   #   top-level `TEST_GO_SCRIPT` invocation by the perl-command-script.
   # - The second is from the top-level `TEST_GO_SCRIPT`, based on the return
   #   status from the perl-command-script.
-  local expected_log_lines=(
-    RUN "test-go perl-command-script foo bar baz"
-    'foo bar baz'
-    RUN "test-go bash-command-script foo bar baz"
-    RUN 'failing_function foo bar baz'
-    FATAL 'failing_function foo bar baz (exit status 127)'
-    "  $TEST_GO_SCRIPTS_DIR/bash-command-script:3 source"
-    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}"
-    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}"
+  assert_log_equals \
+    RUN "test-go perl-command-script foo bar baz" \
+    'foo bar baz' \
+    RUN "test-go bash-command-script foo bar baz" \
+    RUN 'failing_function foo bar baz' \
+    FATAL 'failing_function foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPTS_DIR/bash-command-script:3 source" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
+    "$(test_script_stack_trace_item 1)" \
+    FATAL 'test-go perl-command-script foo bar baz (exit status 127)' \
     "$(test_script_stack_trace_item 1)"
-    FATAL 'test-go perl-command-script foo bar baz (exit status 127)'
-    "$(test_script_stack_trace_item 1)")
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
 @test "$SUITE: subcommand of command in other language appends to all logs" {
@@ -549,20 +509,18 @@ teardown() {
     '@go.log_command function_that_logs_info "$@"'
 
   run test-go perl-command-script echo Hello, World!
+
   assert_success
-
-  local expected_log_lines=(
-    INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT"
-    RUN "test-go perl-command-script echo Hello, World!"
-    'echo Hello, World!'
-    INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT"
-    RUN "test-go bash-command-script echo Hello, World!"
-    RUN 'function_that_logs_info echo Hello, World!'
-    INFO 'echo Hello, World!'
-    'Hello, World!')
-
-  assert_log_equals "${expected_log_lines[@]}"
-  assert_log_file_equals "$TEST_LOG_FILE" "${expected_log_lines[@]}"
+  assert_log_equals \
+    INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
+    RUN "test-go perl-command-script echo Hello, World!" \
+    'echo Hello, World!' \
+    INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
+    RUN "test-go bash-command-script echo Hello, World!" \
+    RUN 'function_that_logs_info echo Hello, World!' \
+    INFO 'echo Hello, World!' \
+    'Hello, World!'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
   assert_log_file_equals "$info_log" \
     INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
     INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
