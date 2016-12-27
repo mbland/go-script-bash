@@ -438,6 +438,23 @@ check_expected_output() {
     'baz'
 }
 
+@test "$SUITE: assert_lines_match" {
+  expect_success "printf 'foo\nbar\nbaz\n'" \
+    "assert_lines_match 'f.*' 'b[a-z]r' '^baz$'"
+}
+
+@test "$SUITE: assert_lines_match failure" {
+  expect_failure "printf 'foo\nbar\nbaz\n'" \
+    "assert_lines_match 'f.*' 'qu+x' '^baz$'" \
+    'line 1 does not match expected pattern:' \
+    "  pattern: 'qu+x'" \
+    "  value:   'bar'" \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz'
+}
+
 @test "$SUITE: fail_if fails when assertion unknown" {
   expect_failure "echo 'Hello, world!'" \
     'fail_if foobar "$output" "echo result"' \
@@ -526,6 +543,25 @@ check_expected_output() {
     "fail_if line_matches '0' 'Hello'" \
     'Expected line 0 not to match:' \
     "  'Hello'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_lines_match fails" {
+  expect_success "printf 'foo\nbar\nbaz\n'" \
+    "fail_if lines_match 'f.*' 'qu+x' '^baz\$'"
+}
+
+@test "$SUITE: fail_if fails when assert_lines_match succeeds" {
+  expect_failure "printf 'foo\nbar\nbaz\n'" \
+    "fail_if lines_match 'f.*' 'b[a-z]r' '^baz\$'" \
+    'Expected lines not to match:' \
+    "  'f.*'" \
+    "  'b[a-z]r'" \
+    "  '^baz\$'" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz'
 }
 
 @test "$SUITE: fail_if succeeds when assert_lines_equal fails" {

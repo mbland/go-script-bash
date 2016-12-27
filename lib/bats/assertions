@@ -263,6 +263,17 @@ assert_lines_equal() {
   __assert_lines 'assert_equal' "$@"
 }
 
+# Validates that each output line matches each corresponding argument
+#
+# Also ensures there are no more and no fewer lines of output than expected.
+#
+# Arguments:
+#   $@: Values to compare to each element of `${lines[@]}` for equality
+assert_lines_match() {
+  set +o functrace
+  __assert_lines 'assert_matches' "$@"
+}
+
 # Scrubs the Bats stacks of functions from the assertion source file
 #
 # You must ensure that `set +o functrace` is in effect prior to calling this
