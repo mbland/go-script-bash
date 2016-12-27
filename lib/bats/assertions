@@ -55,9 +55,11 @@ fail() {
   local reason="$1"
 
   if [[ -n "$reason" ]]; then
-    printf 'failed for the following reason:\n  %s\n' "$reason" >&2
+    printf '%s\n' "$reason" >&2
   fi
-  printf 'STATUS: %s\nOUTPUT:\n%s\n' "$status" "$output" >&2
+  if [[ -z "$__bats_fail_suppress_output" ]]; then
+    printf 'STATUS: %s\nOUTPUT:\n%s\n' "$status" "$output" >&2
+  fi
   __return_from_bats_assertion 1
 }
 

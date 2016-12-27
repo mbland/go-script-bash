@@ -129,13 +129,12 @@ check_expected_output() {
 }
 
 @test "$SUITE: fail uses the supplied reason message" {
-  expect_failure "echo 'Hello, world!'" \
+  expect_failure "echo 'Goodbye, world!'" \
     'fail "You say \"Goodbye,\" while I say \"Hello...\""' \
-    'failed for the following reason:' \
-    '  You say "Goodbye," while I say "Hello..."' \
+    'You say "Goodbye," while I say "Hello..."' \
     'STATUS: 0' \
     'OUTPUT:' \
-    'Hello, world!'
+    'Goodbye, world!'
 }
 
 @test "$SUITE: assert_equal success" {
