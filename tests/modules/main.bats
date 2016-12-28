@@ -49,11 +49,7 @@ get_first_and_last_core_module_summaries() {
 }
 
 @test "$SUITE: error if parsing summary fails" {
-  if fs_missing_permission_support; then
-    skip "Can't trigger condition on this file system"
-  elif [[ "$EUID" -eq '0' ]]; then
-    skip "Can't trigger condition when run by superuser"
-  fi
+  skip_if_cannot_trigger_file_permission_failure
 
   local module_path="$TEST_GO_PLUGINS_DIR/_foo/lib/_plugh"
   chmod ugo-r "$module_path"
