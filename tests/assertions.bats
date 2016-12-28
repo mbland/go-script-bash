@@ -44,8 +44,7 @@ expect_success() {
 expect_failure() {
   local command="$1"
   local assertion="$2"
-  shift
-  shift
+  shift 2
 
   eval run $command
   eval run $assertion
@@ -56,15 +55,15 @@ expect_failure() {
     return 1
   fi
 
-  eval $assertion || :
+  local __expected_output=("$@")
+  check_expected_output
+
+  eval $assertion &>/dev/null || :
 
   if [[ ! "$-" =~ T ]]; then
     printf "The assertion did not reset \`set -o functrace\`: $-" >&2
     return 1
   fi
-
-  local __expected_output=("$@")
-  check_expected_output
 
   run_test_script "  run $command" "  $assertion"
 
