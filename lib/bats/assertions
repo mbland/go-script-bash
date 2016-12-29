@@ -112,6 +112,11 @@ fail_if() {
     label="lines"
     constraints=("${@}")
     ;;
+  assert_file_*)
+    __bats_fail_suppress_output=
+    label="'$1'"
+    constraints=("${@:2}")
+    ;;
   *)
     printf "Unknown assertion: '%s'\n" "$assertion" >&2
     __return_from_bats_assertion '1'
@@ -274,6 +279,36 @@ assert_lines_match() {
   __assert_lines 'assert_matches' "$@"
 }
 
+# Validates that a file contains exactly the specified output
+#
+# Arguments:
+#   file_path:  Path to file to evaluate
+#    ...:       Exact lines expected to appear in the file
+assert_file_equals() {
+  set +o functrace
+  __assert_file 'assert_lines_equal' "$@"
+}
+
+# Validates that a file matches a single regular expression
+#
+# Arguments:
+#   file_path:  Path to the file to examine
+#   pattern:    Regular expression used to validate the contents of the file
+assert_file_matches() {
+  set +o functrace
+  __assert_file 'assert_matches' "$@"
+}
+
+# Validates that every line in a file matches a corresponding regular expression
+#
+# Arguments:
+#   file_path:  Path to the file to examine
+#   ...:        Regular expressions used to validate each line of the file
+assert_file_lines_match() {
+  set +o functrace
+  __assert_file 'assert_lines_match' "$@"
+}
+
 # Scrubs the Bats stacks of functions from the assertion source file
 #
 # You must ensure that `set +o functrace` is in effect prior to calling this
@@ -311,6 +346,47 @@ return_from_bats_assertion() {
   fi
   set -o functrace
   return "$result"
+}
+
+# Sets the `output` and `lines` variables to the contents of a file.
+#
+# This differs from `run cat $file` or similar in that it automatically strips
+# `\r` characters from files produced on Windows systems and preserves empty
+# lines.
+#
+# Normally you should use one of the `assert_file_*` assertions, which rely on
+# this function; but if you wish to examine specific output lines without the
+# regard to the rest (such as the first or last lines), or search for several
+# regular expressions in no particular order, this function may help.
+#
+# Arguments:
+#   file_path:  Path to file from which `output` and `lines` will be filled
+set_bats_output_and_lines_from_file() {
+  set +o functrace
+  local file_path="$1"
+
+  if [[ ! -f "$file_path" ]]; then
+    printf "'%s' doesn't exist or isn't a regular file." "$file_path" >&2
+    __return_from_bats_assertion 1
+    return
+  elif [[ ! -r "$file_path" ]]; then
+    printf "You don't have permission to access '%s'." "$file_path" >&2
+    __return_from_bats_assertion 1
+    return
+  fi
+
+  lines=()
+  output=''
+
+  # This loop preserves leading and trailing blank lines. We need to chomp the
+  # last newline off of `output` though, to make it consistent with the
+  # conventional `output` format.
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+    lines+=("$line")
+    output+="$line"$'\n'
+  done <"$file_path"
+  output="${output%$'\n'}"
 }
 
 # --------------------------------
@@ -410,6 +486,31 @@ __assert_lines() {
   else
     __return_from_bats_assertion
   fi
+}
+
+# Common implementation for assertions that evaluate a file's contents
+#
+# Arguments:
+#   assertion:  The assertion to execute
+#   file_path:  Path to file to evaluate
+#   ...:        Assertion constraints for the contents of `file_path`
+__assert_file() {
+  local assertion="$1"
+  local file_path="$2"
+  shift 2
+  local constraints=("$@")
+
+  set_bats_output_and_lines_from_file "$file_path"
+
+  if [[ "$assertion" == 'assert_matches' ]]; then
+    if [[ "$#" -ne '1' ]]; then
+      echo "ERROR: ${FUNCNAME[1]} takes exactly two arguments" >&2
+      __return_from_bats_assertion 1
+    fi
+    constraints=("$1" "$output" "The content of '$file_path'")
+  fi
+
+  "$assertion" "${constraints[@]}"
 }
 
 # Scrubs the Bats stacks of references to functions from this file

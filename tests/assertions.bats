@@ -4,6 +4,7 @@ load environment
 
 TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
 FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
+export TEST_OUTPUT_FILE="$BATS_TEST_ROOTDIR/test-output.txt"
 
 setup() {
   mkdir "$BATS_TEST_ROOTDIR"
@@ -59,6 +60,7 @@ expect_failure() {
   local command="$1"
   local assertion="$2"
   shift 2
+  local i
 
   eval run $command
   eval run $assertion
@@ -69,7 +71,20 @@ expect_failure() {
     return 1
   fi
 
+  # Since an in-process "run" will chomp trailing whitespace off of `$output`,
+  # we have to add it back here to avoid spurious failures.
+  #
+  # If the whitespace is really missing, the call to `check_expected_output` at
+  # the end of the function will catch it, since the test script assertion
+  # failure will get called directly (instead of under `run`) and will keep all
+  # of the whitespace.
   local __expected_output=("$@")
+  for ((i=${#__expected_output[@]} - 1; i != -1; --i)); do
+    if [[ -n "${__expected_output[$i]}" ]]; then
+      break
+    fi
+    output+=$'\n'
+  done
   check_expected_output
 
   run_test_script "  run $command" "  $assertion"
@@ -130,6 +145,18 @@ check_expected_output() {
     return 1
   fi
 }
+
+# Since we can't really redirect output as part of an `expect_success` or
+# `expect_failure` argument (it redirects the output from `eval run $command`),
+# this encapsulates the redirection to `TEST_OUTPUT_FILE`.
+#
+# This function and `TEST_OUTPUT_FILE` are exported to make them available to
+# generated test scripts.
+test_file_printf() {
+  echo "printf \"$*\" \>\"$TEST_OUTPUT_FILE\""
+  printf "$@" >"$TEST_OUTPUT_FILE"
+}
+export -f test_file_printf
 
 @test "$SUITE: fail prints status and output, returns error" {
   expect_failure "echo 'Hello, world!'" \
@@ -455,6 +482,101 @@ check_expected_output() {
     'baz'
 }
 
+@test "$SUITE: set_bats_output_and_lines_from_file" {
+  assert_equal '' "$output" 'output before'
+  assert_equal '' "${lines[*]}" 'lines before'
+
+  test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'
+  set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
+
+  # Note that the trailing newline is stripped, which is consistent with how
+  # `output` is conventionally set.
+  assert_equal $'\nfoo\n\nbar\n\nbaz\n' "$output" 'output after'
+  assert_lines_equal '' 'foo' '' 'bar' '' 'baz' ''
+}
+
+@test "$SUITE: set_bats_output_and_lines_from_file fails if file is missing" {
+  run set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
+  assert_failure "'$TEST_OUTPUT_FILE' doesn't exist or isn't a regular file."
+}
+
+@test "$SUITE: set_bats_output_and_lines_from_file fails if not regular file" {
+  run set_bats_output_and_lines_from_file "${BATS_TEST_ROOTDIR}"
+  assert_failure "'$BATS_TEST_ROOTDIR' doesn't exist or isn't a regular file."
+}
+
+@test "$SUITE: set_bats_output_and_lines_from_file fails if permission denied" {
+  skip_if_cannot_trigger_file_permission_failure
+
+  test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'
+  chmod u-r "$TEST_OUTPUT_FILE"
+  run set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
+  assert_failure "You don't have permission to access '$TEST_OUTPUT_FILE'."
+}
+
+@test "$SUITE: assert_file_equals" {
+  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''"
+}
+
+@test "$SUITE: assert_file_equals failure" {
+  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'quux' '' 'baz' ''" \
+    'line 3 not equal to expected value:' \
+    "  expected: 'quux'" \
+    "  actual:   'bar'" \
+    'OUTPUT:' \
+    '' \
+    'foo' \
+    '' \
+    'bar' \
+    '' \
+    'baz' \
+    ''
+}
+
+@test "$SUITE: assert_file_matches" {
+  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "assert_file_matches '$TEST_OUTPUT_FILE' 'foo.*b[a-z]r.*baz'"
+}
+
+@test "$SUITE: assert_file_matches failure" {
+  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "assert_file_matches '$TEST_OUTPUT_FILE' 'foo.*qu+x.*baz'" \
+    "The content of '$TEST_OUTPUT_FILE' does not match expected pattern:" \
+    "  pattern: 'foo.*qu+x.*baz'" \
+    "  value:   '" \
+    'foo' \
+    '' \
+    'bar' \
+    '' \
+    'baz' \
+    "'"
+}
+
+@test "$SUITE: assert_file_lines_match" {
+  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "assert_file_lines_match '$TEST_OUTPUT_FILE' \
+      '^$' 'f.*' '^$' 'b[a-z]r' '^$' '^baz$' '^$'"
+}
+
+@test "$SUITE: assert_file_lines_match failure" {
+  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "assert_file_lines_match '$TEST_OUTPUT_FILE' \
+      '^$' 'f.*' '^$' 'qu+x' '^$' '^baz$' '^$'" \
+    'line 3 does not match expected pattern:' \
+    "  pattern: 'qu+x'" \
+    "  value:   'bar'" \
+    'OUTPUT:' \
+    '' \
+    'foo' \
+    '' \
+    'bar' \
+    '' \
+    'baz' \
+    ''
+}
+
 @test "$SUITE: fail_if fails when assertion unknown" {
   expect_failure "echo 'Hello, world!'" \
     'fail_if foobar "$output" "echo result"' \
@@ -581,4 +703,81 @@ check_expected_output() {
     'foo' \
     'bar' \
     'baz'
+}
+
+@test "$SUITE: fail_if succeeds when assert_file_equals fails" {
+  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "fail_if file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'quux' '' 'baz' ''"
+}
+
+@test "$SUITE: fail_if fails when assert_file_equals succeeds" {
+  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "fail_if file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''" \
+    "Expected '$TEST_OUTPUT_FILE' not to equal:" \
+    "  ''" \
+    "  'foo'" \
+    "  ''" \
+    "  'bar'" \
+    "  ''" \
+    "  'baz'" \
+    "  ''" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    '' \
+    'foo' \
+    '' \
+    'bar' \
+    '' \
+    'baz' \
+    ''
+}
+
+@test "$SUITE: fail_if succeeds when assert_file_matches fails" {
+  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "fail_if file_matches '$TEST_OUTPUT_FILE' 'foo.*qu+x.*baz'"
+}
+
+@test "$SUITE: fail_if fails when assert_file_matches succeeds" {
+  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "fail_if file_matches '$TEST_OUTPUT_FILE' 'foo.*b[a-z]r.*baz'" \
+    "Expected '$TEST_OUTPUT_FILE' not to match:" \
+    "  'foo.*b[a-z]r.*baz'" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    '' \
+    'foo' \
+    '' \
+    'bar' \
+    '' \
+    'baz' \
+    ''
+}
+
+@test "$SUITE: fail_if succeeds when assert_file_lines_match fails" {
+  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "fail_if file_lines_match '$TEST_OUTPUT_FILE' \
+      '^$' 'f.*' '^$' 'qu+x' '^$' '^baz$' '^$'"
+}
+
+@test "$SUITE: fail_if fails when assert_file_lines_match succeeds" {
+  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+    "fail_if file_lines_match '$TEST_OUTPUT_FILE' \
+      '^$' 'f.*' '^$' 'b[a-z]r' '^$' '^baz$' '^$'" \
+    "Expected '$TEST_OUTPUT_FILE' not to match:" \
+    "  '^$'" \
+    "  'f.*'" \
+    "  '^$'" \
+    "  'b[a-z]r'" \
+    "  '^$'" \
+    "  '^baz$'" \
+    "  '^$'" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    '' \
+    'foo' \
+    '' \
+    'bar' \
+    '' \
+    'baz' \
+    ''
 }
