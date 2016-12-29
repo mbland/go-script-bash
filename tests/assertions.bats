@@ -5,8 +5,12 @@ load environment
 TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
 FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
 
+setup() {
+  mkdir "$BATS_TEST_ROOTDIR"
+}
+
 teardown() {
-  rm -f "$TEST_SCRIPT" "$FAILING_TEST_SCRIPT"
+  remove_bats_test_dirs
 }
 
 expect_success() {
@@ -82,23 +86,18 @@ expect_failure() {
 }
 
 run_test_script() {
-  local lines=('#! /usr/bin/env bats'
-    "load '$_GO_CORE_DIR/lib/bats/assertions'"
-    "@test \"$BATS_TEST_DESCRIPTION\" {"
-    "$@"
-    '}')
-
-  mkdir -p "${TEST_SCRIPT%/*}"
-  local IFS=$'\n'
-  echo "${lines[*]}" > "$TEST_SCRIPT"
-  chmod 700 "$TEST_SCRIPT"
+  create_bats_test_script "${TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
+    '#! /usr/bin/env bats' \
+    "load '$_GO_CORE_DIR/lib/bats/assertions'" \
+    "@test \"$BATS_TEST_DESCRIPTION\" {" \
+    "$@" \
+    '}'
   run "$TEST_SCRIPT"
 }
 
 write_failing_test_script() {
-  echo '#! /usr/bin/env bash' >"$FAILING_TEST_SCRIPT"
-  echo 'echo "$@"; exit 1' >>"$FAILING_TEST_SCRIPT"
-  chmod 700 "$FAILING_TEST_SCRIPT"
+  create_bats_test_script "${FAILING_TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
+    'echo "$@"; exit 1'
 }
 
 check_expected_output() {

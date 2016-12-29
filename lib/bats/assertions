@@ -278,11 +278,11 @@ return_from_bats_assertion() {
 # None of the functions below this line are part of the public interface.
 # --------------------------------
 
-# Common implementation for assertions that evaluate the Bats $output variable
+# Common implementation for assertions that evaluate the Bats `$output` variable
 #
 # Arguments:
-#   $1: The assertion to execute
-#   $2: The assertion argument signifying the expected outcome for $output
+#   assertion:   The assertion to execute
+#   constraint:  The assertion constraint used to evaluate $output
 __assert_output() {
   local assertion="$1"
   local constraint="$2"
@@ -295,12 +295,12 @@ __assert_output() {
   fi
 }
 
-# Common implementation for assertions that evaluate the Bats $line variable
+# Common implementation for assertions that evaluate a single `$lines` element
 #
 # Arguments:
-#   $1: The assertion to execute
-#   $2: The index into $line identifying the line to evaluate
-#   $3: The assertion argument signifying the expected outcome for ${line[$2]}
+#   assertion:   The assertion to execute
+#   lineno:      The index into $lines identifying the line to evaluate
+#   constraint:  The assertion constraint used to evaluate ${lines[$lineno]}
 __assert_line() {
   local assertion="$1"
   local lineno="$2"
