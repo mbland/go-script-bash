@@ -5,8 +5,12 @@ load environment
 TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
 FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
 
+setup() {
+  mkdir "$BATS_TEST_ROOTDIR"
+}
+
 teardown() {
-  rm -f "$TEST_SCRIPT" "$FAILING_TEST_SCRIPT"
+  remove_bats_test_dirs
 }
 
 expect_success() {
@@ -44,8 +48,7 @@ expect_success() {
 expect_failure() {
   local command="$1"
   local assertion="$2"
-  shift
-  shift
+  shift 2
 
   eval run $command
   eval run $assertion
@@ -56,15 +59,15 @@ expect_failure() {
     return 1
   fi
 
-  eval $assertion || :
+  local __expected_output=("$@")
+  check_expected_output
+
+  eval $assertion &>/dev/null || :
 
   if [[ ! "$-" =~ T ]]; then
     printf "The assertion did not reset \`set -o functrace\`: $-" >&2
     return 1
   fi
-
-  local __expected_output=("$@")
-  check_expected_output
 
   run_test_script "  run $command" "  $assertion"
 
@@ -83,23 +86,18 @@ expect_failure() {
 }
 
 run_test_script() {
-  local lines=('#! /usr/bin/env bats'
-    "load '$_GO_CORE_DIR/lib/bats/assertions'"
-    "@test \"$BATS_TEST_DESCRIPTION\" {"
-    "$@"
-    '}')
-
-  mkdir -p "${TEST_SCRIPT%/*}"
-  local IFS=$'\n'
-  echo "${lines[*]}" > "$TEST_SCRIPT"
-  chmod 700 "$TEST_SCRIPT"
+  create_bats_test_script "${TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
+    '#! /usr/bin/env bats' \
+    "load '$_GO_CORE_DIR/lib/bats/assertions'" \
+    "@test \"$BATS_TEST_DESCRIPTION\" {" \
+    "$@" \
+    '}'
   run "$TEST_SCRIPT"
 }
 
 write_failing_test_script() {
-  echo '#! /usr/bin/env bash' >"$FAILING_TEST_SCRIPT"
-  echo 'echo "$@"; exit 1' >>"$FAILING_TEST_SCRIPT"
-  chmod 700 "$FAILING_TEST_SCRIPT"
+  create_bats_test_script "${FAILING_TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
+    'echo "$@"; exit 1'
 }
 
 check_expected_output() {
@@ -129,13 +127,12 @@ check_expected_output() {
 }
 
 @test "$SUITE: fail uses the supplied reason message" {
-  expect_failure "echo 'Hello, world!'" \
+  expect_failure "echo 'Goodbye, world!'" \
     'fail "You say \"Goodbye,\" while I say \"Hello...\""' \
-    'failed for the following reason:' \
-    '  You say "Goodbye," while I say "Hello..."' \
+    'You say "Goodbye," while I say "Hello..."' \
     'STATUS: 0' \
     'OUTPUT:' \
-    'Hello, world!'
+    'Goodbye, world!'
 }
 
 @test "$SUITE: assert_equal success" {

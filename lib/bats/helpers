@@ -21,7 +21,12 @@
 # It's recommended you use BATS_TEST_ROOTDIR as the root directory for all
 # temporary files, as it contains a space to help ensure that most shell
 # variables are quoted correctly. The create_bats_test_dirs() and
-# create_bats_test_script() functions will create this directory automatically.
+# create_bats_test_script() functions will create this directory automatically,
+# but you may also want to create it manually in setup():
+#
+#   setup() {
+#     mkdir "$BATS_TEST_ROOTDIR"
+#   }
 #
 # If you create BATS_TEST_ROOTDIR directly or use one of the functions mentioned
 # above, make sure your Bats teardown() function calls remove_bats_test_dirs(),
