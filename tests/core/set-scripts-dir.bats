@@ -35,13 +35,8 @@ teardown() {
   assert_failure "$expected"
 }
 
-@test "$SUITE: produce an error if the script dir isn't readable or executable" {
-  if fs_missing_permission_support; then
-    # Even using icacls to set permissions, the dir still seems accessible.
-    skip "Can't trigger condition on this file system"
-  elif [[ "$EUID" -eq '0' ]]; then
-    skip "Can't trigger condition when run by superuser"
-  fi
+@test "$SUITE: produce an error if the script dir can't be read or accessed" {
+  skip_if_cannot_trigger_file_permission_failure
 
   local expected="ERROR: you do not have permission to access the "
   expected+="$TEST_GO_SCRIPTS_DIR directory"
