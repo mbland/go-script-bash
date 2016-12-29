@@ -392,3 +392,112 @@ check_expected_output() {
     "  actual:   ''" \
     'There are 3 fewer lines of output than expected.'
 }
+
+@test "$SUITE: fail_if fails when assertion unknown" {
+  expect_failure "echo 'Hello, world!'" \
+    'fail_if foobar "$output" "echo result"' \
+    "Unknown assertion: 'assert_foobar'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_equal fails" {
+  expect_success "echo 'Hello, world!'" \
+    'fail_if equal "Goodbye, world!" "$output" "echo result"'
+}
+
+@test "$SUITE: fail_if fails when assert_equal succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    'fail_if equal "Hello, world!" "$output" "echo result"' \
+    'Expected echo result not to equal:' \
+    "  'Hello, world!'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_matches fails" {
+  expect_success "echo 'Hello, world!'" \
+    'fail_if matches "Goodbye" "$output" "echo result"'
+}
+
+@test "$SUITE: fail_if fails when assert_matches succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    'fail_if matches "Hello" "$output" "echo result"' \
+    'Expected echo result not to match:' \
+    "  'Hello'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_output fails" {
+  expect_success "echo 'Hello, world!'" \
+    "fail_if output 'Goodbye, world!'"
+}
+
+@test "$SUITE: fail_if fails when assert_output succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    "fail_if output 'Hello, world!'" \
+    'Expected output not to equal:' \
+    "  'Hello, world!'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_output_matches fails" {
+  expect_success "echo 'Hello, world!'" \
+    "fail_if output_matches 'Goodbye'"
+}
+
+@test "$SUITE: fail_if fails when assert_output_matches succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    "fail_if output_matches 'Hello'" \
+    'Expected output not to match:' \
+    "  'Hello'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_status fails" {
+  expect_success "echo 'Hello, world!'" \
+    "fail_if status '1'"
+}
+
+@test "$SUITE: fail_if fails when assert_status succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    "fail_if status '0'" \
+    'Expected status not to equal:' \
+    "  '0'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_line_equals fails" {
+  expect_success "echo 'Hello, world!'" \
+    "fail_if line_equals '0' 'Goodbye, world!'"
+}
+
+@test "$SUITE: fail_if fails when assert_line_equals succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    "fail_if line_equals '0' 'Hello, world!'" \
+    'Expected line 0 not to equal:' \
+    "  'Hello, world!'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_line_matches fails" {
+  expect_success "echo 'Hello, world!'" \
+    "fail_if line_matches '0' 'Goodbye'"
+}
+
+@test "$SUITE: fail_if fails when assert_line_matches succeeds" {
+  expect_failure "echo 'Hello, world!'" \
+    "fail_if line_matches '0' 'Hello'" \
+    'Expected line 0 not to match:' \
+    "  'Hello'"
+}
+
+@test "$SUITE: fail_if succeeds when assert_lines_equal fails" {
+  expect_success "printf 'foo\nbar\nbaz\n'" \
+    "fail_if lines_equal 'foo' 'quux' 'baz'"
+}
+
+@test "$SUITE: fail_if fails when assert_lines_equal succeeds" {
+  expect_failure "printf 'foo\nbar\nbaz\n'" \
+    "fail_if lines_equal 'foo' 'bar' 'baz'" \
+    'Expected lines not to equal:' \
+    "  'foo'" \
+    "  'bar'" \
+    "  'baz'" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    'foo' \
+    'bar' \
+    'baz'
+}
