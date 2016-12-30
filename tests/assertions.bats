@@ -26,13 +26,6 @@ expect_success() {
     return 1
   fi
 
-  eval $assertion || :
-
-  if [[ ! "$-" =~ T ]]; then
-    printf "The assertion did not reset \`set -o functrace\`: $-" >&2
-    return 1
-  fi
-
   run_test_script "  run $command" "  $assertion"
 
   if [[ "$status" -ne 0 ]]; then
@@ -42,6 +35,23 @@ expect_success() {
   fi
 
   local __expected_output=('1..1' "ok 1 $BATS_TEST_DESCRIPTION")
+  check_expected_output
+
+  # Redundant checks that the assertion sets `set -o functrace` upon returning,
+  # so that later failures don't show the passing assertion's stack, per issue
+  # #48. Comment out the `check_sets_functrace` call to see the effect.
+  check_sets_functrace "$command" "$assertion"
+  run_test_script \
+    "  run $command" \
+    "  $assertion" \
+    '  assert_equal_numbers() { [[ "$1" -eq "$2" ]]; }' \
+    '  assert_equal_numbers 0 1'
+
+  __expected_output=('1..1'
+    "not ok 1 $BATS_TEST_DESCRIPTION"
+    "# (from function \`assert_equal_numbers' in file $TEST_SCRIPT, line 6,"
+    "#  in test file $TEST_SCRIPT, line 7)"
+    "#   \`assert_equal_numbers 0 1' failed")
   check_expected_output
 }
 
@@ -62,13 +72,6 @@ expect_failure() {
   local __expected_output=("$@")
   check_expected_output
 
-  eval $assertion &>/dev/null || :
-
-  if [[ ! "$-" =~ T ]]; then
-    printf "The assertion did not reset \`set -o functrace\`: $-" >&2
-    return 1
-  fi
-
   run_test_script "  run $command" "  $assertion"
 
   if [[ "$status" -eq '0' ]]; then
@@ -83,6 +86,7 @@ expect_failure() {
     "#   \`$assertion' failed"
     "${__expected_output[@]/#/# }")
   check_expected_output
+  check_sets_functrace "$command" "$assertion"
 }
 
 run_test_script() {
@@ -98,6 +102,23 @@ run_test_script() {
 write_failing_test_script() {
   create_bats_test_script "${FAILING_TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
     'echo "$@"; exit 1'
+}
+
+# If an assertion fails to `set -o functrace` upon returning, it may cause later
+# assertions to show the earlier assertion in the stack trace. See issue #48.
+check_sets_functrace() {
+  local command="$1"
+  local assertion="$2"
+
+  eval run $command
+  set +o functrace
+  eval $assertion &>/dev/null || :
+
+  if [[ ! "$-" =~ T ]]; then
+    printf 'The assertion did not reset \`set -o functrace\`: %s\n' "$-" >&2
+    set -o functrace
+    return 1
+  fi
 }
 
 check_expected_output() {

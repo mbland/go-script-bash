@@ -295,6 +295,8 @@ assert_lines_equal() {
 
   if [[ "$num_errors" -ne '0' ]]; then
     __return_from_bats_assertion 1
+  else
+    __return_from_bats_assertion
   fi
 }
 
@@ -328,14 +330,11 @@ return_from_bats_assertion() {
   local assertion_source_file="$1"
   local result="${2:-0}"
 
-  if [[ "${BATS_CURRENT_STACK_TRACE[0]}" =~ $assertion_source_file ]]; then
-    unset 'BATS_CURRENT_STACK_TRACE[0]'
-  fi
-
+  # Bats sets its `BATS_ERROR_STACK_TRACE` using `BATS_PREVIOUS_STACK_TRACE`
+  # whenever its `ERR` trap fires.
   if [[ "${BATS_PREVIOUS_STACK_TRACE[0]}" =~ $assertion_source_file ]]; then
     unset 'BATS_PREVIOUS_STACK_TRACE[0]'
   fi
-
   set -o functrace
   return "$result"
 }
