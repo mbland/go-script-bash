@@ -39,7 +39,7 @@
 #
 # Also note that if your assertion function calls other assertion functions, you
 # should call `set +o functrace` after every one of them. See the implementation
-# of `assert_lines_equal` for an example.
+# of `__assert_lines` for an example.
 #
 # The assertions borrow inspiration from rbenv/test/test_helper.bash.
 
@@ -111,6 +111,11 @@ fail_if() {
     __bats_fail_suppress_output=
     label="lines"
     constraints=("${@}")
+    ;;
+  assert_file_*)
+    __bats_fail_suppress_output=
+    label="'$1'"
+    constraints=("${@:2}")
     ;;
   *)
     printf "Unknown assertion: '%s'\n" "$assertion" >&2
@@ -242,7 +247,7 @@ assert_line_equals() {
   __assert_line 'assert_equal' "$@"
 }
 
-# Validates that a specific line from $line equals the expected value
+# Validates that a specific line from $line matches the expected value
 #
 # Arguments:
 #   $1: The index into $line identifying the line to match
@@ -260,44 +265,48 @@ assert_line_matches() {
 #   $@: Values to compare to each element of `${lines[@]}` for equality
 assert_lines_equal() {
   set +o functrace
-  local expected=("$@")
-  local num_lines="${#expected[@]}"
-  local lines_diff="$((${#lines[@]} - num_lines))"
-  local num_errors=0
-  local i
+  __assert_lines 'assert_equal' "$@"
+}
 
-  for ((i=0; i != ${#expected[@]}; ++i)); do
-    if ! assert_equal "${expected[$i]}" "${lines[$i]}" "line $i"; then
-      ((++num_errors))
-    fi
-    set +o functrace
-  done
+# Validates that each output line matches each corresponding argument
+#
+# Also ensures there are no more and no fewer lines of output than expected.
+#
+# Arguments:
+#   $@: Values to compare to each element of `${lines[@]}` for equality
+assert_lines_match() {
+  set +o functrace
+  __assert_lines 'assert_matches' "$@"
+}
 
-  if [[ "$lines_diff" -gt '0' ]]; then
-    if [[ "$lines_diff" -eq '1' ]]; then
-      echo "There is one more line of output than expected:" >&2
-    else
-      echo "There are $lines_diff more lines of output than expected:" >&2
-    fi
-    local IFS=$'\n'
-    echo "${lines[*]:$num_lines}" >&2
-    ((++num_errors))
+# Validates that a file contains exactly the specified output
+#
+# Arguments:
+#   file_path:  Path to file to evaluate
+#    ...:       Exact lines expected to appear in the file
+assert_file_equals() {
+  set +o functrace
+  __assert_file 'assert_lines_equal' "$@"
+}
 
-  elif [[ "$lines_diff" -lt '0' ]]; then
-    lines_diff="$((-lines_diff))"
-    if [[ "$lines_diff" -eq '1' ]]; then
-      echo "There is one fewer line of output than expected." >&2
-    else
-      echo "There are $lines_diff fewer lines of output than expected." >&2
-    fi
-    ((++num_errors))
-  fi
+# Validates that a file matches a single regular expression
+#
+# Arguments:
+#   file_path:  Path to the file to examine
+#   pattern:    Regular expression used to validate the contents of the file
+assert_file_matches() {
+  set +o functrace
+  __assert_file 'assert_matches' "$@"
+}
 
-  if [[ "$num_errors" -ne '0' ]]; then
-    __return_from_bats_assertion 1
-  else
-    __return_from_bats_assertion
-  fi
+# Validates that every line in a file matches a corresponding regular expression
+#
+# Arguments:
+#   file_path:  Path to the file to examine
+#   ...:        Regular expressions used to validate each line of the file
+assert_file_lines_match() {
+  set +o functrace
+  __assert_file 'assert_lines_match' "$@"
 }
 
 # Scrubs the Bats stacks of functions from the assertion source file
@@ -337,6 +346,47 @@ return_from_bats_assertion() {
   fi
   set -o functrace
   return "$result"
+}
+
+# Sets the `output` and `lines` variables to the contents of a file.
+#
+# This differs from `run cat $file` or similar in that it automatically strips
+# `\r` characters from files produced on Windows systems and preserves empty
+# lines.
+#
+# Normally you should use one of the `assert_file_*` assertions, which rely on
+# this function; but if you wish to examine specific output lines without the
+# regard to the rest (such as the first or last lines), or search for several
+# regular expressions in no particular order, this function may help.
+#
+# Arguments:
+#   file_path:  Path to file from which `output` and `lines` will be filled
+set_bats_output_and_lines_from_file() {
+  set +o functrace
+  local file_path="$1"
+
+  if [[ ! -f "$file_path" ]]; then
+    printf "'%s' doesn't exist or isn't a regular file." "$file_path" >&2
+    __return_from_bats_assertion 1
+    return
+  elif [[ ! -r "$file_path" ]]; then
+    printf "You don't have permission to access '%s'." "$file_path" >&2
+    __return_from_bats_assertion 1
+    return
+  fi
+
+  lines=()
+  output=''
+
+  # This loop preserves leading and trailing blank lines. We need to chomp the
+  # last newline off of `output` though, to make it consistent with the
+  # conventional `output` format.
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+    lines+=("$line")
+    output+="$line"$'\n'
+  done <"$file_path"
+  output="${output%$'\n'}"
 }
 
 # --------------------------------
@@ -379,11 +429,88 @@ __assert_line() {
   fi
 
   if ! "$assertion" "$constraint" "${lines[$lineno]}" "line $lineno"; then
+    if [[ -z "$__bats_assert_line_suppress_output" ]]; then
+      printf 'OUTPUT:\n%s\n' "$output" >&2
+    fi
+    __return_from_bats_assertion 1
+  else
+    __return_from_bats_assertion
+  fi
+}
+
+# Common implementation for assertions that evaluate every element of `$lines`
+#
+# Arguments:
+#   assertion:  The assertion to execute
+#   ...:        Assertion constraints for each corresponding element of $lines
+__assert_lines() {
+  local assertion="$1"
+  shift
+  local expected=("$@")
+  local num_lines="${#expected[@]}"
+  local lines_diff="$((${#lines[@]} - num_lines))"
+  local __bats_assert_line_suppress_output='true'
+  local num_errors=0
+  local i
+
+  for ((i=0; i != ${#expected[@]}; ++i)); do
+    if ! __assert_line "$assertion" "$i" "${expected[$i]}"; then
+      ((++num_errors))
+    fi
+    set +o functrace
+  done
+
+  if [[ "$lines_diff" -gt '0' ]]; then
+    if [[ "$lines_diff" -eq '1' ]]; then
+      echo "There is one more line of output than expected:" >&2
+    else
+      echo "There are $lines_diff more lines of output than expected:" >&2
+    fi
+    local IFS=$'\n'
+    echo "${lines[*]:$num_lines}" >&2
+    ((++num_errors))
+
+  elif [[ "$lines_diff" -lt '0' ]]; then
+    lines_diff="$((-lines_diff))"
+    if [[ "$lines_diff" -eq '1' ]]; then
+      echo "There is one fewer line of output than expected." >&2
+    else
+      echo "There are $lines_diff fewer lines of output than expected." >&2
+    fi
+    ((++num_errors))
+  fi
+
+  if [[ "$num_errors" -ne '0' ]]; then
     printf 'OUTPUT:\n%s\n' "$output" >&2
     __return_from_bats_assertion 1
   else
     __return_from_bats_assertion
   fi
+}
+
+# Common implementation for assertions that evaluate a file's contents
+#
+# Arguments:
+#   assertion:  The assertion to execute
+#   file_path:  Path to file to evaluate
+#   ...:        Assertion constraints for the contents of `file_path`
+__assert_file() {
+  local assertion="$1"
+  local file_path="$2"
+  shift 2
+  local constraints=("$@")
+
+  set_bats_output_and_lines_from_file "$file_path"
+
+  if [[ "$assertion" == 'assert_matches' ]]; then
+    if [[ "$#" -ne '1' ]]; then
+      echo "ERROR: ${FUNCNAME[1]} takes exactly two arguments" >&2
+      __return_from_bats_assertion 1
+    fi
+    constraints=("$1" "$output" "The content of '$file_path'")
+  fi
+
+  "$assertion" "${constraints[@]}"
 }
 
 # Scrubs the Bats stacks of references to functions from this file
