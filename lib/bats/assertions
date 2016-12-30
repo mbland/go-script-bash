@@ -32,7 +32,7 @@
 # and then make sure every return path ends with the following (possibly
 # followed by a `return` statement, if not at the end of the function):
 #
-#   return_from_bats_assertion "$return_status" "$BASH_SOURCE"
+#   return_from_bats_assertion "$BASH_SOURCE" "$return_status"
 #
 # Also note that if your assertion function calls other assertion functions, you
 # should call `set +o functrace` after every one of them. See the implementation
@@ -144,14 +144,14 @@ assert_equal() {
   local expected="$1"
   local actual="$2"
   local label="$3"
+  local result='0'
 
   if [[ "$expected" != "$actual" ]]; then
     printf '%s not equal to expected value:\n  %s\n  %s\n' \
       "$label" "expected: '$expected'" "actual:   '$actual'" >&2
-    return_from_bats_assertion "$BASH_SOURCE" '1'
-  else
-    return_from_bats_assertion "$BASH_SOURCE"
+    result='1'
   fi
+  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }
 
 # Validates whether a value matches a regular expression
@@ -165,14 +165,14 @@ assert_matches() {
   local pattern="$1"
   local value="$2"
   local label="$3"
+  local result='0'
 
   if [[ ! "$value" =~ $pattern ]]; then
     printf '%s does not match expected pattern:\n  %s\n  %s\n' \
       "$label" "pattern: '$pattern'" "value:   '$value'" >&2
-    return_from_bats_assertion "$BASH_SOURCE" '1'
-  else
-    return_from_bats_assertion "$BASH_SOURCE"
+    result='1'
   fi
+  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }
 
 # Validates that the Bats $output value is equal to the expected value
@@ -420,6 +420,7 @@ __assert_line() {
   local assertion="$1"
   local lineno="$2"
   local constraint="$3"
+  local result='0'
 
   # Implement negative indices for Bash 3.x.
   if [[ "${lineno:0:1}" == '-' ]]; then
@@ -430,10 +431,9 @@ __assert_line() {
     if [[ -z "$__bats_assert_line_suppress_output" ]]; then
       printf 'OUTPUT:\n%s\n' "$output" >&2
     fi
-    return_from_bats_assertion "$BASH_SOURCE" 1
-  else
-    return_from_bats_assertion "$BASH_SOURCE"
+    result='1'
   fi
+  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }
 
 # Common implementation for assertions that evaluate every element of `$lines`
@@ -480,10 +480,9 @@ __assert_lines() {
 
   if [[ "$num_errors" -ne '0' ]]; then
     printf 'OUTPUT:\n%s\n' "$output" >&2
-    return_from_bats_assertion "$BASH_SOURCE" '1'
-  else
-    return_from_bats_assertion "$BASH_SOURCE"
+    result='1'
   fi
+  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }
 
 # Common implementation for assertions that evaluate a file's contents
@@ -504,6 +503,7 @@ __assert_file() {
     if [[ "$#" -ne '1' ]]; then
       echo "ERROR: ${FUNCNAME[1]} takes exactly two arguments" >&2
       return_from_bats_assertion "$BASH_SOURCE" '1'
+      return
     fi
     constraints=("$1" "$output" "The content of '$file_path'")
   fi
