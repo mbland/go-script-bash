@@ -8,7 +8,7 @@ teardown() {
 }
 
 run_log_script_and_assert_success() {
-  set +o functrace
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local result=0
 
   run_log_script "$@" \
@@ -22,11 +22,8 @@ run_log_script_and_assert_success() {
     '@go.log DEBUG  debug 3' \
     '@go.log INFO   Goodbye, World!'
 
-  if ! assert_success; then
-    result=1
-  fi
-  set +o functrace
-  return_from_bats_assertion "$BASH_SOURCE" "$result"
+  assert_success
+  return_from_bats_assertion "$?"
 }
 
 @test "$SUITE: default _GO_LOG_LEVEL_FILTER is RUN" {

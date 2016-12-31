@@ -28,13 +28,11 @@ expect_success() {
     return 1
   fi
   check_expected_output "$__assertion_output"
-  check_sets_functrace "$assertion"
 
   # Although we expect the assertion under test to pass, this script injects a
-  # failing assertion after it as a redundant check that the assertion under
-  # test sets `set -o functrace` upon returning. If it doesn't, the failing
-  # assertion will show the passing assertion's stack, per issue #48. Comment
-  # out the `check_sets_functrace` call to see the effect.
+  # failing assertion after it to check that the assertion under test calls
+  # `return_from_bats_assertion` upon returning. If it doesn't, the failing
+  # assertion will show the passing assertion's stack, per issue #48.
   run_test_script \
     "  run $command" \
     "  $assertion" \
@@ -67,7 +65,6 @@ expect_failure() {
 
   local __expected_output=("$@")
   check_expected_output "$__assertion_output"
-  check_sets_functrace "$assertion"
 
   run_test_script "  run $command" "  $assertion"
 
@@ -123,27 +120,13 @@ write_failing_test_script() {
     'echo "$@"; exit 1'
 }
 
-# If an assertion fails to `set -o functrace` upon returning, it may cause later
-# assertions to show the earlier assertion in the stack trace. See issue #48.
-#
-# `eval run $command` must be executed before calling this function.
-check_sets_functrace() {
-  local assertion="$1"
-  eval $assertion &>/dev/null || :
-
-  if [[ ! "$-" =~ T ]]; then
-    printf 'The assertion did not reset \`set -o functrace\`: %s\n' "$-" >&2
-    set -o functrace
-    return 1
-  fi
-}
-
 check_expected_output() {
   local actual_output="$1"
   local IFS=$'\n'
 
   if [[ "$actual_output" != "${__expected_output[*]}" ]]; then
-    printf 'EXPECTED:\n%s\n-------\nACTUAL:\n%s\n' \
+    printf 'Actual output differs from expected output:\n' >&2
+    printf -- '-------\nEXPECTED:\n%s\n-------\nACTUAL:\n%s\n-------\n' \
       "${__expected_output[*]}" "$actual_output" >&2
     return 1
   fi

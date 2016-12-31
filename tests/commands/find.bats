@@ -25,17 +25,13 @@ teardown() {
   remove_test_go_rootdir
 }
 
-__assert_command_scripts_equal() {
-  unset "BATS_PREVIOUS_STACK_TRACE[0]"
+assert_command_scripts_equal() {
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local result
   local IFS=$'\n'
   unset 'lines[0]' 'lines[1]'
   assert_equal "$*" "${lines[*]#$_GO_ROOTDIR/}" "command scripts"
-}
-
-assert_command_scripts_equal() {
-  set +o functrace
-  __assert_command_scripts_equal "$@"
+  return_from_bats_assertion "$?"
 }
 
 @test "$SUITE: return only builtin commands" {
