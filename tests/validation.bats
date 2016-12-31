@@ -12,22 +12,26 @@ teardown() {
 }
 
 assert_error_on_invalid_input() {
-  set +o functrace
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   run "$TEST_GO_SCRIPT" "$1"
 
   if [[ "$status" -eq '0' ]]; then
     echo "Expected input to fail validation: $1" >&2
-    return_from_bats_assertion "$BASH_SOURCE" 1
+    return_from_bats_assertion 1
+  else
+    return_from_bats_assertion
   fi
 }
 
 assert_success_on_valid_input() {
-  set +o functrace
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   run "$TEST_GO_SCRIPT" "$1"
 
   if [[ "$status" -ne '0' ]]; then
     echo "Expected input to pass validation: $1" >&2
-    return_from_bats_assertion "$BASH_SOURCE" 1
+    return_from_bats_assertion 1
+  else
+    return_from_bats_assertion
   fi
 }
 

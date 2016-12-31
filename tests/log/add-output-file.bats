@@ -8,8 +8,9 @@ teardown() {
 }
 
 run_log_script_and_assert_status_and_output() {
-  set +o functrace
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local num_errors
+  local expected
 
   run_log_script "$@" \
     '@go.log INFO  FYI' \
@@ -18,24 +19,18 @@ run_log_script_and_assert_status_and_output() {
     '@go.log ERROR uh-oh' \
     '@go.log FATAL oh noes!'
 
-  if ! assert_failure; then
-    set +o functrace
-    return_from_bats_assertion "$BASH_SOURCE" 1
-    return
-  fi
+  if assert_failure; then
+    expected=(INFO 'FYI'
+      RUN   'echo foo'
+      WARN  'watch out'
+      ERROR 'uh-oh'
+      FATAL 'oh noes!'
+      "$(test_script_stack_trace_item)")
 
-  local expected=(INFO 'FYI'
-    RUN   'echo foo'
-    WARN  'watch out'
-    ERROR 'uh-oh'
-    FATAL 'oh noes!'
-    "$(test_script_stack_trace_item)")
-
-  if ! assert_log_equals "${expected[@]}"; then
-    set +o functrace
-    return_from_bats_assertion "$BASH_SOURCE" 1
+    assert_log_equals "${expected[@]}"
+    return_from_bats_assertion "$?"
   else
-    return_from_bats_assertion "$BASH_SOURCE"
+    return_from_bats_assertion 1
   fi
 }
 
@@ -95,8 +90,10 @@ run_log_script_and_assert_status_and_output() {
   run_log_script_and_assert_status_and_output \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/error.log' 'ERROR,FATAL'"
 
+  local origIFS="$IFS"
   local IFS=$'\n'
   local error_log=($(< "$TEST_GO_ROOTDIR/error.log"))
+  IFS="$origIFS"
 
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
@@ -121,8 +118,10 @@ run_log_script_and_assert_status_and_output() {
   assert_matches "^FOOBAR +$msg$" \
     "$(< "$TEST_GO_ROOTDIR/foobar.log")" 'foobar.log'
 
+  local origIFS="$IFS"
   local IFS=$'\n'
   local error_log=($(< "$TEST_GO_ROOTDIR/error.log"))
+  IFS="$origIFS"
 
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'

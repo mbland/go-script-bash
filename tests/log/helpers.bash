@@ -79,7 +79,7 @@ __expected_log_line() {
 }
 
 assert_log_equals() {
-  set +o functrace
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local level
   local __padding=''
   local __log_level_label
@@ -100,7 +100,7 @@ assert_log_equals() {
       expected+=("$(__expected_log_line "$__log_level_label" "$2")")
       if ! shift 2; then
         echo "ERROR: Wrong number of arguments for log line $i." >&2
-        return_from_bats_assertion "$BASH_SOURCE" 1
+        return_from_bats_assertion 1
         return
       fi
     else
@@ -110,26 +110,21 @@ assert_log_equals() {
   done
 
   if ! assert_lines_equal "${expected[@]}"; then
-    result=1
+    return_from_bats_assertion '1'
+  else
+    return_from_bats_assertion
   fi
-  set +o functrace
-  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }
 
 assert_log_file_equals() {
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local log_file="$1"
   shift
-  local origIFS="$IFS"
-  local IFS=$'\n'
-  local log_content=($(< "$log_file"))
-  local result=0
 
-  run echo "${log_content[*]}"
-  IFS="$origIFS"
-
-  if ! assert_log_equals "$@"; then
-    result=1
+  if ! set_bats_output_and_lines_from_file "$log_file"; then
+    return_from_bats_assertion '1'
+  else
+    assert_log_equals "$@"
+    return_from_bats_assertion "$?"
   fi
-  set +o functrace
-  return_from_bats_assertion "$BASH_SOURCE" "$result"
 }

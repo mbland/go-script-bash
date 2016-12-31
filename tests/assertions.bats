@@ -17,31 +17,22 @@ teardown() {
 expect_success() {
   local command="$1"
   local assertion="$2"
+  local __assertion_output
+  local __assertion_status
 
-  eval run $command
-  eval run $assertion
+  run_command_then_run_assertion_in_subshell "$command" "$assertion"
 
-  if [[ "$status" -ne 0 ]]; then
-    printf "In process: expected passing status, actual %d\nOutput:\n%s\n" \
-      "$status" "$output" >&2
+  if [[ "$__assertion_status" -ne '0' ]]; then
+    printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
+      "$__assertion_status" "$__assertion_output" >&2
     return 1
   fi
+  check_expected_output "$__assertion_output"
 
-  run_test_script "  run $command" "  $assertion"
-
-  if [[ "$status" -ne 0 ]]; then
-    printf "In script: expected passing status, actual %d\nOutput:\n%s\n" \
-      "$status" "$output" >&2
-    return 1
-  fi
-
-  local __expected_output=('1..1' "ok 1 $BATS_TEST_DESCRIPTION")
-  check_expected_output
-
-  # Redundant checks that the assertion sets `set -o functrace` upon returning,
-  # so that later failures don't show the passing assertion's stack, per issue
-  # #48. Comment out the `check_sets_functrace` call to see the effect.
-  check_sets_functrace "$command" "$assertion"
+  # Although we expect the assertion under test to pass, this script injects a
+  # failing assertion after it to check that the assertion under test calls
+  # `return_from_bats_assertion` upon returning. If it doesn't, the failing
+  # assertion will show the passing assertion's stack, per issue #48.
   run_test_script \
     "  run $command" \
     "  $assertion" \
@@ -53,39 +44,27 @@ expect_success() {
     "# (from function \`assert_equal_numbers' in file $TEST_SCRIPT, line 6,"
     "#  in test file $TEST_SCRIPT, line 7)"
     "#   \`assert_equal_numbers 0 1' failed")
-  check_expected_output
+  check_expected_output "$output"
 }
 
 expect_failure() {
   local command="$1"
   local assertion="$2"
   shift 2
+  local __assertion_output
+  local __assertion_status
   local i
 
-  eval run $command
-  eval run $assertion
+  run_command_then_run_assertion_in_subshell "$command" "$assertion"
 
-  if [[ "$status" -eq '0' ]]; then
-    printf "In process: expected failure, but succeeded\nOutput:\n%s\n" \
-      "$output" >&2
+  if [[ "$__assertion_status" -eq '0' ]]; then
+    printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
+      "$__assertion_output" >&2
     return 1
   fi
 
-  # Since an in-process "run" will chomp trailing whitespace off of `$output`,
-  # we have to add it back here to avoid spurious failures.
-  #
-  # If the whitespace is really missing, the call to `check_expected_output` at
-  # the end of the function will catch it, since the test script assertion
-  # failure will get called directly (instead of under `run`) and will keep all
-  # of the whitespace.
   local __expected_output=("$@")
-  for ((i=${#__expected_output[@]} - 1; i != -1; --i)); do
-    if [[ -n "${__expected_output[$i]}" ]]; then
-      break
-    fi
-    output+=$'\n'
-  done
-  check_expected_output
+  check_expected_output "$__assertion_output"
 
   run_test_script "  run $command" "  $assertion"
 
@@ -100,8 +79,30 @@ expect_failure() {
     "# (in test file $TEST_SCRIPT, line 5)"
     "#   \`$assertion' failed"
     "${__expected_output[@]/#/# }")
-  check_expected_output
-  check_sets_functrace "$command" "$assertion"
+  check_expected_output "$output"
+}
+
+# The `command` is executed in-process to set `output`, `status`, and `lines`.
+# The `assertion` is executed in a process substitution (subshell) so that its
+# __assertion_output and __assertion_status can be captured and evaluated while
+# leaving `output`, `status`, and `lines` intact for later checks.
+run_command_then_run_assertion_in_subshell() {
+  local command="$1"
+  local assertion="$2"
+  local line
+
+  eval run $command
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+    if [[ "$line" =~ ^exit:([0-9]+)$ ]]; then
+      __assertion_status="${BASH_REMATCH[1]}"
+    else
+      __assertion_output+="$line"$'\n'
+    fi
+  done < <(trap 'echo exit:$?' EXIT; eval $assertion 2>&1; exit "$?")
+
+  # Trim trailing newline to match typical `output` behavior.
+  __assertion_output="${__assertion_output%$'\n'}"
 }
 
 run_test_script() {
@@ -119,29 +120,14 @@ write_failing_test_script() {
     'echo "$@"; exit 1'
 }
 
-# If an assertion fails to `set -o functrace` upon returning, it may cause later
-# assertions to show the earlier assertion in the stack trace. See issue #48.
-check_sets_functrace() {
-  local command="$1"
-  local assertion="$2"
-
-  eval run $command
-  set +o functrace
-  eval $assertion &>/dev/null || :
-
-  if [[ ! "$-" =~ T ]]; then
-    printf 'The assertion did not reset \`set -o functrace\`: %s\n' "$-" >&2
-    set -o functrace
-    return 1
-  fi
-}
-
 check_expected_output() {
+  local actual_output="$1"
   local IFS=$'\n'
 
-  if [[ "$output" != "${__expected_output[*]}" ]]; then
-    printf 'EXPECTED:\n%s\n-------\nACTUAL:\n%s\n' \
-      "${__expected_output[*]}" "$output" >&2
+  if [[ "$actual_output" != "${__expected_output[*]}" ]]; then
+    printf 'Actual output differs from expected output:\n' >&2
+    printf -- '-------\nEXPECTED:\n%s\n-------\nACTUAL:\n%s\n-------\n' \
+      "${__expected_output[*]}" "$actual_output" >&2
     return 1
   fi
 }
