@@ -32,7 +32,7 @@ load environment
 
 @test "$SUITE: produce error on cd" {
   local expected
-  expected+='cd is only available after using "./go env" to set up your '$'\n'
+  expected+=$'cd is only available after using "./go env" to set up your\n'
   expected+='shell environment.'
 
   COLUMNS=60
@@ -42,7 +42,7 @@ load environment
 
 @test "$SUITE: produce error on pushd" {
   local expected
-  expected+='pushd is only available after using "./go env" to set up '$'\n'
+  expected+=$'pushd is only available after using "./go env" to set up\n'
   expected+='your shell environment.'
 
   COLUMNS=60
@@ -52,7 +52,7 @@ load environment
 
 @test "$SUITE: produce error on unenv" {
   local expected
-  expected+='unenv is only available after using "./go env" to set up '$'\n'
+  expected+=$'unenv is only available after using "./go env" to set up\n'
   expected+='your shell environment.'
 
   COLUMNS=60

@@ -124,26 +124,36 @@ declare _GO_PLUGINS_PATHS=()
 # initialized, _GO_PLUGINS_PATHS and _GO_SCRIPTS_DIR will be added.
 declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
 
-# Invokes printf builtin, then folds output to $COLUMNS width if 'fold' exists.
-#
-# Should be used as the last step to print to standard output or error, as that
-# is more efficient than calling this multiple times due to the pipe to 'fold'.
+# Invokes printf builtin, then folds output to $COLUMNS width
 #
 # Arguments:
 #   everything accepted by the printf builtin except the '-v varname' option
 @go.printf() {
   local format="$1"
   shift
+  local result
+  local line
+  local prefix
 
   if [[ "$#" -eq 0 ]]; then
     format="${format//\%/%%}"
   fi
+  # If `format` ends with a newline, chomp it, since the loop will add one.
+  printf -v result "${format%\\n}" "$@"
 
-  if command -v fold >/dev/null; then
-    printf "$format" "$@" | fold -s -w "$COLUMNS"
-  else
-    printf "$format" "$@"
-  fi
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+
+    while [[ "${#line}" -gt "$COLUMNS" ]]; do
+      prefix="${line:0:$COLUMNS}"
+      prefix="${prefix% *}"
+      printf '%s\n' "$prefix"
+      line="${line#$prefix}"
+      line="${line#* }"
+    done
+
+    printf '%s\n' "$line"
+  done <<<"$result"
 }
 
 # Prints the stack trace at the point of the call.
