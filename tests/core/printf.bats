@@ -33,3 +33,9 @@ teardown() {
   COLUMNS=15 run "$TEST_GO_SCRIPT"
   assert_success "$test_string"$'\n'"$test_string"
 }
+
+@test "$SUITE: don't chomp non-blank leading characters" {
+  create_test_go_script "@go.printf '%s\n' '12345678901234567890    1234567890'"
+  COLUMNS=15 run "$TEST_GO_SCRIPT"
+  assert_success $'123456789012345\n67890\n1234567890'
+}

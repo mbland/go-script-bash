@@ -147,9 +147,15 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
     while [[ "${#line}" -gt "$COLUMNS" ]]; do
       prefix="${line:0:$COLUMNS}"
       prefix="${prefix% *}"
-      printf '%s\n' "$prefix"
       line="${line#$prefix}"
-      line="${line#* }"
+
+      if [[ "$prefix" =~ \ +$ ]]; then
+        prefix="${prefix%${BASH_REMATCH[0]}}"
+      fi
+      if [[ "$line" =~ ^\ + ]]; then
+        line="${line#${BASH_REMATCH[0]}}"
+      fi
+      printf '%s\n' "$prefix"
     done
 
     printf '%s\n' "$line"
