@@ -363,10 +363,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   @go.open_file_or_duplicate_fd "$output_file" 'a' 'output_fd'
 
   if [[ -n "$log_level" ]]; then
-    local origIFS="$IFS"
-    local IFS=','
-    levels=($log_level)
-    IFS="$origIFS"
+    IFS=',' read -ra levels <<<"$log_level"
   else
     levels=("${_GO_LOG_LEVELS[@]}")
   fi
@@ -660,8 +657,8 @@ _@go.log_format_level_labels() {
 # Arguments:
 #   log_level_index:  A log level index returned from _@go.log_level_index
 _@go.log_level_file_descriptors() {
-  local IFS=','
-  __go_log_level_file_descriptors=(${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$1]})
+  IFS=',' read -ra __go_log_level_file_descriptors \
+    <<< "${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$1]}"
 }
 
 # Sets the index into the __GO_LOG arrays for the specified label

@@ -83,11 +83,8 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: clone and build" {
-  local go_script=(
-    '__check_kcov_dev_packages_installed() { return 1; }'
-    '__clone_and_build_kcov tests/kcov')
-  local IFS=$'\n'
-  write_kcov_go_script "${go_script[*]}"
+  write_kcov_go_script '__check_kcov_dev_packages_installed() { return 1; }' \
+    '__clone_and_build_kcov tests/kcov'
   echo 'mkdir -p "$3"' >> "$FAKE_BIN_DIR/git"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
@@ -96,6 +93,7 @@ write_kcov_dummy() {
     "Cloning kcov repository from $__KCOV_URL..."
     'Installing dev packages to build kcov...'
     'Building kcov...')
+  local IFS=$'\n'
   assert_success "${expected_output[*]}"
 
   run cat "$FAKE_BIN_DIR/git.out"
@@ -169,11 +167,8 @@ write_kcov_dummy() {
 }
 
 @test "$SUITE: clone and build doesn't install dev packages on Travis" {
-  local go_script=(
-    '__check_kcov_dev_packages_installed() { return 1; }'
-    '__clone_and_build_kcov tests/kcov')
-  local IFS=$'\n'
-  write_kcov_go_script "${go_script[*]}"
+  write_kcov_go_script '__check_kcov_dev_packages_installed() { return 1; }' \
+    '__clone_and_build_kcov tests/kcov'
 
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
   run env TRAVIS_OS_NAME='linux' "$TEST_GO_SCRIPT"
@@ -218,21 +213,20 @@ write_kcov_dummy() {
     "${kcov_argv[@]:1}"
     'Coverage results located in:'
     "  $TEST_GO_ROOTDIR/$KCOV_COVERAGE_DIR")
-  local IFS=$'\n'
 
   run env TRAVIS_JOB_ID= "$TEST_GO_SCRIPT"
+  local IFS=$'\n'
   assert_success "${expected_output[*]}"
 }
 
 @test "$SUITE: success after building kcov" {
-  local go_script=(
-    '__clone_and_build_kcov() {'
-    "  mkdir -p '${KCOV_PATH%/*}'"
-    "  printf '#! /usr/bin/env bash\n' >'$KCOV_PATH'"
-    "  chmod 700 '$KCOV_PATH'"
-    '}'
-    "run_kcov ${RUN_KCOV_ARGV[*]} \"$TEST_GO_SCRIPT\" test foo bar/baz")
-  write_kcov_go_script "${go_script[@]}"
+  write_kcov_go_script \
+    '__clone_and_build_kcov() {' \
+    "  mkdir -p '${KCOV_PATH%/*}'" \
+    "  printf '#! /usr/bin/env bash\n' >'$KCOV_PATH'" \
+    "  chmod 700 '$KCOV_PATH'" \
+    '}' \
+    "run_kcov ${RUN_KCOV_ARGV[*]} \"$TEST_GO_SCRIPT\" test foo bar/baz"
 
   local kcov_argv=("${KCOV_ARGV_START[@]}" "$KCOV_COVERAGE_DIR"
     "$TEST_GO_SCRIPT" 'test' 'foo' 'bar/baz')
@@ -241,9 +235,9 @@ write_kcov_dummy() {
     "  ${kcov_argv[*]}"
     'Coverage results located in:'
     "  $TEST_GO_ROOTDIR/$KCOV_COVERAGE_DIR")
-  local IFS=$'\n'
 
   run env TRAVIS_JOB_ID= "$TEST_GO_SCRIPT"
+  local IFS=$'\n'
   assert_success "${expected_output[*]}"
 }
 
@@ -258,9 +252,9 @@ write_kcov_dummy() {
     'Starting coverage run:'
     "  ${kcov_argv[*]}"
     'kcov exited with errors.')
-  local IFS=$'\n'
 
   run env TRAVIS_JOB_ID= "$TEST_GO_SCRIPT"
+  local IFS=$'\n'
   assert_failure "${expected_output[*]}"
 }
 
@@ -277,9 +271,9 @@ write_kcov_dummy() {
     "  ${kcov_argv[*]}"
     'Coverage results sent to:'
     "  $KCOV_COVERALLS_URL")
-  local IFS=$'\n'
 
   run env TRAVIS_JOB_ID=666 "$TEST_GO_SCRIPT"
+  local IFS=$'\n'
   assert_success "${expected_output[*]}"
 }
 
@@ -301,8 +295,8 @@ write_kcov_dummy() {
     "  ${kcov_argv[*]}"
     'Coverage results located in:'
     "  $TEST_GO_ROOTDIR/$KCOV_COVERAGE_DIR")
-  local IFS=$'\n'
 
   run env TRAVIS_JOB_ID=666 "$TEST_GO_SCRIPT"
+  local IFS=$'\n'
   assert_success "${expected_output[*]}"
 }

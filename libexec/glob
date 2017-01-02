@@ -226,7 +226,7 @@ _@go.glob_set_globignore() {
   if [[ -n "$globignore_spec" ]]; then
     local patterns=()
     local IFS=':'
-    read -r -a patterns <<<"$globignore_spec"
+    read -ra patterns <<<"$globignore_spec"
     GLOBIGNORE="${patterns[*]/#/$rootdir/}"
   fi
 }

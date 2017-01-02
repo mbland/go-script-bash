@@ -130,12 +130,10 @@ fi
 #   output_fds:  Comma-separated list of output file descriptors
 #   ...:         Arguments to pass to the `printf` builtin
 @go.fds_printf() {
-  local origIFS="$IFS"
-  local IFS=','
-  local output_fds=($1)
+  local output_fds=()
   local result=0
 
-  IFS="$origIFS"
+  IFS=',' read -ra output_fds <<<"$1"
   shift
 
   for output_fd in "${output_fds[@]}"; do

@@ -90,10 +90,11 @@ run_log_script_and_assert_status_and_output() {
   run_log_script_and_assert_status_and_output \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/error.log' 'ERROR,FATAL'"
 
-  local origIFS="$IFS"
-  local IFS=$'\n'
-  local error_log=($(< "$TEST_GO_ROOTDIR/error.log"))
-  IFS="$origIFS"
+  local error_log=()
+  local item
+  while IFS= read -r item; do
+    error_log+=("$item")
+  done <<<"$(< "$TEST_GO_ROOTDIR/error.log")"
 
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
@@ -118,10 +119,11 @@ run_log_script_and_assert_status_and_output() {
   assert_matches "^FOOBAR +$msg$" \
     "$(< "$TEST_GO_ROOTDIR/foobar.log")" 'foobar.log'
 
-  local origIFS="$IFS"
-  local IFS=$'\n'
-  local error_log=($(< "$TEST_GO_ROOTDIR/error.log"))
-  IFS="$origIFS"
+  local error_log=()
+  local item
+  while IFS= read -r item; do
+    error_log+=("$item")
+  done <<<"$(< "$TEST_GO_ROOTDIR/error.log")"
 
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'

@@ -52,14 +52,15 @@ teardown() {
   run "$TEST_GO_SCRIPT" complete 1 pushd ''
   assert_success 'scripts'
 
-  local prev_IFS="$IFS"
-  local IFS=$'\n'
-  local expected=($(compgen -d "$TEST_GO_SCRIPTS_DIR/"))
-  IFS="$prev_IFS"
-  expected=("${expected[@]#$TEST_GO_ROOTDIR/}")
+  local expected=()
+  local item
+
+  while IFS= read -r item; do
+    expected+=("${item#$TEST_GO_ROOTDIR/}")
+  done<<<"$(compgen -d "$TEST_GO_SCRIPTS_DIR/")"
 
   run "$TEST_GO_SCRIPT" complete 1 cd 'scripts/'
-  IFS=$'\n'
+  local IFS=$'\n'
   assert_success "${expected[*]}"
   run "$TEST_GO_SCRIPT" complete 1 pushd 'scripts/'
   assert_success "${expected[*]}"
@@ -71,13 +72,17 @@ teardown() {
   mkdir -p "${subdirs[@]/#/$TEST_GO_SCRIPTS_DIR/}"
   touch "${files[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
-  local prevIFS="$IFS"
-  local IFS=$'\n'
-  local top_level=($(compgen -f "$TEST_GO_ROOTDIR/"))
-  local all_scripts_entries=($(compgen -f "$TEST_GO_SCRIPTS_DIR/"))
-  IFS="$prevIFS"
-  top_level=("${top_level[@]#$TEST_GO_ROOTDIR/}")
-  all_scripts_entries=("${all_scripts_entries[@]#$TEST_GO_ROOTDIR/}")
+  local top_level=()
+  local all_scripts_entries=()
+  local item
+
+  while IFS= read -r item; do
+    top_level+=("${item#$TEST_GO_ROOTDIR/}")
+  done <<<"$(compgen -f "$TEST_GO_ROOTDIR/")"
+
+  while IFS= read -r item; do
+    all_scripts_entries+=("${item#$TEST_GO_ROOTDIR/}")
+  done <<<"$(compgen -f "$TEST_GO_SCRIPTS_DIR/")"
 
   run "$TEST_GO_SCRIPT" complete 1 edit ''
   local IFS=$'\n'
