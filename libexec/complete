@@ -42,7 +42,7 @@ _@go.complete_command() {
   local __go_complete_word_index
   local __go_cmd_path
   local __go_argv
-  local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n'$'\r'']'
+  local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n\r'']'
 
   . "$_GO_CORE_DIR/lib/internal/complete"
   exec 2>/dev/null

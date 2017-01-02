@@ -156,9 +156,9 @@ teardown() {
 }
 
 @test "$SUITE: add subcommand summaries" {
-  local cmd_template='# Does {{CMD}} stuff'$'\n'
-  cmd_template+='#'$'\n'
-  cmd_template+='# Usage: {{go}} {{cmd}}'$'\n'
+  local cmd_template=$'# Does {{CMD}} stuff\n'
+  cmd_template+=$'#\n'
+  cmd_template+=$'# Usage: {{go}} {{cmd}}\n'
 
   create_test_command_script 'foo' "${cmd_template/\{\{CMD\}\}/foo}"
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"

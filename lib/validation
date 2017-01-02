@@ -7,7 +7,7 @@
 #     Ensures input parameters do not contain control or metacharacters
 
 # Pattern used to validate file path and variable name parameters
-readonly __GO_VALIDATE_INPUT_PATTERN='[^\][`";$()&|<>'$'\n'$'\r'']'
+readonly __GO_VALIDATE_INPUT_PATTERN=$'[^\][`";$()&|<>\n\r]'
 
 # Ensures input parameters do not contain control or metacharacters
 #

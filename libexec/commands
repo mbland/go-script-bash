@@ -42,8 +42,7 @@ _@go.summarize_commands() {
 }
 
 _@go.commands_parse_search_paths() {
-  local IFS=':'
-  read -r -a __go_commands_search_paths <<<"$1"
+  IFS=':' read -ra __go_commands_search_paths <<<"$1"
 
   local search_path
   for search_path in "${__go_commands_search_paths[@]}"; do

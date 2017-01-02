@@ -179,7 +179,7 @@ create_file_open_test_go_script() {
   create_file_open_test_go_script \
     "@go.open_file_or_duplicate_fd \"\$file_path\" 'r' \"\$VAR_REF\""
 
-  local var_ref='echo SURPRISE'$'\n''read_fd'
+  local var_ref=$'echo SURPRISE\nread_fd'
   VAR_REF="$var_ref" run "$TEST_GO_SCRIPT"
 
   local err_msg="Bad fd_var_reference argument \"$var_ref\" to "

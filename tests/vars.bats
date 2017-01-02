@@ -96,7 +96,7 @@ quotify_expected() {
 # we use Perl to ensure they are are exported to new processes that run command
 # scripts in languages other than Bash.
 @test "$SUITE: run perl script; _GO_* variables are exported" {
-  if ! command -v perl; then
+  if ! command -v perl >/dev/null; then
     skip 'perl not installed'
   fi
 

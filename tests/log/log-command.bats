@@ -402,7 +402,7 @@ teardown() {
 }
 
 @test "$SUITE: exit status from subcommand in other language" {
-  if ! command -v perl &>/dev/null; then
+  if ! command -v perl >/dev/null; then
     skip 'perl not installed'
   fi
 
@@ -428,7 +428,7 @@ teardown() {
 }
 
 @test "$SUITE: fatal status for subcommand of command in another language" {
-  if ! command -v perl &>/dev/null; then
+  if ! command -v perl >/dev/null; then
     skip 'perl not installed'
   fi
 
@@ -481,7 +481,7 @@ teardown() {
 }
 
 @test "$SUITE: subcommand of command in other language appends to all logs" {
-  if ! command -v perl &>/dev/null; then
+  if ! command -v perl >/dev/null; then
     skip 'perl not installed'
   fi
 
