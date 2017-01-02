@@ -7,7 +7,7 @@
 #     Outputs a log line; supports terminal formatting and format stripping
 #
 #   @go.log_timestamp
-#     Prints a timestamp using _GO_LOG_TIMESTAMP_FORMAT (strftime format)
+#     Generates a timestamp using _GO_LOG_TIMESTAMP_FORMAT (strftime format)
 #
 #   @go.add_or_update_log_level
 #     Modifies existing log level labels, formatting, and file descriptors
@@ -220,10 +220,12 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
     fi
   fi
 
-  log_msg="$(@go.log_timestamp) "
-  # Remove leading space if the timestamp is empty.
-  log_msg="${log_msg# }${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
-  log_msg="${log_msg} ${args[*]}\\e[0m"
+  local __go_log_timestamp
+  if @go.log_timestamp; then
+    log_msg="$__go_log_timestamp "
+  fi
+  log_msg+="${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]} "
+  log_msg+="${args[*]}\\e[0m"
 
   local __go_log_level_file_descriptors=()
   _@go.log_level_file_descriptors "$__go_log_level_index"
@@ -258,26 +260,33 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   return "$exit_status"
 }
 
-# Prints a timestamp using _GO_LOG_TIMESTAMP_FORMAT (strftime format)
+# Generates a timestamp using _GO_LOG_TIMESTAMP_FORMAT (strftime format)
 #
-# Prints nothing if:
+# Generates nothing and returns an error if:
 #   - _GO_LOG_TIMESTAMP_FORMAT isn't set
 #   - _GO_LOG_TIMESTAMP_FORMAT is set, but both the builtin
 #     `printf '%(datefmt)T'` format and `date` command are missing
 #
 # Globals:
 #   _GO_LOG_TIMESTAMP_FORMAT:  A strftime-compatible format string
+#   __go_log_timestamp:        Variable into which timestamp will be stored
+#
+# Returns:
+#   zero if the timestamp was generated, nonzero otherwise
 @go.log_timestamp() {
   _@go.log_init
 
   case "$__GO_LOG_TIMESTAMP_IMPL" in
   printf)
-    printf "%($_GO_LOG_TIMESTAMP_FORMAT)T"
+    printf -v __go_log_timestamp "%($_GO_LOG_TIMESTAMP_FORMAT)T"
+    return "$?"
     ;;
   date)
-    date "+$_GO_LOG_TIMESTAMP_FORMAT"
+    __go_log_timestamp="$(date "+$_GO_LOG_TIMESTAMP_FORMAT")"
+    return "$?"
     ;;
   esac
+  return 1
 }
 
 # Adds a new log level or updates an existing one.
@@ -665,8 +674,7 @@ _@go.log_level_file_descriptors() {
 #   $1:  The log level label to look up
 #
 # Returns:
-#   0:  if the label exists
-#   1:  if the label does not exist
+#   zero if the label exists, nonzero otherwise
 _@go.log_level_index() {
   local i
   for ((i=0; i != "${#_GO_LOG_LEVELS[@]}"; ++i)); do
@@ -683,6 +691,7 @@ _@go.log_level_index() {
 # Arguments:
 #   level:     A log level index returned from _@go.log_level_index
 #   level_fd:  A file descriptor corresponding to the log level
+#
 # Returns:
 #   zero if the log level is of sufficient priority, nonzero otherwise
 _@go.log_level_meets_priority() {

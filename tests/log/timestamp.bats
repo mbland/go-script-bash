@@ -26,16 +26,21 @@ setup() {
     'fi'
 
   create_test_go_script '. "$_GO_USE_MODULES" log' \
-    '@go.log_timestamp'
+    'declare __go_log_timestamp' \
+    'if @go.log_timestamp; then' \
+    "  printf '%s' \"\$__go_log_timestamp\"" \
+    'else' \
+    '  exit 1' \
+    'fi'
 }
 
 teardown() {
   remove_test_go_rootdir
 }
 
-@test "$SUITE: return empty value if _GO_LOG_TIMESTAMP_FORMAT not set" {
+@test "$SUITE: return error if _GO_LOG_TIMESTAMP_FORMAT not set" {
   _GO_LOG_TIMESTAMP_FORMAT= PATH="$TEST_PATH" run "$BASH" "$TEST_GO_SCRIPT"
-  assert_success ''
+  assert_failure
 
   if [[ -f "$DATE_CMD_FILE" ]]; then
     fail 'date command was called'
@@ -74,13 +79,13 @@ teardown() {
   fi
 }
 
-@test "$SUITE: return empty value if builtin format and date command missing" {
+@test "$SUITE: return error value if builtin format and date command missing" {
   if [[ -n "$HAS_TIMESTAMP_BUILTIN" ]]; then
     skip "Builtin format available in bash version $BASH_VERSION"
   fi
 
   _GO_LOG_TIMESTAMP_FORMAT='%M:%S' PATH= run "$BASH" "$TEST_GO_SCRIPT"
-  assert_success
+  assert_failure
   assert_output_matches \
     '^WARN +Builtin timestamps not supported and date command not found.$'
 
