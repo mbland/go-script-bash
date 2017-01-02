@@ -553,7 +553,7 @@ _@go.log_init() {
     readonly __GO_LOG_TIMESTAMP_IMPL='none'
   elif printf "%('%Y')T" &>/dev/null; then
     readonly __GO_LOG_TIMESTAMP_IMPL='printf'
-  elif command -v 'date' >/dev/null; then
+  elif command -v date >/dev/null; then
     readonly __GO_LOG_TIMESTAMP_IMPL='date'
   else
     readonly __GO_LOG_TIMESTAMP_IMPL='none'

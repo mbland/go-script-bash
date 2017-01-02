@@ -64,7 +64,7 @@ load environment
   local test_description="${BATS_TEST_DESCRIPTION/$SUITE/\$SUITE}"
   run ./go grep "$test_description" "$BATS_TEST_FILENAME" >&2
 
-  if command -v 'grep'; then
+  if command -v grep >/dev/null; then
     assert_success "@test \"$test_description\" {"
   else
     assert_failure
