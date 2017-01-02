@@ -495,7 +495,7 @@ export -f test_file_printf
   skip_if_cannot_trigger_file_permission_failure
 
   test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'
-  chmod u-r "$TEST_OUTPUT_FILE"
+  chmod ugo-r "$TEST_OUTPUT_FILE"
   run set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
   assert_failure "You don't have permission to access '$TEST_OUTPUT_FILE'."
 }
