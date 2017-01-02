@@ -657,7 +657,8 @@ _@go.log_format_level_labels() {
 # Arguments:
 #   log_level_index:  A log level index returned from _@go.log_level_index
 _@go.log_level_file_descriptors() {
-  IFS=',' read -ra __go_log_level_file_descriptors \
+  local IFS=','
+  read -ra __go_log_level_file_descriptors \
     <<< "${__GO_LOG_LEVELS_FILE_DESCRIPTORS[$1]}"
 }
 
