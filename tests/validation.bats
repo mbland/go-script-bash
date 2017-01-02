@@ -46,8 +46,8 @@ assert_success_on_valid_input() {
   assert_error_on_invalid_input 'foo|bar'
   assert_error_on_invalid_input 'foo<bar'
   assert_error_on_invalid_input 'foo>bar'
-  assert_error_on_invalid_input 'foo'$'\n''bar'
-  assert_error_on_invalid_input 'foo'$'\r''bar'
+  assert_error_on_invalid_input $'foo\nbar'
+  assert_error_on_invalid_input $'foo\rbar'
   assert_error_on_invalid_input "\`echo SURPRISE >&2\`$FILE_PATH"
   assert_error_on_invalid_input "$FILE_PATH\"; echo 'SURPRISE'"
 }
@@ -64,8 +64,8 @@ assert_success_on_valid_input() {
   assert_success_on_valid_input 'foo\|bar'
   assert_success_on_valid_input 'foo\<bar'
   assert_success_on_valid_input 'foo\>bar'
-  assert_success_on_valid_input "foo\\'\\\$\\'\n''bar"
-  assert_success_on_valid_input "foo\\'\\\$\\'\r''bar"
+  assert_success_on_valid_input "\$'foo\nbar'"
+  assert_success_on_valid_input "\$'foo\nbar'"
   assert_success_on_valid_input '\`echo SURPRISE \>\&2\`\$FILE_PATH'
   assert_success_on_valid_input "\\\$FILE_PATH\\\"\\; echo 'SURPRISE'"
 }

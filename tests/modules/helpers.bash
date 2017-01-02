@@ -31,7 +31,7 @@ setup_test_modules() {
   for module in "${TEST_PLUGIN_MODULES[@]}"; do
     module_file="$TEST_GO_PLUGINS_DIR/${module/\///lib/}"
     mkdir -p "${module_file%/*}"
-    echo "# Summary for $module"$'\n' > "$module_file"
+    printf '# Summary for %s\n' "$module" > "$module_file"
     TEST_PLUGIN_MODULES_PATHS+=("${module_file#$TEST_GO_ROOTDIR/}")
     ((++TOTAL_NUM_MODULES))
   done
@@ -39,7 +39,7 @@ setup_test_modules() {
   for module in "${TEST_PROJECT_MODULES[@]}"; do
     module_file="$TEST_GO_SCRIPTS_DIR/lib/$module"
     mkdir -p "${module_file%/*}"
-    echo "# Summary for $module" > "$module_file"
+    printf '# Summary for %s\n' "$module" > "$module_file"
     TEST_PROJECT_MODULES_PATHS+=("${module_file#$TEST_GO_ROOTDIR/}")
     ((++TOTAL_NUM_MODULES))
   done

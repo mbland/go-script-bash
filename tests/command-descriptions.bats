@@ -95,11 +95,11 @@ create_cmd_path_and_name_go_script() {
     "$((${#cmd_name} + 5))")"
 
   local expected
-  expected="  test-command       Summary for a command parsed"$'\n'
-  expected+="                       from the file header"$'\n'
-  expected+="                       comment that's a bit"$'\n'
-  expected+="                       longer than the current"$'\n'
-  expected+="                       column width"
+  expected=$'  test-command       Summary for a command parsed\n'
+  expected+=$'                       from the file header\n'
+  expected+=$'                       comment that\'s a bit\n'
+  expected+=$'                       longer than the current\n'
+  expected+=$'                       column width'
 
   assert_equal "$expected" "$formatted" 'formatted summary'
 }

@@ -135,18 +135,18 @@ get_first_and_last_core_module_summaries() {
 
   # Note the two newlines at the end of each class section.
   assert_output_matches "  ${CORE_MODULES[0]} +${CORE_MODULES_PATHS[0]}"$'\n'
-  assert_output_matches "  $LAST_CORE_MODULE +$LAST_CORE_MODULE_PATH"$'\n'$'\n'
+  assert_output_matches "  $LAST_CORE_MODULE +$LAST_CORE_MODULE_PATH"$'\n\n'
 
   # Note the padding is relative to only the plugin modules. Use a variable to
   # keep the assertion lines under 80 columns.
   local plugins='scripts/plugins'
   assert_output_matches "  _bar/_plugh  $plugins/_bar/lib/_plugh"$'\n'
   assert_output_matches "  _foo/_quux   $plugins/_foo/lib/_quux"$'\n'
-  assert_output_matches "  _foo/_xyzzy  $plugins/_foo/lib/_xyzzy"$'\n'$'\n'
+  assert_output_matches "  _foo/_xyzzy  $plugins/_foo/lib/_xyzzy"$'\n\n'
 
   # Note the padding is relative to only the project modules. Bats trims
   # the last newline of the output.
-  assert_output_matches "  _frobozz  scripts/lib/_frobozz"$'\n'
+  assert_output_matches $'  _frobozz  scripts/lib/_frobozz\n'
   assert_output_matches "  _frotz    scripts/lib/_frotz$"
 
   # Since the 'lines' array doesn't contain blank lines, we only add '3' to
@@ -166,15 +166,15 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches \
     $'\n'"$LAST_CORE_MODULE  +$LAST_CORE_MODULE_PATH"$'\n'
   assert_output_matches \
-    $'\n'"_bar/_plugh  +scripts/plugins/_bar/lib/_plugh"$'\n'
+    $'\n_bar/_plugh  +scripts/plugins/_bar/lib/_plugh\n'
   assert_output_matches \
-    $'\n'"_foo/_quux   +scripts/plugins/_foo/lib/_quux"$'\n'
+    $'\n_foo/_quux   +scripts/plugins/_foo/lib/_quux\n'
   assert_output_matches \
-    $'\n'"_foo/_xyzzy  +scripts/plugins/_foo/lib/_xyzzy"$'\n'
+    $'\n_foo/_xyzzy  +scripts/plugins/_foo/lib/_xyzzy\n'
   assert_output_matches \
-    $'\n'"_frobozz     +scripts/lib/_frobozz"$'\n'
+    $'\n_frobozz     +scripts/lib/_frobozz\n'
   assert_output_matches \
-    $'\n'"_frotz       +scripts/lib/_frotz$"
+    $'\n_frotz       +scripts/lib/_frotz$'
 
   assert_equal "$TOTAL_NUM_MODULES" "${#lines[@]}"
 }
@@ -186,16 +186,16 @@ get_first_and_last_core_module_summaries() {
   # Note the two newlines at the end of each class section.
   get_first_and_last_core_module_summaries
   assert_output_matches "  ${CORE_MODULES[0]} +$FIRST_CORE_MOD_SUMMARY"$'\n'
-  assert_output_matches "  $LAST_CORE_MODULE +$LAST_CORE_MOD_SUMMARY"$'\n'$'\n'
+  assert_output_matches "  $LAST_CORE_MODULE +$LAST_CORE_MOD_SUMMARY"$'\n\n'
 
   # Note the padding is relative to only the plugin modules.
-  assert_output_matches "  _bar/_plugh  Summary for _bar/_plugh"$'\n'
-  assert_output_matches "  _foo/_quux   Summary for _foo/_quux"$'\n'
-  assert_output_matches "  _foo/_xyzzy  Summary for _foo/_xyzzy"$'\n'$'\n'
+  assert_output_matches $'  _bar/_plugh  Summary for _bar/_plugh\n'
+  assert_output_matches $'  _foo/_quux   Summary for _foo/_quux\n'
+  assert_output_matches $'  _foo/_xyzzy  Summary for _foo/_xyzzy\n\n'
 
   # Note the padding is relative to only the project modules. Bats trims
   # the last newline of the output.
-  assert_output_matches "  _frobozz  Summary for _frobozz"$'\n'
+  assert_output_matches $'  _frobozz  Summary for _frobozz\n'
   assert_output_matches "  _frotz    Summary for _frotz$"
 
   # Since the 'lines' array doesn't contain blank lines, we only add '3' to
@@ -212,12 +212,12 @@ get_first_and_last_core_module_summaries() {
   # delimited by back-to-back newlines. Bats trims the final newline.
   get_first_and_last_core_module_summaries
   assert_output_matches "${CORE_MODULES[0]}  +$FIRST_CORE_MOD_SUMMARY"$'\n'
-  assert_output_matches $'\n'"$LAST_CORE_MODULE  +$LAST_CORE_MOD_SUMMARY"$'\n'
-  assert_output_matches $'\n'"_bar/_plugh  +Summary for _bar/_plugh"$'\n'
-  assert_output_matches $'\n'"_foo/_quux   +Summary for _foo/_quux"$'\n'
-  assert_output_matches $'\n'"_foo/_xyzzy  +Summary for _foo/_xyzzy"$'\n'
-  assert_output_matches $'\n'"_frobozz     +Summary for _frobozz"$'\n'
-  assert_output_matches $'\n'"_frotz       +Summary for _frotz$"
+  assert_output_matches "$LAST_CORE_MODULE  +$LAST_CORE_MOD_SUMMARY"$'\n'
+  assert_output_matches $'_bar/_plugh  +Summary for _bar/_plugh\n'
+  assert_output_matches $'_foo/_quux   +Summary for _foo/_quux\n'
+  assert_output_matches $'_foo/_xyzzy  +Summary for _foo/_xyzzy\n'
+  assert_output_matches $'_frobozz     +Summary for _frobozz\n'
+  assert_output_matches $'_frotz       +Summary for _frotz$'
 
   assert_equal "$TOTAL_NUM_MODULES" "${#lines[@]}"
 }
