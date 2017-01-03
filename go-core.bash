@@ -170,18 +170,18 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
 # from the resulting stack trace.
 #
 # Arguments:
-#   skip_callers: The number of callers to skip over when printing the stack
+#   skip_callers:  The number of callers to skip over when printing the stack
 @go.print_stack_trace() {
   local skip_callers="$1"
   local result=0
   local i
 
   if [[ -n "$skip_callers" && ! "$skip_callers" =~ ^[1-9][0-9]*$ ]]; then
-    @go.printf '%s argument %s not a positive integer; printing full stack\n' \
+    printf '%s argument %s not a positive integer; printing full stack\n' \
       "$FUNCNAME" "'$skip_callers'" >&2
     result=1
   elif [[ "$skip_callers" -ge "${#FUNCNAME[@]}" ]]; then
-    @go.printf '%s argument %d exceeds stack size %d; printing full stack\n' \
+    printf '%s argument %d exceeds stack size %d; printing full stack\n' \
       "$FUNCNAME" "$skip_callers" "$((${#FUNCNAME[@]} - 1))" >&2
     result=1
   fi
@@ -191,7 +191,7 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
   fi
 
   for ((i=$skip_callers + 1; i != ${#FUNCNAME[@]}; ++i)); do
-    @go.printf '  %s:%s %s\n' "${BASH_SOURCE[$i]}" "${BASH_LINENO[$((i-1))]}" \
+    printf '  %s:%s %s\n' "${BASH_SOURCE[$i]}" "${BASH_LINENO[$((i-1))]}" \
       "${FUNCNAME[$i]}"
   done
   return "$result"
