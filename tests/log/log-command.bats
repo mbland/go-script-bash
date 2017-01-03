@@ -22,11 +22,33 @@ teardown() {
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
+@test "$SUITE: keep leading and trailing whitespace from nested invocations" {
+  run_log_script \
+  'inner_function() {' \
+  '  echo "   Hello, World!   "' \
+  '}' \
+  'middle_function() {' \
+  '  @go.log_command inner_function' \
+  '}' \
+  'outer_function() {' \
+  '  @go.log_command middle_function' \
+  '}' \
+  '@go.log_command outer_function'
+
+  assert_success
+  assert_log_equals \
+    RUN 'outer_function' \
+    RUN 'middle_function' \
+    RUN 'inner_function' \
+    '   Hello, World!   '
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
 @test "$SUITE: logging to a file doesn't repeat lines or skip other log files" {
   local info_log="$TEST_GO_ROOTDIR/info.log"
 
   run_log_script \
-    'function function_that_logs_info() {' \
+    'function_that_logs_info() {' \
     '  @go.log INFO "$@"' \
     '  "$@"' \
     '}' \

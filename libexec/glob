@@ -58,7 +58,7 @@ _@go.glob_impl() {
   fi
 
   # Setting IFS ensures that matching paths with spaces are handled properly.
-  local IFS=$'\n'
+  local IFS=
   local __go_glob_impl_matches=()
   _@go.glob_impl_helper "$pattern"
 

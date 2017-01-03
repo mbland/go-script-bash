@@ -359,11 +359,11 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
       "logging already initialized"
   fi
 
-  . "$_GO_USE_MODULES" 'file'
+  . "$_GO_USE_MODULES" 'file' 'strings'
   @go.open_file_or_duplicate_fd "$output_file" 'a' 'output_fd'
 
   if [[ -n "$log_level" ]]; then
-    IFS=',' read -ra levels <<<"$log_level"
+    @go.split ',' "$log_level" 'levels'
   else
     levels=("${_GO_LOG_LEVELS[@]}")
   fi

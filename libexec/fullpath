@@ -41,7 +41,7 @@ _@go.fullpath() {
 
   local arg
   local expanded
-  local IFS=$'\n'
+  local IFS=
 
   for arg in "$@"; do
     if [[ "${arg:0:1}" != '/' ]]; then
