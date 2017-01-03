@@ -50,18 +50,15 @@ fi
 #   mode:              File operation mode: r, w, a, or rw
 #   fd_var_reference:  Name of variable to which to assign new fd value
 @go.open_file_or_duplicate_fd() {
+  @go.validate_input_or_die 'file_path_or_fd' "$1"
+  @go.validate_identifier_or_die 'fd_var_reference' "$3"
   local file_path_or_fd="$1"
   local mode="$2"
   local fd_var_reference="$3"
   local bash_mode
   local i
 
-  if ! @go.validate_input "$file_path_or_fd"; then
-    printf 'Bad file_path_or_fd argument \"%s\" to %s at:\n' \
-      "$file_path_or_fd" "$FUNCNAME" >&2
-    @go.print_stack_trace '1' >&2
-    exit 1
-  elif [[ "$file_path_or_fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
+  if [[ "$file_path_or_fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
     file_path_or_fd="&$file_path_or_fd"
   else
     file_path_or_fd="\"$file_path_or_fd\""
@@ -86,17 +83,6 @@ fi
     exit 1
     ;;
   esac
-
-  if [[ -z "$fd_var_reference" ]]; then
-    echo "No variable reference given for the resulting file descriptor." >&2
-    @go.print_stack_trace '1' >&2
-    exit 1
-  elif ! @go.validate_input "$fd_var_reference"; then
-    printf 'Bad fd_var_reference argument \"%s\" to %s at:\n' \
-      "$fd_var_reference" "$FUNCNAME" >&2
-    @go.print_stack_trace '1' >&2
-    exit 1
-  fi
 
   for ((i=_GO_START_FD; i != _GO_MAX_FILE_DESCRIPTORS; ++i)); do
     if [[ ! -e "/dev/fd/$i" ]]; then

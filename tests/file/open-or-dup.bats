@@ -144,8 +144,9 @@ create_file_open_test_go_script() {
   local file_path_or_fd="\`echo SURPRISE >&2\`$FILE_PATH"
   FILE_PATH_OR_FD="$file_path_or_fd" run "$TEST_GO_SCRIPT"
 
-  local err_msg="Bad file_path_or_fd argument \"$file_path_or_fd\" to "
-  err_msg+='@go.open_file_or_duplicate_fd at:'
+  local err_msg="file_path_or_fd \"$file_path_or_fd\" "
+  err_msg+='for @go.open_file_or_duplicate_fd contains invalid characters at:'
+
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
   local IFS=$'\n'
@@ -168,8 +169,10 @@ create_file_open_test_go_script() {
     '@go.open_file_or_duplicate_fd "$file_path" "r"'
   run "$TEST_GO_SCRIPT"
 
-  local expected=(
-    'No variable reference given for the resulting file descriptor.'
+  local err_msg='fd_var_reference "" for @go.open_file_or_duplicate_fd '
+  err_msg+='must not be empty at:'
+
+  local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
   local IFS=$'\n'
   assert_failure "${expected[*]}"
@@ -182,8 +185,10 @@ create_file_open_test_go_script() {
   local var_ref=$'echo SURPRISE\nread_fd'
   VAR_REF="$var_ref" run "$TEST_GO_SCRIPT"
 
-  local err_msg="Bad fd_var_reference argument \"$var_ref\" to "
-  err_msg+='@go.open_file_or_duplicate_fd at:'
+  local err_msg="fd_var_reference \"$var_ref\" "
+  err_msg+='for @go.open_file_or_duplicate_fd '
+  err_msg+='contains invalid identifier characters at:'
+
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
   local IFS=$'\n'
