@@ -28,14 +28,22 @@ assert_success_on_valid_input() {
   run "$TEST_GO_SCRIPT" "$1"
 
   if [[ "$status" -ne '0' ]]; then
-    echo "Expected input to pass validation: $1" >&2
+    printf 'Expected input to pass validation: %s\n' "$1" >&2
+    return_from_bats_assertion 1
+    return
+  fi
+
+  run eval "var=\"$1\""
+
+  if [[ -n "$output" ]]; then
+    fail "Evaluating input still produced output: $1" >&2
     return_from_bats_assertion 1
   else
     return_from_bats_assertion
   fi
 }
 
-@test "$SUITE: returns error on invalid input" {
+@test "$SUITE: validate_input returns error on invalid input" {
   assert_error_on_invalid_input 'foo`bar'
   assert_error_on_invalid_input 'foo"bar'
   assert_error_on_invalid_input 'foo;bar'
@@ -52,7 +60,8 @@ assert_success_on_valid_input() {
   assert_error_on_invalid_input "$FILE_PATH\"; echo 'SURPRISE'"
 }
 
-@test "$SUITE: returns success on valid input" {
+@test "$SUITE: validate_input returns success on valid input" {
+  #assert_success_on_valid_input ''
   assert_success_on_valid_input 'foobar'
   assert_success_on_valid_input 'foo\`bar'
   assert_success_on_valid_input 'foo\"bar'
@@ -68,4 +77,122 @@ assert_success_on_valid_input() {
   assert_success_on_valid_input "\$'foo\nbar'"
   assert_success_on_valid_input '\`echo SURPRISE \>\&2\`\$FILE_PATH'
   assert_success_on_valid_input "\\\$FILE_PATH\\\"\\; echo 'SURPRISE'"
+}
+
+@test "$SUITE: validate_input_or_die passes" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_input_or_die "input argument" "foobar" "1"'
+  run "$TEST_GO_SCRIPT"
+  assert_success
+}
+
+@test "$SUITE: validate_input_or_die in main, skip_callers == 1" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_input_or_die "input argument" "foo;bar" "1"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+
+  local err_msg='^input argument "foo;bar" for @go\.validate_input_or_die '
+  err_msg+='contains invalid characters at:$'
+
+  assert_lines_match "$err_msg" \
+    "  $TEST_GO_SCRIPT:[0-9] main"
+}
+
+@test "$SUITE: validate_input_or_die in function, skip_callers default == 2" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    'test_func() { @go.validate_input_or_die "input argument" "$1"; }' \
+    'test_func "foo;bar"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+  assert_lines_match \
+    '^input argument "foo;bar" for test_func contains invalid characters at:$' \
+    "  $TEST_GO_SCRIPT:[0-9] main"
+}
+
+@test "$SUITE: validate_identifier passes on valid identifier" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_identifier "foobar"'
+  run "$TEST_GO_SCRIPT"
+  assert_success
+}
+
+@test "$SUITE: validate_identifier fails on empty string" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_identifier ""'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+}
+
+@test "$SUITE: validate_identifier fails on invalid character" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_identifier "foo;bar"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+}
+
+@test "$SUITE: validate_identifier fails if starts with number" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_identifier "3foobar"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+}
+
+@test "$SUITE: validate_identifier_or_die passes" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_identifier_or_die "argument" "foobar" "1"'
+  run "$TEST_GO_SCRIPT"
+  assert_success
+}
+
+@test "$SUITE: validate_identifier_or_die in main, skip_callers == 1" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_identifier_or_die "argument" "foo;bar" "1"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+
+  local err_msg='^argument "foo;bar" for @go\.validate_identifier_or_die '
+  err_msg+='contains invalid identifier characters at:$'
+  assert_lines_match "$err_msg" \
+    "  $TEST_GO_SCRIPT:[0-9] main"
+}
+
+@test "$SUITE: validate_identifier_or_die in func, skip_callers default == 2" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    'test_func() {' \
+    '  @go.validate_identifier_or_die "argument" "$1"' \
+    '}' \
+    'test_func "foo;bar"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+
+  local err_msg='^argument "foo;bar" for test_func '
+  err_msg+='contains invalid identifier characters at:$'
+  assert_lines_match "$err_msg" \
+    "  $TEST_GO_SCRIPT:[0-9] main"
+}
+
+@test "$SUITE: validate_identifier_or_die in func, empty string" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    'test_func() {' \
+    '  @go.validate_identifier_or_die "argument" "$1"' \
+    '}' \
+    'test_func ""'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+  assert_lines_match '^argument "" for test_func must not be empty at:$' \
+    "  $TEST_GO_SCRIPT:[0-9] main"
+}
+
+@test "$SUITE: validate_identifier_or_die in func, starts with number" {
+  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    'test_func() {' \
+    '  @go.validate_identifier_or_die "argument" "$1"' \
+    '}' \
+    'test_func "3foobar"'
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+  assert_lines_match \
+    '^argument "3foobar" for test_func must not start with a number at:$' \
+    "  $TEST_GO_SCRIPT:[0-9] main"
 }
