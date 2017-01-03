@@ -30,7 +30,7 @@ if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
   exit 1
 fi
 
-. "$_GO_USE_MODULES" 'validation'
+. "$_GO_USE_MODULES" 'strings' 'validation'
 
 # Opens a file or duplicates an existing descriptor, and returns the new fd.
 #
@@ -119,7 +119,7 @@ fi
   local output_fds=()
   local result=0
 
-  IFS=',' read -ra output_fds <<<"$1"
+  @go.split ',' "$1" 'output_fds'
   shift
 
   for output_fd in "${output_fds[@]}"; do

@@ -56,13 +56,11 @@
 
 _@go.usage() {
   local cmd_paths=("${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
-  local origIFS="$IFS"
-  local IFS=':'
   local summaries
   local summaries_status=0
 
-  cmd_paths="${cmd_paths[*]}"
-  IFS="$origIFS"
+  . "$_GO_USE_MODULES" 'strings'
+  @go.join ':' 'cmd_paths' "${cmd_paths[@]}"
   summaries="$(_@go.source_builtin 'commands' --summaries "$cmd_paths")"
 
   if [[ "$?" -ne '0' ]]; then
