@@ -134,6 +134,7 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
   local result
   local line
   local prefix
+  local IFS=
 
   if [[ "$#" -eq 0 ]]; then
     format="${format//\%/%%}"
@@ -141,7 +142,7 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
   # If `format` ends with a newline, chomp it, since the loop will add one.
   printf -v result "${format%\\n}" "$@"
 
-  while IFS= read -r line; do
+  while read -r line; do
     line="${line%$'\r'}"
 
     while [[ "${#line}" -gt "$COLUMNS" ]]; do
@@ -149,10 +150,10 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
       prefix="${prefix% *}"
       line="${line#$prefix}"
 
-      if [[ "$prefix" =~ \ +$ ]]; then
+      if [[ "$prefix" =~ [[:space:]]+$ ]]; then
         prefix="${prefix%${BASH_REMATCH[0]}}"
       fi
-      if [[ "$line" =~ ^\ + ]]; then
+      if [[ "$line" =~ ^[[:space:]]+ ]]; then
         line="${line#${BASH_REMATCH[0]}}"
       fi
       printf '%s\n' "$prefix"
