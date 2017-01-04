@@ -9,6 +9,9 @@
 #
 #   @go.zip_items
 #     Concatenates parallel elements from each input array
+#
+#   @go.strip_formatting_codes
+#     Strips ANSI escape codes of the form `\e[...(;...)m` from a string
 
 # Pads each string in an array to match the length of the longest element
 #
@@ -55,5 +58,22 @@
   for item in "${!lhs_array_reference}"; do
     rhs_item_ref="${rhs_reference}[$((++i))]"
     __go_zipped_result+=("${item}${delimiter}${!rhs_item_ref}")
+  done
+}
+
+# Strips ANSI escape codes of the form `\e[...(;...)m` from a string
+#
+# Used primarily by `@go.log`.
+#
+# Arguments:
+#   $1: The string to strip
+# Outputs:
+#   __go_stripped_value:  The caller-declared variable for the stripped result
+@go.strip_formatting_codes() {
+  __go_stripped_value="$1"
+  local format_pattern='\\e\[[0-9]{1,3}(;[0-9]{1,3})*m'
+
+  while [[ "$__go_stripped_value" =~ $format_pattern ]]; do
+    __go_stripped_value="${__go_stripped_value/"${BASH_REMATCH[0]}"}"
   done
 }
