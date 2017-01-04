@@ -1,148 +1,16 @@
 #! /usr/bin/env bats
 
 load environment
-
-TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
-FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
-export TEST_OUTPUT_FILE="$BATS_TEST_ROOTDIR/test-output.txt"
+load "$_GO_CORE_DIR/lib/bats/assertion-test-helpers"
 
 setup() {
-  mkdir "$BATS_TEST_ROOTDIR"
   test_filter
+  mkdir "$BATS_TEST_ROOTDIR"
 }
 
 teardown() {
   remove_bats_test_dirs
 }
-
-expect_success() {
-  local command="$1"
-  local assertion="$2"
-  local __assertion_output
-  local __assertion_status
-
-  run_command_then_run_assertion_in_subshell "$command" "$assertion"
-
-  if [[ "$__assertion_status" -ne '0' ]]; then
-    printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
-      "$__assertion_status" "$__assertion_output" >&2
-    return 1
-  fi
-  check_expected_output "$__assertion_output"
-
-  # Although we expect the assertion under test to pass, this script injects a
-  # failing assertion after it to check that the assertion under test calls
-  # `return_from_bats_assertion` upon returning. If it doesn't, the failing
-  # assertion will show the passing assertion's stack, per issue #48.
-  run_test_script \
-    "  run $command" \
-    "  $assertion" \
-    '  assert_equal_numbers() { [[ "$1" -eq "$2" ]]; }' \
-    '  assert_equal_numbers 0 1'
-
-  __expected_output=('1..1'
-    "not ok 1 $BATS_TEST_DESCRIPTION"
-    "# (from function \`assert_equal_numbers' in file $TEST_SCRIPT, line 6,"
-    "#  in test file $TEST_SCRIPT, line 7)"
-    "#   \`assert_equal_numbers 0 1' failed")
-  check_expected_output "$output"
-}
-
-expect_failure() {
-  local command="$1"
-  local assertion="$2"
-  shift 2
-  local __assertion_output
-  local __assertion_status
-  local i
-
-  run_command_then_run_assertion_in_subshell "$command" "$assertion"
-
-  if [[ "$__assertion_status" -eq '0' ]]; then
-    printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
-      "$__assertion_output" >&2
-    return 1
-  fi
-
-  local __expected_output=("$@")
-  check_expected_output "$__assertion_output"
-
-  run_test_script "  run $command" "  $assertion"
-
-  if [[ "$status" -eq '0' ]]; then
-    printf "In script: expected failure, but succeeded\nOutput:\n%s\n" \
-      "$output" >&2
-    return 1
-  fi
-
-  __expected_output=('1..1'
-    "not ok 1 $BATS_TEST_DESCRIPTION"
-    "# (in test file $TEST_SCRIPT, line 5)"
-    "#   \`$assertion' failed"
-    "${__expected_output[@]/#/# }")
-  check_expected_output "$output"
-}
-
-# The `command` is executed in-process to set `output`, `status`, and `lines`.
-# The `assertion` is executed in a process substitution (subshell) so that its
-# __assertion_output and __assertion_status can be captured and evaluated while
-# leaving `output`, `status`, and `lines` intact for later checks.
-run_command_then_run_assertion_in_subshell() {
-  local command="$1"
-  local assertion="$2"
-  local line
-
-  eval run $command
-  while IFS= read -r line; do
-    line="${line%$'\r'}"
-    if [[ "$line" =~ ^exit:([0-9]+)$ ]]; then
-      __assertion_status="${BASH_REMATCH[1]}"
-    else
-      __assertion_output+="$line"$'\n'
-    fi
-  done < <(trap 'echo exit:$?' EXIT; eval $assertion 2>&1; exit "$?")
-
-  # Trim trailing newline to match typical `output` behavior.
-  __assertion_output="${__assertion_output%$'\n'}"
-}
-
-run_test_script() {
-  create_bats_test_script "${TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
-    '#! /usr/bin/env bats' \
-    "load '$_GO_CORE_DIR/lib/bats/assertions'" \
-    "@test \"$BATS_TEST_DESCRIPTION\" {" \
-    "$@" \
-    '}'
-  run "$TEST_SCRIPT"
-}
-
-write_failing_test_script() {
-  create_bats_test_script "${FAILING_TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
-    'printf "%s\n" "$@"; exit 1'
-}
-
-check_expected_output() {
-  local actual_output="$1"
-  local IFS=$'\n'
-
-  if [[ "$actual_output" != "${__expected_output[*]}" ]]; then
-    printf 'Actual output differs from expected output:\n' >&2
-    printf -- '-------\nEXPECTED:\n%s\n-------\nACTUAL:\n%s\n-------\n' \
-      "${__expected_output[*]}" "$actual_output" >&2
-    return 1
-  fi
-}
-
-# Since we can't really redirect output as part of an `expect_success` or
-# `expect_failure` argument (it redirects the output from `eval run $command`),
-# this encapsulates the redirection to `TEST_OUTPUT_FILE`.
-#
-# This function and `TEST_OUTPUT_FILE` are exported to make them available to
-# generated test scripts.
-test_file_printf() {
-  printf "$@" >"$TEST_OUTPUT_FILE"
-}
-export -f test_file_printf
 
 @test "$SUITE: fail prints status and output, returns error" {
   expect_failure "echo 'Hello, world!'" \
