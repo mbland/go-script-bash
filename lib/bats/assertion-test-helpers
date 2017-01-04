@@ -17,7 +17,7 @@ ASSERTION_TEST_SCRIPT="$BATS_TEST_ROOTDIR/assertion-test.bats"
 # Arguments:
 #   run_cmd:    The full command to pass to `run` as a single string
 #   assertion:  The full assertion to evaluate as a single string
-expect_success() {
+expect_assertion_success() {
   local run_cmd="$1"
   local assertion="$2"
   local test_script="$ASSERTION_TEST_SCRIPT"
@@ -63,7 +63,7 @@ expect_success() {
 #   run_cmd:    The full command to pass to `run` as a single string
 #   assertion:  The full assertion to evaluate as a single string
 #   expected:   The expected output of the assertion failure
-expect_failure() {
+expect_assertion_failure() {
   local run_cmd="$1"
   local assertion="$2"
   shift 2
@@ -114,9 +114,9 @@ export -f printf_with_error
 
 # Execute `printf` and write result to `TEST_OUTPUT_FILE`
 #
-# Since we can't really redirect output as part of an `expect_success` or
-# `expect_failure` argument (it redirects the output from `eval run $run_cmd`),
-# this encapsulates the redirection to `TEST_OUTPUT_FILE`.
+# Since we can't really redirect output as part of an `expect_assertion_success`
+# or `expect_failure` argument (it redirects the output from `eval run
+# $run_cmd`), this encapsulates the redirection to `TEST_OUTPUT_FILE`.
 #
 # This function and `TEST_OUTPUT_FILE` are exported to make them available to
 # generated test scripts.
