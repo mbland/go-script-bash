@@ -2,6 +2,10 @@
 
 load environment
 
+setup() {
+  test_filter
+}
+
 teardown() {
   remove_bats_test_dirs
 }
@@ -100,7 +104,7 @@ teardown() {
   # On some Windows file systems, any file starting with '#!' will be marked
   # executable. This is how we can tell Unix-style permissions aren't supported,
   # and thus some test conditions can't be created.
-  run create_bats_test_script test-script 'echo Hello, World!'
+  create_bats_test_script test-script 'echo Hello, World!'
   chmod 600 "$BATS_TEST_ROOTDIR/test-script"
   run fs_missing_permission_support
 
@@ -119,4 +123,53 @@ teardown() {
     skip_if_cannot_trigger_file_permission_failure
     fail "Should have skipped this test due to running as the superuser"
   fi
+}
+
+@test "$SUITE: test_printf" {
+  create_bats_test_script test-script \
+    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
+    "test_printf '%s\n' 'some test debug output'"
+
+  run "$BATS_TEST_ROOTDIR/test-script"
+  assert_success ''
+  TEST_DEBUG='true' run "$BATS_TEST_ROOTDIR/test-script"
+  assert_success 'some test debug output'
+}
+
+@test "$SUITE: test_filter" {
+  # We have to define the script as an array, or the main Bats process will try
+  # to parse it.
+  local test_file="$BATS_TEST_ROOTDIR/test.bats"
+  local test_script=('#! /usr/bin/env bats'
+    "load '$_GO_CORE_DIR/lib/bats/helpers'"
+    'setup() { test_filter; }'
+    '@test "foo" { :; }'
+    '@test "bar" { :; }'
+    '@test "baz" { :; }')
+
+  create_bats_test_script "${test_file#$BATS_TEST_ROOTDIR/}" "${test_script[@]}"
+
+  TEST_FILTER= run bats "$test_file"
+  assert_success
+  assert_lines_equal '1..3' \
+    'ok 1 foo' \
+    'ok 2 bar' \
+    'ok 3 baz'
+
+  TEST_FILTER='b[a-z]r' run bats "$test_file"
+  assert_success
+  assert_lines_equal '1..3' \
+    'ok 1 # skip foo' \
+    'ok 2 bar' \
+    'ok 3 # skip baz'
+}
+
+@test "$SUITE: split_bats_output_into_lines" {
+  # Bats will still trim traling newlines from `output`, so don't include them.
+  local test_output=$'\n\nfoo\n\nbar\n\nbaz'
+  run printf "$test_output"
+  assert_success "$test_output"
+  assert_lines_equal 'foo' 'bar' 'baz'
+  split_bats_output_into_lines
+  assert_lines_equal '' '' 'foo' '' 'bar' '' 'baz'
 }
