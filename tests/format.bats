@@ -43,3 +43,27 @@ setup() {
   assert_equal $'\n'"${expected[*]/#/$indent}" \
     $'\n'"${__go_zipped_result[*]/#/$indent}"
 }
+
+@test "$SUITE: strip formatting codes from empty string" {
+  local __go_stripped_value
+  @go.strip_formatting_codes ''
+  assert_equal '' "$__go_stripped_value"
+}
+
+@test "$SUITE: strip formatting codes from string with no codes" {
+  local __go_stripped_value
+  @go.strip_formatting_codes 'foobar'
+  assert_equal 'foobar' "$__go_stripped_value"
+}
+
+@test "$SUITE: strip formatting codes from string with one code" {
+  local __go_stripped_value
+  @go.strip_formatting_codes 'foobar\e[0m'
+  assert_equal 'foobar' "$__go_stripped_value"
+}
+
+@test "$SUITE: strip formatting codes from string with multiple codes" {
+  local __go_stripped_value
+  @go.strip_formatting_codes '\e[1mf\e[30;47mo\e[0;111mo\e[32mbar\e[0m'
+  assert_equal 'foobar' "$__go_stripped_value"
+}
