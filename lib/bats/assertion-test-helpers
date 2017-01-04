@@ -23,7 +23,7 @@ expect_success() {
       "$__assertion_status" "$__assertion_output" >&2
     return 1
   fi
-  check_expected_output "$__assertion_output"
+  __check_expected_output "$__assertion_output"
 
   # Although we expect the assertion under test to pass, this script injects a
   # failing assertion after it to check that the assertion under test calls
@@ -35,12 +35,12 @@ expect_success() {
     '  assert_equal_numbers() { [ "$1" -eq "$2" ]; }' \
     '  assert_equal_numbers 0 1'
 
-  __expected_output=('1..1'
-    "not ok 1 $BATS_TEST_DESCRIPTION"
-    "# (from function \`assert_equal_numbers' in file $TEST_SCRIPT, line 6,"
-    "#  in test file $TEST_SCRIPT, line 7)"
-    "#   \`assert_equal_numbers 0 1' failed")
-  check_expected_output "$output"
+  __check_expected_output "$output" \
+    '1..1' \
+    "not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# (from function \`assert_equal_numbers' in file $TEST_SCRIPT, line 6," \
+    "#  in test file $TEST_SCRIPT, line 7)" \
+    "#   \`assert_equal_numbers 0 1' failed"
 }
 
 # Validates that an assertion fails for the provided inputs
@@ -65,9 +65,7 @@ expect_failure() {
     return 1
   fi
 
-  local __expected_output=("$@")
-  check_expected_output "$__assertion_output"
-
+  __check_expected_output "$__assertion_output" "$@"
   __run_assertion_test_script "  run $run_cmd" "  $assertion"
 
   if [[ "$status" -eq '0' ]]; then
@@ -76,12 +74,12 @@ expect_failure() {
     return 1
   fi
 
-  __expected_output=('1..1'
-    "not ok 1 $BATS_TEST_DESCRIPTION"
-    "# (in test file $TEST_SCRIPT, line 5)"
-    "#   \`$assertion' failed"
-    "${__expected_output[@]/#/# }")
-  check_expected_output "$output"
+  __check_expected_output "$output" \
+    '1..1' \
+    "not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# (in test file $TEST_SCRIPT, line 5)" \
+    "#   \`$assertion' failed" \
+    "${@/#/# }"
 }
 
 # Calls `printf` on its arguments and returns an error
@@ -173,14 +171,20 @@ __run_assertion_test_script() {
 }
 
 # Compares the actual assertion failure output against the expected output
-check_expected_output() {
+#
+# Arguments:
+#   actual_output:  Actual assertion output as a single string
+#   ...:            Expected assertion output as a series of strings
+__check_expected_output() {
   local actual_output="$1"
+  local expected_output=("${@:2}")
   local IFS=$'\n'
+  expected_output="${expected_output[*]}"
 
-  if [[ "$actual_output" != "${__expected_output[*]}" ]]; then
+  if [[ "$actual_output" != "$expected_output" ]]; then
     printf 'Actual output differs from expected output:\n' >&2
-    printf -- '-------\nEXPECTED:\n%s\n-------\nACTUAL:\n%s\n-------\n' \
-      "${__expected_output[*]}" "$actual_output" >&2
+    printf -- '--------\nEXPECTED:\n%s\n--------\nACTUAL:\n%s\n--------\n' \
+      "$expected_output" "$actual_output" >&2
     return 1
   fi
 }
