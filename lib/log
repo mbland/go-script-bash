@@ -53,6 +53,8 @@
 # script, and provides helpful hints on running the `./go` script upon success.
 #
 # See the function and variable comments from this file for further information.
+# Try the `{{go}} demo-core log` command to get a feel for the mechanisms
+# described above.
 
 # A strftime-compatible date/time format string used to prefix log messages with
 # a timestamp. E.g.: '%Y-%m-%d %H:%M:%S'
