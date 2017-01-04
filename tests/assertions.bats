@@ -142,8 +142,7 @@ teardown() {
 }
 
 @test "$SUITE: assert_success failure" {
-  write_failing_test_script
-  expect_failure "'$FAILING_TEST_SCRIPT' 'Hello, world!'" \
+  expect_failure "printf_with_error 'Hello, world!'" \
     'assert_success' \
     'expected success, but command failed' \
     'STATUS: 1' \
@@ -165,8 +164,7 @@ teardown() {
 }
 
 @test "$SUITE: assert_failure without output check" {
-  write_failing_test_script
-  expect_success "'$FAILING_TEST_SCRIPT' 'Hello, world!'" \
+  expect_success "printf_with_error 'Hello, world!'" \
     'assert_failure'
 }
 
@@ -180,14 +178,12 @@ teardown() {
 }
 
 @test "$SUITE: assert_failure with output check" {
-  write_failing_test_script
-  expect_success "'$FAILING_TEST_SCRIPT' 'Hello,' 'world!'" \
-    "assert_failure 'Hello,' 'world!'"
+  expect_success "printf_with_error 'Hello, world!'" \
+    "assert_failure 'Hello, world!'"
 }
 
 @test "$SUITE: assert_failure output check failure" {
-  write_failing_test_script
-  expect_failure "'$FAILING_TEST_SCRIPT' 'Hello,' 'world!'" \
+  expect_failure "printf_with_error '%s\n' 'Hello,' 'world!'" \
     "assert_failure 'Goodbye,' 'world!'" \
     'output not equal to expected value:' \
     "  expected: 'Goodbye," \

@@ -3,7 +3,6 @@
 # Functions for testing Bats assertions
 
 TEST_SCRIPT="$BATS_TEST_ROOTDIR/do_test.bats"
-FAILING_TEST_SCRIPT="$BATS_TEST_ROOTDIR/fail.bash"
 export TEST_OUTPUT_FILE="$BATS_TEST_ROOTDIR/test-output.txt"
 
 # Validates that an assertion succeeds for the provided inputs
@@ -122,13 +121,19 @@ run_test_script() {
   run "$TEST_SCRIPT"
 }
 
-# Creates `FAILING_TEST_SCRIPT`, which echoes its arguments and calls `exit 1`
+# Useful for generating some output and a failing status. Exported to make it
+# available to generated test scripts.
 #
-# Useful for generating some output and a failing status.
-write_failing_test_script() {
-  create_bats_test_script "${FAILING_TEST_SCRIPT#$BATS_TEST_ROOTDIR/}" \
-    'printf "%s\n" "$@"; exit 1'
+# Globals:
+#   PRINTF_ERROR:  If set, the function returns this value instead of 1
+#
+# Arguments:
+#   ...:  Arguments to `printf`
+printf_with_error() {
+  printf "$@"
+  return "${PRINTF_ERROR:-1}"
 }
+export -f printf_with_error
 
 # Compares the actual assertion failure output against the expected output
 check_expected_output() {
