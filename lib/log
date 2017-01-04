@@ -227,8 +227,10 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   log_msg+="${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]} "
   log_msg+="${args[*]}\\e[0m"
 
-  local __go_log_level_file_descriptors=()
-  _@go.log_level_file_descriptors "$__go_log_level_index"
+  local __go_log_level_file_descriptors=('1')
+  if [[ "$__GO_LOG_COMMAND_DEPTH" == '0' || "$log_level" != 'RUN' ]]; then
+    _@go.log_level_file_descriptors "$__go_log_level_index"
+  fi
 
   for level_fd in "${__go_log_level_file_descriptors[@]}"; do
     if ! _@go.log_level_meets_priority "$__go_log_level_index" "$level_fd" ||
@@ -240,7 +242,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
         unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9]m}"
         unformatted_log_msg="${unformatted_log_msg//\\e\[[0-9][0-9][0-9]m}"
       fi
-      printf '%b\n' "$unformatted_log_msg" >&"$level_fd"
+      printf '%s\n' "$unformatted_log_msg" >&"$level_fd"
     else
       printf '%b\n' "$log_msg" >&"$level_fd"
     fi
@@ -429,10 +431,12 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
     return
   fi
 
-  local __go_log_level_index
-  _@go.log_level_index 'RUN'
-  local __go_log_level_file_descriptors
-  _@go.log_level_file_descriptors "$__go_log_level_index"
+  local __go_log_level_file_descriptors=('1')
+  if [[ "$__GO_LOG_COMMAND_DEPTH" -eq '0' ]]; then
+    local __go_log_level_index
+    _@go.log_level_index 'RUN'
+    _@go.log_level_file_descriptors "$__go_log_level_index"
+  fi
 
   while IFS= read -r line; do
     line="${line%$'\r'}"

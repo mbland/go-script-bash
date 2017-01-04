@@ -5,7 +5,7 @@ load helpers
 
 setup() {
   # Test every case with a log file as well.
-  export TEST_LOG_FILE="$TEST_GO_ROOTDIR/run.log"
+  export TEST_LOG_FILE="$TEST_GO_ROOTDIR/test-script.log"
 }
 
 teardown() {
@@ -66,6 +66,35 @@ teardown() {
   assert_log_file_equals "$info_log" \
     INFO "Invoking _GO_SCRIPT: $TEST_GO_SCRIPT" \
     INFO 'echo Hello, World!'
+}
+
+@test "$SUITE: nested @go.log RUN calls always print to standard output" {
+  # See #66. The reason nested calls should always print to standard output is
+  # because those calls won't otherwise get logged if the `RUN` level file
+  # descriptors are updated to eliminate standard output. By always printing
+  # nested `@go.log_command` messages to standard output, the outermost
+  # `@go.log_command` call will still write them to the log file.
+  local run_log_file="$TEST_GO_ROOTDIR/run.log"
+
+  run_log_script \
+    'nested_log_command_function() {' \
+    '  @go.log_command echo "Hello, World!"' \
+    '}' \
+    '. "$_GO_USE_MODULES" file' \
+    "declare run_log_file=\"$run_log_file\"" \
+    'declare run_log_file_fd' \
+    '@go.open_file_or_duplicate_fd "$run_log_file" w run_log_file_fd' \
+    '@go.add_or_update_log_level RUN keep "$run_log_file_fd"' \
+    '@go.log INFO Calling function with nested log_command call' \
+    '@go.log_command nested_log_command_function'
+
+  assert_success
+  assert_log_equals INFO 'Calling function with nested log_command call'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+  assert_log_file_equals "$run_log_file" \
+    RUN  'nested_log_command_function' \
+    RUN  'echo Hello, World!' \
+    'Hello, World!'
 }
 
 @test "$SUITE: log single failing command to standard error" {
