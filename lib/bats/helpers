@@ -166,3 +166,40 @@ skip_if_cannot_trigger_file_permission_failure() {
     skip "Can't trigger condition when run by superuser"
   fi
 }
+
+# Prints its arguments to standard error whenever `TEST_DEBUG` is set
+#
+# When debugging a piece of code, you may wish to source this file and
+# temporarily include `test_printf` to trace values in your program.
+#
+# Arguments:
+#    ...:  Arguments to `printf`
+test_printf() {
+  if [[ -n "$TEST_DEBUG" ]]; then
+    printf "$@" >&2
+  fi
+}
+
+# Skips a test if `TEST_FILTER` is set but doesn't match `BATS_TEST_DESCRIPTION`
+#
+# Call this from the `setup` function of your test suite if you'd like to
+# quickly execute a subset of test cases within the suite.
+test_filter() {
+  if [[ -n "$TEST_FILTER" && ! "$BATS_TEST_DESCRIPTION" =~ $TEST_FILTER ]]; then
+    skip
+  fi
+}
+
+# Replaces `lines` with the split content of `output`, including blank lines
+#
+# Blank lines are eliminated from `lines` by default. This makes it easier to
+# compare the exact lines of `output` using `assert_lines_equal` and other
+# `lines`-based assertions.
+split_bats_output_into_lines() {
+  local line
+  lines=()
+
+  while IFS= read -r line; do
+    lines+=("${line%$'\r'}")
+  done <<<"$output"
+}

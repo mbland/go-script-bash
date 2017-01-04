@@ -590,7 +590,9 @@ export -f test_file_printf
   expect_failure "echo 'Hello, world!'" \
     'fail_if matches "Hello" "$output" "echo result"' \
     'Expected echo result not to match:' \
-    "  'Hello'"
+    "  'Hello'" \
+    'Value:' \
+    "  'Hello, world!'"
 }
 
 @test "$SUITE: fail_if succeeds when assert_output fails" {
@@ -614,7 +616,9 @@ export -f test_file_printf
   expect_failure "echo 'Hello, world!'" \
     "fail_if output_matches 'Hello'" \
     'Expected output not to match:' \
-    "  'Hello'"
+    "  'Hello'" \
+    'Value:' \
+    "  'Hello, world!'"
 }
 
 @test "$SUITE: fail_if succeeds when assert_status fails" {
@@ -650,7 +654,9 @@ export -f test_file_printf
   expect_failure "echo 'Hello, world!'" \
     "fail_if line_matches '0' 'Hello'" \
     'Expected line 0 not to match:' \
-    "  'Hello'"
+    "  'Hello'" \
+    'Value:' \
+    "  'Hello, world!'"
 }
 
 @test "$SUITE: fail_if succeeds when assert_lines_match fails" {
