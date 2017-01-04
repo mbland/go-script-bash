@@ -16,7 +16,7 @@ expect_success() {
   local __assertion_output
   local __assertion_status
 
-  run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
+  __run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
 
   if [[ "$__assertion_status" -ne '0' ]]; then
     printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
@@ -29,7 +29,7 @@ expect_success() {
   # failing assertion after it to check that the assertion under test calls
   # `return_from_bats_assertion` upon returning. If it doesn't, the failing
   # assertion will show the passing assertion's stack, per issue #48.
-  run_test_script \
+  __run_assertion_test_script \
     "  run $run_cmd" \
     "  $assertion" \
     '  assert_equal_numbers() { [ "$1" -eq "$2" ]; }' \
@@ -57,7 +57,7 @@ expect_failure() {
   local __assertion_status
   local i
 
-  run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
+  __run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
 
   if [[ "$__assertion_status" -eq '0' ]]; then
     printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
@@ -68,7 +68,7 @@ expect_failure() {
   local __expected_output=("$@")
   check_expected_output "$__assertion_output"
 
-  run_test_script "  run $run_cmd" "  $assertion"
+  __run_assertion_test_script "  run $run_cmd" "  $assertion"
 
   if [[ "$status" -eq '0' ]]; then
     printf "In script: expected failure, but succeeded\nOutput:\n%s\n" \
@@ -84,11 +84,62 @@ expect_failure() {
   check_expected_output "$output"
 }
 
+# Calls `printf` on its arguments and returns an error
+#
+# Useful for generating some output and a failing status. Exported to make it
+# available to generated test scripts.
+#
+# Globals:
+#   PRINTF_ERROR:  If set, the function returns this value instead of 1
+#
+# Arguments:
+#   ...:  Arguments to `printf`
+printf_with_error() {
+  printf "$@"
+  return "${PRINTF_ERROR:-1}"
+}
+export -f printf_with_error
+
+# Execute `printf` and write result to `TEST_OUTPUT_FILE`
+#
+# Since we can't really redirect output as part of an `expect_success` or
+# `expect_failure` argument (it redirects the output from `eval run $run_cmd`),
+# this encapsulates the redirection to `TEST_OUTPUT_FILE`.
+#
+# This function and `TEST_OUTPUT_FILE` are exported to make them available to
+# generated test scripts.
+#
+# Arguments:
+#   ...:  Arguments to `printf`
+printf_to_test_output_file() {
+  printf "$@" >"$TEST_OUTPUT_FILE"
+}
+export -f printf_to_test_output_file
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# Passes the target command to `run`, the executes the `assertion` in a subshell
+#
 # The `run_cmd` is executed in-process to set `output`, `status`, and `lines`.
+#
 # The `assertion` is executed in a process substitution (subshell) so that its
 # __assertion_output and __assertion_status can be captured and evaluated while
-# leaving `output`, `status`, and `lines` intact for later checks.
-run_command_then_run_assertion_in_subshell() {
+# leaving `output`, `status`, and `lines` intact for later checks. It's also
+# able to capture trailing blank lines in the assertion output, which `run
+# $assertion` would normally remove.
+#
+# Globals:
+#   __assertion_status:  Caller-declared variable for the assertion status
+#   __assertion_output:  Caller-declared variable for the assertion output
+#
+# Arguments:
+#   run_cmd:    The full command to pass to `run` as a single string
+#   assertion:  The full assertion to evaluate as a single string
+__run_command_then_run_assertion_in_subshell() {
   local run_cmd="$1"
   local assertion="$2"
   local line
@@ -111,7 +162,7 @@ run_command_then_run_assertion_in_subshell() {
 #
 # Arguments:
 #   ...: Body of the test case to execute
-run_test_script() {
+__run_assertion_test_script() {
   create_bats_test_script "${TEST_SCRIPT#$BATS_TEST_ROOTDIR/}" \
     '#! /usr/bin/env bats' \
     "load '$_GO_CORE_DIR/lib/bats/assertions'" \
@@ -120,20 +171,6 @@ run_test_script() {
     '}'
   run "$TEST_SCRIPT"
 }
-
-# Useful for generating some output and a failing status. Exported to make it
-# available to generated test scripts.
-#
-# Globals:
-#   PRINTF_ERROR:  If set, the function returns this value instead of 1
-#
-# Arguments:
-#   ...:  Arguments to `printf`
-printf_with_error() {
-  printf "$@"
-  return "${PRINTF_ERROR:-1}"
-}
-export -f printf_with_error
 
 # Compares the actual assertion failure output against the expected output
 check_expected_output() {
@@ -147,19 +184,3 @@ check_expected_output() {
     return 1
   fi
 }
-
-# Execute `printf` and write result to `TEST_OUTPUT_FILE`
-#
-# Since we can't really redirect output as part of an `expect_success` or
-# `expect_failure` argument (it redirects the output from `eval run $run_cmd`),
-# this encapsulates the redirection to `TEST_OUTPUT_FILE`.
-#
-# This function and `TEST_OUTPUT_FILE` are exported to make them available to
-# generated test scripts.
-#
-# Arguments:
-#   ...:  Arguments to `printf`
-test_file_printf() {
-  printf "$@" >"$TEST_OUTPUT_FILE"
-}
-export -f test_file_printf

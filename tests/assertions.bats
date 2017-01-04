@@ -353,7 +353,7 @@ teardown() {
   assert_equal '' "$output" 'output before'
   assert_equal '' "${lines[*]}" 'lines before'
 
-  test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'
+  printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'
   set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
 
   # Note that the trailing newline is stripped, which is consistent with how
@@ -375,19 +375,19 @@ teardown() {
 @test "$SUITE: set_bats_output_and_lines_from_file fails if permission denied" {
   skip_if_cannot_trigger_file_permission_failure
 
-  test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'
+  printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'
   chmod ugo-r "$TEST_OUTPUT_FILE"
   run set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
   assert_failure "You don't have permission to access '$TEST_OUTPUT_FILE'."
 }
 
 @test "$SUITE: assert_file_equals" {
-  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_success "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''"
 }
 
 @test "$SUITE: assert_file_equals failure" {
-  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_failure "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'quux' '' 'baz' ''" \
     'line 3 not equal to expected value:' \
     "  expected: 'quux'" \
@@ -403,12 +403,12 @@ teardown() {
 }
 
 @test "$SUITE: assert_file_matches" {
-  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_success "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_matches '$TEST_OUTPUT_FILE' 'foo.*b[a-z]r.*baz'"
 }
 
 @test "$SUITE: assert_file_matches failure" {
-  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_failure "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_matches '$TEST_OUTPUT_FILE' 'foo.*qu+x.*baz'" \
     "The content of '$TEST_OUTPUT_FILE' does not match expected pattern:" \
     "  pattern: 'foo.*qu+x.*baz'" \
@@ -422,13 +422,13 @@ teardown() {
 }
 
 @test "$SUITE: assert_file_lines_match" {
-  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_success "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_lines_match '$TEST_OUTPUT_FILE' \
       '^$' 'f.*' '^$' 'b[a-z]r' '^$' '^baz$' '^$'"
 }
 
 @test "$SUITE: assert_file_lines_match failure" {
-  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_failure "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_lines_match '$TEST_OUTPUT_FILE' \
       '^$' 'f.*' '^$' 'qu+x' '^$' '^baz$' '^$'" \
     'line 3 does not match expected pattern:' \
@@ -580,12 +580,12 @@ teardown() {
 }
 
 @test "$SUITE: fail_if succeeds when assert_file_equals fails" {
-  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_success "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "fail_if file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'quux' '' 'baz' ''"
 }
 
 @test "$SUITE: fail_if fails when assert_file_equals succeeds" {
-  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_failure "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "fail_if file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''" \
     "Expected '$TEST_OUTPUT_FILE' not to equal:" \
     "  ''" \
@@ -607,12 +607,12 @@ teardown() {
 }
 
 @test "$SUITE: fail_if succeeds when assert_file_matches fails" {
-  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_success "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "fail_if file_matches '$TEST_OUTPUT_FILE' 'foo.*qu+x.*baz'"
 }
 
 @test "$SUITE: fail_if fails when assert_file_matches succeeds" {
-  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_failure "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "fail_if file_matches '$TEST_OUTPUT_FILE' 'foo.*b[a-z]r.*baz'" \
     "Expected '$TEST_OUTPUT_FILE' not to match:" \
     "  'foo.*b[a-z]r.*baz'" \
@@ -628,13 +628,13 @@ teardown() {
 }
 
 @test "$SUITE: fail_if succeeds when assert_file_lines_match fails" {
-  expect_success "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_success "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "fail_if file_lines_match '$TEST_OUTPUT_FILE' \
       '^$' 'f.*' '^$' 'qu+x' '^$' '^baz$' '^$'"
 }
 
 @test "$SUITE: fail_if fails when assert_file_lines_match succeeds" {
-  expect_failure "test_file_printf '\nfoo\n\nbar\n\nbaz\n\n'" \
+  expect_failure "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "fail_if file_lines_match '$TEST_OUTPUT_FILE' \
       '^$' 'f.*' '^$' 'b[a-z]r' '^$' '^baz$' '^$'" \
     "Expected '$TEST_OUTPUT_FILE' not to match:" \
