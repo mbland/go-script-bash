@@ -35,7 +35,7 @@ teardown() {
   assert_success '--ignore'
 
   expected=($(compgen -f -- 'li'))
-  [[ "${#expected[@]}" -ne '0' ]]
+  [ "${#expected[@]}" -ne '0' ]
   run ./go complete 1 glob 'li'
   assert_success "${expected[*]}"
 }
@@ -61,7 +61,7 @@ teardown() {
   assert_success "${expected[*]}"
 
   expected=($(compgen -f -- 'li'))
-  [[ "${#expected[@]}" -ne '0' ]]
+  [ "${#expected[@]}" -ne '0' ]
   run ./go complete 4 glob '--ignore' 'foo*:bar*' '--trim' 'li'
   assert_success "${expected[*]}"
 }

@@ -20,7 +20,7 @@ teardown() {
   local expected=('--coverage' '--edit' '--list')
   expected+=($('./go' 'glob' '--complete' '5' \
     '--trim' '--ignore' 'bats' 'tests' '.bats'))
-  [[ "${#expected[@]}" -ne 1 ]]
+  [ "${#expected[@]}" -ne 1 ]
 
   run ./go complete 1 test ''
   local IFS=$'\n'
@@ -51,7 +51,7 @@ _trim_expected() {
 @test "$SUITE: no arguments after --list lists all tests" {
   local expected=(
     $('./go' 'glob' '--trim' '--ignore' 'bats' 'tests' '.bats'))
-  [[ "${#expected[@]}" -ne 0 ]]
+  [ "${#expected[@]}" -ne 0 ]
 
   run ./go test --list
   local IFS=$'\n'

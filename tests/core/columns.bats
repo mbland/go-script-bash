@@ -30,7 +30,7 @@ teardown() {
 @test "$SUITE: set COLUMNS if unset" {
   run env COLUMNS= "$TEST_GO_SCRIPT"
   assert_success
-  [[ -n "$output" ]]
+  [ -n "$output" ]
 }
 
 @test "$SUITE: honor COLUMNS if already set" {
