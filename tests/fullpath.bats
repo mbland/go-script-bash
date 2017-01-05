@@ -18,7 +18,7 @@ teardown() {
   assert_success '--existing'
 
   expected=($(compgen -f -- 'li'))
-  [[ "${#expected[@]}" -ne '0' ]]
+  [ "${#expected[@]}" -ne '0' ]
   run ./go complete 1 fullpath 'li'
   assert_success "${expected[*]}"
 }
