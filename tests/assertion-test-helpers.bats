@@ -72,3 +72,10 @@ run_assertion_test() {
   err_msg+="$_GO_CORE_DIR/lib/bats/assertion-test-helpers."
   [ "$output" == "$err_msg" ]
 }
+
+@test "$SUITE: successful assertion" {
+  run_assertion_test 'success'
+  emit_debug_info
+  [ "$status" -eq '0' ]
+  [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
+}
