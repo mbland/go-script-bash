@@ -1,6 +1,8 @@
 #! /usr/bin/env bats
 
 load environment
+
+ASSERTION_SOURCE="$_GO_CORE_DIR/lib/bats/assertions"
 load "$_GO_CORE_DIR/lib/bats/assertion-test-helpers"
 
 setup() {

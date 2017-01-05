@@ -1,10 +1,15 @@
 #! /usr/bin/env bats
 
 load environment
+
+ASSERTION_SOURCE="$_GO_CORE_DIR/tests/assertion-test-helpers.bash"
 load "$_GO_CORE_DIR/lib/bats/assertion-test-helpers"
+
+EXPECT_ASSERTION_TEST_SCRIPT="run-expect-assertion.bats"
 
 setup() {
   test_filter
+  export ASSERTION=
 }
 
 teardown() {
@@ -13,6 +18,29 @@ teardown() {
 
 emit_debug_info() {
   printf 'STATUS: %s\nOUTPUT:\n%s\n' "$status" "$output" >&2
+}
+
+run_assertion_test() {
+  local expected_output=("${@:2}")
+  local expected_output_line
+
+  ASSERTION="expect_assertion_${1}"
+  ASSERTION+=" 'echo foo bar baz' 'test_assertion \"\$output\"'"
+
+  for expected_output_line in "${expected_output[@]}"; do
+    ASSERTION+=$' \\\n    '"'$expected_output_line'"
+  done
+
+  create_bats_test_script "$EXPECT_ASSERTION_TEST_SCRIPT" \
+    '#! /usr/bin/env bats' \
+    '' \
+    "ASSERTION_SOURCE='$ASSERTION_SOURCE'" \
+    ". '$_GO_CORE_DIR/lib/bats/assertion-test-helpers'" \
+    '' \
+    "@test \"$BATS_TEST_DESCRIPTION\" {" \
+    "  $ASSERTION" \
+    '}'
+  run "$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
 }
 
 @test "$SUITE: printf_with_error" {
@@ -33,4 +61,14 @@ emit_debug_info() {
   [ "$status" -eq '0' ]
   [ -z "$output" ]
   [ "$(< "$TEST_OUTPUT_FILE")" == 'foo bar baz' ]
+}
+
+@test "$SUITE: error if ASSERTION_SOURCE not set" {
+  ASSERTION_SOURCE= run_assertion_test
+  emit_debug_info
+  [ "$status" -eq '1' ]
+
+  local err_msg='"ASSERTION_SOURCE" must be set before sourcing '
+  err_msg+="$_GO_CORE_DIR/lib/bats/assertion-test-helpers."
+  [ "$output" == "$err_msg" ]
 }
