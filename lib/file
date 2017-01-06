@@ -91,7 +91,7 @@ fi
         @go.print_stack_trace '1' >&2
         exit 1
       fi
-      eval "$fd_var_reference=$i"
+      printf -v "$fd_var_reference" "$i"
       return
     fi
   done
