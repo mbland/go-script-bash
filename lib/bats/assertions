@@ -93,7 +93,12 @@
 
 # The first line of every Bats assertion must call `set` with this argument.
 # See the function comments for `return_from_bats_assertion` for details.
-readonly BATS_ASSERTION_DISABLE_SHELL_OPTIONS='+eET'
+#
+# This guard allows this file to be sourced multiple times in a test program,
+# either directly or via other assertion files that source it.
+if [[ -z "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS" ]]; then
+  readonly BATS_ASSERTION_DISABLE_SHELL_OPTIONS='+eET'
+fi
 
 # Unconditionally returns a failing status
 #
