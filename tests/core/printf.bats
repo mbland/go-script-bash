@@ -2,6 +2,10 @@
 
 load ../environment
 
+setup() {
+  test_filter
+}
+
 teardown() {
   remove_test_go_rootdir
 }
@@ -17,6 +21,12 @@ teardown() {
   create_test_go_script '@go.printf "$@"'
   run "$TEST_GO_SCRIPT" "$test_text"
   assert_success "$test_text"
+}
+
+@test "$SUITE: Handle leading hyphen and newlines in format" {
+  create_test_go_script "@go.printf '- %s\n' 'foo' 'bar' 'baz'"
+  run "$TEST_GO_SCRIPT"
+  assert_success '- foo' '- bar' '- baz'
 }
 
 @test "$SUITE: preserve blank lines" {

@@ -140,7 +140,6 @@ check_expected_output() {
 # This function and `TEST_OUTPUT_FILE` are exported to make them available to
 # generated test scripts.
 test_file_printf() {
-  echo "printf \"$*\" \>\"$TEST_OUTPUT_FILE\""
   printf "$@" >"$TEST_OUTPUT_FILE"
 }
 export -f test_file_printf
@@ -204,6 +203,11 @@ export -f test_file_printf
 @test "$SUITE: assert_output success with joining multiple lines" {
   expect_success "printf '%s\n' 'Hello,' 'world!'" \
     "assert_output 'Hello,' 'world!'"
+}
+
+@test "$SUITE: assert_output success with argument containing '%'" {
+  expect_success "printf 'This \"%%/\" reproduces failures from #98.\n'" \
+    "assert_output 'This \"%/\" reproduces failures from #98.'"
 }
 
 @test "$SUITE: assert_output handles output starting with dashes" {

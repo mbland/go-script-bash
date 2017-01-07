@@ -255,7 +255,7 @@ assert_output() {
   local origIFS="$IFS"
   local IFS=$'\n'
 
-  printf -v 'expected' -- "$*"
+  printf -v 'expected' -- '%s' "$*"
   origIFS="$IFS"
   assert_equal "$expected" "$output" 'output'
   return_from_bats_assertion "$?"

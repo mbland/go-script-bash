@@ -3,6 +3,10 @@
 load ../environment
 load helpers
 
+setup() {
+  test_filter
+}
+
 teardown() {
   remove_test_go_rootdir
 }
@@ -41,6 +45,14 @@ teardown() {
     'echo "$result"'
   run "$TEST_GO_SCRIPT"
   assert_success '--foo,bar,baz'
+}
+
+@test "$SUITE: multiple items containing '%'" {
+  create_strings_test_script 'declare result=()' \
+    '@go.join "," "result" "This \"%/\" is from #98" "--foo" "bar" "baz"' \
+    'echo "$result"'
+  run "$TEST_GO_SCRIPT"
+  assert_success 'This "%/" is from #98,--foo,bar,baz'
 }
 
 @test "$SUITE: join items into same variable" {
