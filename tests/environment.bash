@@ -6,6 +6,7 @@
 . "$_GO_ROOTDIR/lib/bats/helpers"
 
 set_bats_test_suite_name "${BASH_SOURCE[0]%/*}"
+remove_bats_test_dirs
 
 # Avoid having to fold our test strings. Tests that verify folding behavior will
 # override this.
