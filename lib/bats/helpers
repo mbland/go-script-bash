@@ -8,6 +8,7 @@
 #
 #   . "path/to/bats/helpers"
 #   set_bats_suite_name "${BASH_SOURCE[0]%/*}"
+#   remove_bats_test_dirs
 #
 # Then have each Bats test file load the environment file and start each of
 # its test cases with "$SUITE":
@@ -37,6 +38,8 @@
 #     remove_bats_test_dirs
 #   }
 #
+# This is good practice even if you call `remove_bats_test_dirs` in your
+# `environment.bash` file.
 
 # A subdirectory of BATS_TMPDIR that contains a space.
 #
@@ -113,10 +116,14 @@ create_bats_test_script() {
   chmod 700 "$script"
 }
 
-# Recursively removes BATS_TEST_ROOTDIR and its subdirectories
+# Recursively removes `BATS_TEST_ROOTDIR` and its subdirectories
 #
-# Call this from teardown(), as Bats will not remove $BATS_TMPDIR and everything
-# in it automatically.
+# Call this from `teardown`, as Bats will not remove `BATS_TMPDIR` and
+# everything in it automatically.
+#
+# Calling this from `environment.bash` helps prevent spurious failures if
+# previous `bats` invocations failed to clean up `BATS_TEST_ROOTDIR`. It's still
+# recommended to call it from `teardown` where applicable regardless.
 remove_bats_test_dirs() {
   if [[ -d "$BATS_TEST_ROOTDIR" ]]; then
     chmod -R u+rwx "$BATS_TEST_ROOTDIR"
