@@ -43,6 +43,22 @@ run_assertion_test() {
   run "$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
 }
 
+check_failure_output() {
+  local test_script="$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
+  local assertion_line="${ASSERTION%%$'\n'*}"
+  local actual_failure_message="${output#*$'\n#  in test file '}"
+  local expected_failure_message
+
+  printf -v expected_failure_message '%s\n' \
+    "$test_script, line 7)" \
+    "#   \`$assertion_line' failed" \
+    "$@"
+
+  # We have to trim the last newline off the expected message, since it will've
+  # been trimmed from `output`.
+  [ "$actual_failure_message" == "${expected_failure_message%$'\n'}" ]
+}
+
 @test "$SUITE: printf_with_error" {
   run printf_with_error 'foo bar baz'
   emit_debug_info
@@ -78,4 +94,17 @@ run_assertion_test() {
   emit_debug_info
   [ "$status" -eq '0' ]
   [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
+}
+
+@test "$SUITE: expected success, but failed with nonzero status" {
+  ASSERTION_STATUS='127' run_assertion_test 'success'
+  emit_debug_info
+  [ "$status" -eq '1' ]
+
+  local output_begin="${output%%$'\n'#*}"
+  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
+
+  check_failure_output '# In subshell: expected passing status, actual 127' \
+    '# Output:' \
+    '# foo bar baz'
 }
