@@ -444,8 +444,7 @@ assert_file_lines_match() {
 # stacks prior to its calling `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`.
 #
 # Arguments:
-#   $1:  The $BASH_SOURCE value from the assertion source file
-#   $2:  Return value of the calling assertion; defaults to 0
+#   result:  Return value of the calling assertion; defaults to 0
 return_from_bats_assertion() {
   local result="${1:-0}"
   local target_stack_item_pattern=" ${FUNCNAME[1]} ${BASH_SOURCE[1]}$"

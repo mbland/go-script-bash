@@ -6,10 +6,13 @@ ASSERTION_SOURCE="$_GO_CORE_DIR/tests/assertion-test-helpers.bash"
 load "$_GO_CORE_DIR/lib/bats/assertion-test-helpers"
 
 EXPECT_ASSERTION_TEST_SCRIPT="run-expect-assertion.bats"
+EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE=
 
 setup() {
   test_filter
   export ASSERTION=
+  printf -v 'EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE' \
+    "${ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE//$'\n'/$'\n# '}" "test_assertion"
 }
 
 teardown() {
@@ -123,14 +126,15 @@ check_failure_output() {
     '# EXPECTED:' \
     '# 1..1' \
     "# not ok 1 $BATS_TEST_DESCRIPTION" \
-    "# # (from function \`assert_equal_numbers' in file $test_script, line 6," \
+    "# # (from function \`failing_assertion' in file $test_script, line 5," \
     "# #  in test file $test_script, line 7)" \
-    "# #   \`assert_equal_numbers 0 1' failed" \
+    "# #   \`failing_assertion' failed" \
     '# --------' \
     '# ACTUAL:' \
     '# 1..1' \
     "# ok 1 $BATS_TEST_DESCRIPTION" \
-    '# --------'
+    '# --------' \
+    "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }
 
 @test "$SUITE: failing assertion" {
@@ -161,7 +165,7 @@ check_failure_output() {
 }
 
 @test "$SUITE: failing assertion doesn't disable shell options" {
-  ASSERTION_STATUS='1' SKIP_SET_BATS_ASSERTION_DISABLE_SHELL_OPTIONS='true' \
+  ASSERTION_STATUS='1' TEST_ASSERTION_SHELL_OPTIONS='-eET' \
     run_assertion_test 'failure' 'foo bar baz'
 
   emit_debug_info
@@ -185,9 +189,10 @@ check_failure_output() {
     '# 1..1' \
     "# not ok 1 $BATS_TEST_DESCRIPTION" \
     "# # (from function \`__test_assertion_impl' in file $impl_file, line 13," \
-    "# #  from function \`test_assertion' in file $impl_file, line 26," \
+    "# #  from function \`test_assertion' in file $impl_file, line 22," \
     "# #  in test file $test_script, line 5)" \
     "# #   \`test_assertion \"\$output\"' failed" \
     '# # foo bar baz' \
-    '# --------'
+    '# --------' \
+    "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }

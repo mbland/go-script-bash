@@ -14,17 +14,13 @@ __test_assertion_impl() {
 }
 
 test_assertion() {
-  local result
-
   # If an assertion fails to call `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`,
   # then when it fails, the stack trace will show the implementation details of
   # the assertion, rather than just the line at which it was called.
-  if [[ -z "$SKIP_SET_BATS_ASSERTION_DISABLE_SHELL_OPTIONS" ]]; then
-    set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
-  fi
+  set "${TEST_ASSERTION_SHELL_OPTIONS:-$BATS_ASSERTION_DISABLE_SHELL_OPTIONS}"
 
   __test_assertion_impl "$@"
-  result="$?"
+  local result="$?"
 
   # If an assertion calls `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`, but not
   # `return_from_bats_assertion`, it will fail to scrub the stack and restore
@@ -32,4 +28,5 @@ test_assertion() {
   if [[ -z "$SKIP_RETURN_FROM_BATS_ASSERTION" ]]; then
     return_from_bats_assertion "$result"
   fi
+  return "$result"
 }
