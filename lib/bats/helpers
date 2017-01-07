@@ -182,7 +182,7 @@ test_join() {
   fi
 
   local IFS="$1"
-  printf -v "$2" "${*:3}"
+  printf -v "$2" -- "${*:3}"
 }
 
 # Prints its arguments to standard error whenever `TEST_DEBUG` is set

@@ -29,24 +29,24 @@ teardown() {
 
 @test "$SUITE: single item" {
   create_strings_test_script 'declare result=()' \
-    '@go.join "," "result" "foo"' \
+    '@go.join "," "result" "--foo"' \
     'echo "$result"'
   run "$TEST_GO_SCRIPT"
-  assert_success 'foo'
+  assert_success '--foo'
 }
 
 @test "$SUITE: multiple items" {
   create_strings_test_script 'declare result=()' \
-    '@go.join "," "result" "foo" "bar" "baz"' \
+    '@go.join "," "result" "--foo" "bar" "baz"' \
     'echo "$result"'
   run "$TEST_GO_SCRIPT"
-  assert_success 'foo,bar,baz'
+  assert_success '--foo,bar,baz'
 }
 
 @test "$SUITE: join items into same variable" {
-  create_strings_test_script 'declare items=("foo" "bar" "baz")' \
+  create_strings_test_script 'declare items=("--foo" "bar" "baz")' \
     '@go.join "," "items" "${items[@]}"' \
     'echo "$items"'
   run "$TEST_GO_SCRIPT"
-  assert_success 'foo,bar,baz'
+  assert_success '--foo,bar,baz'
 }
