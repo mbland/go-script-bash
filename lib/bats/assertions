@@ -155,7 +155,7 @@ fail_if() {
   assert_output*|assert_status)
     label="${assertion#assert_}"
     label="${label%_*}"
-    constraints=("$1")
+    constraints=("$@")
     value="$output"
     ;;
   assert_line_*)
@@ -240,13 +240,24 @@ assert_matches() {
   fi
 }
 
-# Validates that the Bats $output value is equal to the expected value
+# Validates that the Bats `output` value is equal to the expected value
+#
+# Will join multiple arguments using a newline character to check a multiline
+# value for equality. This is suggested only for short `output` values, however.
+# For longer values, use `assert_lines_equal` or `assert_lines_match`, possibly
+# in combination with `split_bats_output_into_lines` from `lib/bats/helpers`.
 #
 # Arguments:
-#   $1: The expected value for $output
+#   ...:  Lines comprising the expected value for `output`
 assert_output() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
-  __assert_output 'assert_equal' "$@"
+  local expected
+  local origIFS="$IFS"
+  local IFS=$'\n'
+
+  printf -v 'expected' -- '%s' "$*"
+  origIFS="$IFS"
+  assert_equal "$expected" "$output" 'output'
   return_from_bats_assertion "$?"
 }
 
@@ -256,8 +267,15 @@ assert_output() {
 #   $1: The regular expression to match against $output
 assert_output_matches() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
-  __assert_output 'assert_matches' "$@"
-  return_from_bats_assertion "$?"
+  local pattern="$1"
+
+  if [[ "$#" -ne 1 ]]; then
+    echo "ERROR: ${FUNCNAME[0]} takes exactly one argument" >&2
+    return_from_bats_assertion '1'
+  else
+    assert_matches "$pattern" "$output" 'output'
+    return_from_bats_assertion "$?"
+  fi
 }
 
 # Validates that the Bats $status value is equal to the expected value
@@ -270,10 +288,10 @@ assert_status() {
   return_from_bats_assertion "$?"
 }
 
-# Validates that 'run' returned success and $output equals the expected value
+# Validates that `run` returned success and `output` equals the expected value
 #
 # Arguments:
-#   $1: The regular expression to match against $output
+#   ...:  (Optional) Lines comprising the expected value for `output`
 assert_success() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
 
@@ -286,10 +304,10 @@ assert_success() {
   return_from_bats_assertion "$?"
 }
 
-# Validates that 'run' returned an error and $output equals the expected value
+# Validates that `run` returned an error and `output` equals the expected value
 #
 # Arguments:
-#   $1: The regular expression to match against $output
+#   ...:  (Optional) Lines comprising the expected value for `output`
 assert_failure() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
 
@@ -326,7 +344,9 @@ assert_line_matches() {
 
 # Validates that each output line equals each corresponding argument
 #
-# Also ensures there are no more and no fewer lines of output than expected.
+# Also ensures there are no more and no fewer lines of output than expected. If
+# `output` should contain blank lines, call `split_bats_output_into_lines` from
+# `lib/bats/helpers` before this.
 #
 # Arguments:
 #   $@: Values to compare to each element of `${lines[@]}` for equality
@@ -338,7 +358,9 @@ assert_lines_equal() {
 
 # Validates that each output line matches each corresponding argument
 #
-# Also ensures there are no more and no fewer lines of output than expected.
+# Also ensures there are no more and no fewer lines of output than expected. If
+# `output` should contain blank lines, call `split_bats_output_into_lines` from
+# `lib/bats/helpers` before this.
 #
 # Arguments:
 #   $@: Values to compare to each element of `${lines[@]}` for equality
@@ -479,22 +501,6 @@ set_bats_output_and_lines_from_file() {
 #
 # None of the functions below this line are part of the public interface.
 # --------------------------------
-
-# Common implementation for assertions that evaluate the Bats `$output` variable
-#
-# Arguments:
-#   assertion:   The assertion to execute
-#   constraint:  The assertion constraint used to evaluate $output
-__assert_output() {
-  local assertion="$1"
-  local constraint="$2"
-
-  if [[ "$#" -ne 2 ]]; then
-    echo "ERROR: ${FUNCNAME[1]} takes exactly one argument" >&2
-    return '1'
-  fi
-  "$assertion" "$constraint" "$output" 'output'
-}
 
 # Common implementation for assertions that evaluate a single `$lines` element
 #

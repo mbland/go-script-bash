@@ -22,6 +22,8 @@ KCOV_ARGV_START=(
 )
 
 setup() {
+  test_filter
+
   local fake_binaries=(
     'apt-get'
     'cmake'

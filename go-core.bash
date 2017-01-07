@@ -139,12 +139,11 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
   if [[ "$#" -eq 0 ]]; then
     format="${format//\%/%%}"
   fi
-  # If `format` ends with a newline, chomp it, since the loop will add one.
-  printf -v result "${format%\\n}" "$@"
+  printf -v result -- "$format" "$@"
+  result="${result//$'\r\n'/$'\n'}"
 
+  # If `result` ends with a newline, chomp it, since the loop will add one.
   while read -r line; do
-    line="${line%$'\r'}"
-
     while [[ "${#line}" -gt "$COLUMNS" ]]; do
       prefix="${line:0:$COLUMNS}"
       prefix="${prefix% *}"
@@ -158,9 +157,8 @@ declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
       fi
       printf '%s\n' "$prefix"
     done
-
     printf '%s\n' "$line"
-  done <<<"$result"
+  done <<<"${result%$'\n'}"
 }
 
 # Prints the stack trace at the point of the call.

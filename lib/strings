@@ -52,5 +52,5 @@
 @go.join() {
   @go.validate_identifier_or_die 'Result variable name' "$2"
   local IFS="$1"
-  eval "$2=\"\${*:3}\""
+  printf -v "$2" -- '%s' "${*:3}"
 }

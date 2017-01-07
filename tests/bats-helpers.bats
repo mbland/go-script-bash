@@ -125,6 +125,24 @@ teardown() {
   fi
 }
 
+@test "$SUITE: test_join fails if result variable name is invalid" {
+  create_bats_test_script test-script \
+    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
+    "test_join ',' '3foobar'"
+  run "$BATS_TEST_ROOTDIR/test-script"
+  assert_failure '"3foobar" is not a valid variable identifier.'
+}
+
+@test "$SUITE: test_join succeeds" {
+  create_bats_test_script test-script \
+    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
+    "declare result" \
+    "test_join ',' 'result' '--foo' 'bar' 'baz' 'This \"%/\" is from #98.'" \
+    "printf '%s\n' \"\$result\""
+  run "$BATS_TEST_ROOTDIR/test-script"
+  assert_success '--foo,bar,baz,This "%/" is from #98.'
+}
+
 @test "$SUITE: test_printf" {
   create_bats_test_script test-script \
     ". '$_GO_CORE_DIR/lib/bats/helpers'" \
