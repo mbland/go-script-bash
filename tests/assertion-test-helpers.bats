@@ -146,3 +146,48 @@ check_failure_output() {
   [ "$status" -eq '0' ]
   [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
 }
+
+@test "$SUITE: expected_failure, but assertion succeeds" {
+  ASSERTION_STATUS='0' run_assertion_test 'failure' 'foo bar baz'
+  emit_debug_info
+  [ "$status" -eq '1' ]
+
+  local output_begin="${output%%$'\n'#*}"
+  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
+
+  check_failure_output '# In subshell: expected failure, but succeeded' \
+    '# Output:' \
+    '# '
+}
+
+@test "$SUITE: failing assertion doesn't disable shell options" {
+  ASSERTION_STATUS='1' SKIP_SET_BATS_ASSERTION_DISABLE_SHELL_OPTIONS='true' \
+    run_assertion_test 'failure' 'foo bar baz'
+
+  emit_debug_info
+  [ "$status" -eq '1' ]
+
+  local output_begin="${output%%$'\n'#*}"
+  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
+
+  local test_script="$ASSERTION_TEST_SCRIPT"
+  local impl_file="${ASSERTION_SOURCE#$_GO_CORE_DIR/}"
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# 1..1' \
+    "# not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# # (in test file $test_script, line 5)" \
+    "# #   \`test_assertion \"\$output\"' failed" \
+    '# # foo bar baz' \
+    '# --------' \
+    '# ACTUAL:' \
+    '# 1..1' \
+    "# not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# # (from function \`__test_assertion_impl' in file $impl_file, line 13," \
+    "# #  from function \`test_assertion' in file $impl_file, line 26," \
+    "# #  in test file $test_script, line 5)" \
+    "# #   \`test_assertion \"\$output\"' failed" \
+    '# # foo bar baz' \
+    '# --------'
+}
