@@ -8,6 +8,7 @@ export TEST_OUTPUT_FILE="$BATS_TEST_ROOTDIR/test-output.txt"
 
 setup() {
   mkdir "$BATS_TEST_ROOTDIR"
+  test_filter
 }
 
 teardown() {
@@ -117,7 +118,7 @@ run_test_script() {
 
 write_failing_test_script() {
   create_bats_test_script "${FAILING_TEST_SCRIPT#$BATS_TEST_ROOTDIR}" \
-    'echo "$@"; exit 1'
+    'printf "%s\n" "$@"; exit 1'
 }
 
 check_expected_output() {
@@ -200,6 +201,11 @@ export -f test_file_printf
     "assert_output 'Hello, world!'"
 }
 
+@test "$SUITE: assert_output success with joining multiple lines" {
+  expect_success "printf '%s\n' 'Hello,' 'world!'" \
+    "assert_output 'Hello,' 'world!'"
+}
+
 @test "$SUITE: assert_output fail output check" {
   expect_failure "echo 'Hello, world!'" \
     "assert_output 'Goodbye, world!'" \
@@ -221,12 +227,6 @@ export -f test_file_printf
     "  actual:   'Not empty'"
 }
 
-@test "$SUITE: assert_output fails if more than one argument" {
-  expect_failure "echo 'Hello, world!'" \
-    "assert_output 'Hello,' 'world!'" \
-    'ERROR: assert_output takes exactly one argument'
-}
-
 @test "$SUITE: assert_output_matches success" {
   expect_success "echo 'Hello, world!'" \
     "assert_output_matches 'o, w'"
@@ -238,6 +238,12 @@ export -f test_file_printf
     'output does not match expected pattern:' \
     "  pattern: 'e, w'" \
     "  value:   'Hello, world!'"
+}
+
+@test "$SUITE: assert_output_matches fails if more than one argument" {
+  expect_failure "echo 'Hello, world!'" \
+    "assert_output_matches 'o, w' 'ell'" \
+    'ERROR: assert_output_matches takes exactly one argument'
 }
 
 @test "$SUITE: assert_status" {
@@ -269,8 +275,8 @@ export -f test_file_printf
 }
 
 @test "$SUITE: assert_success with output check" {
-  expect_success "echo 'Hello, world!'" \
-    "assert_success 'Hello, world!'"
+  expect_success "printf '%s\n' 'Hello,' 'world!'" \
+    "assert_success 'Hello,' 'world!'"
 }
 
 @test "$SUITE: assert_success output check failure" {
@@ -298,17 +304,19 @@ export -f test_file_printf
 
 @test "$SUITE: assert_failure with output check" {
   write_failing_test_script
-  expect_success "'$FAILING_TEST_SCRIPT' 'Hello, world!'" \
-    "assert_failure 'Hello, world!'"
+  expect_success "'$FAILING_TEST_SCRIPT' 'Hello,' 'world!'" \
+    "assert_failure 'Hello,' 'world!'"
 }
 
 @test "$SUITE: assert_failure output check failure" {
   write_failing_test_script
-  expect_failure "'$FAILING_TEST_SCRIPT' 'Hello, world!'" \
-    "assert_failure 'Goodbye, world!'" \
+  expect_failure "'$FAILING_TEST_SCRIPT' 'Hello,' 'world!'" \
+    "assert_failure 'Goodbye,' 'world!'" \
     'output not equal to expected value:' \
-    "  expected: 'Goodbye, world!'" \
-    "  actual:   'Hello, world!'"
+    "  expected: 'Goodbye," \
+    "world!'" \
+    "  actual:   'Hello," \
+    "world!'"
 }
 
 @test "$SUITE: assert_line_equals" {
@@ -596,15 +604,16 @@ export -f test_file_printf
 }
 
 @test "$SUITE: fail_if succeeds when assert_output fails" {
-  expect_success "echo 'Hello, world!'" \
-    "fail_if output 'Goodbye, world!'"
+  expect_success "printf '%s\n' 'Hello,' 'world!'" \
+    "fail_if output 'Goodbye,' 'world!'"
 }
 
 @test "$SUITE: fail_if fails when assert_output succeeds" {
-  expect_failure "echo 'Hello, world!'" \
-    "fail_if output 'Hello, world!'" \
+  expect_failure "printf '%s\n' 'Hello,' 'world!'" \
+    "fail_if output 'Hello,' 'world!'" \
     'Expected output not to equal:' \
-    "  'Hello, world!'"
+    "  'Hello,'" \
+    "  'world!'"
 }
 
 @test "$SUITE: fail_if succeeds when assert_output_matches fails" {
