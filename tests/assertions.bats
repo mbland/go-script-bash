@@ -206,6 +206,11 @@ export -f test_file_printf
     "assert_output 'Hello,' 'world!'"
 }
 
+@test "$SUITE: assert_output handles output starting with dashes" {
+  expect_success "echo '--flag-from-tab-completion'" \
+    "assert_output '--flag-from-tab-completion'"
+}
+
 @test "$SUITE: assert_output fail output check" {
   expect_failure "echo 'Hello, world!'" \
     "assert_output 'Goodbye, world!'" \
