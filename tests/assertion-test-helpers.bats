@@ -109,6 +109,30 @@ check_failure_output() {
     '# foo bar baz'
 }
 
+@test "$SUITE: successful assertion doesn't call return_from_bats_assertion" {
+  SKIP_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
+  emit_debug_info
+  [ "$status" -eq '1' ]
+
+  local output_begin="${output%%$'\n'#*}"
+  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
+
+  local test_script="$ASSERTION_TEST_SCRIPT"
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# 1..1' \
+    "# not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# # (from function \`assert_equal_numbers' in file $test_script, line 6," \
+    "# #  in test file $test_script, line 7)" \
+    "# #   \`assert_equal_numbers 0 1' failed" \
+    '# --------' \
+    '# ACTUAL:' \
+    '# 1..1' \
+    "# ok 1 $BATS_TEST_DESCRIPTION" \
+    '# --------'
+}
+
 @test "$SUITE: failing assertion" {
   ASSERTION_STATUS='1' run_assertion_test 'failure' 'foo bar baz'
   emit_debug_info
