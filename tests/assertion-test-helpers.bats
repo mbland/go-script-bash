@@ -108,3 +108,17 @@ check_failure_output() {
     '# Output:' \
     '# foo bar baz'
 }
+
+@test "$SUITE: failing assertion" {
+  ASSERTION_STATUS='1' run_assertion_test 'failure' 'foo bar baz'
+  emit_debug_info
+  [ "$status" -eq '0' ]
+  [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
+}
+
+@test "$SUITE: failing assertion with status other than 1" {
+  ASSERTION_STATUS='127' run_assertion_test 'failure' 'foo bar baz'
+  emit_debug_info
+  [ "$status" -eq '0' ]
+  [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
+}

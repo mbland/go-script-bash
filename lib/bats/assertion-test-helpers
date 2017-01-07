@@ -83,7 +83,7 @@ expect_assertion_failure() {
   shift 2
   local __assertion_output
   local __assertion_status
-  local i
+  local with_status
 
   __run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
 
@@ -91,6 +91,8 @@ expect_assertion_failure() {
     printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
       "$__assertion_output" >&2
     return 1
+  elif [[ "$__assertion_status" -ne '1' ]]; then
+    with_status=" with status $__assertion_status"
   fi
 
   __check_expected_output "$__assertion_output" "$@"
@@ -106,7 +108,7 @@ expect_assertion_failure() {
     '1..1' \
     "not ok 1 $BATS_TEST_DESCRIPTION" \
     "# (in test file $ASSERTION_TEST_SCRIPT, line 5)" \
-    "#   \`$assertion' failed" \
+    "#   \`$assertion' failed${with_status}" \
     "${@/#/# }"
 }
 
