@@ -125,6 +125,22 @@ teardown() {
   fi
 }
 
+@test "$SUITE: test_join" {
+  create_bats_test_script test-script \
+    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
+    "test_join ',' '3foobar'"
+  run "$BATS_TEST_ROOTDIR/test-script"
+  assert_failure '"3foobar" is not a valid variable identifier.'
+
+  create_bats_test_script test-script \
+    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
+    "declare result" \
+    "test_join ',' 'result' 'foo' 'bar' 'baz'" \
+    "printf '%s\n' \"\$result\""
+  run "$BATS_TEST_ROOTDIR/test-script"
+  assert_success 'foo,bar,baz'
+}
+
 @test "$SUITE: test_printf" {
   create_bats_test_script test-script \
     ". '$_GO_CORE_DIR/lib/bats/helpers'" \

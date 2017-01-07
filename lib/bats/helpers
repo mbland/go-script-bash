@@ -109,9 +109,7 @@ create_bats_test_script() {
   if [[ "${1:0:2}" != '#!' ]]; then
     echo "#! /usr/bin/env bash" >"$script"
   fi
-
-  local IFS=$'\n'
-  echo "$*" >> "$script"
+  printf '%s\n' "$@" >>"$script"
   chmod 700 "$script"
 }
 
@@ -165,6 +163,26 @@ skip_if_cannot_trigger_file_permission_failure() {
   elif [[ "$EUID" -eq '0' ]]; then
     skip "Can't trigger condition when run by superuser"
   fi
+}
+
+# Joins lines using a delimiter into a user-defined variable
+#
+# Just like `@go.join` from `lib/strings`, except that it doesn't depend on any
+# core framework features. Returns the result in a variable to avoid a subshell,
+# as subshells can add substantially to a test suite's running time.
+#
+# Arguments:
+#   delimiter:  The character separating individual fields
+#   var_name:   Name of caller's variable to which to assign the joined string
+#   ...:        Elements to join into a string assigned to `var_name`
+test_join() {
+  if [[ ! "$2" =~ ^[[:alpha:]_][[:alnum:]_]*$ ]]; then
+    printf '"%s" is not a valid variable identifier.\n' "$2" >&2
+    return 1
+  fi
+
+  local IFS="$1"
+  printf -v "$2" "${*:3}"
 }
 
 # Prints its arguments to standard error whenever `TEST_DEBUG` is set
