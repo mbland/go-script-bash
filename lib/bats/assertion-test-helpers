@@ -2,9 +2,25 @@
 #
 # Functions for testing Bats assertions
 #
+# `expect_assertion_success` and `expect_assertion_failure` will validate that
+# a Bats assertion function complies with the expectations outlined in
+# `$_GO_CORE_DIR/lib/bats/assertions`, namely that it:
+#
+# - begins with `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`
+# - calls `return_from_bats_assertion` via every return path
+#
+# They also enforce that the assertion writes only to standard error (`>&2`).
+#
+# You can use `printf_with_error` to simulate a failing script or function. For
+# assertions that inspect file output, use `printf_to_test_output_file` to write
+# to `TEST_OUTPUT_FILE`. See the comments for each function for more details.
+#
 # You must set `ASSERTION_SOURCE` as the path to the file containing the
 # assertions to test before sourcing this file. This file will then source
-# `ASSERTION_SOURCE` for you.
+# `ASSERTION_SOURCE` for you (e.g. from `$_GO_CORE_DIR/tests/assertions.bats`):
+#
+#   ASSERTION_SOURCE="$_GO_CORE_DIR/lib/bats/assertions"
+#   load "$_GO_CORE_DIR/lib/bats/assertion-test-helpers"
 
 if [[ -z "$ASSERTION_SOURCE" ]]; then
   printf '"ASSERTION_SOURCE" must be set before sourcing %s.\n' \
@@ -171,7 +187,9 @@ export -f printf_with_error
 # $run_cmd`), this encapsulates the redirection to `TEST_OUTPUT_FILE`.
 #
 # This function and `TEST_OUTPUT_FILE` are exported to make them available to
-# generated test scripts.
+# generated test scripts. You can load `output` with the contents of the file
+# using `set_bats_output_and_lines_from_file` from
+# `$_GO_CORE_DIR/lib/bats/assertions`.
 #
 # Arguments:
 #   ...:  Arguments to `printf`
