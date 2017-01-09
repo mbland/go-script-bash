@@ -47,26 +47,35 @@ run_assertion_test() {
 }
 
 check_failure_output() {
+  set +eET
   local test_script="$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
   local assertion_line="${ASSERTION%%$'\n'*}"
-  local expected_failure_message
+  local expected_output
   local result='0'
 
-  printf -v expected_failure_message '%s\n' \
+  printf -v expected_output '%s\n' \
     '1..1' \
     "not ok 1 $BATS_TEST_DESCRIPTION" \
     "# (in test file $test_script, line 7)" \
     "#   \`$assertion_line' failed" \
     "$@"
+  # Trim the trailing newline, as it will've been from `output`.
+  expected_output="${expected_output%$'\n'}"
 
   # We have to trim the last newline off the expected message, since it will've
   # been trimmed from `output`.
-  if [ "$output" != "${expected_failure_message%$'\n'}" ]; then
-    printf 'EXPECTED:\n%s\nACTUAL:\n%s\n' "${expected_failure_message%$'\n'}" \
-      "$output" >&2
-    result='1'
+  if [ "$output" != "${expected_output}" ]; then
+    printf 'EXPECTED:\n%s\nACTUAL:\n%s\n' "${expected_output}" "$output" >&2
+    __return_from_check_failure_output '1'
+  else
+    __return_from_check_failure_output
   fi
-  return "$result"
+}
+
+__return_from_check_failure_output() {
+  unset 'BATS_CURRENT_STACK_TRACE[0]' 'BATS_PREVIOUS_STACK_TRACE[0]'
+  set -eET
+  return "${1:-0}"
 }
 
 @test "$SUITE: printf_with_error" {
