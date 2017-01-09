@@ -145,9 +145,9 @@ expect_assertion_failure() {
 
     if ! __check_expected_output "$__assertion_output" "$@"; then
       __return_from_expect_assertion '1'
-    elif ! __run_assertion_test_script "  run $run_cmd" "  $assertion"; then
-      __return_from_expect_assertion '1'
     else
+      __run_assertion_test_script "  run $run_cmd" "  $assertion"
+
       expected_output=('1..1'
         "not ok 1 $BATS_TEST_DESCRIPTION"
         "# (in test file $ASSERTION_TEST_SCRIPT, line 5)"

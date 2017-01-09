@@ -66,16 +66,11 @@ check_failure_output() {
   # been trimmed from `output`.
   if [ "$output" != "${expected_output}" ]; then
     printf 'EXPECTED:\n%s\nACTUAL:\n%s\n' "${expected_output}" "$output" >&2
-    __return_from_check_failure_output '1'
-  else
-    __return_from_check_failure_output
+    result='1'
   fi
-}
-
-__return_from_check_failure_output() {
   unset 'BATS_CURRENT_STACK_TRACE[0]' 'BATS_PREVIOUS_STACK_TRACE[0]'
   set -eET
-  return "${1:-0}"
+  return "$result"
 }
 
 @test "$SUITE: printf_with_error" {
@@ -176,7 +171,6 @@ __return_from_check_failure_output() {
 @test "$SUITE: expected_failure, but assertion succeeds" {
   ASSERTION_STATUS='0' run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
-
   check_failure_output '# In subshell: expected failure, but succeeded' \
     '# Output:' \
     '# '
