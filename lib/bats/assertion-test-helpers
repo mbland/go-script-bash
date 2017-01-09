@@ -7,13 +7,10 @@
 # `$_GO_CORE_DIR/lib/bats/assertions`, namely that it:
 #
 # - begins with `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`
-# - calls `return_from_bats_assertion` via every return path
+# - calls `return_from_bats_assertion` directly via every return path
 #
-# They also enforce that the assertion writes only to standard error (`>&2`).
-#
-# You can use `printf_with_error` to simulate a failing script or function. For
-# assertions that inspect file output, use `printf_to_test_output_file` to write
-# to `TEST_OUTPUT_FILE`. See the comments for each function for more details.
+# They also enforce that the assertion produces no output when successful, and
+# that it writes only to standard error (`>&2`) when it fails.
 #
 # You must set `ASSERTION_SOURCE` as the path to the file containing the
 # assertions to test before sourcing this file. This file will then source
@@ -21,6 +18,10 @@
 #
 #   ASSERTION_SOURCE="$_GO_CORE_DIR/lib/bats/assertions"
 #   load "$_GO_CORE_DIR/lib/bats/assertion-test-helpers"
+#
+# You can use `printf_with_error` to simulate a failing script or function. For
+# assertions that inspect file output, use `printf_to_test_output_file` to write
+# to `TEST_OUTPUT_FILE`. See the comments for each function for more details.
 
 if [[ -z "$ASSERTION_SOURCE" ]]; then
   printf '"ASSERTION_SOURCE" must be set before sourcing %s.\n' \
@@ -49,7 +50,7 @@ The very first line of '%s' must be
 
   set "\$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
 
-and it must call 'return_from_bats_assertion' from every return path.
+and it must call 'return_from_bats_assertion' directly from every return path.
 
 For details, see the comments for 'return_from_bats_assertion' from:
 
@@ -83,6 +84,8 @@ expect_assertion_success() {
       "$__assertion_status" "$__assertion_output" >&2
     __return_from_expect_assertion '1'
   elif ! __check_expected_output "$__assertion_output"; then
+    printf "'%s' should not produce output when successful.\n" \
+      "${assertion%% *}" >&2
     __return_from_expect_assertion '1'
   else
     # Although we expect the assertion under test to pass, this script injects a

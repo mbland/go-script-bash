@@ -44,8 +44,9 @@
 #
 #   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
 #
-# and then make sure every return path ends with the following (followed by a
-# `return` statement, if not at the very end of the function):
+# and then make sure every return path ends with a direct call to the following
+# (not delegated to a helper function, and followed by a `return` statement if
+# not at the very end of the function):
 #
 #   return_from_bats_assertion "$return_status"
 #
@@ -411,8 +412,10 @@ assert_file_lines_match() {
 # Ensures Bats assertion failures point to the assertion call, not its internals
 #
 # You must ensure that `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"` is in
-# effect prior to calling this function. See the comments at the top of this
-# file for usage instructions and patterns.
+# effect prior to calling this function, and that your assertion calls this
+# function directly through every return path (i.e. you can't delegate the call
+# to a helper function). See the comments at the top of this file for usage
+# instructions and patterns.
 #
 # Notice that each public assertion starts with:
 #

@@ -126,8 +126,43 @@ check_failure_output() {
     "# 'test_assertion' tried to write to a file descriptor other than 2"
 }
 
-@test "$SUITE: successful assertion doesn't call return_from_bats_assertion" {
+@test "$SUITE: successful assertion should not produce output" {
+  ASSERTION_FORCE_OUTPUT='true' run_assertion_test 'success'
+  [ "$status" -eq '1' ]
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# ' \
+    '# --------' \
+    '# ACTUAL:' \
+    '# foo bar baz' \
+    '# --------' \
+    "# 'test_assertion' should not produce output when successful."
+}
+
+@test "$SUITE: successful assertion must call return_from_bats_assertion" {
   SKIP_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
+  [ "$status" -eq '1' ]
+
+  local test_script="$ASSERTION_TEST_SCRIPT"
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# 1..1' \
+    "# not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# # (from function \`failing_assertion' in file $test_script, line 5," \
+    "# #  in test file $test_script, line 7)" \
+    "# #   \`failing_assertion' failed" \
+    '# --------' \
+    '# ACTUAL:' \
+    '# 1..1' \
+    "# ok 1 $BATS_TEST_DESCRIPTION" \
+    '# --------' \
+    "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
+}
+
+@test "$SUITE: successful assertion return_from_bats_assertion must be direct" {
+  DELEGATE_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
   [ "$status" -eq '1' ]
 
   local test_script="$ASSERTION_TEST_SCRIPT"
@@ -161,6 +196,20 @@ check_failure_output() {
   [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
 }
 
+@test "$SUITE: failing assertion produces unexpected output" {
+  ASSERTION_STATUS='1' ASSERTION_EXTRA_OUTPUT=' quux xyzzy plugh' \
+    run_assertion_test 'failure' 'foo bar baz'
+  [ "$status" -eq '1' ]
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# foo bar baz' \
+    '# --------' \
+    '# ACTUAL:' \
+    '# foo bar baz quux xyzzy plugh' \
+    '# --------'
+}
+
 @test "$SUITE: failing assertion output must go to standard error" {
   ASSERTION_STATUS='1' ASSERTION_FD=1 run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
@@ -176,7 +225,7 @@ check_failure_output() {
     '# '
 }
 
-@test "$SUITE: failing assertion doesn't disable shell options" {
+@test "$SUITE: failing assertion must disable shell options" {
   ASSERTION_STATUS='1' TEST_ASSERTION_SHELL_OPTIONS='-eET' \
     run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
@@ -195,8 +244,8 @@ check_failure_output() {
     '# ACTUAL:' \
     '# 1..1' \
     "# not ok 1 $BATS_TEST_DESCRIPTION" \
-    "# # (from function \`__test_assertion_impl' in file $impl_file, line 13," \
-    "# #  from function \`test_assertion' in file $impl_file, line 22," \
+    "# # (from function \`__test_assertion_impl' in file $impl_file, line 17," \
+    "# #  from function \`test_assertion' in file $impl_file, line 27," \
     "# #  in test file $test_script, line 5)" \
     "# #   \`test_assertion \"\$output\"' failed" \
     '# # foo bar baz' \
@@ -204,8 +253,30 @@ check_failure_output() {
     "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }
 
-@test "$SUITE: failing assertion doesn't call return_from_bats_assertion" {
+@test "$SUITE: failing assertion must call return_from_bats_assertion" {
   ASSERTION_STATUS='1' SKIP_RETURN_FROM_BATS_ASSERTION='true' \
+    run_assertion_test 'failure' 'foo bar baz'
+  [ "$status" -eq '1' ]
+
+  local test_script="$ASSERTION_TEST_SCRIPT"
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# 1..1' \
+    "# not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# # (in test file $test_script, line 5)" \
+    "# #   \`test_assertion \"\$output\"' failed" \
+    '# # foo bar baz' \
+    '# --------' \
+    '# ACTUAL:' \
+    '# 1..1' \
+    "# ok 1 $BATS_TEST_DESCRIPTION" \
+    '# --------' \
+    "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
+}
+
+@test "$SUITE: failing assertion return_from_bats_assertion must be direct" {
+  ASSERTION_STATUS='1' DELEGATE_RETURN_FROM_BATS_ASSERTION='true' \
     run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
 

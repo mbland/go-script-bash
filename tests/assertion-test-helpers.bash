@@ -7,10 +7,15 @@
 __test_assertion_impl() {
   local assertion_status="${ASSERTION_STATUS:-0}"
 
-  if [[ "$assertion_status" -ne '0' ]]; then
-    printf '%s\n' "$*" >&"${ASSERTION_FD:-2}"
+  if [[ "$assertion_status" -ne '0' || -n "$ASSERTION_FORCE_OUTPUT" ]]; then
+    printf '%s%s\n' "$*" "${ASSERTION_EXTRA_OUTPUT}" >&"${ASSERTION_FD:-2}"
   fi
-  return "$assertion_status"
+
+  if [[ -n "$DELEGATE_RETURN_FROM_BATS_ASSERTION" ]]; then
+    return_from_bats_assertion "$assertion_status"
+  else
+    return "$assertion_status"
+  fi
 }
 
 test_assertion() {
@@ -25,8 +30,10 @@ test_assertion() {
   # If an assertion calls `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`, but not
   # `return_from_bats_assertion`, it will fail to scrub the stack and restore
   # `set -eET`.
-  if [[ -z "$SKIP_RETURN_FROM_BATS_ASSERTION" ]]; then
+  if [[ -z "$SKIP_RETURN_FROM_BATS_ASSERTION" &&
+        -z "$DELEGATE_RETURN_FROM_BATS_ASSERTION" ]]; then
     return_from_bats_assertion "$result"
+  else
+    return "$result"
   fi
-  return "$result"
 }
