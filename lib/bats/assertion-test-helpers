@@ -52,41 +52,45 @@ END_OF_FAILURE_MESSAGE
 #   run_cmd:    The full command to pass to `run` as a single string
 #   assertion:  The full assertion to evaluate as a single string
 expect_assertion_success() {
+  set +eET
   local run_cmd="$1"
   local assertion="$2"
   local test_script="$ASSERTION_TEST_SCRIPT"
   local __assertion_output
   local __assertion_status
-  local expected_script_output=()
+  local expected_output=()
 
-  __run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
-
-  if [[ "$__assertion_status" -ne '0' ]]; then
+  if ! __run_command_and_assertion_in_subshell "$run_cmd" "$assertion"; then
+    __return_from_expect_assertion '1'
+  elif [[ "$__assertion_status" -ne '0' ]]; then
     printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
       "$__assertion_status" "$__assertion_output" >&2
-    return 1
-  fi
-  __check_expected_output "$__assertion_output"
+    __return_from_expect_assertion '1'
+  elif ! __check_expected_output "$__assertion_output"; then
+    __return_from_expect_assertion '1'
+  else
+    # Although we expect the assertion under test to pass, this script injects a
+    # failing assertion after it to check that the assertion under test calls
+    # `return_from_bats_assertion` upon returning. If it doesn't, the failing
+    # assertion will show the passing assertion's stack, per issue #48.
+    __run_assertion_test_script \
+      "  run $run_cmd" \
+      "  failing_assertion() { [ 0 -eq 1 ]; }" \
+      "  $assertion" \
+      "  failing_assertion"
 
-  # Although we expect the assertion under test to pass, this script injects a
-  # failing assertion after it to check that the assertion under test calls
-  # `return_from_bats_assertion` upon returning. If it doesn't, the failing
-  # assertion will show the passing assertion's stack, per issue #48.
-  __run_assertion_test_script \
-    "  run $run_cmd" \
-    "  failing_assertion() { [ 0 -eq 1 ]; }" \
-    "  $assertion" \
-    "  failing_assertion"
+    expected_output=('1..1'
+      "not ok 1 $BATS_TEST_DESCRIPTION"
+      "# (from function \`failing_assertion' in file $test_script, line 5,"
+      "#  in test file $test_script, line 7)"
+      "#   \`failing_assertion' failed")
 
-  expected_script_output=('1..1'
-    "not ok 1 $BATS_TEST_DESCRIPTION"
-    "# (from function \`failing_assertion' in file $test_script, line 5,"
-    "#  in test file $test_script, line 7)"
-    "#   \`failing_assertion' failed")
-
-  if ! __check_expected_output "$output" "${expected_script_output[@]}"; then
-    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
-    return 1
+    if ! __check_expected_output "$output" "${expected_output[@]}"; then
+      printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
+      __return_from_expect_assertion '1'
+    else
+      __return_from_expect_assertion
+    fi
   fi
 }
 
@@ -103,36 +107,44 @@ expect_assertion_success() {
 #   assertion:  The full assertion to evaluate as a single string
 #   expected:   The expected output of the assertion failure
 expect_assertion_failure() {
+  set +eET
   local run_cmd="$1"
   local assertion="$2"
   shift 2
   local __assertion_output
   local __assertion_status
   local with_status
-  local expected_script_output=()
+  local expected_output=()
 
-  __run_command_then_run_assertion_in_subshell "$run_cmd" "$assertion"
-
-  if [[ "$__assertion_status" -eq '0' ]]; then
+  if ! __run_command_and_assertion_in_subshell "$run_cmd" "$assertion"; then
+    __return_from_expect_assertion '1'
+  elif [[ "$__assertion_status" -eq '0' ]]; then
     printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
       "$__assertion_output" >&2
-    return 1
-  elif [[ "$__assertion_status" -ne '1' ]]; then
-    with_status=" with status $__assertion_status"
-  fi
+    __return_from_expect_assertion '1'
+  else
+    if [[ "$__assertion_status" -ne '1' ]]; then
+      with_status=" with status $__assertion_status"
+    fi
 
-  __check_expected_output "$__assertion_output" "$@"
-  __run_assertion_test_script "  run $run_cmd" "  $assertion"
+    if ! __check_expected_output "$__assertion_output" "$@"; then
+      __return_from_expect_assertion '1'
+    elif ! __run_assertion_test_script "  run $run_cmd" "  $assertion"; then
+      __return_from_expect_assertion '1'
+    else
+      expected_output=('1..1'
+        "not ok 1 $BATS_TEST_DESCRIPTION"
+        "# (in test file $ASSERTION_TEST_SCRIPT, line 5)"
+        "#   \`$assertion' failed${with_status}"
+        "${@/#/# }")
 
-  expected_script_output=('1..1'
-    "not ok 1 $BATS_TEST_DESCRIPTION"
-    "# (in test file $ASSERTION_TEST_SCRIPT, line 5)"
-    "#   \`$assertion' failed${with_status}"
-    "${@/#/# }")
-
-  if ! __check_expected_output "$output" "${expected_script_output[@]}"; then
-    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
-    return 1
+      if ! __check_expected_output "$output" "${expected_output[@]}"; then
+        printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
+        __return_from_expect_assertion '1'
+      else
+        __return_from_expect_assertion
+      fi
+    fi
   fi
 }
 
@@ -194,7 +206,7 @@ export -f printf_to_test_output_file
 # Arguments:
 #   run_cmd:    The full command to pass to `run` as a single string
 #   assertion:  The full assertion to evaluate as a single string
-__run_command_then_run_assertion_in_subshell() {
+__run_command_and_assertion_in_subshell() {
   local run_cmd="$1"
   local assertion="$2"
   local line
@@ -244,4 +256,22 @@ __check_expected_output() {
       "$expected_output" "$actual_output" >&2
     return 1
   fi
+}
+
+# Basically the same as `return_from_bats_assertion`, but specific to this file.
+#
+# Arguments:
+#   result:  Return value of the calling assertion; defaults to 0
+__return_from_expect_assertion() {
+  local pattern=" expect_assertion_(success|failure) $BASH_SOURCE$"
+
+  if [[ "${BATS_CURRENT_STACK_TRACE[0]}" =~ $pattern ]]; then
+    unset 'BATS_CURRENT_STACK_TRACE[0]'
+    set -eET
+  fi
+  if [[ "${BATS_PREVIOUS_STACK_TRACE[0]}" =~ $pattern ]]; then
+    unset 'BATS_PREVIOUS_STACK_TRACE[0]'
+    set -eET
+  fi
+  return "${1:-0}"
 }

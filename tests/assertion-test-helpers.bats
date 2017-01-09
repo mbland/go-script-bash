@@ -49,17 +49,24 @@ run_assertion_test() {
 check_failure_output() {
   local test_script="$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
   local assertion_line="${ASSERTION%%$'\n'*}"
-  local actual_failure_message="${output#*$'\n#  in test file '}"
   local expected_failure_message
+  local result='0'
 
   printf -v expected_failure_message '%s\n' \
-    "$test_script, line 7)" \
+    '1..1' \
+    "not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# (in test file $test_script, line 7)" \
     "#   \`$assertion_line' failed" \
     "$@"
 
   # We have to trim the last newline off the expected message, since it will've
   # been trimmed from `output`.
-  [ "$actual_failure_message" == "${expected_failure_message%$'\n'}" ]
+  if [ "$output" != "${expected_failure_message%$'\n'}" ]; then
+    printf 'EXPECTED:\n%s\nACTUAL:\n%s\n' "${expected_failure_message%$'\n'}" \
+      "$output" >&2
+    result='1'
+  fi
+  return "$result"
 }
 
 @test "$SUITE: printf_with_error" {
@@ -101,11 +108,7 @@ check_failure_output() {
 
 @test "$SUITE: expected success, but failed with nonzero status" {
   ASSERTION_STATUS='127' run_assertion_test 'success'
-  emit_debug_info
   [ "$status" -eq '1' ]
-
-  local output_begin="${output%%$'\n'#*}"
-  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
 
   check_failure_output '# In subshell: expected passing status, actual 127' \
     '# Output:' \
@@ -114,11 +117,7 @@ check_failure_output() {
 
 @test "$SUITE: successful assertion doesn't call return_from_bats_assertion" {
   SKIP_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
-  emit_debug_info
   [ "$status" -eq '1' ]
-
-  local output_begin="${output%%$'\n'#*}"
-  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
 
   local test_script="$ASSERTION_TEST_SCRIPT"
   check_failure_output '# Actual output differs from expected output:' \
@@ -153,11 +152,7 @@ check_failure_output() {
 
 @test "$SUITE: expected_failure, but assertion succeeds" {
   ASSERTION_STATUS='0' run_assertion_test 'failure' 'foo bar baz'
-  emit_debug_info
   [ "$status" -eq '1' ]
-
-  local output_begin="${output%%$'\n'#*}"
-  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
 
   check_failure_output '# In subshell: expected failure, but succeeded' \
     '# Output:' \
@@ -167,12 +162,7 @@ check_failure_output() {
 @test "$SUITE: failing assertion doesn't disable shell options" {
   ASSERTION_STATUS='1' TEST_ASSERTION_SHELL_OPTIONS='-eET' \
     run_assertion_test 'failure' 'foo bar baz'
-
-  emit_debug_info
   [ "$status" -eq '1' ]
-
-  local output_begin="${output%%$'\n'#*}"
-  [ "$output_begin" == $'1..1\nnot ok 1 '"$BATS_TEST_DESCRIPTION" ]
 
   local test_script="$ASSERTION_TEST_SCRIPT"
   local impl_file="${ASSERTION_SOURCE#$_GO_CORE_DIR/}"
