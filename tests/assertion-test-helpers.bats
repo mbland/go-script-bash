@@ -124,6 +124,13 @@ __return_from_check_failure_output() {
     '# foo bar baz'
 }
 
+@test "$SUITE: expected success, but failed and wrote to fd other than 2 " {
+  ASSERTION_STATUS='127' ASSERTION_FD='1' run_assertion_test 'success'
+  [ "$status" -eq '1' ]
+  check_failure_output \
+    "# 'test_assertion' tried to write to a file descriptor other than 2"
+}
+
 @test "$SUITE: successful assertion doesn't call return_from_bats_assertion" {
   SKIP_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
   [ "$status" -eq '1' ]
@@ -159,6 +166,13 @@ __return_from_check_failure_output() {
   [ "$output" == $'1..1\nok 1 '"$BATS_TEST_DESCRIPTION" ]
 }
 
+@test "$SUITE: failing assertion output must go to standard error" {
+  ASSERTION_STATUS='1' ASSERTION_FD=1 run_assertion_test 'failure' 'foo bar baz'
+  [ "$status" -eq '1' ]
+  check_failure_output \
+    "# 'test_assertion' tried to write to a file descriptor other than 2"
+}
+
 @test "$SUITE: expected_failure, but assertion succeeds" {
   ASSERTION_STATUS='0' run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
@@ -192,6 +206,28 @@ __return_from_check_failure_output() {
     "# #  in test file $test_script, line 5)" \
     "# #   \`test_assertion \"\$output\"' failed" \
     '# # foo bar baz' \
+    '# --------' \
+    "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
+}
+
+@test "$SUITE: failing assertion doesn't call return_from_bats_assertion" {
+  ASSERTION_STATUS='1' SKIP_RETURN_FROM_BATS_ASSERTION='true' \
+    run_assertion_test 'failure' 'foo bar baz'
+  [ "$status" -eq '1' ]
+
+  local test_script="$ASSERTION_TEST_SCRIPT"
+  check_failure_output '# Actual output differs from expected output:' \
+    '# --------' \
+    '# EXPECTED:' \
+    '# 1..1' \
+    "# not ok 1 $BATS_TEST_DESCRIPTION" \
+    "# # (in test file $test_script, line 5)" \
+    "# #   \`test_assertion \"\$output\"' failed" \
+    '# # foo bar baz' \
+    '# --------' \
+    '# ACTUAL:' \
+    '# 1..1' \
+    "# ok 1 $BATS_TEST_DESCRIPTION" \
     '# --------' \
     "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }

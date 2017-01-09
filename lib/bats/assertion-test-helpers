@@ -223,6 +223,12 @@ __run_command_and_assertion_in_subshell() {
 
   # Trim trailing newline to match typical `output` behavior.
   __assertion_output="${__assertion_output%$'\n'}"
+
+  if [[ "$__assertion_output" =~ write\ error:\ Bad\ file\ descriptor$ ]]; then
+    printf "'%s' tried to write to a file descriptor other than 2" \
+      "${assertion%% *}" >&2
+    return 1
+  fi
 }
 
 # Creates a test script from the arguments and runs it right away
