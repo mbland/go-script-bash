@@ -3,6 +3,7 @@
 load ../environment
 
 setup() {
+  test_filter
   create_test_go_script '@go "$@"'
   export _GO_LOG_DEMO_DELAY='0'
 }
@@ -29,6 +30,7 @@ teardown() {
   assert_line_equals 0 "$first_line"
   assert_output_matches $'\nRUN +echo Hello, World!\nHello, World!\n'
   assert_output_matches $'\nINFO +Hello, World!\n'
+  assert_output_matches $'\nQUIT  +Hello, World! \(would normally exit\)\n'
   assert_output_matches $'\nFATAL +Hello, World!\n'
 
   set_go_core_stack_trace_components
@@ -73,12 +75,13 @@ teardown() {
   _GO_LOG_DEMO_EXIT_STATUS='127' run "$TEST_GO_SCRIPT" demo-core log
   assert_status '127'
   assert_output_matches $'\nERROR +Hello, World! \(exit status 127\)\n'
+  assert_output_matches \
+    $'\nQUIT  +Hello, World! \(would normally exit\) \(exit status 127\)\n'
   assert_output_matches $'\nFATAL +Hello, World! \(exit status 127\)\n'
 }
 
 @test "$SUITE: set log file" {
   local log_file="$TEST_GO_ROOTDIR/demo.log"
-  rm -f "$log_file"
 
   # Setting the message on the command line eliminates the "Using default log
   # message" line printed only to standard output, so the console and file
@@ -86,14 +89,6 @@ teardown() {
   _GO_LOG_DEMO_FILE="$log_file" run "$TEST_GO_SCRIPT" demo-core log foo bar baz
   assert_status '1'
   assert_output_matches $'\nINFO +foo bar baz\n'
-
-  # Hmm, this could become "split_bats_output_into_lines". Filed #92.
-  local console_output=()
-  local line
-
-  while IFS= read -r line; do
-    console_output+=("${line%$'\r'}")
-  done <<<"$output"
-
-  assert_file_equals "$log_file" "${console_output[@]}"
+  split_bats_output_into_lines
+  assert_file_equals "$log_file" "${lines[@]}"
 }

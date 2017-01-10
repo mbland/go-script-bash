@@ -4,6 +4,7 @@ load ../environment
 load helpers
 
 setup() {
+  test_filter
   # Test every case with a log file as well.
   export TEST_LOG_FILE="$TEST_GO_ROOTDIR/test-script.log"
 }
@@ -155,6 +156,42 @@ teardown() {
   assert_success
   assert_log_equals \
     RUN 'failing_function foo bar baz'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
+@test "$SUITE: log single command that logs QUIT" {
+  run_log_script \
+      'function failing_function() {' \
+      '  @go.log QUIT 127 "$@"' \
+      '}' \
+      '@go.log_command failing_function foo bar baz'
+
+  assert_failure
+  assert_status 127
+
+  assert_log_equals \
+    RUN  'failing_function foo bar baz' \
+    QUIT 'foo bar baz (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
+@test "$SUITE: log single command that logs FATAL (only one stack trace)" {
+  run_log_script \
+      'function failing_function() {' \
+      '  @go.log FATAL 127 "$@"' \
+      '}' \
+      '@go.log_command failing_function foo bar baz'
+
+  assert_failure
+  assert_status 127
+
+  set_log_command_stack_trace_items
+  assert_log_equals \
+    RUN   'failing_function foo bar baz' \
+    FATAL 'foo bar baz (exit status 127)' \
+    "  $TEST_GO_SCRIPT:8 failing_function" \
+    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
+    "$(test_script_stack_trace_item)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 

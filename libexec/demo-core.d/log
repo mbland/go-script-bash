@@ -60,6 +60,7 @@ log_demo_print_environment() {
 log_demo() {
   local level
   local log_args=('Hello,' 'World!')
+  local error_log_args=()
   local print_env
 
   if [[ "$1" == '--complete' ]]; then
@@ -92,11 +93,18 @@ log_demo() {
     @go.log_add_output_file "$_GO_LOG_DEMO_FILE"
   fi
 
+  if [[ -n "$_GO_LOG_DEMO_EXIT_STATUS" ]]; then
+    error_log_args=("$_GO_LOG_DEMO_EXIT_STATUS")
+  fi
+  error_log_args+=("${log_args[@]}")
+
   for level in "${_GO_LOG_LEVELS[@]}"; do
     if [[ "$level" == 'RUN' ]]; then
       @go.log_command echo "${log_args[@]}"
-    elif [[ "$level" =~ ERROR|FATAL && -n "$_GO_LOG_DEMO_EXIT_STATUS" ]]; then
-      @go.log "$level" "$_GO_LOG_DEMO_EXIT_STATUS" "${log_args[@]}"
+    elif [[ "$level" == 'QUIT' ]]; then
+      $(@go.log "$level" "${error_log_args[@]}" '(would normally exit)')
+    elif [[ "$level" =~ ERROR|FATAL ]]; then
+      @go.log "$level" "${error_log_args[@]}"
     else
       @go.log "$level" "${log_args[@]}"
     fi
