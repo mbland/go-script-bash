@@ -454,9 +454,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
     exit_state=''
 
     for fd in "${__go_log_level_file_descriptors[@]}"; do
-      if _@go.log_command_should_skip_file_descriptor "$fd"; then
-        continue
-      elif [[ -t "$fd" || -n "$_GO_LOG_FORMATTING" ]]; then
+      if [[ -t "$fd" || -n "$_GO_LOG_FORMATTING" ]]; then
         printf '%b\n' "$line" >&"$fd"
       else
         printf '%s\n' "$line" >&"$fd"
