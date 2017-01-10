@@ -163,7 +163,7 @@ export __GO_LOG_COMMAND_DEPTH="${__GO_LOG_COMMAND_DEPTH:-0}"
 # process was started. Used by `@go.log_command` to skip emitting multiple fatal
 # log messages in the same process while allowing separate fatal messages from
 # parent processes.
-export __GO_LOG_COMMAND_DEPTH_0="${__GO_LOG_COMMAND_DEPTH}"
+readonly __GO_LOG_COMMAND_DEPTH_0="${__GO_LOG_COMMAND_DEPTH}"
 
 # DO NOT EDIT: Every index corresponds to a descriptor for which
 # `_@go.log_command_should_skip_file_descriptor` should return true.
