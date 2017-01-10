@@ -92,6 +92,11 @@ readonly _GO_LOG_FORMATTING="$_GO_LOG_FORMATTING"
 # Can be set either in the script or on the command line.
 readonly _GO_DRY_RUN="$_GO_DRY_RUN"
 
+# Set this to the default log level for `@go.critical_section_begin`. May be
+# overridden by individual `@go.critical_section_begin` calls, the value set by
+# the outermost call always taking precedence.
+readonly _GO_CRITICAL_SECTION_DEFAULT="${_GO_CRITICAL_SECTION_DEFAULT:-FATAL}"
+
 # Default log level labels
 #
 # These are in priority order. The _GO_LOG_CONSOLE_FILTER and
@@ -151,6 +156,9 @@ __GO_LOG_LEVELS_FORMATTED=()
 # Set by @go.critical_section_{begin,end}
 export __GO_LOG_CRITICAL_SECTION="${__GO_LOG_CRITICAL_SECTION:-0}"
 
+# Set by @go.critical_section_begin
+export __GO_LOG_CRITICAL_SECTION_LEVEL="$__GO_LOG_CRITICAL_SECTION_LEVEL"
+
 # DO NOT EDIT: Determines number of stack trace levels to skip for FATAL logs.
 export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 
@@ -163,7 +171,7 @@ export __GO_LOG_COMMAND_DEPTH="${__GO_LOG_COMMAND_DEPTH:-0}"
 # process was started. Used by `@go.log_command` to skip emitting multiple fatal
 # log messages in the same process while allowing separate fatal messages from
 # parent processes.
-export __GO_LOG_COMMAND_DEPTH_0="${__GO_LOG_COMMAND_DEPTH}"
+readonly __GO_LOG_COMMAND_DEPTH_0="${__GO_LOG_COMMAND_DEPTH}"
 
 # DO NOT EDIT: Every index corresponds to a descriptor for which
 # `_@go.log_command_should_skip_file_descriptor` should return true.
@@ -398,12 +406,27 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   done
 }
 
-# Sets @go.log_command to log FATAL when its command exits with an error status.
+# Sets @go.log_command to log QUIT or FATAL when a command exits with an error.
+#
+# Note that the `log_level` argument only takes effect when opening the
+# outermost critical section; otherwise the log level of the outermost critical
+# section is used.
+#
+# Arguments:
+#   log_level:  (Optional) Either QUIT or FATAL; defaults to FATAL
 @go.critical_section_begin() {
+  local log_level="${1:-$_GO_CRITICAL_SECTION_DEFAULT}"
+
+  if [[ ! "$log_level" =~ ^(QUIT|FATAL)$ ]]; then
+    ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
+    @go.log FATAL "$FUNCNAME accepts QUIT or FATAL, not $log_level" >&2
+  elif [[ "$__GO_LOG_CRITICAL_SECTION" -eq '0' ]]; then
+    __GO_LOG_CRITICAL_SECTION_LEVEL="$log_level"
+  fi
   ((++__GO_LOG_CRITICAL_SECTION))
 }
 
-# Sets @go.log_command to log ERROR when its command exits with an error status.
+# Sets @go.log_command to log ERROR when a command exits with an error.
 @go.critical_section_end() {
   if [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
     ((--__GO_LOG_CRITICAL_SECTION))
@@ -497,7 +520,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
       exit "$exit_status"
     elif [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
       ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
-      @go.log FATAL "$exit_status" "$cmd_string"
+      @go.log "$__GO_LOG_CRITICAL_SECTION_LEVEL" "$exit_status" "$cmd_string"
     fi
     @go.log ERROR "$exit_status" "$cmd_string"
   fi
@@ -524,7 +547,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 # And your `$_GO_SCRIPTS_DIR/setup` script may include (assuming your own `test`
 # script as well):
 #
-#   @go.critical_section_begin
+#   @go.critical_section_begin QUIT
 #   @go.log_command npm install
 #   @go.log_command @go test
 #   @go.critical_section_end
