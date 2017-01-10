@@ -148,6 +148,71 @@ teardown() {
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
+@test "$SUITE: log single failing command in critical section using QUIT" {
+  # Note that this overrides the default _GO_LOG_CRITICAL_SECTION_LEVEL.
+  run_log_script 'failing_function() { return 127; }' \
+    '@go.critical_section_begin QUIT' \
+    '@go.log_command failing_function foo bar baz' \
+    '@go.critical_section_end'
+
+  # Note that QUIT doesn't produce a stack trace.
+  assert_failure
+  assert_log_equals \
+    RUN 'failing_function foo bar baz' \
+    QUIT 'failing_function foo bar baz (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
+@test "$SUITE: log single failing critical section after setting global level" {
+  _GO_CRITICAL_SECTION_DEFAULT='QUIT' run_log_script \
+    'failing_function() { return 127; }' \
+    '@go.critical_section_begin' \
+    '@go.log_command failing_function foo bar baz' \
+    '@go.critical_section_end'
+
+  # Note that QUIT doesn't produce a stack trace.
+  assert_failure
+  assert_log_equals \
+    RUN 'failing_function foo bar baz' \
+    QUIT 'failing_function foo bar baz (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
+@test "$SUITE: error if any log level other than QUIT or FATAL specified" {
+  run_log_script '@go.critical_section_begin' \
+    '@go.critical_section_begin QUIT' \
+    '@go.critical_section_begin FATAL' \
+    '@go.critical_section_begin ERROR'
+
+  assert_failure
+  assert_log_equals \
+    FATAL '@go.critical_section_begin accepts QUIT or FATAL, not ERROR' \
+    "$(test_script_stack_trace_item)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
+@test "$SUITE: log level of earlier section doesn't affect later section" {
+  run_log_script '@go.critical_section_begin QUIT' \
+    '@go.log_command echo Hello, World!' \
+    '@go.critical_section_end' \
+    '@go.critical_section_begin' \
+    '@go.log_command @go.log ERROR 127 This triggers a fatal exit' \
+    '@go.critical_section_end' \
+    "@go.log ERROR Shouldn't get this far..."
+
+  assert_failure
+  assert_status 127
+  set_log_command_stack_trace_items
+  assert_log_equals \
+    RUN   'echo Hello, World!' \
+    'Hello, World!' \
+    RUN   '@go.log ERROR 127 This triggers a fatal exit' \
+    ERROR 'This triggers a fatal exit (exit status 127)' \
+    FATAL '@go.log ERROR 127 This triggers a fatal exit (exit status 127)' \
+    "$(test_script_stack_trace_item 2)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
 @test "$SUITE: log single failing command without executing during dry run" {
   _GO_DRY_RUN='true' run_log_script \
     'failing_function() { return 127; }' \
@@ -312,6 +377,28 @@ teardown() {
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
+@test "$SUITE: nested critical sections, outermost determines log level" {
+  run_log_script 'failing_function() { return 127; }' \
+    'critical_subsection() {' \
+    '  @go.critical_section_begin FATAL' \
+    '  @go.log_command failing_function "$@"' \
+    '  @go.critical_section_end' \
+    '}' \
+    '@go.critical_section_begin QUIT' \
+    '@go.log_command critical_subsection Hello, World!' \
+    '@go.critical_section_end' \
+    "@go.log_command echo \"We shouldn't've made it...\""
+
+  # Note that QUIT doesn't produce a stack trace.
+  assert_failure
+  assert_status 127
+  assert_log_equals \
+    RUN  'critical_subsection Hello, World!' \
+    RUN  'failing_function Hello, World!' \
+    QUIT 'failing_function Hello, World! (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
 @test "$SUITE: nested critical sections, @go.log FATAL still looks FATAL" {
   run_log_script 'failing_function() { @go.log FATAL 127 "$@"; }' \
     'critical_subsection() {' \
@@ -319,11 +406,13 @@ teardown() {
     '  @go.log_command failing_function "$@"' \
     '  @go.critical_section_end' \
     '}' \
-    '@go.critical_section_begin' \
+    '@go.critical_section_begin QUIT' \
     '@go.log_command critical_subsection Hello, World!' \
     '@go.critical_section_end' \
     "@go.log_command echo \"We shouldn't've made it...\""
 
+  # Note that though the critical section specifies QUIT, the exit still appears
+  # FATAL because failing_command called `@go.log FATAL` directly.
   assert_failure
   assert_status 127
   set_log_command_stack_trace_items
