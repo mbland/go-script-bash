@@ -89,9 +89,16 @@ expect_assertion_success() {
     __return_from_expect_assertion '1'
   else
     # Although we expect the assertion under test to pass, this script injects a
-    # failing assertion after it to check that the assertion under test calls
-    # `return_from_bats_assertion` upon returning. If it doesn't, the failing
-    # assertion will show the passing assertion's stack, per issue #48.
+    # failing assertion after it to check that the assertion under test directly
+    # calls `return_from_bats_assertion` upon returning. If it doesn't, `set
+    # -eET` will not be in effect, so the failing assertion will not trigger the
+    # ERR trap or fail the test case.
+    #
+    # In an earlier incarnation of `return_from_bats_assertion` that only
+    # restored `set -o functrace` (and when tests only started with `set +o
+    # functrace`, equivalent to `set +T`), the failing assertion would fire the
+    # ERR trap and exit the test case, but Bats would show the passing
+    # assertion's stack, per issue #48.
     __run_assertion_test_script \
       "  run $run_cmd" \
       "  failing_assertion() { [ 0 -eq 1 ]; }" \
