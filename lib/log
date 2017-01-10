@@ -159,6 +159,12 @@ export __GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS=1
 # to determine when to skip emitting a log message.
 export __GO_LOG_COMMAND_DEPTH="${__GO_LOG_COMMAND_DEPTH:-0}"
 
+# DO NOT EDIT: The value for `__GO_LOG_COMMAND_DEPTH` in effect when the current
+# process was started. Used by `@go.log_command` to skip emitting multiple fatal
+# log messages in the same process while allowing separate fatal messages from
+# parent processes.
+export __GO_LOG_COMMAND_DEPTH_0="${__GO_LOG_COMMAND_DEPTH}"
+
 # DO NOT EDIT: Every index corresponds to a descriptor for which
 # `_@go.log_command_should_skip_file_descriptor` should return true.
 export __GO_LOG_COMMAND_SKIP_FILE_DESCRIPTORS
@@ -478,6 +484,16 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   if [[ "$exit_status" -ne '0' ]]; then
     # If the subprocess logged QUIT or FATAL, don't add a stack trace.
     if [[ "$exit_state" == 'fatal' ]]; then
+      # Keep emitting the `fatal` marker until we've reached the depth at which
+      # the process was started. This prevents a deeply nested fatal exit from
+      # producing multiple fatal log messages in the same process, while
+      # allowing parent processes to emit their own fatal messages. Relevant
+      # test cases from tests/log/log-command.bats:
+      # - nested critical sections, @go.log FATAL still looks FATAL
+      # - fatal status for subcommand of command in another language
+      if [[ "$__GO_LOG_COMMAND_DEPTH" -ne "$__GO_LOG_COMMAND_DEPTH_0" ]]; then
+        printf '@go.log_command fatal:%s\n' "$exit_status" >&2
+      fi
       exit "$exit_status"
     elif [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then
       ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
