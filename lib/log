@@ -31,7 +31,12 @@
 # can be forced when writing to a pipe or file by setting `_GO_LOG_FORMATTING`.
 #
 # `@go.log ERROR` will return an error code, so you may use it in conditional
-# statements. `@go.log FATAL` will exit the process.
+# statements. `@go.log QUIT` and `@go.log FATAL` will exit the process; the
+# latter will print a stack trace. The intention for each is:
+#
+# - `ERROR`: recoverable errors (except after `@go.critical_section_begin`)
+# - `QUIT`:  nonerror exit conditions (e.g. invalid user input, program finish)
+# - `FATAL`: unrecoverable program errors; prints the stack trace and exits
 #
 # The `_GO_LOG_LEVEL_FILTER` variable sets the minimum priority for logged
 # messages (defaulting to `RUN`), and the `_GO_LOG_CONSOLE_FILTER` variable
@@ -105,6 +110,7 @@ _GO_LOG_LEVELS=(
   'INFO'
   'WARN'
   'ERROR'
+  'QUIT'
   'FATAL'
 )
 
@@ -117,6 +123,7 @@ __GO_LOG_LEVELS_FORMAT_CODES=(
   '\e[1m\e[32m'
   '\e[1m\e[36m'
   '\e[1m\e[33m'
+  '\e[1m\e[31m'
   '\e[1m\e[31m'
   '\e[1m\e[31m'
 )
@@ -132,6 +139,7 @@ __GO_LOG_LEVELS_FILE_DESCRIPTORS=(
   '1'
   '1'
   '1'
+  '2'
   '2'
   '2'
 )
@@ -164,12 +172,12 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 # Usage:
 #
 #   @go.log <log-level> args...
-#   @go.log <ERROR|FATAL> [exit-status] args...
+#   @go.log <ERROR|QUIT|FATAL> [exit-status] args...
 #
 # Where:
 #
 #   <log-level>    A label from _GO_LOG_LEVELS
-#   <exit-status>  The exit status number to return from an ERROR or FATAL call
+#   <exit-status>  The exit status to return from an ERROR, QUIT, or FATAL call
 #   args...        Arguments comprising the log record text
 #
 # Will automatically format the '<log-level>' label if writing to the terminal
@@ -177,13 +185,18 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 # remaining arguments if not writing to the terminal and _GO_LOG_FORMATTING is
 # empty.
 #
-# If the first argument is ERROR or FATAL, the second argument is the exit
-# status, and the remainder of the arguments comprise the log record. The exit
-# status will be appended to the log record if it is not the empty string.
+# If the first argument is ERROR, QUIT, or FATAL, the second argument is
+# interpreted as the exit status if an integer or the empty string, and the
+# remainder of the arguments comprise the log record. The exit status will be
+# appended to the log record if it is not the empty string. If the second
+# argument is neither an integer or the empty string, it will provide the first
+# element of the log record.
 #
-# ERROR will cause @go.log to return the exit status; FATAL will exit the
-# process with the exit status. If the exit status is the empty string, it will
-# default to 1.
+# ERROR will cause @go.log to return the exit status; QUIT will exit the process
+# with the exit status; FATAL will print a stack trace and exit the process with
+# the exit status. If the exit status is the empty string, it will default to 1.
+# (Note that QUIT may be used for normal program exit, but you must specify `0`
+# as the first argument.)
 #
 # If you want to add a custom log level, or change an existing log level, do so
 # using @go.add_or_update_log_level before the first call to @go.log, most
@@ -191,7 +204,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 #
 # Arguments:
 #   $1: log level label; will be converted to all-uppercase
-#   $2: exit status if $1 is ERROR or FATAL; first log record element otherwise
+#   $2: exit status if $1 is ERROR, QUIT, or FATAL; first log element otherwise
 #   $3..$#: remainder of the log record
 @go.log() {
   local args=("$@")
@@ -211,7 +224,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
     return 1
   fi
 
-  if [[ "$log_level" =~ ERROR|FATAL ]]; then
+  if [[ "$log_level" =~ ERROR|QUIT|FATAL ]]; then
     exit_status="${args[1]}"
 
     if [[ -n "$exit_status" && "$exit_status" =~ ^-?[0-9]+$ ]]; then
@@ -253,7 +266,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
     fi
   done
 
-  if [[ "$log_level" == 'FATAL' ]]; then
+  if [[ "$log_level" =~ QUIT|FATAL ]]; then
     if [[ "$__GO_LOG_COMMAND_DEPTH" -ne '0' ]]; then
       echo "@go.log_command fatal:$exit_status" >&2
     fi
@@ -463,7 +476,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   done < <(_@go.log_command_invoke)
 
   if [[ "$exit_status" -ne '0' ]]; then
-    # If the subprocess logged FATAL, don't add another stack trace.
+    # If the subprocess logged QUIT or FATAL, don't add a stack trace.
     if [[ "$exit_state" == 'fatal' ]]; then
       exit "$exit_status"
     elif [[ "$__GO_LOG_CRITICAL_SECTION" -ne '0' ]]; then

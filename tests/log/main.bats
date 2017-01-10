@@ -74,6 +74,26 @@ teardown() {
     INFO  'error with status 127 as expected'
 }
 
+@test "$SUITE: exit with error on QUIT" {
+  # The first arg after QUIT is not the exit status; default to 1.
+   run_log_script 'if ! @go.log QUIT Hello, World!; then' \
+    '  @go.log INFO This line should be unreachable.' \
+    'fi'
+  assert_failure
+  assert_status 1
+  assert_log_equals QUIT 'Hello, World!'
+}
+
+@test "$SUITE: show status on QUIT if supplied" {
+  # The first arg after FATAL is the exit status.
+  run_log_script 'if ! @go.log QUIT 127 Hello, World!; then' \
+    '  @go.log INFO This line should be unreachable.' \
+    'fi'
+  assert_failure
+  assert_status 127
+  assert_log_equals QUIT 'Hello, World! (exit status 127)'
+}
+
 @test "$SUITE: exit with error on FATAL" {
   # The first arg after FATAL is not the exit status; default to 1.
   run_log_script 'if ! @go.log FATAL Hello, World!; then' \

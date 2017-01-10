@@ -159,6 +159,22 @@ teardown() {
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
+@test "$SUITE: log single command that logs QUIT" {
+  run_log_script \
+      'function failing_function() {' \
+      '  @go.log QUIT 127 "$@"' \
+      '}' \
+      '@go.log_command failing_function foo bar baz'
+
+  assert_failure
+  assert_status 127
+
+  assert_log_equals \
+    RUN  'failing_function foo bar baz' \
+    QUIT 'foo bar baz (exit status 127)'
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
 @test "$SUITE: log single command that logs FATAL (only one stack trace)" {
   run_log_script \
       'function failing_function() {' \
