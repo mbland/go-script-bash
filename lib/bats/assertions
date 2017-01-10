@@ -44,8 +44,9 @@
 #
 #   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
 #
-# and then make sure every return path ends with the following (followed by a
-# `return` statement, if not at the very end of the function):
+# and then make sure every return path ends with a direct call to the following
+# (not delegated to a helper function, and followed by a `return` statement if
+# not at the very end of the function):
 #
 #   return_from_bats_assertion "$return_status"
 #
@@ -93,7 +94,12 @@
 
 # The first line of every Bats assertion must call `set` with this argument.
 # See the function comments for `return_from_bats_assertion` for details.
-readonly BATS_ASSERTION_DISABLE_SHELL_OPTIONS='+eET'
+#
+# This guard allows this file to be sourced multiple times in a test program,
+# either directly or via other assertion files that source it.
+if [[ -z "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS" ]]; then
+  readonly BATS_ASSERTION_DISABLE_SHELL_OPTIONS='+eET'
+fi
 
 # Unconditionally returns a failing status
 #
@@ -406,8 +412,10 @@ assert_file_lines_match() {
 # Ensures Bats assertion failures point to the assertion call, not its internals
 #
 # You must ensure that `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"` is in
-# effect prior to calling this function. See the comments at the top of this
-# file for usage instructions and patterns.
+# effect prior to calling this function, and that your assertion calls this
+# function directly through every return path (i.e. you can't delegate the call
+# to a helper function). See the comments at the top of this file for usage
+# instructions and patterns.
 #
 # Notice that each public assertion starts with:
 #
@@ -439,8 +447,7 @@ assert_file_lines_match() {
 # stacks prior to its calling `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`.
 #
 # Arguments:
-#   $1:  The $BASH_SOURCE value from the assertion source file
-#   $2:  Return value of the calling assertion; defaults to 0
+#   result:  Return value of the calling assertion; defaults to 0
 return_from_bats_assertion() {
   local result="${1:-0}"
   local target_stack_item_pattern=" ${FUNCNAME[1]} ${BASH_SOURCE[1]}$"
