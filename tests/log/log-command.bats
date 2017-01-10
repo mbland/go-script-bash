@@ -312,6 +312,33 @@ teardown() {
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
+@test "$SUITE: nested critical sections, @go.log FATAL still looks FATAL" {
+  run_log_script 'failing_function() { @go.log FATAL 127 "$@"; }' \
+    'critical_subsection() {' \
+    '  @go.critical_section_begin' \
+    '  @go.log_command failing_function "$@"' \
+    '  @go.critical_section_end' \
+    '}' \
+    '@go.critical_section_begin' \
+    '@go.log_command critical_subsection Hello, World!' \
+    '@go.critical_section_end' \
+    "@go.log_command echo \"We shouldn't've made it...\""
+
+  assert_failure
+  assert_status 127
+  set_log_command_stack_trace_items
+  assert_log_equals \
+    RUN   'critical_subsection Hello, World!' \
+    RUN   'failing_function Hello, World!' \
+    FATAL 'Hello, World! (exit status 127)' \
+    "  $TEST_GO_SCRIPT:7 failing_function" \
+    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
+    "  $TEST_GO_SCRIPT:10 critical_subsection" \
+    "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
+    "$(test_script_stack_trace_item 2)"
+  assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
+}
+
 @test "$SUITE: nested critical sections dry run" {
   # Note that `echo Hello, World!` inside `critical_subsection` isn't logged,
   # since `critical_subsection` is only logged but not executed.
@@ -541,7 +568,7 @@ teardown() {
   # `__GO_LOG_CRITICAL_SECTION` is exported.
   create_test_command_script 'bash-command-script' \
     'failing_function() { return 127; }' \
-    '@go.log_command failing_function "$@"' \
+    '@go.log_command failing_function "$@"'
 
   run test-go perl-command-script foo bar baz
   assert_failure
