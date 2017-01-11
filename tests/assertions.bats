@@ -429,6 +429,14 @@ teardown() {
     ''
 }
 
+@test "$SUITE: assert_file_equals fails fast when file is nonexistent" {
+  # This reproduces a bug where __assert_file didn't exit when
+  # set_bats_output_and_lines_from_file failed.
+  expect_assertion_failure "echo Whoops, forgot to write to TEST_OUTPUT_FILE!" \
+    "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''" \
+    "'$TEST_OUTPUT_FILE' doesn't exist or isn't a regular file."
+}
+
 @test "$SUITE: assert_file_matches" {
   expect_assertion_success \
     "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \

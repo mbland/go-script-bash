@@ -484,10 +484,10 @@ set_bats_output_and_lines_from_file() {
   local file_path="$1"
 
   if [[ ! -f "$file_path" ]]; then
-    printf "'%s' doesn't exist or isn't a regular file." "$file_path" >&2
+    printf "'%s' doesn't exist or isn't a regular file.\n" "$file_path" >&2
     return_from_bats_assertion 1
   elif [[ ! -r "$file_path" ]]; then
-    printf "You don't have permission to access '%s'." "$file_path" >&2
+    printf "You don't have permission to access '%s'.\n" "$file_path" >&2
     return_from_bats_assertion 1
   else
     lines=()
@@ -595,7 +595,9 @@ __assert_file() {
   shift 2
   local constraints=("$@")
 
-  set_bats_output_and_lines_from_file "$file_path"
+  if ! set_bats_output_and_lines_from_file "$file_path"; then
+    return '1'
+  fi
 
   if [[ "$assertion" == 'assert_matches' ]]; then
     if [[ "$#" -ne '1' ]]; then
