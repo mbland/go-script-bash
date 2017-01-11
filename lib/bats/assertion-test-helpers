@@ -54,7 +54,7 @@ and it must call 'return_from_bats_assertion' directly from every return path.
 
 For details, see the comments for 'return_from_bats_assertion' from:
 
-  $_GO_CORE_DIR/lib/bats/assertions
+  ${BASH_SOURCE%/*}/assertions
 END_OF_FAILURE_MESSAGE
 
 # Validates that an assertion succeeds for the provided inputs
