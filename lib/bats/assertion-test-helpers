@@ -253,7 +253,7 @@ __run_command_and_assertion_in_subshell() {
   __assertion_output="${__assertion_output%$'\n'}"
 
   if [[ "$__assertion_output" =~ write\ error:\ Bad\ file\ descriptor$ ]]; then
-    printf "'%s' tried to write to a file descriptor other than 2" \
+    printf "'%s' tried to write to standard output instead of standard error" \
       "${assertion%% *}" >&2
     return 1
   elif [[ -z "$__assertion_status" ]]; then
