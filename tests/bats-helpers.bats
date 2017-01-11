@@ -28,9 +28,6 @@ assert_bats_teardown_called_on_signal() {
 
   run bats "$BATS_TEST_ROOTDIR/$signal-test.bats"
 
-  if ! assert_failure '1..1' "not ok 1 invoke teardown on $signal"; then
-    return_from_bats_assertion '1'
-  fi
   assert_file_equals "$BATS_TEST_ROOTDIR/$signal-teardown.txt" 'Goodbye, World!'
   return_from_bats_assertion "$?"
 }
