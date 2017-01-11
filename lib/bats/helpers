@@ -47,6 +47,9 @@
 # variables are quoted properly in most places.
 BATS_TEST_ROOTDIR="$BATS_TMPDIR/test rootdir"
 
+# Ensure `teardown` is always called, even if the user kills the test early.
+trap 'bats_teardown_trap' SIGTERM SIGINT
+
 # Sets the global SUITE variable based on the path of the test file.
 #
 # To make Bats output easier to follow, call this function and ensure that each

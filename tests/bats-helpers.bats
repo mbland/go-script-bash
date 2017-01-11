@@ -10,12 +10,42 @@ teardown() {
   remove_bats_test_dirs
 }
 
+assert_bats_teardown_called_on_signal() {
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+
+  local signal="$1"
+  local bats_test=('#! /usr/bin/bats'
+    'load "$_GO_CORE_DIR/lib/bats/helpers"'
+    'teardown() {'
+    "  echo Goodbye, World! >\"\$BATS_TEST_ROOTDIR/$signal-teardown.txt\""
+    '}'
+    "@test 'invoke teardown on $signal' {"
+    "  kill -s '$signal' \"\$\$\""
+    '}')
+
+  mkdir -p "$BATS_TEST_ROOTDIR"
+  printf '%s\n' "${bats_test[@]}" >"$BATS_TEST_ROOTDIR/$signal-test.bats"
+
+  run bats "$BATS_TEST_ROOTDIR/$signal-test.bats"
+
+  if ! assert_failure '1..1' "not ok 1 invoke teardown on $signal"; then
+    return_from_bats_assertion '1'
+  fi
+  assert_file_equals "$BATS_TEST_ROOTDIR/$signal-teardown.txt" 'Goodbye, World!'
+  return_from_bats_assertion "$?"
+}
+
 @test "$SUITE: suite name" {
   assert_equal 'bats-helpers: suite name' "$BATS_TEST_DESCRIPTION" 'SUITE'
 }
 
 @test "$SUITE: BATS_TEST_ROOTDIR contains space" {
   assert_matches ' ' "$BATS_TEST_ROOTDIR" "BATS_TEST_ROOTDIR"
+}
+
+@test "$SUITE: bats_teardown_trap called on signals" {
+  assert_bats_teardown_called_on_signal SIGTERM
+  assert_bats_teardown_called_on_signal SIGINT
 }
 
 @test "$SUITE: {create,remove}_bats_test_dirs" {
