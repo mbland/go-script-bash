@@ -154,7 +154,7 @@ fail_if() {
 
   case "$assertion" in
   assert_equal|assert_matches)
-    label="$3"
+    label="${3:-value}"
     constraints=("$1")
     value="$2"
     ;;
@@ -207,14 +207,14 @@ fail_if() {
 # Compares two values for equality
 #
 # Arguments:
-#   $1: The expected value
-#   $2: The actual value to evaluate
-#   $3: A label explaining the value being evaluated
+#   expected:  The expected value
+#   actual:    The actual value to evaluate
+#   label:     (Optional) A label explaining the value being evaluated
 assert_equal() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local expected="$1"
   local actual="$2"
-  local label="$3"
+  local label="${3:-Actual value}"
 
   if [[ "$expected" != "$actual" ]]; then
     printf '%s not equal to expected value:\n  %s\n  %s\n' \
@@ -228,14 +228,14 @@ assert_equal() {
 # Validates whether a value matches a regular expression
 #
 # Arguments:
-#   $1: The regular expression to match against the value
-#   $2: The value to match
-#   $3: A label explaining the value being matched
+#   pattern:  The regular expression to match against the value
+#   value:    The value to match
+#   label:    (Optional) A label explaining the value being matched
 assert_matches() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local pattern="$1"
   local value="$2"
-  local label="$3"
+  local label="${3:-Value}"
 
   if [[ ! "$value" =~ $pattern ]]; then
     printf '%s does not match expected pattern:\n  %s\n  %s\n' \
