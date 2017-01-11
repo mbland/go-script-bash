@@ -39,6 +39,12 @@ teardown() {
     'Goodbye, world!'
 }
 
+@test "$SUITE: fail doesn't print status, output when bats_fail_no_output set" {
+  bats_fail_no_output='true' expect_assertion_failure "echo 'Goodbye, world!'" \
+    'fail "You say \"Goodbye,\" while I say \"Hello...\""' \
+    'You say "Goodbye," while I say "Hello..."'
+}
+
 @test "$SUITE: assert_equal success" {
   expect_assertion_success "echo 'Hello, world!'" \
     'assert_equal "Hello, world!" "$output" "echo result"'

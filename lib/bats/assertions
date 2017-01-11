@@ -106,6 +106,9 @@ fi
 # Will print an optional failure reason, the Bats 'run' command exit status, and
 # the output from the 'run' command, all to standard error.
 #
+# Globals:
+#   bats_fail_no_output:  If nonempty, will not print `status` and `output`
+#
 # Arguments:
 #   $1:  (optional) Reason to include in the failure output
 fail() {
@@ -115,7 +118,7 @@ fail() {
   if [[ -n "$reason" ]]; then
     printf '%b\n' "$reason" >&2
   fi
-  if [[ -z "$__bats_fail_suppress_output" ]]; then
+  if [[ -z "$bats_fail_no_output" ]]; then
     printf 'STATUS: %d\nOUTPUT:\n%b\n' "$status" "$output" >&2
   fi
   return_from_bats_assertion '1'
@@ -146,7 +149,7 @@ fail_if() {
   local constraints=()
   local constraint
   local i
-  local __bats_fail_suppress_output='true'
+  local bats_fail_no_output='true'
 
   if [[ "$assertion" =~ _match ]]; then
     operation='match'
@@ -170,12 +173,12 @@ fail_if() {
     value="${lines[$1]}"
     ;;
   assert_lines_*)
-    __bats_fail_suppress_output=
+    bats_fail_no_output=
     label="lines"
     constraints=("${@}")
     ;;
   assert_file_*)
-    __bats_fail_suppress_output=
+    bats_fail_no_output=
     label="'$1'"
     constraints=("${@:2}")
     ;;
