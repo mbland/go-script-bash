@@ -1,8 +1,18 @@
 #! /bin/bash
 #
-# Common setup for all tests
+# Common environment setup and helper functions for all go-script-bash tests
+#
+# You may source this from your own applications' `environment.bash` file thus:
+#
+#   . "$_GO_CORE_DIR/lib/testing/environment"
+#
+# See `$GO_CORE_DIR/tests/environment.bash` for an example.
+#
+# Many of these functions depend on functions from
+# `$_GO_CORE_DIR/lib/bats/helpers`. See the comments for those functions for
+# further details.
 
-. "$_GO_ROOTDIR/lib/bats/helpers"
+. "$_GO_CORE_DIR/lib/bats/helpers"
 
 # Avoid having to fold our test strings. Tests that verify folding behavior will
 # override this.
@@ -13,9 +23,8 @@ COLUMNS=1000
 # function.
 unset -v _GO_CMD
 
-# Clear all user-definable `readonly` variables (and potentially user-definable
-# `export` variables) module variables to avoid interference with test
-# conditions.
+# Clear all user-definable `readonly` (and potentially user-definable `export`)
+# module variables to avoid interference with test conditions.
 unset -v _GO_MAX_FILE_DESCRIPTORS "${!_GO_LOG@}" "${!__GO_LOG@}"
 
 # TEST_GO_ROOTDIR contains a space to help ensure that variables are quoted
@@ -26,9 +35,24 @@ readonly TEST_GO_SCRIPTS_RELATIVE_DIR="scripts"
 readonly TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
 readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 
+# Recursively removes `TEST_GO_ROOTDIR`
+#
+# Call this from `teardown` if your tests create any files or directories in
+# `TEST_GO_ROOTDIR`.
+remove_test_go_rootdir() {
+  remove_bats_test_dirs
+}
+
+# Creates an executable `./go` script as `TEST_GO_SCRIPT`
+#
+# The `. "$_GO_CORE_DIR/go-core.bash"` line is included, so callers need only
+# supply the remaining lines. Also automatically creates `TEST_GO_SCRIPTS_DIR`.
+#
+# Arguments:
+#   ...:  Lines comprising the `./go` script
 create_test_go_script() {
   create_bats_test_script 'go' \
-    ". '$_GO_ROOTDIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
+    ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     "$@"
 
   # Most tests should assume this directory is present. Those that don't should
@@ -38,12 +62,30 @@ create_test_go_script() {
   fi
 }
 
+# Creates an executable `./go` command script in `TEST_GO_SCRIPTS_DIR`
+#
+# The script will be created as `$TEST_GO_SCRIPTS_DIR/$script_name`.
+#
+# Arguments:
+#   script_name:  Name of the command script
+#   ...:          Lines comprising the `./go` command script
 create_test_command_script() {
   create_bats_test_script "$TEST_GO_SCRIPTS_RELATIVE_DIR/$1" "${@:2}"
 }
 
+# Replace a module in `_GO_CORE_DIR/lib` with a stub implementation
+#
+# THIS IS POTENTIALLY DANGEROUS and you MUST call `restore_stubbed_core_modules`
+# in your `teardown` function if you use it!
+#
+# Useful when you need to model core module behavior, but don't want it to do
+# real work or want to avoid a potentially complicated test setup.
+#
+# Arguments:
+#   module_name:  Name of the module to stub from `_GO_CORE_DIR/lib`
+#   ...:          Lines comprising the stubbed module implementation
 create_core_module_stub() {
-  local module_path="$_GO_ROOTDIR/lib/$1"
+  local module_path="$_GO_CORE_DIR/lib/$1"
   shift
 
   if [[ ! -f "$module_path" ]]; then
@@ -53,19 +95,32 @@ create_core_module_stub() {
 
   cp "$module_path"{,.stubbed}
   echo '#! /bin/bash' > "$module_path"
-  local IFS=$'\n'
-  echo "$*" >> "$module_path"
+  printf '%s\n' "$@" >>"$module_path"
   chmod 600 "$module_path"
 }
 
+# Restore all `_GO_CORE_DIR/lib` modules stubbed by `create_core_module_stub`
+#
+# YOU MUST CALL THIS FROM TEARDOWN IF YOU USE `create_core_module_stub`!
 restore_stubbed_core_modules() {
   local module
 
-  for module in "$_GO_ROOTDIR/lib"/*.stubbed; do
+  for module in "$_GO_CORE_DIR/lib"/*.stubbed; do
     mv "$module" "${module%.stubbed}"
   done
 }
 
+# Creates empty "parent" and "child" command scripts in `TEST_GO_SCRIPTS_DIR`
+#
+# The "parent" is created as `$TEST_GO_SCRIPTS_DIR/$parent`, and each
+# "child" script is created as `$TEST_GO_SCRIPTS_DIR/${parent}.d/$child".
+#
+# Primarily useful for testing tab completion of commands that operate on other
+# commands, such as `help` or `path`.
+#
+# Arguments:
+#   parent_name:  Name of the "parent" command script
+#   ...:          Names of "child" command scripts
 create_parent_and_subcommands() {
   local parent="$1"
   shift
@@ -76,10 +131,6 @@ create_parent_and_subcommands() {
   for subcommand in "$@"; do
     create_test_command_script "$parent.d/$subcommand"
   done
-}
-
-remove_test_go_rootdir() {
-  remove_bats_test_dirs
 }
 
 # Get the stack trace of a line from a file or function as it would appear in
@@ -119,7 +170,7 @@ set_go_core_stack_trace_components() {
 
   if [[ "${#GO_CORE_STACK_TRACE_COMPONENTS[@]}" -eq '0' ]]; then
     create_bats_test_script "${script#$TEST_GO_ROOTDIR}" \
-      ". '$_GO_ROOTDIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
+      ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
       '@go "$@"'
     create_test_command_script 'print-stack-trace' '@go.print_stack_trace'
 

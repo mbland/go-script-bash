@@ -49,8 +49,11 @@ BATS_TEST_ROOTDIR="$BATS_TMPDIR/test rootdir"
 
 # Sets the global SUITE variable based on the path of the test file.
 #
-# To make Bats output easier to follow, call this function and ensure that each
-# @test declaration starts with "$SUITE: ".
+# To make Bats output easier to follow, call this function from your shared
+# environment file thus, ans and ensure that each @test declaration starts with
+# "$SUITE: ":
+#
+#   set_bats_test_suite_name "${BASH_SOURCE%/*}"
 #
 # Arguments:
 #   $1:  Path to the project's top-level test directory
