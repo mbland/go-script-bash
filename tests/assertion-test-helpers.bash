@@ -8,7 +8,11 @@ __test_assertion_impl() {
   local assertion_status="${ASSERTION_STATUS:-0}"
 
   if [[ "$assertion_status" -ne '0' || -n "$ASSERTION_FORCE_OUTPUT" ]]; then
-    printf '%s%s\n' "$*" "${ASSERTION_EXTRA_OUTPUT}" >&"${ASSERTION_FD:-2}"
+    printf '%s%s' "$*" "${ASSERTION_EXTRA_OUTPUT}" >&"${ASSERTION_FD:-2}"
+
+    if [[ -z "$ASSERTION_WITHHOLD_NEWLINE" ]]; then
+      printf '\n' >&"${ASSERTION_FD:-2}"
+    fi
   fi
 
   if [[ -n "$DELEGATE_RETURN_FROM_BATS_ASSERTION" ]]; then
