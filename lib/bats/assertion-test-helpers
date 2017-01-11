@@ -83,7 +83,7 @@ expect_assertion_success() {
     printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
       "$__assertion_status" "$__assertion_output" >&2
     __return_from_expect_assertion '1'
-  elif ! __check_expected_output "${__assertion_output}"; then
+  elif ! __check_expected_output "$__assertion_output"; then
     printf "'%s' should not produce output when successful.\n" \
       "${assertion%% *}" >&2
     __return_from_expect_assertion '1'
@@ -237,7 +237,6 @@ export -f printf_to_test_output_file
 __run_command_and_assertion_in_subshell() {
   local run_cmd="$1"
   local assertion="$2"
-  local expected_status
   local line
 
   eval run $run_cmd
