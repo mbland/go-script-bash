@@ -3,17 +3,17 @@
 # Implements the `stack_trace_item` function from environment.bash
 
 __stack_trace_item() {
-  local haystack_file="$1"
+  local filepath="$1"
   local function_name="$2"
-  local function_opening="$function_name() {"
-  local needle="${3:-$function_opening}"
-  local skip
-  local inside_function
+  local target_line="$3"
+  local function_opening="^(function )? *([[:alnum:]_.@-]+) *([(][)])? *{"
+  local initial_state='FUNCTION'
+  local state='MAIN'
   local lineno=0
   local line
 
   if [[ "$function_name" == 'main' || "$function_name" == 'source' ]]; then
-    inside_function='false'
+    initial_state='MAIN'
   fi
 
   # We have to set `IFS=` to preserve leading spaces, and then for Windows
@@ -23,28 +23,58 @@ __stack_trace_item() {
     line="${line%$'\r'}"
     ((++lineno))
 
-    if [[ -n "$skip" ]]; then
+    case "$state" in
+    MAIN)
+      if [[ "$line" == "$target_line" ]]; then
+        state='SUCCESS'
+        break
+      elif [[ "$line" =~ $function_opening ]]; then
+        state='SKIP_FUNCTION'
+      fi
+      ;;
+    FUNCTION)
+      if [[ "$line" =~ $function_opening ]]; then
+        if [[ "${BASH_REMATCH[2]}" != "$function_name" ]]; then
+          state='SKIP_FUNCTION'
+        elif [[ -z "$target_line" ]]; then
+          state='SUCCESS'
+          break
+        else
+          state='INSIDE_TARGET_FUNCTION'
+        fi
+      fi
+      ;;
+    INSIDE_TARGET_FUNCTION)
+      if [[ "$line" == "$target_line" ]]; then
+        state='SUCCESS'
+        break
+      elif [[ "$line" == '}' ]]; then
+        state='FOUND_FUNCTION'
+        break
+      fi
+      ;;
+    SKIP_FUNCTION)
       if [[ "$line" == '}' ]]; then
-        skip=
+        state="$initial_state"
       fi
-    elif [[ -z "$inside_function" && "$line" == $function_opening ]]; then
-      if [[ "$line" == "$needle" ]]; then
-        echo "  $haystack_file:$lineno $function_name"
-        return
-      fi
-      inside_function='true'
-    elif [[ "$line" =~ ()\ {$ ]]; then
-      skip='true'
-    elif [[ "$inside_function" == 'true' && "$line" == '}' ]]; then
-      break
-    elif [[ "$line" == "$needle" ]]; then
-      echo "  $haystack_file:$lineno $function_name"
-      return
-    fi
-  done <"$haystack_file"
+      ;;
+    esac
+  done <"$filepath"
 
-  printf "ERROR: Line not found in $function_name: \"$needle\"\nat:\n" >&2
-  return 1
+  case "$state" in
+  SUCCESS)
+    printf '  %s:%d %s\n' "$filepath" "$lineno" "$function_name"
+    return
+    ;;
+  MAIN|FOUND_FUNCTION)
+    printf 'Line not found in `%s` from "%s": "%s"\n' \
+      "$function_name" "$filepath" "$target_line" >&2
+    ;;
+  *)
+    printf 'Function `%s` not found in "%s".\n' "$function_name" "$filepath" >&2
+    ;;
+  esac
+  exit 1
 }
 
 __stack_trace_item "$@"

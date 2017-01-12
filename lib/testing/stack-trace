@@ -8,10 +8,25 @@
 # @go.print_stack_trace output.
 #
 # Arguments:
-#   haystack_file:  File containing the line
+#   filepath:       Path to the file containing the line
 #   function_name:  Function in which the line appears, 'main', or 'source'
-#   needle_line:    Line for which to produce a stack trace line
+#   target_line:    Line for which to produce a stack trace line
 stack_trace_item() {
+  local filepath="$1"
+  local function_name="$2"
+  local target_line="$3"
+
+  __check_file_path_specified_and_present "$filepath"
+
+  if [[ -z "$function_name" ]]; then
+    printf 'No function name specified for `%s`.\n' "$FUNCNAME" >&2
+    exit 1
+  elif [[ "$function_name" =~ ^(main|source)$ && -z "$target_line" ]]; then
+    printf 'No target line from `%s` specified for `%s`.\n'  \
+      "$function_name" "$FUNCNAME" >&2
+    exit 1
+  fi
+
   # Seriously, it's faster to run a script containing a `for` or `while read`
   # loop over a file as a new process than it is to run the function in-process
   # under Bats. Haven't yet figured out why.
@@ -76,7 +91,7 @@ stack_trace_item_from_offset() {
   __check_file_path_specified_and_present "$filepath"
   count_lines "$filepath" 'num_lines'
   lineno="$((num_lines - offset))"
-  echo "  ${filepath}:${lineno} ${funcname}"
+  printf '  %s:%d %s\n' "$filepath" "$lineno" "$funcname"
 }
 
 # Counts the number of lines in a file.
