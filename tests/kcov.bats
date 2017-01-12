@@ -2,7 +2,6 @@
 
 load environment
 
-FAKE_BIN_DIR="$TEST_GO_ROOTDIR/fake-bin"
 KCOV_DIR='tests/kcov'
 KCOV_COVERAGE_DIR='tests/coverage'
 KCOV_INCLUDE_PATTERNS='include/,pattern'
@@ -33,13 +32,10 @@ setup() {
     'dpkg-query')
   local fake_binary
 
-  mkdir -p "$FAKE_BIN_DIR"
-
-  for fake_binary in "${fake_binaries[@]/#/$FAKE_BIN_DIR/}"; do
-    echo '#! /usr/bin/env bash' >"$fake_binary"
-    echo 'echo "$@" >"$0.out" 2>&1' >>"$fake_binary"
+  for fake_binary in "${fake_binaries[@]}"; do
+    stub_program_in_path "$fake_binary" \
+      'echo "$@" >"$0.out" 2>&1'
   done
-  chmod 700 "$FAKE_BIN_DIR"/*
 }
 
 teardown() {
@@ -49,7 +45,6 @@ teardown() {
 write_kcov_go_script() {
   create_test_go_script \
     ". \"\$_GO_USE_MODULES\" 'kcov-ubuntu'" \
-    "PATH=\"$FAKE_BIN_DIR:\$PATH\"" \
     "$@"
 }
 
@@ -65,21 +60,21 @@ write_kcov_dummy() {
   run "$TEST_GO_SCRIPT"
   assert_success ''
 
-  run cat "$FAKE_BIN_DIR/dpkg-query.out"
   . 'lib/kcov-ubuntu'
-  assert_success "-W -f=\${Package} \${Status}\\n ${__KCOV_DEV_PACKAGES[*]}"
+  assert_equal "-W -f=\${Package} \${Status}\\n ${__KCOV_DEV_PACKAGES[*]}" \
+    "$(<"$BATS_TEST_BINDIR/dpkg-query.out")"
 }
 
 @test "$SUITE: check dev packages fails on dpkg-query error" {
   write_kcov_go_script '__check_kcov_dev_packages_installed'
-  echo 'exit 1' >>"$FAKE_BIN_DIR/dpkg-query"
+  echo 'exit 1' >>"$BATS_TEST_BINDIR/dpkg-query"
   run "$TEST_GO_SCRIPT"
   assert_failure ''
 }
 
 @test "$SUITE: check dev packages fails if a package deinstalled" {
   write_kcov_go_script '__check_kcov_dev_packages_installed'
-  echo 'echo deinstall' >>"$FAKE_BIN_DIR/dpkg-query"
+  echo 'echo deinstall' >>"$BATS_TEST_BINDIR/dpkg-query"
   run "$TEST_GO_SCRIPT"
   assert_failure ''
 }
@@ -87,7 +82,7 @@ write_kcov_dummy() {
 @test "$SUITE: clone and build" {
   write_kcov_go_script '__check_kcov_dev_packages_installed() { return 1; }' \
     '__clone_and_build_kcov tests/kcov'
-  echo 'mkdir -p "$3"' >> "$FAKE_BIN_DIR/git"
+  echo 'mkdir -p "$3"' >> "$BATS_TEST_BINDIR/git"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'
@@ -98,23 +93,19 @@ write_kcov_dummy() {
   local IFS=$'\n'
   assert_success "${expected_output[*]}"
 
-  run cat "$FAKE_BIN_DIR/git.out"
-  assert_success "clone $__KCOV_URL tests/kcov"
+  assert_equal "clone $__KCOV_URL tests/kcov" "$(<"$BATS_TEST_BINDIR/git.out")"
 
-  run cat "$FAKE_BIN_DIR/sudo.out"
   IFS=' '
-  assert_success "apt-get install -y ${__KCOV_DEV_PACKAGES[*]}"
+  assert_equal "apt-get install -y ${__KCOV_DEV_PACKAGES[*]}" \
+    "$(<"$BATS_TEST_BINDIR/sudo.out")"
 
-  run cat "$FAKE_BIN_DIR/cmake.out"
-  assert_success '.'
-
-  run cat "$FAKE_BIN_DIR/make.out"
-  assert_success ''
+  assert_equal '.' "$(<"$BATS_TEST_BINDIR/cmake.out")"
+  assert_equal '' "$(<"$BATS_TEST_BINDIR/make.out")"
 }
 
 @test "$SUITE: clone and build fails if clone fails" {
   write_kcov_go_script '__clone_and_build_kcov tests/kcov'
-  echo 'exit 1' >> "$FAKE_BIN_DIR/git"
+  echo 'exit 1' >> "$BATS_TEST_BINDIR/git"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'
@@ -127,8 +118,8 @@ write_kcov_dummy() {
 
 @test "$SUITE: clone and build fails if install fails" {
   write_kcov_go_script '__clone_and_build_kcov tests/kcov'
-  echo 'exit 1' >>"$FAKE_BIN_DIR/dpkg-query"
-  echo 'exit 1' >> "$FAKE_BIN_DIR/sudo"
+  echo 'exit 1' >>"$BATS_TEST_BINDIR/dpkg-query"
+  echo 'exit 1' >> "$BATS_TEST_BINDIR/sudo"
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
@@ -143,7 +134,7 @@ write_kcov_dummy() {
 @test "$SUITE: clone and build fails if cmake fails" {
   write_kcov_go_script '__clone_and_build_kcov tests/kcov'
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
-  echo 'exit 1' >> "$FAKE_BIN_DIR/cmake"
+  echo 'exit 1' >> "$BATS_TEST_BINDIR/cmake"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'
@@ -157,7 +148,7 @@ write_kcov_dummy() {
 @test "$SUITE: clone and build fails if make fails" {
   write_kcov_go_script '__clone_and_build_kcov tests/kcov'
   mkdir -p "$TEST_GO_ROOTDIR/tests/kcov"
-  echo 'exit 1' >> "$FAKE_BIN_DIR/make"
+  echo 'exit 1' >> "$BATS_TEST_BINDIR/make"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'

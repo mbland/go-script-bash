@@ -83,14 +83,9 @@ _trim_expected() {
 }
 
 @test "$SUITE: update bats submodule if not present" {
-  mkdir -p "$TEST_GO_SCRIPTS_DIR/bin"
-
-  local git_dummy="$TEST_GO_SCRIPTS_DIR/bin/git"
-  printf '#! /usr/bin/env bash\necho "GIT ARGV: $*"\n' >"$git_dummy"
-  chmod 700 "$git_dummy"
-
+  create_test_go_script '@go "$@"'
   cp "$_GO_ROOTDIR/scripts/test" "$TEST_GO_SCRIPTS_DIR"
-  create_test_go_script "PATH=\"$TEST_GO_SCRIPTS_DIR/bin:\$PATH\"; @go \"\$@\""
+  stub_program_in_path 'git' 'echo "GIT ARGV: $*"'
 
   # This will fail because we didn't create the tests/ directory, but git should
   # have been called correctly.

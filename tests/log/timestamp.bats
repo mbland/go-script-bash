@@ -5,7 +5,6 @@ load ../environment
 HAS_TIMESTAMP_BUILTIN=
 DATE_CMD=
 DATE_CMD_FILE=
-TEST_PATH=
 
 setup() {
   if printf '%(%Y)T' &>/dev/null; then
@@ -14,9 +13,8 @@ setup() {
 
   DATE_CMD="$(command -v date)"
   DATE_CMD_FILE="$TEST_GO_ROOTDIR/date-cmd-called"
-  TEST_PATH="$TEST_GO_ROOTDIR/bin:$PATH"
 
-  create_bats_test_script "${TEST_GO_ROOTDIR#$BATS_TEST_ROOTDIR}/bin/date" \
+  stub_program_in_path date \
     "declare -r DATE_CMD='$DATE_CMD'" \
     "touch '$DATE_CMD_FILE'" \
     "if [[ -n '$DATE_CMD' ]]; then" \
@@ -39,7 +37,7 @@ teardown() {
 }
 
 @test "$SUITE: return error if _GO_LOG_TIMESTAMP_FORMAT not set" {
-  _GO_LOG_TIMESTAMP_FORMAT= PATH="$TEST_PATH" run "$BASH" "$TEST_GO_SCRIPT"
+  _GO_LOG_TIMESTAMP_FORMAT= run "$BASH" "$TEST_GO_SCRIPT"
   assert_failure
 
   if [[ -f "$DATE_CMD_FILE" ]]; then
@@ -52,8 +50,7 @@ teardown() {
     skip "Builtin format not available in bash version $BASH_VERSION"
   fi
 
-  _GO_LOG_TIMESTAMP_FORMAT='%M:%S' PATH="$TEST_PATH" \
-    run "$BASH" "$TEST_GO_SCRIPT"
+  _GO_LOG_TIMESTAMP_FORMAT='%M:%S' run "$BASH" "$TEST_GO_SCRIPT"
   assert_success
   assert_output_matches '^[0-5][0-9]:[0-5][0-9]$'
 
@@ -69,8 +66,7 @@ teardown() {
     skip "`date` command not found in \$PATH: $PATH"
   fi
 
-  _GO_LOG_TIMESTAMP_FORMAT='%M:%S' PATH="$TEST_PATH" \
-    run "$BASH" "$TEST_GO_SCRIPT"
+  _GO_LOG_TIMESTAMP_FORMAT='%M:%S' run "$BASH" "$TEST_GO_SCRIPT"
   assert_success
   assert_output_matches '^[0-5][0-9]:[0-5][0-9]$'
 
