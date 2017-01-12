@@ -9,6 +9,10 @@ setup() {
   test_filter
   EXPECTED_TEST_GO_SCRIPT=('#! /usr/bin/env bash'
     ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'"
+    '# Comment'
+    ''
+    '# Moar comment'
+    ''
     'foo()   {'
     '  baz'
     '}'
@@ -19,6 +23,7 @@ setup() {
     'function baz  {'
     ' :'
     '}'
+    ''
     '@go "$@"')
 }
 
@@ -108,13 +113,13 @@ create_stack_trace_test_script() {
 @test "$SUITE: stack_trace_item finds line in 'main'" {
   create_stack_trace_test_script
   run stack_trace_item "$TEST_GO_SCRIPT" 'main' 'baz'
-  assert_success "  $TEST_GO_SCRIPT:6 main"
+  assert_success "  $TEST_GO_SCRIPT:10 main"
 }
 
 @test "$SUITE: stack_trace_item finds line in 'source'" {
   create_stack_trace_test_script
   run stack_trace_item "$TEST_GO_SCRIPT" 'source' 'baz'
-  assert_success "  $TEST_GO_SCRIPT:6 source"
+  assert_success "  $TEST_GO_SCRIPT:10 source"
 }
 
 @test "$SUITE: stack_trace_item finds function definition opening" {
@@ -123,13 +128,13 @@ create_stack_trace_test_script() {
   # substitution, such as `@go.log_command`.
   create_stack_trace_test_script
   run stack_trace_item "$TEST_GO_SCRIPT" 'baz'
-  assert_success "  $TEST_GO_SCRIPT:10 baz"
+  assert_success "  $TEST_GO_SCRIPT:14 baz"
 }
 
 @test "$SUITE: stack_trace_item finds line inside specified function" {
   create_stack_trace_test_script
   run stack_trace_item "$TEST_GO_SCRIPT" 'bar' '  baz'
-  assert_success "  $TEST_GO_SCRIPT:8 bar"
+  assert_success "  $TEST_GO_SCRIPT:12 bar"
 }
 
 @test "$SUITE: stack_trace_item fails to find a match in a function" {

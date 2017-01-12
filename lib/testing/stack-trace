@@ -102,7 +102,8 @@ stack_trace_item_from_offset() {
 count_lines() {
   local filepath="$1"
   local result_name="$2"
-  local file_contents=()
+  local line
+  local i='0'
 
   __check_file_path_specified_and_present "$filepath"
   if [[ -z "$result_name" ]]; then
@@ -110,9 +111,10 @@ count_lines() {
     exit 1
   fi
 
-  local IFS=$'\n'
-  file_contents=($(< "$filepath"))
-  printf -v "$result_name" '%d' "${#file_contents[@]}"
+  while read line; do
+    ((++i))
+  done < "$filepath"
+  printf -v "$result_name" '%d' "$i"
 }
 
 # --------------------------------
