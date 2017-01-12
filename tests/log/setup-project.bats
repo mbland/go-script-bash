@@ -14,7 +14,7 @@ teardown() {
   local setup_script="$TEST_GO_SCRIPTS_DIR/setup"
   assert_log_equals START "Project setup in $TEST_GO_ROOTDIR" \
     FATAL "Create $setup_script before invoking @go.setup_project." \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: fail if the 'setup' script isn't executable" {
@@ -29,7 +29,7 @@ teardown() {
   assert_failure
   assert_log_equals START "Project setup in $TEST_GO_ROOTDIR" \
     FATAL "$TEST_GO_SCRIPTS_DIR/setup is not executable." \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: setup project successfully using ./go script directly" {
@@ -73,7 +73,7 @@ teardown() {
     RUN    "${TEST_GO_SCRIPTS_RELATIVE_DIR}/setup foo bar baz" \
     ERROR  'foo bar baz (exit status 127)' \
     FATAL  'Project setup failed (exit status 127)' \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: Bash setup script exits directly due to @go.log FATAL" {
@@ -97,5 +97,5 @@ teardown() {
     "  $TEST_GO_SCRIPTS_DIR/setup:2 source" \
     "$run_command_script_stack_trace_item" \
     "$setup_project_stack_trace_item" \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }

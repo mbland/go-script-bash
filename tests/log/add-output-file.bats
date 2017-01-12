@@ -25,7 +25,7 @@ run_log_script_and_assert_status_and_output() {
       WARN  'watch out'
       ERROR 'uh-oh'
       FATAL 'oh noes!'
-      "$(test_script_stack_trace_item)")
+      "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")")
 
     assert_log_equals "${expected[@]}"
     return_from_bats_assertion "$?"
@@ -46,7 +46,7 @@ run_log_script_and_assert_status_and_output() {
     FATAL "Can't add new output file $log_file; logging already initialized" \
     "$(stack_trace_item "$_GO_CORE_DIR/lib/log" '@go.log_add_output_file' \
       "    @go.log FATAL \"Can't add new output file \$output_file;\" \\")" \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: add an output file for all log levels" {
@@ -99,8 +99,8 @@ run_log_script_and_assert_status_and_output() {
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
   assert_matches '^FATAL +oh noes!$' "${error_log[1]}" 'FATAL log message'
-  assert_equal "$(test_script_stack_trace_item)" "${error_log[2]}" \
-    'FATAL stack trace'
+  assert_equal "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")" \
+    "${error_log[2]}" 'FATAL stack trace'
 }
 
 @test "$SUITE: add output files for a mix of levels" {
@@ -128,6 +128,6 @@ run_log_script_and_assert_status_and_output() {
   assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
   assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
   assert_matches '^FATAL +oh noes!$' "${error_log[1]}" 'FATAL log message'
-  assert_equal "$(test_script_stack_trace_item)" "${error_log[2]}" \
-    'FATAL stack trace'
+  assert_equal "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")" \
+    "${error_log[2]}" 'FATAL stack trace'
 }

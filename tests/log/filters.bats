@@ -62,7 +62,7 @@ run_log_script_and_assert_success() {
   assert_failure
   assert_log_equals \
     FATAL 'Invalid _GO_LOG_LEVEL_FILTER: FOOBAR' \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: error if _GO_LOG_CONSOLE_FILTER doesn't match a valid level" {
@@ -70,7 +70,7 @@ run_log_script_and_assert_success() {
   assert_failure
   assert_log_equals \
     FATAL 'Invalid _GO_LOG_CONSOLE_FILTER: FOOBAR' \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: _GO_LOG_CONSOLE_FILTER lower priority override" {
