@@ -54,7 +54,7 @@ and it must call 'return_from_bats_assertion' directly from every return path.
 
 For details, see the comments for 'return_from_bats_assertion' from:
 
-  $_GO_CORE_DIR/lib/bats/assertions
+  ${BASH_SOURCE%/*}/assertions
 END_OF_FAILURE_MESSAGE
 
 # Validates that an assertion succeeds for the provided inputs
@@ -253,9 +253,17 @@ __run_command_and_assertion_in_subshell() {
   __assertion_output="${__assertion_output%$'\n'}"
 
   if [[ "$__assertion_output" =~ write\ error:\ Bad\ file\ descriptor$ ]]; then
-    printf "'%s' tried to write to a file descriptor other than 2" \
+    printf "'%s' tried to write to standard output instead of standard error" \
       "${assertion%% *}" >&2
     return 1
+  elif [[ -z "$__assertion_status" ]]; then
+    __assertion_output="${__assertion_output%exit:*}"
+
+    if [[ "${FUNCNAME[1]}" == 'expect_assertion_failure' ]]; then
+      printf '"%s" output does not end with a newline character:\n%s\n' \
+        "${assertion%% *}" "${__assertion_output%exit:*}" >&2
+      return 1
+    fi
   fi
 }
 

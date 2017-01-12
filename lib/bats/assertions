@@ -106,6 +106,9 @@ fi
 # Will print an optional failure reason, the Bats 'run' command exit status, and
 # the output from the 'run' command, all to standard error.
 #
+# Globals:
+#   bats_fail_no_output:  If nonempty, will not print `status` and `output`
+#
 # Arguments:
 #   $1:  (optional) Reason to include in the failure output
 fail() {
@@ -115,7 +118,7 @@ fail() {
   if [[ -n "$reason" ]]; then
     printf '%b\n' "$reason" >&2
   fi
-  if [[ -z "$__bats_fail_suppress_output" ]]; then
+  if [[ -z "$bats_fail_no_output" ]]; then
     printf 'STATUS: %d\nOUTPUT:\n%b\n' "$status" "$output" >&2
   fi
   return_from_bats_assertion '1'
@@ -146,7 +149,7 @@ fail_if() {
   local constraints=()
   local constraint
   local i
-  local __bats_fail_suppress_output='true'
+  local bats_fail_no_output='true'
 
   if [[ "$assertion" =~ _match ]]; then
     operation='match'
@@ -154,7 +157,7 @@ fail_if() {
 
   case "$assertion" in
   assert_equal|assert_matches)
-    label="$3"
+    label="${3:-value}"
     constraints=("$1")
     value="$2"
     ;;
@@ -170,12 +173,12 @@ fail_if() {
     value="${lines[$1]}"
     ;;
   assert_lines_*)
-    __bats_fail_suppress_output=
+    bats_fail_no_output=
     label="lines"
     constraints=("${@}")
     ;;
   assert_file_*)
-    __bats_fail_suppress_output=
+    bats_fail_no_output=
     label="'$1'"
     constraints=("${@:2}")
     ;;
@@ -207,14 +210,14 @@ fail_if() {
 # Compares two values for equality
 #
 # Arguments:
-#   $1: The expected value
-#   $2: The actual value to evaluate
-#   $3: A label explaining the value being evaluated
+#   expected:  The expected value
+#   actual:    The actual value to evaluate
+#   label:     (Optional) A label explaining the value being evaluated
 assert_equal() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local expected="$1"
   local actual="$2"
-  local label="$3"
+  local label="${3:-Actual value}"
 
   if [[ "$expected" != "$actual" ]]; then
     printf '%s not equal to expected value:\n  %s\n  %s\n' \
@@ -228,14 +231,14 @@ assert_equal() {
 # Validates whether a value matches a regular expression
 #
 # Arguments:
-#   $1: The regular expression to match against the value
-#   $2: The value to match
-#   $3: A label explaining the value being matched
+#   pattern:  The regular expression to match against the value
+#   value:    The value to match
+#   label:    (Optional) A label explaining the value being matched
 assert_matches() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local pattern="$1"
   local value="$2"
-  local label="$3"
+  local label="${3:-Value}"
 
   if [[ ! "$value" =~ $pattern ]]; then
     printf '%s does not match expected pattern:\n  %s\n  %s\n' \
@@ -481,10 +484,10 @@ set_bats_output_and_lines_from_file() {
   local file_path="$1"
 
   if [[ ! -f "$file_path" ]]; then
-    printf "'%s' doesn't exist or isn't a regular file." "$file_path" >&2
+    printf "'%s' doesn't exist or isn't a regular file.\n" "$file_path" >&2
     return_from_bats_assertion 1
   elif [[ ! -r "$file_path" ]]; then
-    printf "You don't have permission to access '%s'." "$file_path" >&2
+    printf "You don't have permission to access '%s'.\n" "$file_path" >&2
     return_from_bats_assertion 1
   else
     lines=()
@@ -592,7 +595,9 @@ __assert_file() {
   shift 2
   local constraints=("$@")
 
-  set_bats_output_and_lines_from_file "$file_path"
+  if ! set_bats_output_and_lines_from_file "$file_path"; then
+    return '1'
+  fi
 
   if [[ "$assertion" == 'assert_matches' ]]; then
     if [[ "$#" -ne '1' ]]; then

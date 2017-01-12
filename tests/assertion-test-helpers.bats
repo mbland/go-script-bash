@@ -122,12 +122,16 @@ check_failure_output() {
 @test "$SUITE: expected success, but failed and wrote to fd other than 2 " {
   ASSERTION_STATUS='127' ASSERTION_FD='1' run_assertion_test 'success'
   [ "$status" -eq '1' ]
-  check_failure_output \
-    "# 'test_assertion' tried to write to a file descriptor other than 2"
+
+  local expected_output="# 'test_assertion' tried to write to standard output "
+  expected_output+='instead of standard error'
+  check_failure_output "$expected_output"
 }
 
 @test "$SUITE: successful assertion should not produce output" {
-  ASSERTION_FORCE_OUTPUT='true' run_assertion_test 'success'
+  # Make sure a missing newline doesn't throw off the expected (empty) output.
+  ASSERTION_FORCE_OUTPUT='true' ASSERTION_WITHHOLD_NEWLINE='true' \
+    run_assertion_test 'success'
   [ "$status" -eq '1' ]
   check_failure_output '# Actual output differs from expected output:' \
     '# --------' \
@@ -213,8 +217,19 @@ check_failure_output() {
 @test "$SUITE: failing assertion output must go to standard error" {
   ASSERTION_STATUS='1' ASSERTION_FD=1 run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
+
+  local expected_output="# 'test_assertion' tried to write to standard output "
+  expected_output+='instead of standard error'
+  check_failure_output "$expected_output"
+}
+
+@test "$SUITE: failing assertion doesn't end output with newline" {
+  ASSERTION_STATUS='1' ASSERTION_WITHHOLD_NEWLINE='true' \
+    run_assertion_test 'failure' 'foo bar baz'
+  [ "$status" -eq '1' ]
   check_failure_output \
-    "# 'test_assertion' tried to write to a file descriptor other than 2"
+    '# "test_assertion" output does not end with a newline character:' \
+    '# foo bar baz'
 }
 
 @test "$SUITE: expected_failure, but assertion succeeds" {
@@ -244,8 +259,8 @@ check_failure_output() {
     '# ACTUAL:' \
     '# 1..1' \
     "# not ok 1 $BATS_TEST_DESCRIPTION" \
-    "# # (from function \`__test_assertion_impl' in file $impl_file, line 17," \
-    "# #  from function \`test_assertion' in file $impl_file, line 27," \
+    "# # (from function \`__test_assertion_impl' in file $impl_file, line 21," \
+    "# #  from function \`test_assertion' in file $impl_file, line 31," \
     "# #  in test file $test_script, line 5)" \
     "# #   \`test_assertion \"\$output\"' failed" \
     '# # foo bar baz' \

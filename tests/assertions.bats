@@ -39,6 +39,12 @@ teardown() {
     'Goodbye, world!'
 }
 
+@test "$SUITE: fail doesn't print status, output when bats_fail_no_output set" {
+  bats_fail_no_output='true' expect_assertion_failure "echo 'Goodbye, world!'" \
+    'fail "You say \"Goodbye,\" while I say \"Hello...\""' \
+    'You say "Goodbye," while I say "Hello..."'
+}
+
 @test "$SUITE: assert_equal success" {
   expect_assertion_success "echo 'Hello, world!'" \
     'assert_equal "Hello, world!" "$output" "echo result"'
@@ -52,6 +58,14 @@ teardown() {
     "  actual:   'Hello, world!'"
 }
 
+@test "$SUITE: assert_equal failure default label" {
+  expect_assertion_failure "echo 'Hello, world!'" \
+    'assert_equal "Goodbye, world!" "$output"' \
+    'Actual value not equal to expected value:' \
+    "  expected: 'Goodbye, world!'" \
+    "  actual:   'Hello, world!'"
+}
+
 @test "$SUITE: assert_matches success" {
   expect_assertion_success "echo 'Hello, world!'" \
     'assert_matches "o, w" "$output" "echo result"'
@@ -61,6 +75,14 @@ teardown() {
   expect_assertion_failure "echo 'Hello, world!'" \
     'assert_matches "e, w" "$output" "echo result"' \
     'echo result does not match expected pattern:' \
+    "  pattern: 'e, w'" \
+    "  value:   'Hello, world!'"
+}
+
+@test "$SUITE: assert_matches failure default label" {
+  expect_assertion_failure "echo 'Hello, world!'" \
+    'assert_matches "e, w" "$output"' \
+    'Value does not match expected pattern:' \
     "  pattern: 'e, w'" \
     "  value:   'Hello, world!'"
 }
@@ -407,6 +429,14 @@ teardown() {
     ''
 }
 
+@test "$SUITE: assert_file_equals fails fast when file is nonexistent" {
+  # This reproduces a bug where __assert_file didn't exit when
+  # set_bats_output_and_lines_from_file failed.
+  expect_assertion_failure "echo Whoops, forgot to write to TEST_OUTPUT_FILE!" \
+    "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''" \
+    "'$TEST_OUTPUT_FILE' doesn't exist or isn't a regular file."
+}
+
 @test "$SUITE: assert_file_matches" {
   expect_assertion_success \
     "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
@@ -471,6 +501,13 @@ teardown() {
     "  'Hello, world!'"
 }
 
+@test "$SUITE: fail_if fails when assert_equal succeeds with default label" {
+  expect_assertion_failure "echo 'Hello, world!'" \
+    'fail_if equal "Hello, world!" "$output"' \
+    'Expected value not to equal:' \
+    "  'Hello, world!'"
+}
+
 @test "$SUITE: fail_if succeeds when assert_matches fails" {
   expect_assertion_success "echo 'Hello, world!'" \
     'fail_if matches "Goodbye" "$output" "echo result"'
@@ -480,6 +517,15 @@ teardown() {
   expect_assertion_failure "echo 'Hello, world!'" \
     'fail_if matches "Hello" "$output" "echo result"' \
     'Expected echo result not to match:' \
+    "  'Hello'" \
+    'Value:' \
+    "  'Hello, world!'"
+}
+
+@test "$SUITE: fail_if fails when assert_matches succeeds with default label" {
+  expect_assertion_failure "echo 'Hello, world!'" \
+    'fail_if matches "Hello" "$output"' \
+    'Expected value not to match:' \
     "  'Hello'" \
     'Value:' \
     "  'Hello, world!'"
