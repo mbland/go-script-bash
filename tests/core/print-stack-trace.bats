@@ -1,6 +1,7 @@
 #! /usr/bin/env bats
 
 load ../environment
+load "$_GO_CORE_DIR/lib/testing/stack-trace"
 
 teardown() {
   remove_test_go_rootdir
