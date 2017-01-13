@@ -33,6 +33,36 @@ run_log_script() {
   run "$TEST_GO_SCRIPT"
 }
 
+# Format a `log` module log level label
+#
+# Note that this must be called before any other log assertion, because it needs
+# to set _GO_LOG_FORMATTING before importing the `log` module.
+#
+# Arguments:
+#   label:  Log level label to format
+format_log_label() {
+  local label="$1"
+
+  if [[ -n "$__GO_LOG_INIT" ]]; then
+    local err_format=("\`%s\` must be called before any other function"
+      "or assertion that calls \`. \"\$_GO_USE_MODULES\" 'log'\`"
+      'because it needs to set `_GO_LOG_FORMATTING`.')
+    printf "${err_format[*]}" "$FUNCNAME" >&2
+    exit 1
+  fi
+
+  _GO_LOG_FORMATTING='true'
+  . "$_GO_USE_MODULES" 'log'
+  _@go.log_init
+
+  local __go_log_level_index=0
+  if ! _@go.log_level_index "$label"; then
+    printf 'Unknown log level label: %s\n' "$label" >&2
+    exit 1
+  fi
+  printf '%s' "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
+}
+
 assert_log_equals() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local level
@@ -82,30 +112,6 @@ assert_log_file_equals() {
     assert_log_equals "$@"
     return_from_bats_assertion "$?"
   fi
-}
-
-# Note that this must be called before any other log assertion, because it needs
-# to set _GO_LOG_FORMATTING before importing the `log` module.
-format_label() {
-  local label="$1"
-
-  if [[ -n "$__GO_LOG_INIT" ]]; then
-    echo "$FUNCNAME must be called before any other function or assertion" \
-      "that calls \`. \$_GO_USE_MODULES 'log'\` because it needs to set" \
-      "\`_GO_LOG_FORMATTING\`." >&2
-      return 1
-  fi
-
-  _GO_LOG_FORMATTING='true'
-  . "$_GO_USE_MODULES" 'log'
-  _@go.log_init
-
-  local __go_log_level_index=0
-  if ! _@go.log_level_index "$label"; then
-    echo "Unknown log level label: $label" >&2
-    return 1
-  fi
-  echo "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
 }
 
 # Creates `LOG_COMMAND_STACK_TRACE_ITEMS` to help validate stack trace output.
@@ -170,5 +176,3 @@ __expected_log_line() {
     printf '%b\n' "$level $message"
   fi
 }
-
-

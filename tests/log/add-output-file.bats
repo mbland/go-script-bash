@@ -66,7 +66,7 @@ run_log_script_and_assert_status_and_output() {
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/info.log' 'INFO'" \
     "@go.log INFO Hello, World!"
   assert_success
-  assert_log_equals "$(format_label INFO)" 'Hello, World!'
+  assert_log_equals "$(format_log_label INFO)" 'Hello, World!'
   assert_file_equals "$TEST_GO_ROOTDIR/info.log" "${lines[@]}"
 }
 

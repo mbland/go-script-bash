@@ -36,3 +36,25 @@ teardown() {
     "^  $_GO_CORE_DIR/lib/log:[0-9]+ _@go.log_command_invoke$" \
     "^  $_GO_CORE_DIR/lib/log:[0-9]+ @go.log_command$"
 }
+
+@test "$SUITE: format_log_label" {
+  run format_log_label INFO
+  assert_success
+
+  local expected_message
+  printf -v expected_message '%b' "$output Hello, World!\e[0m"
+
+  _GO_LOG_FORMATTING='true' run_log_script '@go.log INFO Hello, World!'
+  assert_success "$expected_message"
+}
+
+@test "$SUITE: format_log_label exits if log module already initialized" {
+  __GO_LOG_INIT='true' run format_log_label INFO
+  assert_failure
+  assert_output_matches '^`format_log_label` must be called before any other '
+}
+
+@test "$SUITE: format_log_label exits if log level label invalid" {
+  run format_log_label FOOBAR
+  assert_failure 'Unknown log level label: FOOBAR'
+}

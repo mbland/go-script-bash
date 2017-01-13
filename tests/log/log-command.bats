@@ -115,8 +115,8 @@ teardown() {
 }
 
 @test "$SUITE: log failing command to standard error with formatting" {
-  local formatted_run_level_label="$(format_label RUN)"
-  local formatted_error_level_label="$(format_label ERROR)"
+  local formatted_run_level_label="$(format_log_label RUN)"
+  local formatted_error_level_label="$(format_log_label ERROR)"
 
   _GO_LOG_FORMATTING='true' run_log_script \
       'function failing_function() {' \
