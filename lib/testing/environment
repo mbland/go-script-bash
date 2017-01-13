@@ -62,6 +62,19 @@ create_test_go_script() {
   fi
 }
 
+# Sets `_GO_CMD` to make for neater test output when running `TEST_GO_SCRIPT`
+#
+# Use `run test-go` instead of `run "$TEST_GO_SCRIPT"` to achieve the effect.
+#
+# Useful for tests that contain `_GO_CMD` in the output, to avoid clouding the
+# output with the full `TEST_GO_SCRIPT` path.
+#
+# Arguments:
+#    ...:  Command line arguments for `TEST_GO_SCRIPT`
+test-go() {
+  _GO_CMD="$FUNCNAME" "$TEST_GO_SCRIPT" "$@"
+}
+
 # Creates an executable `./go` command script in `TEST_GO_SCRIPTS_DIR`
 #
 # The script will be created as `$TEST_GO_SCRIPTS_DIR/$script_name`.

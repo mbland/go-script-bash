@@ -6,6 +6,16 @@
 
 . "${BASH_SOURCE[0]%/*}/stack-trace"
 
+# Creates a `./go` script that imports the `log` module
+#
+# If `TEST_LOG_FILE` is defined, it will add that file for logging output as
+# well.
+#
+# Globals:
+#   TEST_LOG_FILE:  (Optional) Path to the log file to add for all log levels
+#
+# Arguments:
+#   ...:  Lines comprising the `./go` script
 create_log_script(){
   create_test_go_script \
     ". \"\$_GO_USE_MODULES\" 'log'" \
@@ -15,15 +25,12 @@ create_log_script(){
     "$@"
 }
 
+# Creates and executes a `./go` script that imports the `log` module
+#
+# Globals and arguments are identical to `create_log_script`.
 run_log_script() {
   create_log_script "$@"
   run "$TEST_GO_SCRIPT"
-}
-
-# For tests that run command scripts via @go, set _GO_CMD to make sure that's
-# the variable included in the log.
-test-go() {
-  env _GO_CMD="$FUNCNAME" "$TEST_GO_SCRIPT" "$@"
 }
 
 assert_log_equals() {
