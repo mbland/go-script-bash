@@ -35,6 +35,13 @@ teardown() {
   assert_failure "$expected"
 }
 
+@test "$SUITE: produce an error if the script dir isn't a directory" {
+  rm -rf "$TEST_GO_SCRIPTS_DIR"
+  printf '' >"$TEST_GO_SCRIPTS_DIR"
+  run "$TEST_GO_SCRIPT"
+  assert_failure "ERROR: $TEST_GO_SCRIPTS_DIR is not a directory"
+}
+
 @test "$SUITE: produce an error if the script dir can't be read or accessed" {
   skip_if_cannot_trigger_file_permission_failure
 
