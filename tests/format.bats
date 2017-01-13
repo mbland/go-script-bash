@@ -67,3 +67,12 @@ setup() {
   @go.strip_formatting_codes '\e[1mf\e[30;47mo\e[0;111mo\e[32mbar\e[0m'
   assert_equal 'foobar' "$__go_stripped_value"
 }
+
+@test "$SUITE: strip formatting codes from string with expanded codes" {
+  local __go_stripped_value
+  local orig_value
+
+  printf -v orig_value '%b' '\e[1mf\e[30;47mo\e[0;111mo\e[32mbar\e[0m'
+  @go.strip_formatting_codes "$orig_value"
+  assert_equal 'foobar' "$__go_stripped_value"
+}
