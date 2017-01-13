@@ -1,7 +1,7 @@
 #! /usr/bin/env bats
 
 load ../environment
-load helpers
+load "$_GO_CORE_DIR/lib/testing/log"
 
 INFO_FORMAT='\e[1m\e[36m'
 START_FORMAT='\e[1m\e[32m'
