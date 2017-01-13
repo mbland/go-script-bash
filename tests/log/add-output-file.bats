@@ -52,13 +52,13 @@ run_log_script_and_assert_status_and_output() {
 @test "$SUITE: add an output file for all log levels" {
   run_log_script_and_assert_status_and_output \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/all.log'"
-  assert_equal "$output" "$(< "$TEST_GO_ROOTDIR/all.log")" 'all.log'
+  assert_file_equals "$TEST_GO_ROOTDIR/all.log" "${lines[@]}"
 }
 
 @test "$SUITE: add an output file for an existing log level" {
   run_log_script_and_assert_status_and_output \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/info.log' 'INFO'"
-  assert_matches "^INFO +FYI$" "$(< "$TEST_GO_ROOTDIR/info.log")" 'info.log'
+  assert_file_matches "$TEST_GO_ROOTDIR/info.log" "^INFO +FYI$"
 }
 
 @test "$SUITE: force formatted output in log file" {
@@ -67,7 +67,7 @@ run_log_script_and_assert_status_and_output() {
     "@go.log INFO Hello, World!"
   assert_success
   assert_log_equals "$(format_label INFO)" 'Hello, World!'
-  assert_equal "$output" "$(< "$TEST_GO_ROOTDIR/info.log")" 'info.log'
+  assert_file_equals "$TEST_GO_ROOTDIR/info.log" "${lines[@]}"
 }
 
 @test "$SUITE: add an output file for a new log level" {
@@ -82,25 +82,17 @@ run_log_script_and_assert_status_and_output() {
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/foobar.log' 'FOOBAR'" \
     "@go.log FOOBAR \"$msg\""
 
-  assert_matches "^FOOBAR +$msg$" \
-    "$(< "$TEST_GO_ROOTDIR/foobar.log")" 'foobar.log'
+  assert_file_matches "$TEST_GO_ROOTDIR/foobar.log" "^FOOBAR +$msg$"
 }
 
 @test "$SUITE: add output files for multiple log levels" {
   run_log_script_and_assert_status_and_output \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/error.log' 'ERROR,FATAL'"
 
-  local error_log=()
-  local item
-  while IFS= read -r item; do
-    error_log+=("$item")
-  done <<<"$(< "$TEST_GO_ROOTDIR/error.log")"
-
-  assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
-  assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
-  assert_matches '^FATAL +oh noes!$' "${error_log[1]}" 'FATAL log message'
-  assert_equal "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")" \
-    "${error_log[2]}" 'FATAL stack trace'
+  assert_file_lines_match "$TEST_GO_ROOTDIR/error.log" \
+    '^ERROR +uh-oh$' \
+    '^FATAL +oh noes!$' \
+    "^$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")\$"
 }
 
 @test "$SUITE: add output files for a mix of levels" {
@@ -114,20 +106,12 @@ run_log_script_and_assert_status_and_output() {
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/foobar.log' 'FOOBAR'" \
     "@go.log FOOBAR \"$msg\""
 
-  assert_equal "$output" "$(< "$TEST_GO_ROOTDIR/all.log")" 'all.log'
-  assert_matches "^INFO +FYI$" "$(< "$TEST_GO_ROOTDIR/info.log")" 'info.log'
-  assert_matches "^FOOBAR +$msg$" \
-    "$(< "$TEST_GO_ROOTDIR/foobar.log")" 'foobar.log'
+  assert_file_equals "$TEST_GO_ROOTDIR/all.log" "${lines[@]}"
+  assert_file_matches "$TEST_GO_ROOTDIR/info.log" "^INFO +FYI$"
+  assert_file_matches "$TEST_GO_ROOTDIR/foobar.log" "^FOOBAR +$msg$"
 
-  local error_log=()
-  local item
-  while IFS= read -r item; do
-    error_log+=("$item")
-  done <<<"$(< "$TEST_GO_ROOTDIR/error.log")"
-
-  assert_equal '3' "${#error_log[@]}" 'Number of error log lines'
-  assert_matches '^ERROR +uh-oh$' "${error_log[0]}" 'ERROR log message'
-  assert_matches '^FATAL +oh noes!$' "${error_log[1]}" 'FATAL log message'
-  assert_equal "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")" \
-    "${error_log[2]}" 'FATAL stack trace'
+  assert_file_lines_match "$TEST_GO_ROOTDIR/error.log" \
+    '^ERROR +uh-oh$' \
+    '^FATAL +oh noes!$' \
+    "^$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")\$"
 }

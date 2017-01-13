@@ -47,6 +47,9 @@
 # variables are quoted properly in most places.
 BATS_TEST_ROOTDIR="$BATS_TMPDIR/test rootdir"
 
+# Created by `stub_program_in_path` and exported to `PATH`
+BATS_TEST_BINDIR="$BATS_TEST_ROOTDIR/bin"
+
 # Sets the global SUITE variable based on the path of the test file.
 #
 # To make Bats output easier to follow, call this function from your shared
@@ -230,4 +233,21 @@ split_bats_output_into_lines() {
   while IFS= read -r line; do
     lines+=("${line%$'\r'}")
   done <<<"$output"
+}
+
+# Creates a stub program in PATH for testing purposes
+#
+# The script is written as `$BATS_TEST_BINDIR/$cmd_name`. `$BATS_TEST_BINDIR` is
+# added to `PATH` and exported if it isn't already present.
+#
+# Arguments:
+#   cmd_name:  Name of the command from PATH to stub
+#   ...:       Lines comprising the stub script
+stub_program_in_path() {
+  local bindir_pattern="^${BATS_TEST_BINDIR}:"
+
+  if [[ ! "$PATH" =~ $bindir_pattern ]]; then
+    export PATH="$BATS_TEST_BINDIR:$PATH"
+  fi
+  create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$1" "${@:2}"
 }

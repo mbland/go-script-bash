@@ -191,3 +191,14 @@ teardown() {
   split_bats_output_into_lines
   assert_lines_equal '' '' 'foo' '' 'bar' '' 'baz'
 }
+
+@test "$SUITE: stub_program_in_path" {
+  local bats_bindir_pattern="^${BATS_TEST_BINDIR}:"
+  fail_if matches "$bats_bindir_pattern" "$PATH"
+
+  stub_program_in_path 'git' 'echo "$@"'
+  assert_matches "$bats_bindir_pattern" "$PATH"
+
+  run git Hello, World!
+  assert_success 'Hello, World!'
+}

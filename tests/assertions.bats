@@ -267,6 +267,11 @@ teardown() {
     "assert_lines_equal 'foo' 'bar' 'baz'"
 }
 
+@test "$SUITE: assert_lines_equal zero lines" {
+  expect_assertion_success "printf ''" \
+    "assert_lines_equal"
+}
+
 @test "$SUITE: assert_lines_equal failure" {
   expect_assertion_failure "printf 'foo\nbar\nbaz\n'" \
     "assert_lines_equal 'foo' 'quux' 'baz'" \
@@ -387,6 +392,21 @@ teardown() {
   assert_lines_equal '' 'foo' '' 'bar' '' 'baz' ''
 }
 
+@test "$SUITE: set_bats_output_and_lines_from_file from empty file" {
+  printf_to_test_output_file '\n'
+  set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
+  assert_lines_equal ''
+}
+
+@test "$SUITE: set_bats_output_and_lines_from_file from completely empty file" {
+  printf_to_test_output_file ''
+  set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
+
+  # Note that because there wasn't even a newline, we don't even expect the
+  # empty string to be present in `lines`.
+  assert_lines_equal
+}
+
 @test "$SUITE: set_bats_output_and_lines_from_file fails if file is missing" {
   run set_bats_output_and_lines_from_file "$TEST_OUTPUT_FILE"
   assert_failure "'$TEST_OUTPUT_FILE' doesn't exist or isn't a regular file."
@@ -410,6 +430,20 @@ teardown() {
   expect_assertion_success \
     "printf_to_test_output_file '\nfoo\n\nbar\n\nbaz\n\n'" \
     "assert_file_equals '$TEST_OUTPUT_FILE' '' 'foo' '' 'bar' '' 'baz' ''"
+}
+
+@test "$SUITE: assert_file_equals expect file containing empty string only" {
+  expect_assertion_success \
+    "printf_to_test_output_file '\n'" \
+    "assert_file_equals '$TEST_OUTPUT_FILE' ''"
+}
+
+@test "$SUITE: assert_file_equals expect file completely empty file" {
+  # Note that because there wasn't even a newline, we don't even supply the
+  # empty string to `assert_file_equals`.
+  expect_assertion_success \
+    "printf_to_test_output_file ''" \
+    "assert_file_equals '$TEST_OUTPUT_FILE'"
 }
 
 @test "$SUITE: assert_file_equals failure" {
