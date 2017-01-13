@@ -26,3 +26,10 @@ teardown() {
   [ -e "$_GO_CORE_DIR/lib/log" ]
   assert_success 'Hello, World!'
 }
+
+
+@test "$SUITE: create_core_module_stub aborts if module unknown" {
+  [ ! -e "$_GO_CORE_DIR/lib/foobar" ]
+  run create_core_module_stub 'foobar' 'echo Hello, World!'
+  assert_failure "No such core module: $_GO_CORE_DIR/lib/foobar"
+}
