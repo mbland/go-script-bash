@@ -11,11 +11,14 @@ __stack_trace_item() {
   local filepath="$1"
   local function_name="$2"
   local target_line="$3"
-  local function_opening='^(function )? *([[:alnum:]_.@-]+) *(\(\))? *\{'
   local initial_state='FUNCTION'
   local state
   local lineno=0
   local line
+
+  # Granted, this will match an illegal line like 'foo {' that has neither
+  # 'function' nor '()', but it's probably not worth splitting hairs here.
+  local function_opening='^(function )? *([[:alnum:]_.@-]+) *(\(\))? *\{'
 
   if [[ "$function_name" == 'main' || "$function_name" == 'source' ]]; then
     initial_state='MAIN'
