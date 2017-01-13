@@ -11,7 +11,7 @@ __stack_trace_item() {
   local filepath="$1"
   local function_name="$2"
   local target_line="$3"
-  local function_opening="^(function )? *([[:alnum:]_.@-]+) *([(][)])? *{"
+  local function_opening='^(function )? *([[:alnum:]_.@-]+) *(\(\))? *\{'
   local initial_state='FUNCTION'
   local state
   local lineno=0
