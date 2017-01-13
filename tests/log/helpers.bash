@@ -2,6 +2,8 @@
 #
 # Helper functions for `lib/log` tests.
 
+load "$_GO_CORE_DIR/lib/testing/log"
+
 create_log_script(){
   create_test_go_script \
     ". \"\$_GO_USE_MODULES\" 'log'" \

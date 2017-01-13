@@ -1,0 +1,89 @@
+#! /usr/bin/env bash
+#
+# Implementation of `stack_trace_item` from `lib/testing/stack-trace`
+#
+# DO NOT USE THIS FILE DIRECTLY! Source `_GO_CORE_DIR/lib/testing/stack-trace`
+# and use the `stack_trace_item` function instead.
+
+. "$_GO_CORE_DIR/lib/bats/helpers"
+
+__stack_trace_item() {
+  local filepath="$1"
+  local function_name="$2"
+  local target_line="$3"
+  local initial_state='FUNCTION'
+  local state
+  local lineno=0
+  local line
+
+  # Granted, this will match an illegal line like 'foo {' that has neither
+  # 'function' nor '()', but it's probably not worth splitting hairs here.
+  local function_opening='^(function )? *([[:alnum:]_.@-]+) *(\(\))? *\{'
+
+  if [[ "$function_name" == 'main' || "$function_name" == 'source' ]]; then
+    initial_state='MAIN'
+  fi
+  state="$initial_state"
+
+  # We have to set `IFS=` to preserve leading spaces, and then for Windows
+  # compatibility, strip off the trailing carriage return (the newline is
+  # already chomped off).
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+    ((++lineno))
+
+    case "$state" in
+    MAIN)
+      if [[ "$line" == "$target_line" ]]; then
+        state='SUCCESS'
+        break
+      elif [[ "$line" =~ $function_opening ]]; then
+        state='SKIP_FUNCTION'
+      fi
+      ;;
+    FUNCTION)
+      if [[ "$line" =~ $function_opening ]]; then
+        if [[ "${BASH_REMATCH[2]}" != "$function_name" ]]; then
+          state='SKIP_FUNCTION'
+        elif [[ -z "$target_line" ]]; then
+          state='SUCCESS'
+          break
+        else
+          state='INSIDE_TARGET_FUNCTION'
+        fi
+      fi
+      ;;
+    INSIDE_TARGET_FUNCTION)
+      if [[ "$line" == "$target_line" ]]; then
+        state='SUCCESS'
+        break
+      elif [[ "$line" == '}' ]]; then
+        state='FOUND_FUNCTION'
+        break
+      fi
+      ;;
+    SKIP_FUNCTION)
+      if [[ "$line" == '}' ]]; then
+        state="$initial_state"
+      fi
+      ;;
+    esac
+  done <"$filepath"
+
+  case "$state" in
+  SUCCESS)
+    printf '  %s:%d %s\n' "$filepath" "$lineno" "$function_name"
+    return
+    ;;
+  MAIN|FOUND_FUNCTION)
+    printf 'Line not found in `%s` from "%s": "%s"\n' \
+      "$function_name" "$filepath" "$target_line" >&2
+    ;;
+  *)
+    printf 'Function `%s` not found in "%s".\n' "$function_name" "$filepath" >&2
+    ;;
+  esac
+  exit 1
+}
+
+__stack_trace_item "$@"

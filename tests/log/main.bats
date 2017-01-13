@@ -102,7 +102,7 @@ teardown() {
   assert_failure
   assert_status 1
   assert_log_equals FATAL 'Hello, World!' \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
 }
 
 @test "$SUITE: show status on FATAL if supplied" {
@@ -113,7 +113,7 @@ teardown() {
   assert_failure
   assert_status 127
   assert_log_equals FATAL 'Hello, World! (exit status 127)' \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
 }
 
 @test "$SUITE: exit with error if num format codes != num log levels" {

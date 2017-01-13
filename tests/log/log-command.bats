@@ -144,7 +144,7 @@ teardown() {
   assert_log_equals \
     RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "$(test_script_stack_trace_item 1)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 1)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -187,7 +187,7 @@ teardown() {
   assert_failure
   assert_log_equals \
     FATAL '@go.critical_section_begin accepts QUIT or FATAL, not ERROR' \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -209,7 +209,7 @@ teardown() {
     RUN   '@go.log ERROR 127 This triggers a fatal exit' \
     ERROR 'This triggers a fatal exit (exit status 127)' \
     FATAL '@go.log ERROR 127 This triggers a fatal exit (exit status 127)' \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -256,7 +256,7 @@ teardown() {
     FATAL 'foo bar baz (exit status 127)' \
     "  $TEST_GO_SCRIPT:8 failing_function" \
     "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
-    "$(test_script_stack_trace_item)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -307,7 +307,7 @@ teardown() {
     'Hello, World!' \
     RUN "failing_function foo bar baz" \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -424,7 +424,7 @@ teardown() {
     "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
     "  $TEST_GO_SCRIPT:10 critical_subsection" \
     "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -472,7 +472,7 @@ teardown() {
     'Hello, World!' \
     RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -497,7 +497,7 @@ teardown() {
     ERROR 'failing_function foo bar baz (exit status 127)' \
     RUN 'failing_function foo bar baz' \
     FATAL 'failing_function foo bar baz (exit status 127)' \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -539,7 +539,7 @@ teardown() {
     "  $TEST_GO_SCRIPTS_DIR/project-command-script:3 source" \
     "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
-    "$(test_script_stack_trace_item 2)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 2)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -566,7 +566,7 @@ teardown() {
     "  $TEST_GO_SCRIPTS_DIR/project-command-script:4 source" \
     "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
-    "$(test_script_stack_trace_item 1)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 1)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -601,7 +601,7 @@ teardown() {
   assert_log_equals \
     RUN ". $TEST_GO_SCRIPTS_RELATIVE_DIR/sourced-script" \
     FATAL ". $TEST_GO_SCRIPTS_RELATIVE_DIR/sourced-script (exit status 127)" \
-    "$(test_script_stack_trace_item 1)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 1)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -627,7 +627,7 @@ teardown() {
     RUN "test-go perl-command-script foo bar baz" \
     'foo bar baz' \
     FATAL "test-go perl-command-script foo bar baz (exit status 127)" \
-    "$(test_script_stack_trace_item 1)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 1)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 
@@ -678,9 +678,9 @@ teardown() {
     "  $TEST_GO_SCRIPTS_DIR/bash-command-script:3 source" \
     "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
     "${LOG_COMMAND_STACK_TRACE_ITEMS[@]}" \
-    "$(test_script_stack_trace_item 1)" \
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 1)" \
     FATAL 'test-go perl-command-script foo bar baz (exit status 127)' \
-    "$(test_script_stack_trace_item 1)"
+    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT" 1)"
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
 

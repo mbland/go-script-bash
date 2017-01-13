@@ -3,6 +3,7 @@
 # Tests for scripts/test.
 
 load environment
+load "$_GO_CORE_DIR/lib/testing/stubbing"
 
 teardown() {
   restore_stubbed_core_modules
