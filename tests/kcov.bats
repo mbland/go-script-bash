@@ -61,8 +61,8 @@ write_kcov_dummy() {
   assert_success ''
 
   . 'lib/kcov-ubuntu'
-  assert_equal "-W -f=\${Package} \${Status}\\n ${__KCOV_DEV_PACKAGES[*]}" \
-    "$(<"$BATS_TEST_BINDIR/dpkg-query.out")"
+  assert_file_equals "$BATS_TEST_BINDIR/dpkg-query.out" \
+    "-W -f=\${Package} \${Status}\\n ${__KCOV_DEV_PACKAGES[*]}"
 }
 
 @test "$SUITE: check dev packages fails on dpkg-query error" {
@@ -93,14 +93,13 @@ write_kcov_dummy() {
   local IFS=$'\n'
   assert_success "${expected_output[*]}"
 
-  assert_equal "clone $__KCOV_URL tests/kcov" "$(<"$BATS_TEST_BINDIR/git.out")"
+  assert_file_equals "$BATS_TEST_BINDIR/git.out" "clone $__KCOV_URL tests/kcov"
 
   IFS=' '
-  assert_equal "apt-get install -y ${__KCOV_DEV_PACKAGES[*]}" \
-    "$(<"$BATS_TEST_BINDIR/sudo.out")"
-
-  assert_equal '.' "$(<"$BATS_TEST_BINDIR/cmake.out")"
-  assert_equal '' "$(<"$BATS_TEST_BINDIR/make.out")"
+  assert_file_equals "$BATS_TEST_BINDIR/sudo.out" \
+    "apt-get install -y ${__KCOV_DEV_PACKAGES[*]}"
+  assert_file_equals "$BATS_TEST_BINDIR/cmake.out" '.'
+  assert_file_equals "$BATS_TEST_BINDIR/make.out" ''
 }
 
 @test "$SUITE: clone and build fails if clone fails" {

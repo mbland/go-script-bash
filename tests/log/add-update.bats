@@ -54,9 +54,8 @@ teardown() {
     "@go.add_or_update_log_level FOOBAR '$INFO_FORMAT' 27" \
     '@go.log FOOBAR Hello, World!'
   assert_success ''
-
-  local expected="$(printf "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m\n")"
-  assert_equal "$expected" "$(< "$TEST_GO_ROOTDIR/logfile")" 'log file output'
+  assert_file_equals "$TEST_GO_ROOTDIR/logfile" \
+    "$(printf "${INFO_FORMAT}FOOBAR\e[0m Hello, World!\e[0m\n")"
 }
 
 @test "$SUITE: add new log level defaulting to standard output" {
@@ -79,9 +78,8 @@ teardown() {
     '@go.add_or_update_log_level INFO keep 27' \
     '@go.log INFO Hello, World!'
   assert_success ''
-  
-  local expected="$(printf "${INFO_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
-  assert_equal "$expected" "$(< "$TEST_GO_ROOTDIR/logfile")" 'log file output'
+  assert_file_equals "$TEST_GO_ROOTDIR/logfile" \
+    "$(printf "${INFO_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
 }
 
 @test "$SUITE: update format and file descriptor of existing log level" {
@@ -90,7 +88,6 @@ teardown() {
     "@go.add_or_update_log_level INFO '$START_FORMAT' 27" \
     '@go.log INFO Hello, World!'
   assert_success ''
-
-  local expected="$(printf "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
-  assert_equal "$expected" "$(< "$TEST_GO_ROOTDIR/logfile")" 'log file output'
+  assert_file_equals "$TEST_GO_ROOTDIR/logfile" \
+    "$(printf "${START_FORMAT}INFO\e[0m   Hello, World!\e[0m\n")"
 }

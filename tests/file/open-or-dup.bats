@@ -52,7 +52,7 @@ create_file_open_test_go_script() {
     'echo "Goodbye, World!" >&"$write_fd"'
   run "$TEST_GO_SCRIPT"
   assert_success
-  assert_equal "Goodbye, World!" "$(< "$FILE_PATH")"
+  assert_file_equals "$FILE_PATH" "Goodbye, World!"
 }
 
 @test "$SUITE: duplicate descriptor for writing" {
@@ -64,7 +64,7 @@ create_file_open_test_go_script() {
     'echo "Goodbye, World!" >&"$dup_write_fd"'
   run "$TEST_GO_SCRIPT"
   assert_success
-  assert_equal "Goodbye, World!" "$(< "$FILE_PATH")"
+  assert_file_equals "$FILE_PATH" "Goodbye, World!"
 }
 
 @test "$SUITE: open file for appending" {
@@ -77,9 +77,7 @@ create_file_open_test_go_script() {
     'echo "Goodbye, World!" >&"$append_fd"'
   run "$TEST_GO_SCRIPT"
   assert_success
-
-  local IFS=$'\n'
-  assert_equal "${expected[*]}" "$(< "$FILE_PATH")"
+  assert_file_equals "$FILE_PATH" "${expected[@]}"
 }
 
 @test "$SUITE: open file for read and write" {
@@ -104,15 +102,11 @@ create_file_open_test_go_script() {
     'echo " hello!" >&"$read_write_fd"' \
 
   run "$TEST_GO_SCRIPT"
-
-  local IFS=$'\n'
-  local orig_content=("$first_line"
-    "$second_line")
-  assert_success "${orig_content[*]}"
+  assert_success "$first_line" "$second_line"
 
   local updated_content=('You say goodbye,'
     'and I say hello!')
-  assert_equal "${updated_content[*]}" "$(< "$FILE_PATH")"
+  assert_file_equals "$FILE_PATH" "${updated_content[@]}"
 }
 
 @test "$SUITE: error if _GO_MAX_FILE_DESCRIPTORS is not an integer" {

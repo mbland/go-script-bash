@@ -33,7 +33,7 @@ create_fds_printf_test_script() {
     'output_fds="$output_fd"'
   run "$TEST_GO_SCRIPT"
   assert_success
-  assert_equal "$MESSAGE" "$(< "$file_path")"
+  assert_file_equals "$file_path" "$MESSAGE"
 }
 
 @test "$SUITE: print to standard output and to a file" {
@@ -46,7 +46,7 @@ create_fds_printf_test_script() {
     'output_fds="1,$output_fd"'
   run "$TEST_GO_SCRIPT"
   assert_success "$MESSAGE"
-  assert_equal "$MESSAGE" "$(< "$file_path")"
+  assert_file_equals "$file_path" "$MESSAGE"
 }
 
 @test "$SUITE: error if non-file descriptor argument given" {
@@ -79,5 +79,8 @@ create_fds_printf_test_script() {
   assert_line_equals  0    "$MESSAGE"
   assert_line_matches '-2' "Failed to print to fd [1-9][0-9]* at:"
   assert_line_matches '-1' "  $TEST_GO_SCRIPT:10 main"
-  assert_equal '' "$(< "$file_path")"
+
+  # Note that no "expected" argument means we expect the file to be completely
+  # empty, with not even a newline.
+  assert_file_equals "$file_path"
 }

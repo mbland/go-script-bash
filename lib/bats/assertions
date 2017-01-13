@@ -357,6 +357,8 @@ assert_line_matches() {
 # `output` should contain blank lines, call `split_bats_output_into_lines` from
 # `lib/bats/helpers` before this.
 #
+# If you expect zero lines, then don't supply any arguments.
+#
 # Arguments:
 #   $@: Values to compare to each element of `${lines[@]}` for equality
 assert_lines_equal() {
@@ -380,6 +382,10 @@ assert_lines_match() {
 }
 
 # Validates that a file contains exactly the specified output
+#
+# NOTE: If the file doesn't end with a newline, the last line will not be
+# present. To check that a file is completely empty, supply only the `file_path`
+# argument.
 #
 # Arguments:
 #   file_path:  Path to file to evaluate
@@ -476,6 +482,9 @@ return_from_bats_assertion() {
 # this function; but if you wish to examine specific output lines without the
 # regard to the rest (such as the first or last lines), or search for several
 # regular expressions in no particular order, this function may help.
+#
+# NOTE: If the file doesn't end with a newline, the last line will not be
+# present. If the file is completely empty, `lines` will contain zero elements.
 #
 # Arguments:
 #   file_path:  Path to file from which `output` and `lines` will be filled
