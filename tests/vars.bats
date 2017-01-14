@@ -73,13 +73,18 @@ quotify_expected() {
     "[4]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\""
     "[5]=\"$TEST_GO_SCRIPTS_DIR\"")
 
+  # Note that the `format` module imports `strings` and `validation`.
+  local expected_modules=('[0]="complete"'
+    '[1]="format"'
+    '[2]="strings"'
+    '[3]="validation"')
   local expected=("declare -rx _GO_CMD=\"$TEST_GO_SCRIPT\""
     "declare -ax _GO_CMD_ARGV=(${cmd_argv[*]})"
     'declare -ax _GO_CMD_NAME=([0]="test-command" [1]="test-subcommand")'
     "declare -rx _GO_CORE_DIR=\"$_GO_CORE_DIR\""
     "declare -rx _GO_CORE_URL=\"$_GO_CORE_URL\""
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
-    'declare -a _GO_IMPORTED_MODULES=([0]="complete" [1]="format")'
+    "declare -a _GO_IMPORTED_MODULES=(${expected_modules[*]})"
     "declare -- _GO_PLUGINS_DIR=\"$TEST_GO_PLUGINS_DIR\""
     "declare -a _GO_PLUGINS_PATHS=(${plugins_paths[*]})"
     "declare -rx _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
