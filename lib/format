@@ -3,6 +3,8 @@
 # Text formatting utilities
 #
 # Exports:
+#   @go.array_printf
+#     Assigns `printf` transformations of its arguments to an array
 #
 #   @go.pad_items
 #     Pads each string in an array to match the length of the longest element
@@ -13,36 +15,63 @@
 #   @go.strip_formatting_codes
 #     Strips ANSI escape codes of the form `\e[...(;...)m` from a string
 
-. "$_GO_USE_MODULES" 'validation'
+. "$_GO_USE_MODULES" 'strings' 'validation'
 
-# Pads each string in an array to match the length of the longest element
+# Assigns `printf` transformations of its arguments to an array
+#
+# Since `printf -v` can't print to an array subscript prior to Bash 4.1, this
+# provides a portable means of printing to an array variable while avoiding the
+# use of `eval`.
+#
+# NOTE: By default, this function relies on the ASCII Record Separator character
+# ($'\x1f') to delimit generated strings before splitting them into the result
+# array. If you have strings containing this character, you can set a new
+# delimiter via `_GO_ARRAY_PRINTF_DELIMITER`.
+#
+# Globals:
+#   _GO_ARRAY_PRINTF_DELIMITER:
+#     If set, used to separate generated strings prior to array assignment
+#
+# Arguments:
+#   result:  Name of the caller-declared output array
+#   format:  `printf`-style format specification
+#   ...:     Items to pass to `printf` and store in `result`
+@go.array_printf() {
+  @go.validate_identifier_or_die 'Result array name' "$1"
+  local __go_array_printf_delim="${_GO_ARRAY_PRINTF_DELIMITER:-$'\x1f'}"
+  local __tmp_go_array_printf
+  printf -v __tmp_go_array_printf -- "${2}${__go_array_printf_delim}" "${@:3}"
+  @go.split "$__go_array_printf_delim" "$__tmp_go_array_printf" "$1"
+}
+
+# Right-pads each string in an array to match the length of the longest element
+#
+# Globals:
+#   _GO_ARRAY_PRINTF_DELIMITER:  See the comments for `@go.array_printf`
 #
 # Arguments:
 #   items:   Name of the input array in the caller's scope
 #   result:  Name of the caller-declared output array
 @go.pad_items() {
-  @go.validate_identifier_or_die 'Result variable name' "$2"
+  @go.validate_identifier_or_die 'Result array name' "$2"
   local items_reference="${1}[@]"
   local item
   local padding_size=0
-  local pad_format=''
-  local item_index=0
 
   for item in "${!items_reference}"; do
     while [[ "$padding_size" -lt "${#item}" ]]; do
       padding_size="${#item}"
     done
   done
-  pad_format="%-${padding_size}s"
-
-  for item in "${!items_reference}"; do
-    printf -v "$2[$((item_index++))]" -- "$pad_format" "$item"
-  done
+  @go.array_printf "$2" "%-${padding_size}s" "${!items_reference}"
 }
 
 # Concatenates parallel elements from each input array
 #
 # Will produce a number of results matching that of the left-hand input array.
+#
+# Globals:
+#   _GO_ARRAY_PRINTF_DELIMITER:  See the comments for `@go.array_printf`
 #
 # Arguments:
 #   lhs:     Name of the left-hand input array in the caller's scope
@@ -50,16 +79,18 @@
 #   delim:   String used as a delimiter between elements (default: two spaces)
 #   result:  Name of the caller-declared output array
 @go.zip_items() {
-  @go.validate_identifier_or_die 'Result variable name' "$4"
+  @go.validate_identifier_or_die 'Result array name' "$4"
   local lhs_array_reference="${1}[@]"
   local rhs_item_ref
   local item
   local i=0
+  local __tmp_go_zip_items_result=()
 
   for item in "${!lhs_array_reference}"; do
-    rhs_item_ref="${2}[$i]"
-    printf -v "$4[$((i++))]" -- '%s' "${item}${3}${!rhs_item_ref}"
+    rhs_item_ref="${2}[$((i++))]"
+    __tmp_go_zip_items_result+=("${item}${3}${!rhs_item_ref}")
   done
+  @go.array_printf "$4" '%s' "${__tmp_go_zip_items_result[@]}"
 }
 
 # Strips ANSI escape codes from a string

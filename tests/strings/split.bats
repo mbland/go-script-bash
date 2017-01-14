@@ -42,6 +42,14 @@ teardown() {
   assert_success 'foo bar baz'
 }
 
+@test "$SUITE: multiple items using ASCII unit separator" {
+  create_strings_test_script 'declare result=()' \
+    "@go.split \$'\x1f' $'foo\x1fbar\x1fbaz' result" \
+    'echo "${result[@]}"'
+  run "$TEST_GO_SCRIPT"
+  assert_success 'foo bar baz'
+}
+
 @test "$SUITE: split items into same variable" {
   create_strings_test_script 'declare items="foo,bar,baz"' \
     '@go.split "," "$items" "items"' \
