@@ -3,76 +3,123 @@
 load environment
 
 setup() {
-  . 'lib/format'
+  test_filter
 }
 
-@test "$SUITE: does nothing for empty argv" {
-  local items=()
-  local __go_padded_result=()
-  @go.pad_items 'items'
-  assert_equal '' "${__go_padded_result[*]}"
+teardown() {
+  remove_test_go_rootdir
 }
 
-@test "$SUITE: pads argv items" {
-  local items=('foo' 'bar' 'baz' 'xyzzy' 'quux')
-  local __go_padded_result=()
-  @go.pad_items 'items'
-
-  local IFS='|'
-  assert_equal 'foo  |bar  |baz  |xyzzy|quux ' "${__go_padded_result[*]}"
+create_go_format_script() {
+  create_test_go_script '. "$_GO_USE_MODULES" format' "$@"
 }
 
-@test "$SUITE: zip empty items" {
-  local lhs=()
-  local rhs=()
-  local __go_zipped_result=()
-  @go.zip_items 'lhs' 'rhs' '='
-
-  assert_equal '' "${__go_zipped_result[*]}"
+run_pad_items_script() {
+  create_go_format_script \
+    'declare items=("$@")' \
+    'declare padded=()' \
+    '@go.pad_items items padded' \
+    'IFS="|"' \
+    'printf "%s\n" "${padded[*]}"'
+  run "$TEST_GO_SCRIPT" "$@"
 }
 
-@test "$SUITE: zip matching items" {
+run_zip_items_script() {
+  create_go_format_script \
+    'declare lhs_items=($1)' \
+    'declare rhs_items=($2)' \
+    'declare zipped=()' \
+    '@go.zip_items lhs_items rhs_items "$3" zipped' \
+    'printf "%s\n" "${zipped[@]}"'
+  run "$TEST_GO_SCRIPT" "$@"
+}
+
+run_strip_formatting_codes_script() {
+  create_go_format_script \
+    'declare stripped' \
+    '@go.strip_formatting_codes "$*" stripped' \
+    'printf "%s\n" "$stripped"'
+  run "$TEST_GO_SCRIPT" "$@"
+}
+
+@test "$SUITE: pad items validates result variable name" {
+  create_test_go_script '. "$_GO_USE_MODULES" format' \
+    '@go.pad_items items "3foobar"'
+  run "$TEST_GO_SCRIPT"
+
+  local err_msg='Result variable name "3foobar" for @go.pad_items '
+  err_msg+='must not start with a number at:'
+  assert_failure "$err_msg" \
+    "  $TEST_GO_SCRIPT:4 main"
+}
+
+@test "$SUITE: pad items does nothing for empty argv" {
+  run_pad_items_script
+  assert_success ''
+}
+
+@test "$SUITE: pad items pads argv items" {
+  run_pad_items_script 'foo' 'bar' 'baz' 'xyzzy' 'quux'
+  assert_success 'foo  |bar  |baz  |xyzzy|quux '
+}
+
+@test "$SUITE: zip items validates result variable name" {
+  create_test_go_script '. "$_GO_USE_MODULES" format' \
+    '@go.zip_items lhs rhs = "3foobar"'
+  run "$TEST_GO_SCRIPT"
+
+  local err_msg='Result variable name "3foobar" for @go.zip_items '
+  err_msg+='must not start with a number at:'
+  assert_failure "$err_msg" \
+    "  $TEST_GO_SCRIPT:4 main"
+}
+
+@test "$SUITE: zip items does nothing for empty argv" {
+  run_zip_items_script
+  assert_success ''
+}
+
+@test "$SUITE: zip items zips matching items with supplied delimiter" {
   local lhs=('foo' 'xyzzy' 'quux')
   local rhs=('bar' 'baz' 'plugh')
-  local __go_zipped_result=()
-  @go.zip_items 'lhs' 'rhs' '='
+  run_zip_items_script "${lhs[*]}" "${rhs[*]}" '='
+  assert_success 'foo=bar' 'xyzzy=baz' 'quux=plugh'
+}
 
-  local expected=('foo=bar' 'xyzzy=baz' 'quux=plugh')
-  local IFS=$'\n'
-  local indent='    '
-  assert_equal $'\n'"${expected[*]/#/$indent}" \
-    $'\n'"${__go_zipped_result[*]/#/$indent}"
+@test "$SUITE: strip formatting codes validates result variable name" {
+  create_test_go_script '. "$_GO_USE_MODULES" format' \
+    '@go.strip_formatting_codes "foobar" "3foobar"'
+  run "$TEST_GO_SCRIPT"
+
+  local err_msg='Result variable name "3foobar" for @go.strip_formatting_codes '
+  err_msg+='must not start with a number at:'
+  assert_failure "$err_msg" \
+    "  $TEST_GO_SCRIPT:4 main"
 }
 
 @test "$SUITE: strip formatting codes from empty string" {
-  local __go_stripped_value
-  @go.strip_formatting_codes ''
-  assert_equal '' "$__go_stripped_value"
+  run_strip_formatting_codes_script ''
+  assert_success ''
 }
 
 @test "$SUITE: strip formatting codes from string with no codes" {
-  local __go_stripped_value
-  @go.strip_formatting_codes 'foobar'
-  assert_equal 'foobar' "$__go_stripped_value"
+  run_strip_formatting_codes_script 'foobar'
+  assert_success 'foobar'
 }
 
 @test "$SUITE: strip formatting codes from string with one code" {
-  local __go_stripped_value
-  @go.strip_formatting_codes 'foobar\e[0m'
-  assert_equal 'foobar' "$__go_stripped_value"
+  run_strip_formatting_codes_script 'foobar\e[0m'
+  assert_success 'foobar'
 }
 
 @test "$SUITE: strip formatting codes from string with multiple codes" {
-  local __go_stripped_value
-  @go.strip_formatting_codes '\e[1mf\e[30;47mo\e[0;111mo\e[32mbar\e[0m'
-  assert_equal 'foobar' "$__go_stripped_value"
+  run_strip_formatting_codes_script '\e[1mf\e[30;47mo\e[0;111mo\e[32mbar\e[0m'
+  assert_success 'foobar'
 }
 
 @test "$SUITE: strip formatting codes from string with expanded codes" {
-  local __go_stripped_value
   local orig_value
-
   printf -v orig_value '%b' '\e[1mf\e[30;47mo\e[0;111mo\e[32mbar\e[0m'
-  @go.strip_formatting_codes "$orig_value"
-  assert_equal 'foobar' "$__go_stripped_value"
+  run_strip_formatting_codes_script "$orig_value"
+  assert_success 'foobar'
 }

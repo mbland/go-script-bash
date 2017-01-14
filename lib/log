@@ -225,7 +225,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   local log_level="${args[0]^^}"
   local exit_status=0
   local log_msg
-  local __go_stripped_value
+  local stripped_log_msg
   local level_fd
 
   unset 'args[0]'
@@ -266,10 +266,10 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
       _@go.log_command_should_skip_file_descriptor "$level_fd"; then
       continue
     elif [[ ! -t "$level_fd" && -z "$_GO_LOG_FORMATTING" ]]; then
-      if [[ -z "$__go_stripped_value" ]]; then
-        @go.strip_formatting_codes "$log_msg"
+      if [[ -z "$stripped_log_msg" ]]; then
+        @go.strip_formatting_codes "$log_msg" 'stripped_log_msg'
       fi
-      printf '%s\n' "$__go_stripped_value" >&"$level_fd"
+      printf '%s\n' "$stripped_log_msg" >&"$level_fd"
     else
       printf '%b\n' "$log_msg" >&"$level_fd"
     fi
