@@ -151,23 +151,23 @@ _@go.modules_produce_listing() {
 
   . "$_GO_CORE_DIR/lib/format"
 
-  local __go_padded_result=()
-  local __go_zipped_result=()
+  local padded_modules=()
+  local zipped_modules=()
 
-  @go.pad_items 'modules'
-  modules=("${__go_padded_result[@]}")
+  @go.pad_items padded_modules "${modules[@]}"
+  modules=("${padded_modules[@]}")
 
   case "$action" in
   paths)
     local relative_paths=("${__go_modules[@]#$_GO_ROOTDIR/}")
-    @go.zip_items 'modules' 'relative_paths'
+    @go.zip_items modules relative_paths '  ' zipped_modules
     ;;
   summaries)
     local __go_modules_summaries=()
     if ! _@go.modules_summaries; then
       return 1
     fi
-    @go.zip_items 'modules' '__go_modules_summaries'
+    @go.zip_items modules __go_modules_summaries '  ' zipped_modules
     ;;
   *)
     # Should only happen if _@go.modules is updated and this case statement
@@ -175,7 +175,7 @@ _@go.modules_produce_listing() {
     @go.printf 'ERROR: Unknown action: %s\n' "$action" >&2
     return 1
   esac
-  __go_modules_listing=("${__go_zipped_result[@]}")
+  __go_modules_listing=("${zipped_modules[@]}")
 }
 
 _@go.modules_search() {

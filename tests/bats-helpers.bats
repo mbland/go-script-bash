@@ -145,7 +145,6 @@ teardown() {
 
 @test "$SUITE: test_printf" {
   create_bats_test_script test-script \
-    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
     "test_printf '%s\n' 'some test debug output'"
 
   run "$BATS_TEST_ROOTDIR/test-script"
