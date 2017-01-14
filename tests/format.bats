@@ -25,9 +25,8 @@ run_array_printf_script() {
 
 run_pad_items_script() {
   create_go_format_script \
-    'declare items=("$@")' \
     'declare padded=()' \
-    '@go.pad_items items padded' \
+    '@go.pad_items padded "$@"' \
     'IFS="|"' \
     'printf "%s\n" "${padded[*]}"'
   run "$TEST_GO_SCRIPT" "$@"
@@ -80,7 +79,7 @@ run_strip_formatting_codes_script() {
 
 @test "$SUITE: pad_items validates result array name" {
   create_test_go_script '. "$_GO_USE_MODULES" format' \
-    '@go.pad_items items "3foobar"'
+    '@go.pad_items "3foobar"'
   run "$TEST_GO_SCRIPT"
 
   local err_msg='Result array name "3foobar" for @go.pad_items '

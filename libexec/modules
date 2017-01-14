@@ -154,7 +154,7 @@ _@go.modules_produce_listing() {
   local padded_modules=()
   local zipped_modules=()
 
-  @go.pad_items modules padded_modules
+  @go.pad_items padded_modules "${modules[@]}"
   modules=("${padded_modules[@]}")
 
   case "$action" in

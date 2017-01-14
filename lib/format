@@ -7,7 +7,7 @@
 #     Assigns `printf` transformations of its arguments to an array
 #
 #   @go.pad_items
-#     Pads each string in an array to match the length of the longest element
+#     Right-pads each string with spaces to match the length of the longest
 #
 #   @go.zip_items
 #     Concatenates parallel elements from each input array
@@ -44,26 +44,26 @@
   @go.split "$__go_array_printf_delim" "$__tmp_go_array_printf" "$1"
 }
 
-# Right-pads each string in an array to match the length of the longest element
+# Right-pads each string with spaces to match the length of the longest
 #
 # Globals:
 #   _GO_ARRAY_PRINTF_DELIMITER:  See the comments for `@go.array_printf`
 #
 # Arguments:
-#   items:   Name of the input array in the caller's scope
 #   result:  Name of the caller-declared output array
+#   ...:     Items to right-pad with spaces to match the longest one
 @go.pad_items() {
-  @go.validate_identifier_or_die 'Result array name' "$2"
-  local items_reference="${1}[@]"
-  local item
+  @go.validate_identifier_or_die 'Result array name' "$1"
+  local __go_pad_items_items=("${@:2}")
+  local __item
   local padding_size=0
 
-  for item in "${!items_reference}"; do
-    while [[ "$padding_size" -lt "${#item}" ]]; do
-      padding_size="${#item}"
+  for __item in "${__go_pad_items_items[@]}"; do
+    while [[ "$padding_size" -lt "${#__item}" ]]; do
+      padding_size="${#__item}"
     done
   done
-  @go.array_printf "$2" "%-${padding_size}s" "${!items_reference}"
+  @go.array_printf "$1" "%-${padding_size}s" "${__go_pad_items_items[@]}"
 }
 
 # Concatenates parallel elements from each input array
