@@ -101,7 +101,7 @@ teardown() {
 @test "$SUITE: log single failing command to standard error" {
   run_log_script \
       'function failing_function() {' \
-      '  printf "%s\n" "\e[1m$*\e[0m" >&2' \
+      '  printf "%b\n" "\e[1m$*\e[0m" >&2' \
       '  exit 127' \
       '}' \
       '@go.log_command failing_function foo bar baz'
@@ -109,7 +109,7 @@ teardown() {
   assert_failure
   assert_log_equals \
     RUN 'failing_function foo bar baz' \
-    '\e[1mfoo bar baz\e[0m' \
+    'foo bar baz' \
     ERROR 'failing_function foo bar baz (exit status 127)'
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }
@@ -120,7 +120,7 @@ teardown() {
 
   _GO_LOG_FORMATTING='true' run_log_script \
       'function failing_function() {' \
-      '  printf "%s\n" "\e[1m$*\e[0m" >&2' \
+      '  printf "%b\n" "\e[1m$*\e[0m" >&2' \
       '  exit 127' \
       '}' \
       '@go.log_command failing_function foo bar baz'

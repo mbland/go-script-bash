@@ -460,6 +460,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   local __go_log_command_args=("$@")
   local cmd_string="${__go_log_command_args[*]}"
   local line
+  local stripped_line
   local exit_state
   local exit_status=1
 
@@ -482,6 +483,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 
   while IFS= read -r line; do
     line="${line%$'\r'}"
+    stripped_line=''
 
     if [[ "$line" =~ $__GO_LOG_COMMAND_EXIT_PATTERN ]]; then
       # If the line immediately previous was fatal, keep the fatal state.
@@ -497,9 +499,12 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 
     for fd in "${__go_log_level_file_descriptors[@]}"; do
       if [[ -t "$fd" || -n "$_GO_LOG_FORMATTING" ]]; then
-        printf '%b\n' "$line" >&"$fd"
-      else
         printf '%s\n' "$line" >&"$fd"
+      else
+        if [[ -z "$stripped_line" ]]; then
+          @go.strip_formatting_codes "$line" stripped_line
+        fi
+        printf '%s\n' "$stripped_line" >&"$fd"
       fi
     done
   done < <(_@go.log_command_invoke)
