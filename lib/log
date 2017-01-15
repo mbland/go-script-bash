@@ -651,57 +651,18 @@ _@go.log_init() {
 
 # Assigns formatted log level labels to __GO_LOG_LEVELS_FORMATTED.
 #
-# If `_GO_LOG_FORMATTING` is not empty, or the file descriptor corresponding to
-# a log level corresponds to a terminal, this will assign a corresponding value
-# wrapped by terminal formatting codes to __GO_LOG_LEVELS_FORMATTED. Otherwise
-# the original label value is assigned.
-#
 # Each element of `__GO_LOG_LEVELS_FORMATTED` will also be padded with trailing
 # spaces so that each element will be the same length.
 #
 # Globals:
 #   _GO_LOG_LEVELS:                    List of valid log level labels
-#   _GO_LOG_FORMATTING                 If set, always produce formatted labels
 #   __GO_LOG_LEVELS_FORMAT_CODES:      Terminal format codes for each log level
-#   __GO_LOG_LEVELS_FILE_DESCRIPTORS:  Output descriptors for each log level
 #   __GO_LOG_LEVELS_FORMATTED:         Formatted labels
 _@go.log_format_level_labels() {
-  local num_levels="${#_GO_LOG_LEVELS[@]}"
-  local label_length
-  local longest_label_length
-  local padding=''
-  local log_level
-  local padding_len
-  local level_var
-  local level_fd
-  local i
-
-  for ((i=0; i != num_levels; ++i)); do
-    label_length="${#_GO_LOG_LEVELS[$i]}"
-    if [[ "$label_length" -gt "$longest_label_length" ]]; then
-      longest_label_length="$label_length"
-    fi
-  done
-
-  for ((i=0; i != longest_label_length; ++i)); do
-    padding+=' '
-  done
-
-  for ((i=0; i != num_levels; ++i)); do
-    log_level="${_GO_LOG_LEVELS[$i]}"
-    padding_len="$((${#padding} - ${#log_level}))"
-
-    local __go_log_level_file_descriptors=()
-    _@go.log_level_file_descriptors "$i"
-
-    for level_fd in "${__go_log_level_file_descriptors[@]}"; do
-      if [[ -n "$_GO_LOG_FORMATTING" || -t "$level_fd" ]]; then
-        log_level="${__GO_LOG_LEVELS_FORMAT_CODES[$i]}$log_level\e[0m"
-        break
-      fi
-    done
-    __GO_LOG_LEVELS_FORMATTED[$i]="${log_level}${padding:0:$padding_len}"
-  done
+  __GO_LOG_LEVELS_FORMATTED=("${_GO_LOG_LEVELS[@]/%/\\e[0m}")
+  @go.pad_items __GO_LOG_LEVELS_FORMATTED "${__GO_LOG_LEVELS_FORMATTED[@]}"
+  @go.zip_items __GO_LOG_LEVELS_FORMAT_CODES __GO_LOG_LEVELS_FORMATTED '' \
+    __GO_LOG_LEVELS_FORMATTED
 }
 
 # Returns the set of file descriptors for the specified log level index.
