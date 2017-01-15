@@ -251,10 +251,10 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 
   local __go_log_timestamp
   if @go.log_timestamp; then
-    log_msg="$__go_log_timestamp "
+    __go_log_timestamp+=' '
   fi
-  log_msg+="${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]} "
-  log_msg+="${args[*]}\\e[0m"
+  printf -v log_msg -- '%s%b %b' "$__go_log_timestamp" \
+    "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}" "${args[*]}\\e[0m"
 
   local __go_log_level_file_descriptors=('1')
   if [[ "$__GO_LOG_COMMAND_DEPTH" == '0' || "$log_level" != 'RUN' ]]; then
@@ -271,7 +271,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
       fi
       printf '%s\n' "$stripped_log_msg" >&"$level_fd"
     else
-      printf '%b\n' "$log_msg" >&"$level_fd"
+      printf '%s\n' "$log_msg" >&"$level_fd"
     fi
 
     if [[ "$log_level" == 'FATAL' ]]; then
