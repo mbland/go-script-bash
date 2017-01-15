@@ -3,16 +3,16 @@
 load environment
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completion" {
   local subcommands=('plugh' 'quux' 'xyzzy')
-  create_parent_and_subcommands foo "${subcommands[@]}"
+  @go.create_parent_and_subcommands foo "${subcommands[@]}"
   run "$TEST_GO_SCRIPT" complete 1 path 'foo'
   assert_success 'foo'
 
@@ -35,17 +35,17 @@ teardown() {
 }
 
 @test "$SUITE: user script path" {
-  create_test_command_script foo
+  @go.create_test_command_script foo
   run "$TEST_GO_SCRIPT" path foo
   assert_success "scripts/foo"
 }
 
 @test "$SUITE: user subcommand script with arguments" {
   mkdir -p "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d"
-  create_test_command_script foo
-  create_test_command_script foo.d/bar
-  create_test_command_script foo.d/bar.d/baz
-  create_test_go_script '@go "$@"'
+  @go.create_test_command_script foo
+  @go.create_test_command_script foo.d/bar
+  @go.create_test_command_script foo.d/bar.d/baz
+  @go.create_test_go_script '@go "$@"'
 
   run "$TEST_GO_SCRIPT" path foo bar baz --quux --xyzzy plugh frobozz
   assert_success "${TEST_GO_SCRIPTS_DIR#$TEST_GO_ROOTDIR/}/foo.d/bar.d/baz"

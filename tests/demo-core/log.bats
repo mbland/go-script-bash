@@ -5,12 +5,12 @@ load "$_GO_CORE_DIR/lib/testing/stack-trace"
 
 setup() {
   test_filter
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   export _GO_LOG_DEMO_DELAY='0'
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completion" {
@@ -34,15 +34,15 @@ teardown() {
   assert_output_matches $'\nQUIT  +Hello, World! \(would normally exit\)\n'
   assert_output_matches $'\nFATAL +Hello, World!\n'
 
-  set_go_core_stack_trace_components
-  local stack_trace_pattern=(''
-    "  $_GO_CORE_DIR/libexec/demo-core.d/log:[0-9]+ log_demo"
-    "  $_GO_CORE_DIR/libexec/demo-core.d/log:[0-9]+ source"
-    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}"
-    "  $TEST_GO_SCRIPT:[0-9] main")
+  @go.set_go_core_stack_trace_components
+  local stack_trace_pattern
 
-  local IFS=$'\n'
-  assert_output_matches "${stack_trace_pattern[*]}"
+  printf -v stack_trace_pattern '\n%s' \
+    "  $_GO_CORE_DIR/libexec/demo-core.d/log:[0-9]+ log_demo" \
+    "  $_GO_CORE_DIR/libexec/demo-core.d/log:[0-9]+ source" \
+    "${GO_CORE_STACK_TRACE_COMPONENTS[@]}" \
+    "  $TEST_GO_SCRIPT:[0-9] main"
+  assert_output_matches "$stack_trace_pattern"
 }
 
 @test "$SUITE: verbose output" {

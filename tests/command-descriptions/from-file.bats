@@ -42,11 +42,11 @@ setup() {
 
 echo The command script starts now.
 '
-  create_test_command_script 'test-command' "$script"
+  @go.create_test_command_script 'test-command' "$script"
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: return error if there's an error reading" {
@@ -64,7 +64,7 @@ teardown() {
 }
 
 @test "$SUITE: return default text when no description is available" {
-  create_test_command_script 'test-command' \
+  @go.create_test_command_script 'test-command' \
     'echo "This script has no description"'
 
   local __go_cmd_desc=''
@@ -136,7 +136,7 @@ Indented lines that look like tables (there are two or more adjacent spaces afte
 
 @test "$SUITE: format subcommand description" {
   mkdir -p "$TEST_GO_SCRIPTS_DIR/root-command.d/node-command.d"
-  create_test_command_script 'root-command.d/node-command.d/leaf-command' '#
+  @go.create_test_command_script 'root-command.d/node-command.d/leaf-command' '#
 # Leaf command that does something in {{root}}
 #
 # Usage: {{go}} {{cmd}} [args...]

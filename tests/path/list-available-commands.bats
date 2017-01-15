@@ -3,13 +3,13 @@
 load ../environment
 
 setup() {
-  create_test_go_script \
+  @go.create_test_go_script \
     '. "$_GO_CORE_DIR/lib/internal/path"' \
     '_@go.list_available_commands "$@"'
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: list available commands" {
@@ -31,7 +31,6 @@ teardown() {
   unset 'lines[0]'
   local IFS=$'\n'
   assert_equal "${expected[*]/#/  }" "${lines[*]}" 'available commands'
-
 }
 
 @test "$SUITE: error if no commands available" {

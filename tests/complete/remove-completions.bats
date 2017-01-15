@@ -59,7 +59,6 @@ load ../environment
   @go.complete_remove_completions_already_present \
     'argv' 'completions' "${#completions[@]}"
 
-  local expected=('foo/baz' 'foo/quux' 'frotz' 'frotz/blorple')
-  local IFS=$'\n'
-  assert_equal "${expected[*]}" "${completions[*]}"
+  lines=("${completions[@]}")
+  assert_lines_equal 'foo/baz' 'foo/quux' 'frotz' 'frotz/blorple'
 }

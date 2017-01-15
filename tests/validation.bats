@@ -2,13 +2,8 @@
 
 load environment
 
-setup() {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
-    '@go.validate_input "$@"'
-}
-
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 assert_error_on_invalid_input() {
@@ -44,6 +39,8 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_input returns error on invalid input" {
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_input "$@"'
   assert_error_on_invalid_input 'foo`bar'
   assert_error_on_invalid_input 'foo"bar'
   assert_error_on_invalid_input 'foo;bar'
@@ -61,7 +58,9 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_input returns success on valid input" {
-  #assert_success_on_valid_input ''
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+    '@go.validate_input "$@"'
+  assert_success_on_valid_input ''
   assert_success_on_valid_input 'foobar'
   assert_success_on_valid_input 'foo\`bar'
   assert_success_on_valid_input 'foo\"bar'
@@ -80,14 +79,14 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_input_or_die passes" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_input_or_die "input argument" "foobar" "1"'
   run "$TEST_GO_SCRIPT"
   assert_success
 }
 
 @test "$SUITE: validate_input_or_die in main, skip_callers == 1" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_input_or_die "input argument" "foo;bar" "1"'
   run "$TEST_GO_SCRIPT"
   assert_failure
@@ -100,7 +99,7 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_input_or_die in function, skip_callers default == 2" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     'test_func() { @go.validate_input_or_die "input argument" "$1"; }' \
     'test_func "foo;bar"'
   run "$TEST_GO_SCRIPT"
@@ -111,42 +110,42 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_identifier passes on valid identifier" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_identifier "foobar"'
   run "$TEST_GO_SCRIPT"
   assert_success
 }
 
 @test "$SUITE: validate_identifier fails on empty string" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_identifier ""'
   run "$TEST_GO_SCRIPT"
   assert_failure
 }
 
 @test "$SUITE: validate_identifier fails on invalid character" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_identifier "foo;bar"'
   run "$TEST_GO_SCRIPT"
   assert_failure
 }
 
 @test "$SUITE: validate_identifier fails if starts with number" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_identifier "3foobar"'
   run "$TEST_GO_SCRIPT"
   assert_failure
 }
 
 @test "$SUITE: validate_identifier_or_die passes" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_identifier_or_die "argument" "foobar" "1"'
   run "$TEST_GO_SCRIPT"
   assert_success
 }
 
 @test "$SUITE: validate_identifier_or_die in main, skip_callers == 1" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     '@go.validate_identifier_or_die "argument" "foo;bar" "1"'
   run "$TEST_GO_SCRIPT"
   assert_failure
@@ -158,7 +157,7 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_identifier_or_die in func, skip_callers default == 2" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     'test_func() {' \
     '  @go.validate_identifier_or_die "argument" "$1"' \
     '}' \
@@ -173,7 +172,7 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_identifier_or_die in func, empty string" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     'test_func() {' \
     '  @go.validate_identifier_or_die "argument" "$1"' \
     '}' \
@@ -185,7 +184,7 @@ assert_success_on_valid_input() {
 }
 
 @test "$SUITE: validate_identifier_or_die in func, starts with number" {
-  create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "validation"' \
     'test_func() {' \
     '  @go.validate_identifier_or_die "argument" "$1"' \
     '}' \

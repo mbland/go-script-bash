@@ -4,23 +4,23 @@ load ../environment
 load "$_GO_CORE_DIR/lib/testing/stack-trace"
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: stack trace from top level of main ./go script" {
-  create_test_go_script '@go.print_stack_trace'
+  @go.create_test_go_script '@go.print_stack_trace'
   run "$TEST_GO_SCRIPT"
   assert_success "  $TEST_GO_SCRIPT:3 main"
 }
 
 @test "$SUITE: stack trace from top level of main ./go script without caller" {
-  create_test_go_script '@go.print_stack_trace 1'
+  @go.create_test_go_script '@go.print_stack_trace 1'
   run "$TEST_GO_SCRIPT"
   assert_success ''
 }
 
 @test "$SUITE: stack trace from function inside main ./go script" {
-  create_test_go_script \
+  @go.create_test_go_script \
     'print_stack() {' \
     '  @go.print_stack_trace' \
     '}' \
@@ -34,7 +34,7 @@ teardown() {
 }
 
 @test "$SUITE: omit function caller from stack trace" {
-  create_test_go_script \
+  @go.create_test_go_script \
     'print_stack() {' \
     "  @go.print_stack_trace 1" \
     '}' \
@@ -44,7 +44,7 @@ teardown() {
 }
 
 @test "$SUITE: bad skip_callers argument prints entire trace" {
-  create_test_go_script \
+  @go.create_test_go_script \
     'print_stack() {' \
     "  @go.print_stack_trace foobar" \
     '}' \
@@ -60,7 +60,7 @@ teardown() {
 }
 
 @test "$SUITE: skipping too many callers prints entire trace" {
-  create_test_go_script \
+  @go.create_test_go_script \
     'print_stack() {' \
     "  @go.print_stack_trace 100" \
     '}' \
@@ -76,13 +76,13 @@ teardown() {
 }
 
 @test "$SUITE: stack trace from subcommand script" {
-  create_test_go_script '@go "$@"'
-  create_test_command_script 'foo' \
+  @go.create_test_go_script '@go "$@"'
+  @go.create_test_command_script 'foo' \
     'foo_func() {' \
     '  @go foo bar' \
     '}' \
     'foo_func'
-  create_test_command_script 'foo.d/bar' \
+  @go.create_test_command_script 'foo.d/bar' \
     'bar_func() {' \
     '  @go.print_stack_trace 1' \
     '}' \
@@ -90,7 +90,7 @@ teardown() {
 
   run "$TEST_GO_SCRIPT" foo
   assert_success
-  set_go_core_stack_trace_components
+  @go.set_go_core_stack_trace_components
 
   local IFS=$'\n'
   assert_lines_equal "  $TEST_GO_SCRIPTS_DIR/foo.d/bar:5 source" \

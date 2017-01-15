@@ -4,7 +4,7 @@ load ../environment
 load helpers
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   find_builtins
 
   # We have to add back the _GO_ROOTDIR that was stripped from the beginning of
@@ -15,7 +15,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completions" {
@@ -52,14 +52,14 @@ teardown() {
 }
 
 @test "$SUITE: tab complete subcommand" {
-  create_test_command_script 'foo'
+  @go.create_test_command_script 'foo'
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
 
   local expected=('bar' 'baz' 'quux')
   local subcommand
 
   for subcommand in "${expected[@]}"; do
-    create_test_command_script "foo.d/$subcommand"
+    @go.create_test_command_script "foo.d/$subcommand"
   done
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo
@@ -78,14 +78,14 @@ teardown() {
 }
 
 @test "$SUITE: only tab complete flags before other args" {
-  create_test_command_script 'foo'
+  @go.create_test_command_script 'foo'
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
 
   local subcommands=('bar' 'baz' 'quux')
   local subcommand
 
   for subcommand in "${subcommands[@]}"; do
-    create_test_command_script "foo.d/$subcommand"
+    @go.create_test_command_script "foo.d/$subcommand"
   done
 
   run "$TEST_GO_SCRIPT" complete 1 commands '' foo
@@ -139,13 +139,13 @@ teardown() {
   local cmd_name
 
   mkdir "$TEST_GO_SCRIPTS_DIR/"{bar,baz,foo}.d
-  create_test_command_script 'bar.d/child0'
-  create_test_command_script 'baz.d/child1'
-  create_test_command_script 'foo.d/child2'
+  @go.create_test_command_script 'bar.d/child0'
+  @go.create_test_command_script 'baz.d/child1'
+  @go.create_test_command_script 'foo.d/child2'
   mkdir "$TEST_GO_SCRIPTS_DIR/plugins/"{plugh,quux,xyzzy}.d
-  create_test_command_script 'plugins/plugh.d/child3'
-  create_test_command_script 'plugins/quux.d/child4'
-  create_test_command_script 'plugins/xyzzy.d/child5'
+  @go.create_test_command_script 'plugins/plugh.d/child3'
+  @go.create_test_command_script 'plugins/quux.d/child4'
+  @go.create_test_command_script 'plugins/xyzzy.d/child5'
 
   run "$TEST_GO_SCRIPT" commands
   local IFS=$'\n'
@@ -205,7 +205,7 @@ create_script_with_description() {
   local script_path="$1"
   local cmd_name="${script_path##*/}"
 
-  create_test_command_script "$script_path" \
+  @go.create_test_command_script "$script_path" \
     '#' \
     "# Does $cmd_name stuff"
 }

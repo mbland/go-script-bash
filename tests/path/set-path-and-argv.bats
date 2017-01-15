@@ -3,7 +3,7 @@
 load ../environment
 
 setup() {
-  create_test_go_script \
+  @go.create_test_go_script \
     '. "$_GO_CORE_DIR/lib/internal/path"' \
     'if ! _@go.set_command_path_and_argv "$@"; then' \
     '  exit 1' \
@@ -14,7 +14,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: error on empty argument list" {

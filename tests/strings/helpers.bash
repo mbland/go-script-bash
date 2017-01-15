@@ -3,5 +3,5 @@
 # Helper functions for `lib/strings` tests
 
 create_strings_test_script() {
-  create_test_go_script '. "$_GO_USE_MODULES" strings' "$@"
+  @go.create_test_go_script '. "$_GO_USE_MODULES" strings' "$@"
 }

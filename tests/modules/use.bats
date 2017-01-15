@@ -16,7 +16,7 @@ EXPECTED=(
 )
 
 setup() {
-  create_test_go_script \
+  @go.create_test_go_script \
     ". \"\$_GO_USE_MODULES\" $*" \
     'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
 
@@ -29,11 +29,11 @@ setup() {
 
 teardown() {
   rm -f "${TEST_MODULES[@]}"
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: no modules imported by default" {
-  create_test_go_script 'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
+  @go.create_test_go_script 'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
   run "$TEST_GO_SCRIPT"
   assert_success 'modules: '
 }

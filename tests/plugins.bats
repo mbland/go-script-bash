@@ -3,12 +3,12 @@
 load environment
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   mkdir "$TEST_GO_PLUGINS_DIR"
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completion returns error if no plugins dir" {
@@ -53,7 +53,8 @@ teardown() {
   local IFS=$'\n'
 
   for plugin in "${plugins[@]}"; do
-    create_test_command_script "plugins/$plugin" "# Does ${plugin##*/} stuff"
+    @go.create_test_command_script "plugins/$plugin" \
+      "# Does ${plugin##*/} stuff"
 
     plugin="${plugin##*/}"
     if [[ "$longest_plugin_len" -lt "${#plugin}" ]]; then

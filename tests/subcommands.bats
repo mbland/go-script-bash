@@ -9,16 +9,16 @@ EXPECTED_SUBCOMMAND_LISTING=('Available subcommands of "foo" are:'
   '  quux  Do quux stuff')
 
 setup() {
-  create_test_go_script '@go "$@"'
-  create_test_command_script 'foo' '. "$_GO_USE_MODULES" subcommands' \
+  @go.create_test_go_script '@go "$@"'
+  @go.create_test_command_script 'foo' '. "$_GO_USE_MODULES" subcommands' \
     '@go.show_subcommands'
-  create_test_command_script 'foo.d/bar' '# Do bar stuff'
-  create_test_command_script 'foo.d/baz' '# Do baz stuff'
-  create_test_command_script 'foo.d/quux' '# Do quux stuff'
+  @go.create_test_command_script 'foo.d/bar' '# Do bar stuff'
+  @go.create_test_command_script 'foo.d/baz' '# Do baz stuff'
+  @go.create_test_command_script 'foo.d/quux' '# Do quux stuff'
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: show subcommands" {

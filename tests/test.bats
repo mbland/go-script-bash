@@ -6,8 +6,8 @@ load environment
 load "$_GO_CORE_DIR/lib/testing/stubbing"
 
 teardown() {
-  restore_stubbed_core_modules
-  remove_test_go_rootdir
+  @go.restore_stubbed_core_modules
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab complete flags" {
@@ -83,7 +83,7 @@ _trim_expected() {
 }
 
 @test "$SUITE: update bats submodule if not present" {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   cp "$_GO_ROOTDIR/scripts/test" "$TEST_GO_SCRIPTS_DIR"
   stub_program_in_path 'git' 'echo "GIT ARGV: $*"'
 
@@ -102,7 +102,7 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
   create_bats_test_script "tests/bats/libexec/bats"
 
   # Stub the kcov lib to assert it's called correctly.
-  create_core_module_stub 'kcov-ubuntu' \
+  @go.create_core_module_stub 'kcov-ubuntu' \
     "run_kcov() { IFS=\$'\n'; echo \"\$*\"; }"
 
   if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then
@@ -113,7 +113,7 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
 
 @test "$SUITE: coverage run" {
   write_bats_dummy_stub_kcov_lib_and_copy_test_script
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
 
   local test_cmd_argv=("$TEST_GO_SCRIPT" 'test' '--coverage' 'foo' 'bar/baz')
   local expected_kcov_args=(
@@ -157,7 +157,7 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
 # With the `__COVERAGE_RUN` variable, the recursive call is now short-circuited.
 @test "$SUITE: run coverage by default on Travis Linux" {
   write_bats_dummy_stub_kcov_lib_and_copy_test_script
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
 
   run env __COVERAGE_RUN= TRAVIS_OS_NAME='linux' "$TEST_GO_SCRIPT" test
   assert_success

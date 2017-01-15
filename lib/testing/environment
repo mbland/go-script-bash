@@ -39,7 +39,7 @@ readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 #
 # Call this from `teardown` if your tests create any files or directories in
 # `TEST_GO_ROOTDIR`.
-remove_test_go_rootdir() {
+@go.remove_test_go_rootdir() {
   remove_bats_test_dirs
 }
 
@@ -50,7 +50,7 @@ remove_test_go_rootdir() {
 #
 # Arguments:
 #   ...:  Lines comprising the `./go` script
-create_test_go_script() {
+@go.create_test_go_script() {
   create_bats_test_script 'go' \
     ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     "$@"
@@ -82,7 +82,7 @@ test-go() {
 # Arguments:
 #   script_name:  Name of the command script
 #   ...:          Lines comprising the `./go` command script
-create_test_command_script() {
+@go.create_test_command_script() {
   create_bats_test_script "$TEST_GO_SCRIPTS_RELATIVE_DIR/$1" "${@:2}"
 }
 
@@ -97,14 +97,14 @@ create_test_command_script() {
 # Arguments:
 #   parent_name:  Name of the "parent" command script
 #   ...:          Names of "child" command scripts
-create_parent_and_subcommands() {
+@go.create_parent_and_subcommands() {
   local parent="$1"
   shift
   local subcommand
 
-  create_test_command_script "$parent"
+  @go.create_test_command_script "$parent"
 
   for subcommand in "$@"; do
-    create_test_command_script "$parent.d/$subcommand"
+    @go.create_test_command_script "$parent.d/$subcommand"
   done
 }

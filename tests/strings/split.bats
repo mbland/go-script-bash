@@ -4,7 +4,7 @@ load ../environment
 load helpers
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: error if result array name not a valid identifier" {

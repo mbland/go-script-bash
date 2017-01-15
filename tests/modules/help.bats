@@ -4,12 +4,12 @@ load ../environment
 load helpers
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   setup_test_modules
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: no args shows module system help" {

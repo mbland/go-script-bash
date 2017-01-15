@@ -39,11 +39,11 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 write_kcov_go_script() {
-  create_test_go_script \
+  @go.create_test_go_script \
     ". \"\$_GO_USE_MODULES\" 'kcov-ubuntu'" \
     "$@"
 }

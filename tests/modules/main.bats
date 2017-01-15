@@ -10,7 +10,7 @@ FIRST_CORE_MOD_SUMMARY=
 LAST_CORE_MOD_SUMMARY=
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   setup_test_modules
 
   local last_index="$((${#CORE_MODULES[@]} - 1))"
@@ -19,7 +19,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 get_first_and_last_core_module_summaries() {
@@ -64,7 +64,7 @@ get_first_and_last_core_module_summaries() {
 }
 
 @test "$SUITE: --imported" {
-  create_test_go_script \
+  @go.create_test_go_script \
     '. "$_GO_USE_MODULES" "complete" "_foo/_plugh" "_bar/_quux" "_frotz"' \
     '@go "$@"'
 

@@ -5,14 +5,14 @@ load ../environment
 TEST_COMMAND_SCRIPT_PATH="$TEST_GO_SCRIPTS_DIR/test-command"
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   # Though we overwrite the script in most cases, this will also set the
   # permissions so we don't have to do that everywhere.
-  create_test_command_script "test-command"
+  @go.create_test_command_script "test-command"
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: run bash script by sourcing" {

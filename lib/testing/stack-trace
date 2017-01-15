@@ -5,18 +5,18 @@
 # You must source `_GO_CORE_DIR/lib/testing/environment` before this file.
 
 # Get the stack trace of a line from a file or function as it would appear in
-# @go.print_stack_trace output.
+# `@go.print_stack_trace` output.
 #
 # Arguments:
 #   filepath:       Path to the file containing the line
 #   function_name:  Function in which the line appears, 'main', or 'source'
 #   target_line:    Line for which to produce a stack trace line
-stack_trace_item() {
+@go.stack_trace_item() {
   local filepath="$1"
   local function_name="$2"
   local target_line="$3"
 
-  __check_file_path_specified_and_present "$filepath"
+  __@go.check_file_path_specified_and_present "$filepath"
 
   if [[ -z "$function_name" ]]; then
     printf 'No function name specified for `%s`.\n' "$FUNCNAME" >&2
@@ -48,7 +48,7 @@ stack_trace_item() {
 #   GO_CORE_STACK_TRACE_COMPONENTS:
 #     Stack trace lines from `go-core.bash` comprising the command script
 #     dispatch mechanism
-set_go_core_stack_trace_components() {
+@go.set_go_core_stack_trace_components() {
   local go_core_file="$_GO_CORE_DIR/go-core.bash"
   local stack_item
   local script="$TEST_GO_ROOTDIR/generate-go-core-stack-trace"
@@ -58,7 +58,7 @@ set_go_core_stack_trace_components() {
     create_bats_test_script "${script#$TEST_GO_ROOTDIR}" \
       ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
       '@go "$@"'
-    create_test_command_script 'print-stack-trace' '@go.print_stack_trace'
+    @go.create_test_command_script 'print-stack-trace' '@go.print_stack_trace'
 
     for stack_item in $("$script" 'print-stack-trace'); do
       if [[ "$stack_item" =~ $go_core_file ]]; then
@@ -81,15 +81,15 @@ set_go_core_stack_trace_components() {
 #   filepath:  Path to the file used to generate the stack trace item
 #   offset:    Offset from the last line to get the line number (default 0)
 #   funcname:  Name of the function expected in the stack trace (default 'main')
-stack_trace_item_from_offset() {
+@go.stack_trace_item_from_offset() {
   local filepath="${1}"
   local offset="${2:-0}"
   local funcname="${3:-main}"
   local num_lines='0'
   local lineno
 
-  __check_file_path_specified_and_present "$filepath"
-  count_lines "$filepath" 'num_lines'
+  __@go.check_file_path_specified_and_present "$filepath"
+  @go.count_lines "$filepath" 'num_lines'
   lineno="$((num_lines - offset))"
   printf '  %s:%d %s\n' "$filepath" "$lineno" "$funcname"
 }
@@ -99,13 +99,13 @@ stack_trace_item_from_offset() {
 # Arguments:
 #   filepath:     Path to the file
 #   result_name:  Name of the caller's variable in which to store the result
-count_lines() {
+@go.count_lines() {
   local filepath="$1"
   local result_name="$2"
   local line
   local i='0'
 
-  __check_file_path_specified_and_present "$filepath"
+  __@go.check_file_path_specified_and_present "$filepath"
   if [[ -z "$result_name" ]]; then
     printf 'No result variable specified for `%s`.\n' "$FUNCNAME" >&2
     exit 1
@@ -129,7 +129,7 @@ count_lines() {
 #
 # Arguments:
 #   filepath:  File path value to confirm
-__check_file_path_specified_and_present() {
+__@go.check_file_path_specified_and_present() {
   if [[ -z "$1" ]]; then
     printf 'No file specified for `%s`.\n' "${FUNCNAME[1]}" >&2
     exit 1

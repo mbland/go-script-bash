@@ -3,7 +3,7 @@
 load ../environment
 
 setup() {
-  create_test_go_script \
+  @go.create_test_go_script \
     '. "$_GO_CORE_DIR/lib/internal/path"' \
     'echo "_GO_PLUGINS_DIR: $_GO_PLUGINS_DIR"' \
     'echo "_GO_PLUGINS_PATHS: ${_GO_PLUGINS_PATHS[@]}"' \
@@ -11,7 +11,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: initialize constants without plugins" {

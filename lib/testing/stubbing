@@ -4,8 +4,8 @@
 
 # Replace a module in `_GO_CORE_DIR/lib` with a stub implementation
 #
-# THIS IS POTENTIALLY DANGEROUS and you MUST call `restore_stubbed_core_modules`
-# in your `teardown` function if you use it!
+# THIS IS POTENTIALLY DANGEROUS and you MUST call
+# `@go.restore_stubbed_core_modules` in your `teardown` function if you use it!
 #
 # Useful when you need to model core module behavior, but don't want it to do
 # real work or want to avoid a potentially complicated test setup.
@@ -13,7 +13,7 @@
 # Arguments:
 #   module_name:  Name of the module to stub from `_GO_CORE_DIR/lib`
 #   ...:          Lines comprising the stubbed module implementation
-create_core_module_stub() {
+@go.create_core_module_stub() {
   local module_path="$_GO_CORE_DIR/lib/$1"
   shift
 
@@ -28,10 +28,10 @@ create_core_module_stub() {
   chmod 600 "$module_path"
 }
 
-# Restore all `_GO_CORE_DIR/lib` modules stubbed by `create_core_module_stub`
+# Restore all core modules stubbed by `@go.create_core_module_stub`
 #
-# YOU MUST CALL THIS FROM TEARDOWN IF YOU USE `create_core_module_stub`!
-restore_stubbed_core_modules() {
+# YOU MUST CALL THIS FROM TEARDOWN IF YOU USE `@go.create_core_module_stub`!
+@go.restore_stubbed_core_modules() {
   local module
 
   for module in "$_GO_CORE_DIR/lib"/*.stubbed; do

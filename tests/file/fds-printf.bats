@@ -5,11 +5,11 @@ load ../environment
 MESSAGE='Hello, World!'
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 create_fds_printf_test_script() {
-  create_test_go_script \
+  @go.create_test_go_script \
     '. "$_GO_USE_MODULES" "file"' \
     'declare output_fds' \
     "$@" \

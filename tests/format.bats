@@ -7,11 +7,11 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 create_go_format_script() {
-  create_test_go_script '. "$_GO_USE_MODULES" format' "$@"
+  @go.create_test_go_script '. "$_GO_USE_MODULES" format' "$@"
 }
 
 run_array_printf_script() {
@@ -51,7 +51,7 @@ run_strip_formatting_codes_script() {
 }
 
 @test "$SUITE: array_printf validates result array name" {
-  create_test_go_script '. "$_GO_USE_MODULES" format' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" format' \
     '@go.array_printf "3foobar"'
   run "$TEST_GO_SCRIPT"
 
@@ -78,7 +78,7 @@ run_strip_formatting_codes_script() {
 }
 
 @test "$SUITE: pad_items validates result array name" {
-  create_test_go_script '. "$_GO_USE_MODULES" format' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" format' \
     '@go.pad_items "3foobar"'
   run "$TEST_GO_SCRIPT"
 
@@ -99,7 +99,7 @@ run_strip_formatting_codes_script() {
 }
 
 @test "$SUITE: zip_items validates result array name" {
-  create_test_go_script '. "$_GO_USE_MODULES" format' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" format' \
     '@go.zip_items lhs rhs = "3foobar"'
   run "$TEST_GO_SCRIPT"
 
@@ -122,7 +122,7 @@ run_strip_formatting_codes_script() {
 }
 
 @test "$SUITE: strip_formatting_codes validates result array name" {
-  create_test_go_script '. "$_GO_USE_MODULES" format' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" format' \
     '@go.strip_formatting_codes "foobar" "3foobar"'
   run "$TEST_GO_SCRIPT"
 

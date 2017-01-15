@@ -8,28 +8,27 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: create_core_module_stub and restore_stubbed_core_modules" {
   [ -e "$_GO_CORE_DIR/lib/log" ]
   [ ! -e "$_GO_CORE_DIR/lib/log.stubbed" ]
-  create_core_module_stub 'log' 'echo Hello, World!'
+  @go.create_core_module_stub 'log' 'echo Hello, World!'
   [ -e "$_GO_CORE_DIR/lib/log.stubbed" ]
   [ -e "$_GO_CORE_DIR/lib/log" ]
 
-  create_test_go_script '. "$_GO_USE_MODULES" log'
+  @go.create_test_go_script '. "$_GO_USE_MODULES" log'
   run "$TEST_GO_SCRIPT"
 
-  restore_stubbed_core_modules
+  @go.restore_stubbed_core_modules
   [ ! -e "$_GO_CORE_DIR/lib/log.stubbed" ]
   [ -e "$_GO_CORE_DIR/lib/log" ]
   assert_success 'Hello, World!'
 }
 
-
 @test "$SUITE: create_core_module_stub aborts if module unknown" {
   [ ! -e "$_GO_CORE_DIR/lib/foobar" ]
-  run create_core_module_stub 'foobar' 'echo Hello, World!'
+  run @go.create_core_module_stub 'foobar' 'echo Hello, World!'
   assert_failure "No such core module: $_GO_CORE_DIR/lib/foobar"
 }

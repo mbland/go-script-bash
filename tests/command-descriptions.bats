@@ -7,11 +7,11 @@ setup() {
 }
 
 teardown() {
-  rm -rf "$TEST_GO_ROOTDIR"
+  @go.remove_test_go_rootdir
 }
 
 create_cmd_path_and_name_go_script() {
-  create_test_go_script \
+  @go.create_test_go_script \
     ". '$_GO_CORE_DIR/lib/internal/command_descriptions'" \
     'declare __go_cmd_name' \
     'if _@go.check_command_path_and_parse_command_name "$@"; then' \
@@ -23,14 +23,14 @@ create_cmd_path_and_name_go_script() {
 
 @test "$SUITE: check command path and parse command name passes" {
   create_cmd_path_and_name_go_script
-  create_test_command_script 'foo'
+  @go.create_test_command_script 'foo'
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_DIR/foo"
   assert_success '__go_cmd_name: foo'
 }
 
 @test "$SUITE: check sub-command path and parse command name passes" {
   create_cmd_path_and_name_go_script
-  create_test_command_script 'foo.d/bar.d/baz'
+  @go.create_test_command_script 'foo.d/bar.d/baz'
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz"
   assert_success '__go_cmd_name: foo bar baz'
 }

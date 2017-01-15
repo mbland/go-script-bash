@@ -24,7 +24,7 @@ setup() {
     '  exit 1' \
     'fi'
 
-  create_test_go_script '. "$_GO_USE_MODULES" log' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" log' \
     'declare __go_log_timestamp' \
     'if @go.log_timestamp; then' \
     "  printf '%s' \"\$__go_log_timestamp\"" \
@@ -34,7 +34,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: return error if _GO_LOG_TIMESTAMP_FORMAT not set" {
@@ -92,7 +92,7 @@ teardown() {
 }
 
 @test "$SUITE: log messages prefixed with timestamp if supported" {
-  create_test_go_script '_GO_LOG_TIMESTAMP_FORMAT="%M:%S"' \
+  @go.create_test_go_script '_GO_LOG_TIMESTAMP_FORMAT="%M:%S"' \
     '. "$_GO_USE_MODULES" log' \
     '@go.log INFO Timestamp me!'
 
