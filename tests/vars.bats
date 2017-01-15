@@ -115,8 +115,8 @@ quotify_expected() {
   run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy
   assert_success
   assert_lines_equal "_GO_CMD: $TEST_GO_SCRIPT" \
-    "_GO_CMD_ARGV: foo"$'\0'"bar"$'\0'"baz quux"$'\0'"xyzzy" \
-    "_GO_CMD_NAME: test-command"$'\0'"test-subcommand" \
+    $'_GO_CMD_ARGV: foo\x1fbar\x1fbaz quux\x1fxyzzy' \
+    $'_GO_CMD_NAME: test-command\x1ftest-subcommand' \
     "_GO_CORE_DIR: $_GO_CORE_DIR" \
     "_GO_CORE_URL: $_GO_CORE_URL" \
     "_GO_CORE_VERSION: $_GO_CORE_VERSION" \
