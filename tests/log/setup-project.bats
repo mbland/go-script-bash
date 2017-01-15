@@ -1,7 +1,7 @@
 #! /usr/bin/env bats
 
 load ../environment
-load helpers
+load "$_GO_CORE_DIR/lib/testing/log"
 
 teardown() {
   remove_test_go_rootdir

@@ -87,3 +87,9 @@ teardown() {
   [ -x "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/xyzzy" ]
   [ -x "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/plugh" ]
 }
+
+@test "$SUITE: run TEST_GO_SCRIPT via test-go" {
+  create_test_go_script 'printf "_GO_CMD: %s\n" "$_GO_CMD"'
+  run test-go
+  assert_success '_GO_CMD: test-go'
+}

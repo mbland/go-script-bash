@@ -1,6 +1,7 @@
 #! /usr/bin/env bats
 
 load ../environment
+load "$_GO_CORE_DIR/lib/testing/log"
 
 HAS_TIMESTAMP_BUILTIN=
 DATE_CMD=
