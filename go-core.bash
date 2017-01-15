@@ -105,13 +105,13 @@ declare -r -x _GO_CMD="${_GO_CMD:=$0}"
 # _GO_CMD.
 #
 # When exported to scripts not written in bash, the array is converted to a
-# string with the components delimited by the ASCII NUL character ($'\0').
+# string with the components delimited by the ASCII Unit Separator ($'\x1f').
 declare -x _GO_CMD_NAME=
 
 # The array of command line arguments for the ./go command after _GO_CMD_NAME.
 #
 # When exported to scripts not written in bash, the array is converted to a
-# string with the arguments delimited by the ASCII NUL character ($'\0').
+# string with the arguments delimited by the ASCII Unit Separator ($'\x1f').
 declare -x _GO_CMD_ARGV=
 
 # The directory in which plugins are installed.
@@ -290,7 +290,7 @@ _@go.run_command_script() {
   else
     if [[ -z "$_GO_CMD_NAME" ]]; then
       local origIFS="$IFS"
-      local IFS=$'\0'
+      local IFS=$'\x1f'
       _GO_CMD_NAME="${__go_cmd_name[*]}"
       _GO_CMD_ARGV="$*"
       IFS="$origIFS"
