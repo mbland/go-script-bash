@@ -3,12 +3,12 @@
 load environment
 
 setup() {
-  create_test_go_script '@go "$@"'
-  create_test_command_script "test-command"
+  @go.create_test_go_script '@go "$@"'
+  @go.create_test_command_script "test-command"
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 # Some versions of Bash single quote each array value, causing the assertion to
@@ -50,7 +50,7 @@ quotify_expected() {
 }
 
 @test "$SUITE: all _GO_* variables for Bash subcommand contain values" {
-  create_test_command_script 'test-command.d/test-subcommand' \
+  @go.create_test_command_script 'test-command.d/test-subcommand' \
     '. "$_GO_USE_MODULES" "complete" "format"' \
     '@go vars'
 
@@ -105,7 +105,7 @@ quotify_expected() {
     skip 'perl not installed'
   fi
 
-  create_test_command_script 'test-command.d/test-subcommand' \
+  @go.create_test_command_script 'test-command.d/test-subcommand' \
     '#!/bin/perl' \
     'foreach my $env_var (sort keys %ENV) {' \
     '  if ($env_var =~ /^_GO_/) {' \

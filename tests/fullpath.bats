@@ -3,7 +3,7 @@
 load environment
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completions" {
@@ -44,7 +44,7 @@ teardown() {
 }
 
 @test "$SUITE: only print existing paths" {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   mkdir "$TEST_GO_ROOTDIR"/foo
   touch "$TEST_GO_ROOTDIR"/plugh
 
@@ -55,7 +55,7 @@ teardown() {
 }
 
 @test "$SUITE: expand glob paths" {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   mkdir -p "$TEST_GO_ROOTDIR/foo/bar"
   touch "$TEST_GO_ROOTDIR/foo/"{baz,quux}
 
@@ -69,7 +69,7 @@ teardown() {
 }
 
 @test "$SUITE: expand glob paths containing spaces" {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   mkdir "$TEST_GO_ROOTDIR/foo bar"
   touch "$TEST_GO_ROOTDIR/foo bar/"{baz,quux,xyzzy}
 

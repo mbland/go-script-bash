@@ -3,16 +3,16 @@
 load environment
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completion" {
   local subcommands=('plugh' 'quux' 'xyzzy')
-  create_parent_and_subcommands foo "${subcommands[@]}"
+  @go.create_parent_and_subcommands foo "${subcommands[@]}"
   run "$TEST_GO_SCRIPT" complete 1 help 'foo'
   assert_success 'foo'
 
@@ -25,9 +25,9 @@ teardown() {
 }
 
 @test "$SUITE: produce message with successful return for help command" {
-  create_test_command_script 'foo' '# Does foo stuff'
-  create_test_command_script 'bar' '# Does bar stuff'
-  create_test_command_script 'baz' '# Does baz stuff'
+  @go.create_test_command_script 'foo' '# Does foo stuff'
+  @go.create_test_command_script 'bar' '# Does bar stuff'
+  @go.create_test_command_script 'baz' '# Does baz stuff'
   run "$TEST_GO_SCRIPT" help
 
   assert_success
@@ -50,7 +50,7 @@ teardown() {
 
 @test "$SUITE: accept -h, -help, and --help as synonyms" {
   # Create a command to ensure a sucessful exit status.
-  create_test_command_script 'foo' '# Does foo stuff'
+  @go.create_test_command_script 'foo' '# Does foo stuff'
   run "$TEST_GO_SCRIPT" help
   assert_success
 
@@ -91,7 +91,7 @@ teardown() {
     "  __go_cmd_path='bogus/path/to/nowhere'"
     '}'
     '_@go.source_builtin "help" "$@"')
-  create_test_go_script "${go_script[@]}"
+  @go.create_test_go_script "${go_script[@]}"
 
   run "$TEST_GO_SCRIPT" 'bogus' 'command'
   local expected_errors=(
@@ -109,7 +109,7 @@ teardown() {
     '# Usage: {{go}} {{cmd}} <argument>'
     ''
     'echo "rm -rf /"')
-  create_test_command_script 'foo' "${cmd_script[@]}"
+  @go.create_test_command_script 'foo' "${cmd_script[@]}"
   run "$TEST_GO_SCRIPT" help foo
 
   local expected=(
@@ -144,7 +144,7 @@ teardown() {
     '  declare -r replacement="${FOO_VALID_ARGS[*]}"'
     '  echo "${2//$pattern/$replacement}"'
     'fi')
-  create_test_command_script 'foo' "${cmd_script[@]}"
+  @go.create_test_command_script 'foo' "${cmd_script[@]}"
   run "$TEST_GO_SCRIPT" help foo
 
   local expected=(
@@ -160,11 +160,11 @@ teardown() {
   cmd_template+=$'#\n'
   cmd_template+=$'# Usage: {{go}} {{cmd}}\n'
 
-  create_test_command_script 'foo' "${cmd_template/\{\{CMD\}\}/foo}"
+  @go.create_test_command_script 'foo' "${cmd_template/\{\{CMD\}\}/foo}"
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
-  create_test_command_script 'foo.d/bar' "${cmd_template/\{\{CMD\}\}/bar}"
-  create_test_command_script 'foo.d/baz' "${cmd_template/\{\{CMD\}\}/baz}"
-  create_test_command_script 'foo.d/quux' "${cmd_template/\{\{CMD\}\}/quux}"
+  @go.create_test_command_script 'foo.d/bar' "${cmd_template/\{\{CMD\}\}/bar}"
+  @go.create_test_command_script 'foo.d/baz' "${cmd_template/\{\{CMD\}\}/baz}"
+  @go.create_test_command_script 'foo.d/quux' "${cmd_template/\{\{CMD\}\}/quux}"
   run "$TEST_GO_SCRIPT" help foo
 
   local expected=(

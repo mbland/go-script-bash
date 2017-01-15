@@ -6,7 +6,7 @@ load ../commands/helpers
 setup() {
   # We add a prefix to each of the echo statements to ensure that blank lines
   # are not elided from the Bats `lines` array.
-  create_test_go_script '. "$_GO_CORE_DIR/lib/internal/complete"' \
+  @go.create_test_go_script '. "$_GO_CORE_DIR/lib/internal/complete"' \
     'declare __go_complete_word_index' \
     'declare __go_cmd_path' \
     'declare __go_argv' \
@@ -22,10 +22,11 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 assert_completions_match() {
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   # Trim the last three lines of output from the script to compare separately
   # from the output of _@go.complete_command_path.
   local num_lines="${#lines[@]}"
@@ -53,7 +54,9 @@ assert_completions_match() {
     ((++num_errors))
   fi
   if [[ "$num_errors" -ne '0' ]]; then
-    return 1
+    return_from_bats_assertion '1'
+  else
+    return_from_bats_assertion
   fi
 }
 
@@ -118,7 +121,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: complete parent command" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='foo'
   run "$TEST_GO_SCRIPT" 0 "$__word"
@@ -130,7 +133,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: complete all subcommands" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   run "$TEST_GO_SCRIPT" 1 'foo' ''
   assert_success
@@ -142,7 +145,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: complete subcommands matching target word" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='b'
   run "$TEST_GO_SCRIPT" 1 'foo' "$__word"
@@ -156,7 +159,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: complete subcommands matching target word with trailing args" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='b'
   run "$TEST_GO_SCRIPT" 1 'foo' "$__word" 'xyzzy'
@@ -170,7 +173,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: fail to complete subcommand but still return success" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='bogus'
   run "$TEST_GO_SCRIPT" 1 'foo' "$__word" 'xyzzy'
@@ -184,7 +187,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: successfully complete subcommand" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='bar'
   run "$TEST_GO_SCRIPT" 1 'foo' "$__word" 'xyzzy'
@@ -198,7 +201,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: do not complete nonexistent subcommand of subcommand" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='xyzzy'
   run "$TEST_GO_SCRIPT" 2 'foo' 'bar' "$__word"
@@ -212,7 +215,7 @@ assert_completions_match() {
 }
 
 @test "$SUITE: set subcommand path but do not attempt to complete later arg" {
-  create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
+  @go.create_parent_and_subcommands 'foo' 'bar' 'baz' 'quux'
 
   local __word='frobozz'
   run "$TEST_GO_SCRIPT" 3 'foo' 'bar' 'xyzzy' "$__word"

@@ -3,11 +3,11 @@
 load ../environment
 
 setup() {
-  create_test_go_script
+  @go.create_test_go_script
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: scripts dir successfully set" {

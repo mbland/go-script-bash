@@ -7,7 +7,7 @@
 
 . "$_GO_CORE_DIR/lib/bats/helpers"
 
-__stack_trace_item() {
+__@go.stack_trace_item() {
   local filepath="$1"
   local function_name="$2"
   local target_line="$3"
@@ -86,4 +86,4 @@ __stack_trace_item() {
   exit 1
 }
 
-__stack_trace_item "$@"
+__@go.stack_trace_item "$@"

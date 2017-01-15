@@ -4,7 +4,7 @@ load ../environment
 load helpers
 
 setup() {
-  create_test_go_script \
+  @go.create_test_go_script \
     '. "$_GO_CORE_DIR/lib/internal/path"' \
     '. "$_GO_CORE_DIR/lib/internal/commands"' \
     'declare __go_longest_name_len' \
@@ -22,15 +22,14 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 assert_command_scripts_equal() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
-  local result
-  local IFS=$'\n'
   unset 'lines[0]' 'lines[1]'
-  assert_equal "$*" "${lines[*]#$_GO_ROOTDIR/}" "command scripts"
+  lines=("${lines[@]#$_GO_ROOTDIR/}")
+  assert_lines_equal "$@"
   return_from_bats_assertion "$?"
 }
 

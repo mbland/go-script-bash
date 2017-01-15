@@ -28,11 +28,11 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 create_stack_trace_test_script() {
-  create_test_go_script "${EXPECTED_TEST_GO_SCRIPT[@]:2}"
+  @go.create_test_go_script "${EXPECTED_TEST_GO_SCRIPT[@]:2}"
 }
 
 @test "$SUITE: count_lines" {
@@ -40,48 +40,49 @@ create_stack_trace_test_script() {
   assert_file_equals "$TEST_GO_SCRIPT" "${EXPECTED_TEST_GO_SCRIPT[@]}"
 
   local num_lines=0
-  count_lines "$TEST_GO_SCRIPT" 'num_lines'
+  @go.count_lines "$TEST_GO_SCRIPT" 'num_lines'
   assert_equal "${#EXPECTED_TEST_GO_SCRIPT[@]}" "$num_lines"
 }
 
 @test "$SUITE: count_lines aborts if file not specified" {
-  run count_lines
-  assert_failure 'No file specified for `count_lines`.'
+  run @go.count_lines
+  assert_failure 'No file specified for `@go.count_lines`.'
 }
 
 @test "$SUITE: count_lines aborts if file missing" {
-  run count_lines "$TEST_GO_SCRIPT" 'num_lines'
-  assert_failure "Create \"$TEST_GO_SCRIPT\" before calling \`count_lines\`."
+  run @go.count_lines "$TEST_GO_SCRIPT" 'num_lines'
+  assert_failure \
+    "Create \"$TEST_GO_SCRIPT\" before calling \`@go.count_lines\`."
 }
 
 @test "$SUITE: count_lines aborts if result variable not specified" {
   create_stack_trace_test_script
-  run count_lines "$TEST_GO_SCRIPT"
-  assert_failure 'No result variable specified for `count_lines`.'
+  run @go.count_lines "$TEST_GO_SCRIPT"
+  assert_failure 'No result variable specified for `@go.count_lines`.'
 }
 
 @test "$SUITE: stack_trace_item_from_offset reports last line:main by default" {
   create_stack_trace_test_script
-  run stack_trace_item_from_offset "$TEST_GO_SCRIPT"
+  run @go.stack_trace_item_from_offset "$TEST_GO_SCRIPT"
   assert_success "  $TEST_GO_SCRIPT:${#EXPECTED_TEST_GO_SCRIPT[@]} main"
 }
 
 @test "$SUITE: stack_trace_item_from_offset reports specified line, function" {
   create_stack_trace_test_script
-  run stack_trace_item_from_offset "$TEST_GO_SCRIPT" '1' 'funcname'
+  run @go.stack_trace_item_from_offset "$TEST_GO_SCRIPT" '1' 'funcname'
 
   local expected_lineno="$((${#EXPECTED_TEST_GO_SCRIPT[@]} - 1))"
   assert_success "  $TEST_GO_SCRIPT:$expected_lineno funcname"
 }
 
 @test "$SUITE: stack_trace_item_from_offset aborts if file not specified" {
-  run stack_trace_item_from_offset
-  assert_failure 'No file specified for `stack_trace_item_from_offset`.'
+  run @go.stack_trace_item_from_offset
+  assert_failure 'No file specified for `@go.stack_trace_item_from_offset`.'
 }
 
 @test "$SUITE: set_go_core_stack_trace_components" {
   assert_equal '' "${GO_CORE_STACK_TRACE_COMPONENTS[*]}"
-  set_go_core_stack_trace_components
+  @go.set_go_core_stack_trace_components
   lines=("${GO_CORE_STACK_TRACE_COMPONENTS[@]}")
   assert_lines_match \
     "^  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script$" \
@@ -89,36 +90,37 @@ create_stack_trace_test_script() {
 }
 
 @test "$SUITE: stack_trace_item aborts if file not specified" {
-  run stack_trace_item
-  assert_failure 'No file specified for `stack_trace_item`.'
+  run @go.stack_trace_item
+  assert_failure 'No file specified for `@go.stack_trace_item`.'
 }
 
 @test "$SUITE: stack_trace_item aborts if no function name specified" {
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT"
-  assert_failure 'No function name specified for `stack_trace_item`.'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT"
+  assert_failure 'No function name specified for `@go.stack_trace_item`.'
 }
 
 @test "$SUITE: stack_trace_item aborts if 'main' or 'source', but no target" {
   create_stack_trace_test_script
 
-  run stack_trace_item "$TEST_GO_SCRIPT" 'main'
-  assert_failure 'No target line from `main` specified for `stack_trace_item`.'
-
-  run stack_trace_item "$TEST_GO_SCRIPT" 'source'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'main'
   assert_failure \
-    'No target line from `source` specified for `stack_trace_item`.'
+    'No target line from `main` specified for `@go.stack_trace_item`.'
+
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'source'
+  assert_failure \
+    'No target line from `source` specified for `@go.stack_trace_item`.'
 }
 
 @test "$SUITE: stack_trace_item finds line in 'main'" {
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'main' 'baz'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'main' 'baz'
   assert_success "  $TEST_GO_SCRIPT:10 main"
 }
 
 @test "$SUITE: stack_trace_item finds line in 'source'" {
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'source' 'baz'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'source' 'baz'
   assert_success "  $TEST_GO_SCRIPT:10 source"
 }
 
@@ -127,13 +129,13 @@ create_stack_trace_test_script() {
   # defined. Somehow this will happend in functions that contain a process
   # substitution, such as `@go.log_command`.
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'baz'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'baz'
   assert_success "  $TEST_GO_SCRIPT:14 baz"
 }
 
 @test "$SUITE: stack_trace_item finds line inside specified function" {
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'bar' '  baz'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'bar' '  baz'
   assert_success "  $TEST_GO_SCRIPT:12 bar"
 }
 
@@ -142,24 +144,24 @@ create_stack_trace_test_script() {
   # It should match neither the '  baz' lines from 'foo' or 'bar', nor should it
   # match the 'baz' line in 'main'.
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'bar' 'baz'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'bar' 'baz'
   assert_failure "Line not found in \`bar\` from \"$TEST_GO_SCRIPT\": \"baz\""
 }
 
 @test "$SUITE: stack_trace_item fails to find a match in 'main'" {
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'main' 'quux'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'main' 'quux'
   assert_failure "Line not found in \`main\` from \"$TEST_GO_SCRIPT\": \"quux\""
 }
 
 @test "$SUITE: stack_trace_item fails to find a function definition" {
   create_stack_trace_test_script
-  TEST_DEBUG=1 run stack_trace_item "$TEST_GO_SCRIPT" 'quux'
+  TEST_DEBUG=1 run @go.stack_trace_item "$TEST_GO_SCRIPT" 'quux'
   assert_failure "Function \`quux\` not found in \"$TEST_GO_SCRIPT\"."
 }
 
 @test "$SUITE: stack_trace_item fails to find a line in a missing function" {
   create_stack_trace_test_script
-  run stack_trace_item "$TEST_GO_SCRIPT" 'quux' 'baz'
+  run @go.stack_trace_item "$TEST_GO_SCRIPT" 'quux' 'baz'
   assert_failure "Function \`quux\` not found in \"$TEST_GO_SCRIPT\"."
 }

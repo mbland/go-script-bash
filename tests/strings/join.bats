@@ -8,7 +8,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: error if result variable name not a valid identifier" {

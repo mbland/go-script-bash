@@ -4,14 +4,14 @@ load ../environment
 load "$_GO_CORE_DIR/lib/testing/log"
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 run_log_script_and_assert_success() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   local result=0
 
-  run_log_script "$@" \
+  @go.run_log_script "$@" \
     '@go.log DEBUG  debug 0' \
     '@go.log START  testing filter' \
     '@go.log DEBUG  debug 1' \
@@ -28,7 +28,7 @@ run_log_script_and_assert_success() {
 
 @test "$SUITE: default _GO_LOG_LEVEL_FILTER is RUN" {
   run_log_script_and_assert_success
-  assert_log_equals \
+  @go.assert_log_equals \
     START  'testing filter' \
     RUN    'echo Hello, World!' \
     INFO   'Hello, World!' \
@@ -38,7 +38,7 @@ run_log_script_and_assert_success() {
 
 @test "$SUITE: set _GO_LOG_LEVEL_FILTER to DEBUG" {
   _GO_LOG_LEVEL_FILTER='DEBUG' run_log_script_and_assert_success
-  assert_log_equals \
+  @go.assert_log_equals \
     DEBUG  'debug 0' \
     START  'testing filter' \
     DEBUG  'debug 1' \
@@ -52,32 +52,32 @@ run_log_script_and_assert_success() {
 
 @test "$SUITE: set _GO_LOG_LEVEL_FILTER to INFO" {
   _GO_LOG_LEVEL_FILTER='INFO' run_log_script_and_assert_success
-  assert_log_equals \
+  @go.assert_log_equals \
     INFO   'Hello, World!' \
     INFO   'Goodbye, World!'
 }
 
 @test "$SUITE: error if _GO_LOG_LEVEL_FILTER doesn't match a valid level" {
-  _GO_LOG_LEVEL_FILTER='FOOBAR' run_log_script '@go.log FOOBAR fubarred'
+  _GO_LOG_LEVEL_FILTER='FOOBAR' @go.run_log_script '@go.log FOOBAR fubarred'
   assert_failure
-  assert_log_equals \
+  @go.assert_log_equals \
     FATAL 'Invalid _GO_LOG_LEVEL_FILTER: FOOBAR' \
-    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
+    "$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: error if _GO_LOG_CONSOLE_FILTER doesn't match a valid level" {
-  _GO_LOG_CONSOLE_FILTER='FOOBAR' run_log_script '@go.log FOOBAR fubarred'
+  _GO_LOG_CONSOLE_FILTER='FOOBAR' @go.run_log_script '@go.log FOOBAR fubarred'
   assert_failure
-  assert_log_equals \
+  @go.assert_log_equals \
     FATAL 'Invalid _GO_LOG_CONSOLE_FILTER: FOOBAR' \
-    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
+    "$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: _GO_LOG_CONSOLE_FILTER lower priority override" {
   _GO_LOG_CONSOLE_FILTER='DEBUG' run_log_script_and_assert_success \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/info.log'"
 
-  assert_log_equals \
+  @go.assert_log_equals \
     DEBUG  'debug 0' \
     START  'testing filter' \
     DEBUG  'debug 1' \
@@ -88,7 +88,7 @@ run_log_script_and_assert_success() {
     DEBUG  'debug 3' \
     INFO   'Goodbye, World!'
 
-  assert_log_file_equals "$TEST_GO_ROOTDIR/info.log" \
+  @go.assert_log_file_equals "$TEST_GO_ROOTDIR/info.log" \
     START  'testing filter' \
     RUN    'echo Hello, World!' \
     INFO   'Hello, World!' \
@@ -100,11 +100,11 @@ run_log_script_and_assert_success() {
   _GO_LOG_CONSOLE_FILTER='INFO' run_log_script_and_assert_success \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/info.log'"
 
-  assert_log_equals \
+  @go.assert_log_equals \
     INFO   'Hello, World!' \
     INFO   'Goodbye, World!'
 
-  assert_log_file_equals "$TEST_GO_ROOTDIR/info.log" \
+  @go.assert_log_file_equals "$TEST_GO_ROOTDIR/info.log" \
     START  'testing filter' \
     RUN    'echo Hello, World!' \
     INFO   'Hello, World!' \

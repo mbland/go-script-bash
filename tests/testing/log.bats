@@ -8,7 +8,7 @@ setup() {
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: log timestamps are disabled for testing by default" {
@@ -20,7 +20,7 @@ teardown() {
 
 @test "$SUITE: create_log_script and run_log_script without log file" {
   export TEST_LOG_FILE="$TEST_GO_ROOTDIR/test-script.log"
-  TEST_LOG_FILE= run_log_script '@go.log INFO Hello, World!'
+  TEST_LOG_FILE= @go.run_log_script '@go.log INFO Hello, World!'
   assert_success
   assert_output_matches '^INFO +Hello, World!$'
   [ ! -e "$TEST_LOG_FILE" ]
@@ -28,7 +28,7 @@ teardown() {
 
 @test "$SUITE: create_log_script and run_log_script with log file" {
   export TEST_LOG_FILE="$TEST_GO_ROOTDIR/test-script.log"
-  run_log_script '@go.log INFO Hello, World!'
+  @go.run_log_script '@go.log INFO Hello, World!'
   assert_success
   assert_output_matches '^INFO +Hello, World!$'
   [ -e "$TEST_LOG_FILE" ]
@@ -37,7 +37,7 @@ teardown() {
 
 @test "$SUITE: set_log_command_stack_trace_items" {
   assert_equal '' "${LOG_COMMAND_STACK_TRACE_ITEMS[*]}"
-  set_log_command_stack_trace_items
+  @go.set_log_command_stack_trace_items
   lines=("${LOG_COMMAND_STACK_TRACE_ITEMS[@]}")
   assert_lines_match \
     "^  $_GO_CORE_DIR/lib/log:[0-9]+ _@go.log_command_invoke$" \
@@ -45,17 +45,17 @@ teardown() {
 }
 
 @test "$SUITE: format_log_label" {
-  run format_log_label INFO
+  run @go.format_log_label INFO
   assert_success
 
   local expected_message
   printf -v expected_message '%b' "$output Hello, World!\e[0m"
 
-  _GO_LOG_FORMATTING='true' run_log_script '@go.log INFO Hello, World!'
+  _GO_LOG_FORMATTING='true' @go.run_log_script '@go.log INFO Hello, World!'
   assert_success "$expected_message"
 }
 
 @test "$SUITE: format_log_label exits if log level label invalid" {
-  run format_log_label FOOBAR
+  run @go.format_log_label FOOBAR
   assert_failure 'Unknown log level label: FOOBAR'
 }

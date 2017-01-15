@@ -4,7 +4,7 @@ load ../environment
 load "$_GO_CORE_DIR/lib/testing/log"
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 run_log_script_and_assert_status_and_output() {
@@ -12,7 +12,7 @@ run_log_script_and_assert_status_and_output() {
   local num_errors
   local expected
 
-  run_log_script "$@" \
+  @go.run_log_script "$@" \
     '@go.log INFO  FYI' \
     '@go.log RUN   echo foo' \
     '@go.log WARN  watch out' \
@@ -25,9 +25,9 @@ run_log_script_and_assert_status_and_output() {
       WARN  'watch out'
       ERROR 'uh-oh'
       FATAL 'oh noes!'
-      "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")")
+      "$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")")
 
-    assert_log_equals "${expected[@]}"
+    @go.assert_log_equals "${expected[@]}"
     return_from_bats_assertion "$?"
   else
     return_from_bats_assertion 1
@@ -37,16 +37,16 @@ run_log_script_and_assert_status_and_output() {
 @test "$SUITE: exit if adding output file after logging already initiaized" {
   local log_file="$TEST_GO_ROOTDIR/all.log"
 
-  run_log_script \
+  @go.run_log_script \
     "@go.log INFO Hello, World!" \
     "@go.log_add_output_file '$log_file'"
   assert_failure
-  assert_log_equals \
+  @go.assert_log_equals \
     INFO 'Hello, World!' \
     FATAL "Can't add new output file $log_file; logging already initialized" \
-    "$(stack_trace_item "$_GO_CORE_DIR/lib/log" '@go.log_add_output_file' \
+    "$(@go.stack_trace_item "$_GO_CORE_DIR/lib/log" '@go.log_add_output_file' \
       "    @go.log FATAL \"Can't add new output file \$output_file;\" \\")" \
-    "$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
+    "$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 
 @test "$SUITE: add an output file for all log levels" {
@@ -62,11 +62,11 @@ run_log_script_and_assert_status_and_output() {
 }
 
 @test "$SUITE: force formatted output in log file" {
-  _GO_LOG_FORMATTING='true' run_log_script \
+  _GO_LOG_FORMATTING='true' @go.run_log_script \
     "@go.log_add_output_file '$TEST_GO_ROOTDIR/info.log' 'INFO'" \
     "@go.log INFO Hello, World!"
   assert_success
-  assert_log_equals "$(format_log_label INFO)" 'Hello, World!'
+  @go.assert_log_equals "$(@go.format_log_label INFO)" 'Hello, World!'
   assert_file_equals "$TEST_GO_ROOTDIR/info.log" "${lines[@]}"
 }
 
@@ -92,7 +92,7 @@ run_log_script_and_assert_status_and_output() {
   assert_file_lines_match "$TEST_GO_ROOTDIR/error.log" \
     '^ERROR +uh-oh$' \
     '^FATAL +oh noes!$' \
-    "^$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")\$"
+    "^$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")\$"
 }
 
 @test "$SUITE: add output files for a mix of levels" {
@@ -113,5 +113,5 @@ run_log_script_and_assert_status_and_output() {
   assert_file_lines_match "$TEST_GO_ROOTDIR/error.log" \
     '^ERROR +uh-oh$' \
     '^FATAL +oh noes!$' \
-    "^$(stack_trace_item_from_offset "$TEST_GO_SCRIPT")\$"
+    "^$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")\$"
 }

@@ -4,12 +4,12 @@ load environment
 load commands/helpers
 
 setup() {
-  create_test_go_script '@go "$@"'
+  @go.create_test_go_script '@go "$@"'
   find_builtins
 }
 
 teardown() {
-  remove_test_go_rootdir
+  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: complete help flag variations" {
@@ -112,7 +112,7 @@ teardown() {
 }
 
 @test "$SUITE: invoke command script completion" {
-  create_test_command_script foo \
+  @go.create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  # Tab completions' \
     '  echo "bar" "baz" "quux"' \
@@ -138,7 +138,7 @@ teardown() {
 }
 
 @test "$SUITE: command script completion not detected without comment" {
-  create_test_command_script foo \
+  @go.create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  echo "bar" "baz" "quux"' \
     'fi'
@@ -151,7 +151,7 @@ teardown() {
 }
 
 @test "$SUITE: subcommand script completion" {
-  create_test_command_script foo \
+  @go.create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  # Tab completions' \
     '  echo "baz" "quux"' \
@@ -159,7 +159,7 @@ teardown() {
 
   mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
 
-  create_test_command_script foo.d/bar \
+  @go.create_test_command_script foo.d/bar \
     'if [[ "$1" == "--complete" ]]; then ' \
     '  # Tab completions' \
     '  echo "plugh" "xyzzy"' \
