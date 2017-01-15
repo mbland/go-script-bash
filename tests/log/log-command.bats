@@ -115,9 +115,6 @@ teardown() {
 }
 
 @test "$SUITE: log failing command to standard error with formatting" {
-  local formatted_run_level_label="$(format_log_label RUN)"
-  local formatted_error_level_label="$(format_log_label ERROR)"
-
   _GO_LOG_FORMATTING='true' run_log_script \
       'function failing_function() {' \
       '  printf "%b\n" "\e[1m$*\e[0m" >&2' \
@@ -127,9 +124,9 @@ teardown() {
 
   assert_failure
   assert_log_equals \
-    "$formatted_run_level_label" 'failing_function foo bar baz' \
+    "$(format_log_label RUN)" 'failing_function foo bar baz' \
     "$(printf '%b' '\e[1mfoo bar baz\e[0m')" \
-    "$formatted_error_level_label" \
+    "$(format_log_label ERROR)" \
       'failing_function foo bar baz (exit status 127)'
   assert_log_file_equals "$TEST_LOG_FILE" "${lines[@]}"
 }

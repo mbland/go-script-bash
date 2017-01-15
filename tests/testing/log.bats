@@ -48,12 +48,6 @@ teardown() {
   assert_success "$expected_message"
 }
 
-@test "$SUITE: format_log_label exits if log module already initialized" {
-  __GO_LOG_INIT='true' run format_log_label INFO
-  assert_failure
-  assert_output_matches '^`format_log_label` must be called before any other '
-}
-
 @test "$SUITE: format_log_label exits if log level label invalid" {
   run format_log_label FOOBAR
   assert_failure 'Unknown log level label: FOOBAR'

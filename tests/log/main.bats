@@ -23,7 +23,7 @@ teardown() {
     'echo Goodbye, World!'
   assert_success
   assert_log_equals \
-    "$(format_log_label INFO)" '\e[1m\e[36mHello, World!' \
+    "$(format_log_label INFO)" "$(printf '%b' '\e[1m\e[36mHello, World!')" \
     'Goodbye, World!'
 }
 

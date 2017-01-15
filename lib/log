@@ -253,7 +253,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
   if @go.log_timestamp; then
     __go_log_timestamp+=' '
   fi
-  printf -v log_msg -- '%s%b %b' "$__go_log_timestamp" \
+  printf -v log_msg -- '%s%s %b' "$__go_log_timestamp" \
     "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}" "${args[*]}\\e[0m"
 
   local __go_log_level_file_descriptors=('1')
@@ -668,6 +668,8 @@ _@go.log_format_level_labels() {
   @go.pad_items __GO_LOG_LEVELS_FORMATTED "${__GO_LOG_LEVELS_FORMATTED[@]}"
   @go.zip_items __GO_LOG_LEVELS_FORMAT_CODES __GO_LOG_LEVELS_FORMATTED '' \
     __GO_LOG_LEVELS_FORMATTED
+  @go.array_printf __GO_LOG_LEVELS_FORMATTED '%b' \
+    "${__GO_LOG_LEVELS_FORMATTED[@]}"
 }
 
 # Returns the set of file descriptors for the specified log level index.
