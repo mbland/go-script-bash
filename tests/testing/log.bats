@@ -11,6 +11,13 @@ teardown() {
   remove_test_go_rootdir
 }
 
+@test "$SUITE: log timestamps are disabled for testing by default" {
+  assert_equal '' "$_GO_LOG_TIMESTAMP_FORMAT"
+  _GO_LOG_TIMESTAMP_FORMAT='%Y:%m:%d %H:%M:%S'
+  . "$_GO_CORE_DIR/lib/testing/log"
+  assert_equal '' "$_GO_LOG_TIMESTAMP_FORMAT"
+}
+
 @test "$SUITE: create_log_script and run_log_script without log file" {
   export TEST_LOG_FILE="$TEST_GO_ROOTDIR/test-script.log"
   TEST_LOG_FILE= run_log_script '@go.log INFO Hello, World!'
