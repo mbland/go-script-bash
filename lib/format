@@ -23,7 +23,7 @@
 # provides a portable means of printing to an array variable while avoiding the
 # use of `eval`.
 #
-# NOTE: By default, this function relies on the ASCII Record Separator character
+# NOTE: By default, this function relies on the ASCII Unit Separator character
 # ($'\x1f') to delimit generated strings before splitting them into the result
 # array. If you have strings containing this character, you can set a new
 # delimiter via `_GO_ARRAY_PRINTF_DELIMITER`.
