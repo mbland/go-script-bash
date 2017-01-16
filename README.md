@@ -195,8 +195,8 @@ scripts can be in any other interpreted language.__
 First you'll need a copy of this framework available in your project sources.
 Archives are available at:
 
-- https://github.com/mbland/go-script-bash/archive/v1.2.1.tar.gz
-- https://github.com/mbland/go-script-bash/archive/v1.2.1.zip
+- https://github.com/mbland/go-script-bash/archive/v1.3.0.tar.gz
+- https://github.com/mbland/go-script-bash/archive/v1.3.0.zip
 
 You can also add this repository to your project as a [`Git
 submodule`](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
@@ -365,11 +365,14 @@ For more information, run `./go modules --help log`.
 #### Bats test assertions and helpers
 
 The assertions and helpers from the test suite have been extracted into the
-`lib/bats/assertions` and `lib/bats/helpers` libraries. While these are not
-modules you can import with `_GO_USE_MODULES`, they are completely independent
-of the rest of the core framework and you may source them in your own Bats
-tests. (Whether or not these will ever become a separate library remains an open
-question.)
+`lib/bats/assertions`, `lib/bats/helpers`, and `lib/bats/assertion-test-helpers`
+libraries. While these are not modules you can import with `_GO_USE_MODULES`,
+they are completely independent of the rest of the core framework and you may
+source them in your own Bats tests. (Whether or not these will ever become a
+separate library remains an open question.)
+
+Variables, helper functions, and assertions for testing features based on the
+core framework are available in the `lib/testing` directory.
 
 Read the comments from each file for more information.
 
