@@ -254,7 +254,7 @@ project/
 
 This structure implies that the first line of your `./go` script will be:
 ```bash
-. "${0%/*}/scripts/go-script-bash/go-core.bash" "scripts/bin"
+. "${0%/*}/scripts/go-script-bash/go-core.bash" "scripts"
 ```
 
 The precedence for discovering commands is:
