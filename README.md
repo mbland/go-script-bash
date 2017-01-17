@@ -2,8 +2,10 @@
 
 Source: https://github.com/mbland/go-script-bash
 
-[![Continuous integration status](https://travis-ci.org/mbland/go-script-bash.png?branch=master)](https://travis-ci.org/mbland/go-script-bash)
-[![Coverage Status](https://coveralls.io/repos/github/mbland/go-script-bash/badge.svg?branch=master)](https://coveralls.io/github/mbland/go-script-bash?branch=master)
+[![Latest release](https://img.shields.io/github/release/mbland/go-script-bash.svg)](https://github.com/mbland/go-script-bash/releases/latest)
+[![License](https://img.shields.io/github/license/mbland/go-script-bash.svg)](https://github.com/mbland/go-script-bash/blob/master/LICENSE.md)
+[![Continuous integration status](https://img.shields.io/travis/mbland/go-script-bash/master.svg)](https://travis-ci.org/mbland/go-script-bash)
+[![Coverage Status](https://img.shields.io/coveralls/mbland/go-script-bash/master.svg)](https://coveralls.io/github/mbland/go-script-bash?branch=master)
 
 A `./go` script aims to abstract away many of the steps needed to develop (and
 sometimes deploy) a software project. It is a replacement for READMEs and other
