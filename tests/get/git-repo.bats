@@ -68,6 +68,8 @@ teardown() {
   mkdir -p "$TEST_GO_ROOTDIR/test-repo"
   cd "$TEST_GO_ROOTDIR/test-repo"
   git init
+  git config user.email 'mbland@example.com'
+  git config user.name 'Mike Bland'
   printf '# This is a test\n' >README.md
   git add README.md
   git commit -m 'Initial commit'
