@@ -62,21 +62,37 @@ teardown() {
   assert_failure "${expected[*]}"
 }
 
-@test "$SUITE: use the real git to clone the framework repo" {
-  if ! command -v git >/dev/null; then
-    skip "git not installed on the system"
-  fi
+@test "$SUITE: use the real git to create and clone a repo" {
+  skip_if_system_missing git
 
-  run "$TEST_GO_SCRIPT" get git-repo "$_GO_CORE_DIR" v1.3.0 go-core
+  mkdir -p "$TEST_GO_ROOTDIR/test-repo"
+  cd "$TEST_GO_ROOTDIR/test-repo"
+  git init
+  printf '# This is a test\n' >README.md
+  git add README.md
+  git commit -m 'Initial commit'
+  printf 'Hello, World!\n' >hello.txt
+  git add hello.txt
+  git commit -m 'Add hello.txt'
+  printf 'Goodbye, World!\n' >goodbye.txt
+  git add goodbye.txt
+  git commit -m 'Add goodbye.txt' goodbye.txt
+  git tag v1.0.0
+
+  local last_commit_log="$(git log --oneline -n 1)"
+
+  cd "$TEST_GO_ROOTDIR"
+  run "$TEST_GO_SCRIPT" get git-repo "$TEST_GO_ROOTDIR/test-repo" \
+    'v1.0.0' 'test-clone'
 
   # Note that we add a `file://` prefix to local repositories.
-  local expected=("Successfully cloned \"file://$_GO_CORE_DIR\""
-    'reference "v1.3.0" into "go-core".')
+  local expected=("Successfully cloned \"file://$TEST_GO_ROOTDIR/test-repo\""
+    "reference \"v1.0.0\" into \"test-clone\".")
   assert_success "${expected[*]}"
 
-  [ -d "$TEST_GO_ROOTDIR/go-core/.git" ]
-  cd "$TEST_GO_ROOTDIR/go-core"
+  [ -d "$TEST_GO_ROOTDIR/test-clone/.git" ]
+  cd "$TEST_GO_ROOTDIR/test-clone"
 
   run git log --oneline
-  assert_success 'daa9f5d go-script-bash v1.3.0'
+  assert_success "$last_commit_log"
 }

@@ -202,8 +202,10 @@ teardown() {
   PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" \
     get file -f - "$source_path"
 
-  # Note that `wget` is using "smart" quotes around `file`.
-  assert_failure "file://$source_path: Unsupported scheme ‘file’." \
-    "Failed to download: file://$source_path" \
-    'Consider installing `curl` and trying again.'
+  # Note that `wget` uses "smart" quotes around `file` on some platforms, so we
+  # have to use a regex.
+  assert_failure
+  assert_lines_match "^file://$source_path: Unsupported scheme .file.\.$" \
+    "^Failed to download: file://$source_path$" \
+    '^Consider installing `curl` and trying again\.$'
 }
