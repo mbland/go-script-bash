@@ -125,6 +125,28 @@ teardown() {
   fi
 }
 
+@test "$SUITE: skip if system missing" {
+  create_bats_test_script 'test.bats' \
+    '#! /usr/bin/env bats' \
+    "load '$_GO_CORE_DIR/lib/bats/helpers'" \
+    '@test "skip if missing" { skip_if_system_missing foo bar baz; }'
+
+  stub_program_in_path 'foo'
+  stub_program_in_path 'bar'
+  stub_program_in_path 'baz'
+
+  run bats "$BATS_TEST_ROOTDIR/test.bats"
+  assert_success
+  assert_lines_equal '1..1' \
+    'ok 1 skip if missing'
+
+  rm "$BATS_TEST_BINDIR"/*
+  run bats "$BATS_TEST_ROOTDIR/test.bats"
+  assert_success
+  assert_lines_equal '1..1' \
+    'ok 1 # skip (foo, bar, baz not installed on the system) skip if missing'
+}
+
 @test "$SUITE: test_join fails if result variable name is invalid" {
   create_bats_test_script test-script \
     ". '$_GO_CORE_DIR/lib/bats/helpers'" \

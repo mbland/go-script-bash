@@ -178,6 +178,26 @@ skip_if_cannot_trigger_file_permission_failure() {
   fi
 }
 
+# Skips the current test if any of the listed system programs are not installed
+#
+# Arguments:
+#   ...:  System programs that must be present for the test case to proceed
+skip_if_system_missing() {
+  local missing=()
+  local program
+
+  for program in "$@"; do
+    if ! command -v "$program" >/dev/null; then
+      missing+=("$program")
+    fi
+  done
+
+  if [[ "${#missing[@]}" -ne '0' ]]; then
+    printf -v missing '%s, ' "${missing[@]}"
+    skip "${missing%, } not installed on the system"
+  fi
+}
+
 # Joins lines using a delimiter into a user-defined variable
 #
 # Just like `@go.join` from `lib/strings`, except that it doesn't depend on any
