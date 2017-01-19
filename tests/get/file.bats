@@ -25,7 +25,7 @@ teardown() {
   run "$TEST_GO_SCRIPT" get file --complete 0
   assert_success '-f'
 
-  local expected
+  local expected=()
   local item
   while IFS= read -r item; do
     expected+=("$item")
