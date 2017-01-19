@@ -1,4 +1,0 @@
-[submodule "test/bats"]
-	path = tests/bats
-	url = https://github.com/sstephenson/bats
-	shallow = true

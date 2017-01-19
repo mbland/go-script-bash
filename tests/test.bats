@@ -88,14 +88,12 @@ _trim_expected() {
 
   stub_program_in_path 'git' 'echo "GIT ARGV: $*"'
 
-  # This will fail because we didn't create the tests/ directory, but git should
-  # have been called correctly.
+  # Note that rather than running our own `./go` script, we're running
+  # `TEST_GO_SCRIPT` instead. This will fail because we didn't create the tests/
+  # directory, but `git` should have been called correctly.
   run "$TEST_GO_SCRIPT" test --list test
-
-  # Since `test` will try to clone the submodule, but the `git` stub doesn't
-  # actually do anything, `@go.bats_main` will then call `@go.bats_clone`.
   assert_failure
-  assert_lines_match '^GIT ARGV: submodule update --init tests/bats$' \
+  assert_lines_match \
     "^GIT ARGV: clone .* -b $_GO_BATS_VERSION $_GO_BATS_URL $_GO_BATS_DIR\$" \
     "^Successfully cloned \"$_GO_BATS_URL\" .* \"$_GO_BATS_DIR\"" \
     '^Root directory argument tests is not a directory\.$'
