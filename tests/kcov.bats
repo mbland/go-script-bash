@@ -88,16 +88,14 @@ write_kcov_dummy() {
 
   TRAVIS_OS_NAME= run "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'
-  local expected_output=(
-    "Cloning kcov repository from $__KCOV_URL..."
-    "Successfully cloned \"$__KCOV_URL\" reference \"$__KCOV_VERSION\" into "
-    'Installing dev packages to build kcov...'
-    'Building kcov...')
   assert_success
-  assert_lines_match "${expected_output[@]}"
+  assert_lines_match "Cloning kcov repository from $__KCOV_URL..." \
+    "Successfully cloned \"$__KCOV_URL\" reference \"$__KCOV_VERSION\" into " \
+    'Installing dev packages to build kcov...' \
+    'Building kcov...'
 
   assert_file_matches "$BATS_TEST_BINDIR/git.out" \
-    "clone .* -b master $__KCOV_URL tests/kcov"
+    "clone .* -b $__KCOV_VERSION $__KCOV_URL tests/kcov"
 
   IFS=' '
   assert_file_equals "$BATS_TEST_BINDIR/sudo.out" \
