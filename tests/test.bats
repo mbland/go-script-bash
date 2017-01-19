@@ -70,7 +70,7 @@ _trim_expected() {
 }
 
 @test "$SUITE: open EDITOR on --edit" {
-  run env EDITOR='echo' ./go test --edit test aliases 'builtins*'
+  EDITOR='echo' run ./go test --edit test aliases 'builtins*'
   local expected=(
     'tests/test.bats' 'tests/aliases.bats' 'tests/builtins.bats'
     tests/builtins/*)
