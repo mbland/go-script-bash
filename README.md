@@ -452,12 +452,15 @@ run it as `bash ./go` every time.
 
 #### Recommended utilities
 
-The framework as-is does not require any other external tools. However, in order
-for the automatic command help and output formatting to work, you'll need the
-following utilities installed:
+Most of the framework as-is does not require any other external tools. However,
+in order for the automatic command help and output formatting to work, you'll
+need the following utilities installed:
 
-- `fold` (coreutils)
-- `tput` (ncurses) on Linux, OS X, UNIX; `mode.com` should be present on Windows
+- `tput` (ncurses) on Linux, OS X, UNIX
+- `mode.com` should be present on Windows
+
+To use the `get` builtin, the `curl`, `wget`, and `git` programs must be
+installed on your system.
 
 ### Open Source License
 
