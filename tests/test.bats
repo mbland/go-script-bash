@@ -82,19 +82,23 @@ _trim_expected() {
   assert_failure '"foo*" does not match any .bats files in tests.'
 }
 
-@test "$SUITE: update bats submodule if not present" {
+@test "$SUITE: update bats submodule/clone bats repo if not present" {
   @go.create_test_go_script '@go "$@"'
   cp "$_GO_ROOTDIR/scripts/test" "$TEST_GO_SCRIPTS_DIR"
+
   stub_program_in_path 'git' 'echo "GIT ARGV: $*"'
 
   # This will fail because we didn't create the tests/ directory, but git should
   # have been called correctly.
   run "$TEST_GO_SCRIPT" test --list test
-  local expected_output=(
-    'GIT ARGV: submodule update --init tests/bats'
-    'Root directory argument tests is not a directory.')
-  local IFS=$'\n'
-  assert_failure "${expected_output[*]}"
+
+  # Since `test` will try to clone the submodule, but the `git` stub doesn't
+  # actually do anything, `@go.bats_main` will then call `@go.bats_clone`.
+  assert_failure
+  assert_lines_match '^GIT ARGV: submodule update --init tests/bats$' \
+    "^GIT ARGV: clone .* -b $_GO_BATS_VERSION $_GO_BATS_URL $_GO_BATS_DIR\$" \
+    "^Successfully cloned \"$_GO_BATS_URL\" .* \"$_GO_BATS_DIR\"" \
+    '^Root directory argument tests is not a directory\.$'
 }
 
 write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
@@ -120,21 +124,21 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
     'tests/kcov'
     'tests/coverage'
     'go,go-core.bash,lib/,libexec/,scripts/'
-    '/tmp,tests/bats/'
+    '/tmp/,tests/bats/'
     'https://coveralls.io/github/mbland/go-script-bash'
     "$TEST_GO_SCRIPT"
     'test'
     'foo'
     'bar/baz')
 
-  run env __COVERAGE_RUN= TRAVIS_OS_NAME= "${test_cmd_argv[@]}"
-  local IFS=$'\n'
-  assert_success "${expected_kcov_args[*]}"
+  __GO_COVERAGE_RUN= TRAVIS_OS_NAME= run "${test_cmd_argv[@]}"
+  assert_lines_match "${expected_kcov_args[@]}" \
+    '^real[[:space:]]+' '^user[[:space:]]+' '^sys[[:space:]]+'
 }
 
 # This test also makes sure the invocation doesn't cause a second recursive call
-# to `run_kcov` thanks to the `__COVERAGE_RUN` variable.  Previously, seemingly
-# successful coverage runs (added in commit
+# to `run_kcov` thanks to the `__GO_COVERAGE_RUN` variable.  Previously,
+# seemingly successful coverage runs (added in commit
 # 4440832c257c3fa455d7d773ee56fd66c4431a19) were causing Travis failures,
 # ameliorated in commit cc284d11e010442392029afdcddc5b1c761ad9a0. These were
 # due to the `run_kcov` getting called recursively and failing because the first
@@ -154,12 +158,12 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
 # - `kcov` sends coverage info to Coveralls, but exits with an error.
 # - Travis build reports failure.
 #
-# With the `__COVERAGE_RUN` variable, the recursive call is now short-circuited.
+# With the `__GO_COVERAGE_RUN` variable, the recursive call is short-circuited.
 @test "$SUITE: run coverage by default on Travis Linux" {
   write_bats_dummy_stub_kcov_lib_and_copy_test_script
   @go.create_test_go_script '@go "$@"'
 
-  run env __COVERAGE_RUN= TRAVIS_OS_NAME='linux' "$TEST_GO_SCRIPT" test
+  __GO_COVERAGE_RUN= TRAVIS_OS_NAME='linux' run "$TEST_GO_SCRIPT" test
   assert_success
   assert_line_equals 0 'tests/kcov'
 }

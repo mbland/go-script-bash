@@ -30,19 +30,28 @@ quotify_expected() {
   local search_paths=("[0]=\"$_GO_CORE_DIR/libexec\""
     "[1]=\"$TEST_GO_SCRIPTS_DIR\"")
 
-  local expected=("declare -rx _GO_CMD=\"$TEST_GO_SCRIPT\""
+  local expected=("declare -x _GO_BATS_COVERAGE_DIR=\"$_GO_BATS_COVERAGE_DIR\""
+    "declare -x _GO_BATS_DIR=\"$_GO_BATS_DIR\""
+    "declare -x _GO_BATS_PATH=\"$_GO_BATS_PATH\""
+    "declare -x _GO_BATS_URL=\"$_GO_BATS_URL\""
+    "declare -x _GO_BATS_VERSION=\"$_GO_BATS_VERSION\""
+    "declare -rx _GO_CMD=\"$TEST_GO_SCRIPT\""
     'declare -ax _GO_CMD_ARGV=()'
     'declare -ax _GO_CMD_NAME=([0]="vars")'
+    "declare -x _GO_COLLECT_BATS_COVERAGE=\"$_GO_COLLECT_BATS_COVERAGE\""
     "declare -rx _GO_CORE_DIR=\"$_GO_CORE_DIR\""
     "declare -rx _GO_CORE_URL=\"$_GO_CORE_URL\""
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
+    "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     'declare -a _GO_IMPORTED_MODULES=()'
+    "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
     'declare -- _GO_PLUGINS_DIR=""'
     'declare -a _GO_PLUGINS_PATHS=()'
     "declare -rx _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
     "declare -- _GO_SCRIPTS_DIR=\"$TEST_GO_SCRIPTS_DIR\""
     "declare -a _GO_SEARCH_PATHS=(${search_paths[*]})"
+    "declare -x _GO_TEST_DIR=\"$_GO_TEST_DIR\""
     "declare -rx _GO_USE_MODULES=\"$_GO_CORE_DIR/lib/internal/use\"")
 
   quotify_expected
@@ -78,19 +87,28 @@ quotify_expected() {
     '[1]="format"'
     '[2]="strings"'
     '[3]="validation"')
-  local expected=("declare -rx _GO_CMD=\"$TEST_GO_SCRIPT\""
+  local expected=("declare -x _GO_BATS_COVERAGE_DIR=\"$_GO_BATS_COVERAGE_DIR\""
+    "declare -x _GO_BATS_DIR=\"$_GO_BATS_DIR\""
+    "declare -x _GO_BATS_PATH=\"$_GO_BATS_PATH\""
+    "declare -x _GO_BATS_URL=\"$_GO_BATS_URL\""
+    "declare -x _GO_BATS_VERSION=\"$_GO_BATS_VERSION\""
+    "declare -rx _GO_CMD=\"$TEST_GO_SCRIPT\""
     "declare -ax _GO_CMD_ARGV=(${cmd_argv[*]})"
     'declare -ax _GO_CMD_NAME=([0]="test-command" [1]="test-subcommand")'
+    "declare -x _GO_COLLECT_BATS_COVERAGE=\"$_GO_COLLECT_BATS_COVERAGE\""
     "declare -rx _GO_CORE_DIR=\"$_GO_CORE_DIR\""
     "declare -rx _GO_CORE_URL=\"$_GO_CORE_URL\""
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
+    "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     "declare -a _GO_IMPORTED_MODULES=(${expected_modules[*]})"
+    "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
     "declare -- _GO_PLUGINS_DIR=\"$TEST_GO_PLUGINS_DIR\""
     "declare -a _GO_PLUGINS_PATHS=(${plugins_paths[*]})"
     "declare -rx _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
     "declare -- _GO_SCRIPTS_DIR=\"$TEST_GO_SCRIPTS_DIR\""
     "declare -a _GO_SEARCH_PATHS=(${search_paths[*]})"
+    "declare -x _GO_TEST_DIR=\"$_GO_TEST_DIR\""
     "declare -rx _GO_USE_MODULES=\"$_GO_CORE_DIR/lib/internal/use\"")
 
   quotify_expected
@@ -114,13 +132,22 @@ quotify_expected() {
     '}'
   run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy
   assert_success
-  assert_lines_equal "_GO_CMD: $TEST_GO_SCRIPT" \
+  assert_lines_equal "_GO_BATS_COVERAGE_DIR: $_GO_BATS_COVERAGE_DIR" \
+    "_GO_BATS_DIR: $_GO_BATS_DIR" \
+    "_GO_BATS_PATH: $_GO_BATS_PATH" \
+    "_GO_BATS_URL: $_GO_BATS_URL" \
+    "_GO_BATS_VERSION: $_GO_BATS_VERSION" \
+    "_GO_CMD: $TEST_GO_SCRIPT" \
     $'_GO_CMD_ARGV: foo\x1fbar\x1fbaz quux\x1fxyzzy' \
     $'_GO_CMD_NAME: test-command\x1ftest-subcommand' \
+    "_GO_COLLECT_BATS_COVERAGE: $_GO_COLLECT_BATS_COVERAGE" \
     "_GO_CORE_DIR: $_GO_CORE_DIR" \
     "_GO_CORE_URL: $_GO_CORE_URL" \
     "_GO_CORE_VERSION: $_GO_CORE_VERSION" \
+    "_GO_COVERALLS_URL: $_GO_COVERALLS_URL" \
+    "_GO_KCOV_DIR: $_GO_KCOV_DIR" \
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR" \
     "_GO_SCRIPT: $TEST_GO_SCRIPT" \
+    "_GO_TEST_DIR: $_GO_TEST_DIR" \
     "_GO_USE_MODULES: $_GO_USE_MODULES"
 }
