@@ -82,18 +82,22 @@ write_kcov_dummy() {
 @test "$SUITE: clone and build" {
   write_kcov_go_script '__check_kcov_dev_packages_installed() { return 1; }' \
     '__clone_and_build_kcov tests/kcov'
-  echo 'mkdir -p "$3"' >> "$BATS_TEST_BINDIR/git"
+
+  # Use `mkdir` to create the target directory of `git clone`.
+  echo 'mkdir -p "${@:$(($# - 1))}"' >> "$BATS_TEST_BINDIR/git"
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'
   local expected_output=(
     "Cloning kcov repository from $__KCOV_URL..."
+    "Successfully cloned \"$__KCOV_URL\" reference \"$__KCOV_VERSION\" into "
     'Installing dev packages to build kcov...'
     'Building kcov...')
-  local IFS=$'\n'
-  assert_success "${expected_output[*]}"
+  assert_success
+  assert_lines_match "${expected_output[@]}"
 
-  assert_file_equals "$BATS_TEST_BINDIR/git.out" "clone $__KCOV_URL tests/kcov"
+  assert_file_matches "$BATS_TEST_BINDIR/git.out" \
+    "clone .* -b master $__KCOV_URL tests/kcov"
 
   IFS=' '
   assert_file_equals "$BATS_TEST_BINDIR/sudo.out" \
@@ -108,11 +112,9 @@ write_kcov_dummy() {
 
   run env TRAVIS_OS_NAME= "$TEST_GO_SCRIPT"
   . 'lib/kcov-ubuntu'
-  local expected_output=(
-    "Cloning kcov repository from $__KCOV_URL..."
-    "Failed to clone $__KCOV_URL into tests/kcov.")
-  local IFS=$'\n'
-  assert_failure "${expected_output[*]}"
+  assert_failure
+  assert_lines_match "Cloning kcov repository from $__KCOV_URL\.\.\." \
+    "Failed to clone \"$__KCOV_URL\" .* into \"tests/kcov\"\."
 }
 
 @test "$SUITE: clone and build fails if install fails" {
