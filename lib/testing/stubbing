@@ -33,8 +33,11 @@
 # YOU MUST CALL THIS FROM TEARDOWN IF YOU USE `@go.create_core_module_stub`!
 @go.restore_stubbed_core_modules() {
   local module
+  local stubbed_modules=("$_GO_CORE_DIR/lib"/*.stubbed)
 
-  for module in "$_GO_CORE_DIR/lib"/*.stubbed; do
-    mv "$module" "${module%.stubbed}"
-  done
+  if [[ "${stubbed_modules#$_GO_CORE_DIR/lib/}" != '*.stubbed' ]]; then
+    for module in "${stubbed_modules[@]}"; do
+      mv "$module" "${module%.stubbed}"
+    done
+  fi
 }
