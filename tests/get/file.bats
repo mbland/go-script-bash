@@ -200,27 +200,27 @@ teardown() {
 @test "$SUITE: use real curl to copy a local file" {
   skip_if_system_missing 'curl'
 
-  local source_path="$TEST_GO_ROOTDIR/hello.txt"
+  # Since curl on MSYS2 can't handle file:/// URLs that contain root paths
+  # that aren't literally on the C: filesystem, and `BATS_TMPDIR` falls into
+  # that category, we'll use the ./go script itself as input.
   local download_path="$TEST_GO_ROOTDIR/download.txt"
-
   mkdir -p "$TEST_GO_ROOTDIR"
-  printf 'Hello, World!\n' >"$source_path"
-  run "$TEST_GO_SCRIPT" get file -f "$download_path" "$source_path"
+  run "$TEST_GO_SCRIPT" get file -f "$download_path" "$_GO_SCRIPT"
+
+  local source_path="$_GO_SCRIPT"
+  if [[ "$source_path" =~ ^/[^/]+ && -d "$BASH_REMATCH/Windows" ]]; then
+    source_path="${BASH_REMATCH}:/${source_path#$BASH_REMATCH/}"
+  fi
 
   assert_success "Downloaded \"file://$source_path\" as: $download_path"
-  assert_file_equals "$download_path" 'Hello, World!'
+  set_bats_output_and_lines_from_file "$_GO_SCRIPT"
+  assert_file_equals "$download_path" "${lines[@]}"
 }
 
 @test "$SUITE: use real curl to print a local file to standard output" {
   skip_if_system_missing 'curl'
-
-  local source_path="$TEST_GO_ROOTDIR/hello.txt"
-
-  mkdir -p "$TEST_GO_ROOTDIR"
-  printf 'Hello, World!\n' >"$source_path"
-  run "$TEST_GO_SCRIPT" get file -f - "$source_path"
-
-  assert_success 'Hello, World!'
+  run "$TEST_GO_SCRIPT" get file -f - "$_GO_SCRIPT"
+  assert_success "$(< "$_GO_SCRIPT")"
 }
 
 @test "$SUITE: use real fetch to print a local file to standard output" {

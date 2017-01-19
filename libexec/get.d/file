@@ -201,9 +201,12 @@ _@go.get_file() {
   fi
   download_dir="${download_dir:-$PWD}"
 
-  if [[ -e "$url" ]]; then
+  if [[ -f "$url" ]]; then
     if [[ "${url:0:1}" != '/' ]]; then
       url="${PWD}/${url}"
+    fi
+    if [[ "$url" =~ ^/[^/]+ && -d "$BASH_REMATCH/Windows" ]]; then
+      url="${BASH_REMATCH}:/${url#$BASH_REMATCH/}"
     fi
     url="file://${url}"
   fi
