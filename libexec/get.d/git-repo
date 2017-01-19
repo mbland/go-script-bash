@@ -22,7 +22,7 @@
 # Implements the script behavior per the top-level description
 #
 # The arguments are the same as in the script description.
-_@go.git_repo_impl() {
+_@go.get_git_repo_impl() {
   local repo_url="$1"
   local git_ref="$2"
   local clone_dir="$3"
@@ -43,10 +43,10 @@ _@go.git_repo_impl() {
   @go.printf 'Successfully cloned %s.\n' "$repo_msg"
 }
 
-# Parses the command line flags before invoking _@go.git_repo_impl
+# Parses the command line flags before invoking _@go.get_git_repo_impl
 #
 # The arguments are the same as in the script description.
-_@go.git_repo() {
+_@go.get_git_repo() {
   local repo_url="$1"
   local git_ref="$2"
   local clone_dir="$3"
@@ -68,7 +68,7 @@ _@go.git_repo() {
     repo_url="file://$repo_url"
   fi
 
-  _@go.git_repo_impl "$repo_url" "$git_ref" "$clone_dir"
+  _@go.get_git_repo_impl "$repo_url" "$git_ref" "$clone_dir"
 }
 
-_@go.git_repo "$@"
+_@go.get_git_repo "$@"
