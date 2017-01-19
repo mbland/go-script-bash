@@ -3,7 +3,6 @@
 # Builds kcov from scratch on Ubuntu to support Bash test coverage
 #
 # Exports:
-#
 #   run_kcov
 #     Downloads and compiles kcov if necessary, then runs tests under kcov
 #
@@ -20,6 +19,7 @@ readonly __KCOV_DEV_PACKAGES=(
   'zlib1g-dev'
 )
 readonly __KCOV_URL='https://github.com/SimonKagstrom/kcov'
+readonly __KCOV_VERSION='master'
 
 # Downloads and compiles kcov if necessary, then runs tests under kcov
 #
@@ -103,8 +103,7 @@ __clone_and_build_kcov() {
   if [[ ! -d "$kcov_dir" ]]; then
     @go.printf 'Cloning kcov repository from %s...\n' "$__KCOV_URL"
 
-    if ! git clone "$__KCOV_URL" "$kcov_dir"; then
-      @go.printf "Failed to clone $__KCOV_URL into $kcov_dir." >&2
+    if ! @go get git-repo "$__KCOV_URL" "$__KCOV_VERSION" "$kcov_dir"; then
       return 1
     fi
   fi

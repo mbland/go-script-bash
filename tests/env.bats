@@ -26,7 +26,7 @@ teardown() {
 
 @test "$SUITE: error if no implementation available for SHELL" {
   local shell='nonexistent-sh'
-  run env SHELL="$shell" "$TEST_GO_SCRIPT" env
+  SHELL="$shell" run "$TEST_GO_SCRIPT" env
 
   assert_failure
   assert_line_equals 0 "The $shell shell currently isn't supported."
@@ -37,7 +37,7 @@ teardown() {
   local go_script="$TEST_GO_ROOTDIR/go script"
   mv "$TEST_GO_SCRIPT" "$go_script"
 
-  run env SHELL='bash' "$go_script" env
+  SHELL='bash' run "$go_script" env
   assert_failure
 
   local expected="ERROR: the \"${go_script#$TEST_GO_ROOTDIR/}\" script "
@@ -49,7 +49,7 @@ teardown() {
   local go_script="$TEST_GO_ROOTDIR/my-go"
   mv "$TEST_GO_SCRIPT" "$go_script"
 
-  run env SHELL='bash' "$go_script" env
+  SHELL='bash' run "$go_script" env
   assert_success
   assert_line_matches 0 "Define the \"${go_script#$TEST_GO_ROOTDIR/}\" function"
   assert_line_equals 2 "eval \"\$($go_script env -)\""
@@ -58,7 +58,7 @@ teardown() {
 @test "$SUITE: error if shell impl doesn't contain eval line" {
   echo '' > "$_GO_ROOTDIR/lib/internal/env/badsh"
 
-  run env SHELL='badsh' "$TEST_GO_SCRIPT" env
+  SHELL='badsh' run "$TEST_GO_SCRIPT" env
   rm "$_GO_ROOTDIR/lib/internal/env/badsh"
 
   assert_failure
@@ -68,7 +68,7 @@ teardown() {
 }
 
 @test "$SUITE: error if function name contains spaces" {
-  run env SHELL='bash' "$TEST_GO_SCRIPT" env 'foo bar'
+  SHELL='bash' run "$TEST_GO_SCRIPT" env 'foo bar'
   assert_failure
   assert_output_matches 'ERROR: "foo bar" must not contain spaces'
 }
@@ -78,7 +78,7 @@ teardown() {
   local go_script="$TEST_GO_ROOTDIR/$script_name"
   mv "$TEST_GO_SCRIPT" "$go_script"
 
-  run env SHELL='bash' "$go_script" env -
+  SHELL='bash' run "$go_script" env -
   assert_success
 
   ! command -v "_$script_name"
@@ -110,7 +110,7 @@ teardown() {
 
 @test "$SUITE: generate functions using specified name" {
   local func_name='never-collide-with-test-environment-go'
-  run env SHELL='bash' "$TEST_GO_SCRIPT" env "$func_name"
+  SHELL='bash' run "$TEST_GO_SCRIPT" env "$func_name"
   assert_success
 
   ! command -v "_$func_name"

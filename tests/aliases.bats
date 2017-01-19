@@ -99,7 +99,7 @@ load environment
   # Setting _GO_CMD will trick the script into thinking the shell function is
   # running it.
   
-  run env _GO_CMD='test-go' ./go aliases --help cd
+  _GO_CMD='test-go' run ./go aliases --help cd
   [ "$status" -eq '0' ]
 
   local expected=("test-go cd - Shell alias that will execute in $_GO_ROOTDIR")
@@ -109,7 +109,7 @@ load environment
   [ "${lines[1]}" == "${expected[1]}" ]
   [ -z "${lines[2]}" ]
 
-  run env _GO_CMD='test-go' ./go aliases --help pushd
+  _GO_CMD='test-go' run ./go aliases --help pushd
   [ "$status" -eq '0' ]
 
   expected[0]="${expected[0]/test-go cd/test-go pushd}"

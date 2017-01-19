@@ -21,7 +21,7 @@ load environment
 }
 
 @test "$SUITE: invoke editor on edit command" {
-  run env EDITOR=echo ./go edit 'editor invoked'
+  EDITOR=echo run ./go edit 'editor invoked'
   assert_success 'editor invoked'
 }
 

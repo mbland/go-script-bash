@@ -28,18 +28,18 @@ teardown() {
 }
 
 @test "$SUITE: set COLUMNS if unset" {
-  run env COLUMNS= "$TEST_GO_SCRIPT"
+  COLUMNS= run "$TEST_GO_SCRIPT"
   assert_success
   [ -n "$output" ]
 }
 
 @test "$SUITE: honor COLUMNS if already set" {
-  run env COLUMNS="19700918" "$TEST_GO_SCRIPT"
+  COLUMNS="19700918" run "$TEST_GO_SCRIPT"
   assert_success '19700918'
 }
 
 @test "$SUITE: default COLUMNS to 80 if actual columns can't be determined" {
-  run env COLUMNS= PATH= "$BASH" "$TEST_GO_SCRIPT"
+  COLUMNS= PATH= run "$BASH" "$TEST_GO_SCRIPT"
   assert_success '80'
 }
 
@@ -60,7 +60,7 @@ teardown() {
   local expected_cols="$(env COLUMNS= tput cols)"
   exec 1>&27 27>&- 2>&1
 
-  run env COLUMNS= "$TEST_GO_SCRIPT"
+  COLUMNS= run "$TEST_GO_SCRIPT"
   assert_success "$expected_cols"
 }
 
@@ -73,6 +73,6 @@ teardown() {
 
   # One way to cause tput to fail is to set `$TERM` to null. On Travis it's set
   # to 'dumb', but tput fails anyway. The code now defaults to 80 on all errors.
-  run env COLUMNS= TERM= "$TEST_GO_SCRIPT"
+  COLUMNS= TERM= run "$TEST_GO_SCRIPT"
   assert_success "$expected_cols"
 }

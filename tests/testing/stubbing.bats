@@ -27,6 +27,11 @@ teardown() {
   assert_success 'Hello, World!'
 }
 
+@test "$SUITE: restore_stubbed_core_modules does nothing if no stubs exist" {
+  run @go.restore_stubbed_core_modules
+  assert_success ''
+}
+
 @test "$SUITE: create_core_module_stub aborts if module unknown" {
   [ ! -e "$_GO_CORE_DIR/lib/foobar" ]
   run @go.create_core_module_stub 'foobar' 'echo Hello, World!'
