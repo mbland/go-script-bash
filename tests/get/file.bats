@@ -41,8 +41,9 @@ teardown() {
   assert_failure 'Please install curl or wget before running "get file".'
 }
 
-@test "$SUITE: prefer curl to wget" {
+@test "$SUITE: prefer curl to fetch and wget" {
   stub_program_in_path 'curl' 'printf "curl found\n"'
+  stub_program_in_path 'fetch' 'printf "wget found\n"'
   stub_program_in_path 'wget' 'printf "wget found\n"'
   run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
   assert_success
@@ -51,6 +52,7 @@ teardown() {
 
 @test "$SUITE: override preference with _GO_GET_FILE_DOWNLOAD_COMMAND" {
   stub_program_in_path 'curl' 'printf "curl found\n"'
+  stub_program_in_path 'fetch' 'printf "wget found\n"'
   stub_program_in_path 'wget' 'printf "wget found\n"'
   _GO_GET_FILE_DOWNLOAD_COMMAND='wget' \
     run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
@@ -84,8 +86,7 @@ teardown() {
 
 @test "$SUITE: curl called with correct args with URL only" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
-  PATH="${PATH%%:*}:/bin" run "$BASH" "$TEST_GO_SCRIPT" get file \
-    http://localhost/foobar.txt
+  run "$BASH" "$TEST_GO_SCRIPT" get file http://localhost/foobar.txt
   assert_success '-L -o foobar.txt http://localhost/foobar.txt' \
     'Downloaded "http://localhost/foobar.txt" as: foobar.txt'
 }
@@ -218,6 +219,20 @@ teardown() {
   mkdir -p "$TEST_GO_ROOTDIR"
   printf 'Hello, World!\n' >"$source_path"
   run "$TEST_GO_SCRIPT" get file -f - "$source_path"
+
+  assert_success 'Hello, World!'
+}
+
+@test "$SUITE: use real fetch to print a local file to standard output" {
+  # This is effectively a FreeBSD-only test.
+  skip_if_system_missing 'fetch'
+
+  local source_path="$TEST_GO_ROOTDIR/hello.txt"
+
+  mkdir -p "$TEST_GO_ROOTDIR"
+  printf 'Hello, World!\n' >"$source_path"
+  _GO_GET_FILE_DOWNLOAD_COMMAND='fetch' run "$TEST_GO_SCRIPT" \
+    get file -f - "$source_path"
 
   assert_success 'Hello, World!'
 }

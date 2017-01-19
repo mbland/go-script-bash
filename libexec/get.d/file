@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Downloads a single file using `curl` or `wget`
+# Downloads a single file using `curl`, `fetch`, or `wget`
 #
 # Usage:
 #   {{go}} {{cmd}} [-f <filename>] <url>
@@ -11,10 +11,13 @@
 # Where:
 #   url:  URL of the file to download
 #
-# This is a basic wrapper over the system `curl` or `wget` for downloading a
-# single file. If `-f <filename>` isn't specified, it will download the target
-# of `url` to the current working directory, using the same file name as that in
-# the URL.
+# Globals:
+#   _GO_GET_FILE_DOWNLOAD_COMMAND:  Overrides download program detection
+#
+# This is a basic wrapper over the system `curl`, `fetch` (on FreeBSD), or
+# `wget` for downloading a single file. If `-f <filename>` isn't specified, it
+# will download the target of `url` to the current working directory, using
+# the same file name as that in the URL.
 #
 # If `-f <filename>` is specified:
 #
@@ -61,7 +64,7 @@ _@go.get_file_tab_completions() {
 _@go.get_file_download_command() {
   local filename="$1"
   local dl_cmd="$_GO_GET_FILE_DOWNLOAD_COMMAND"
-  local supported=('curl' 'wget')
+  local supported=('curl' 'fetch' 'wget')
 
   if [[ -z "$dl_cmd" ]]; then
     for dl_cmd in "${supported[@]}"; do
@@ -81,6 +84,9 @@ _@go.get_file_download_command() {
     if [[ -n "$filename" ]]; then
       __go_get_file_download_cmd+=('-o' "$filename")
     fi
+    ;;
+  fetch)
+    __go_get_file_download_cmd=("$dl_cmd" '-o' "${filename:--}")
     ;;
   wget)
     __go_get_file_download_cmd=("$dl_cmd" '-O' "${filename:--}")
