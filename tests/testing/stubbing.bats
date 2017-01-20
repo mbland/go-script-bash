@@ -11,29 +11,16 @@ teardown() {
   @go.remove_test_go_rootdir
 }
 
-@test "$SUITE: create_core_module_stub and restore_stubbed_core_modules" {
-  [ -e "$_GO_CORE_DIR/lib/log" ]
-  [ ! -e "$_GO_CORE_DIR/lib/log.stubbed" ]
-  @go.create_core_module_stub 'log' 'echo Hello, World!'
-  [ -e "$_GO_CORE_DIR/lib/log.stubbed" ]
-  [ -e "$_GO_CORE_DIR/lib/log" ]
-
-  @go.create_test_go_script '. "$_GO_USE_MODULES" log'
-  run "$TEST_GO_SCRIPT"
-
-  @go.restore_stubbed_core_modules
-  [ ! -e "$_GO_CORE_DIR/lib/log.stubbed" ]
-  [ -e "$_GO_CORE_DIR/lib/log" ]
-  assert_success 'Hello, World!'
+@test "$SUITE: create_command_script_test_stub to stub out builtin command" {
+  @go.create_test_go_script '@go "$@"'
+  @go.create_command_script_test_stub 'help' 'printf "INJECTED\n"'
+  run "$TEST_GO_SCRIPT" help
+  assert_success 'INJECTED'
 }
 
-@test "$SUITE: restore_stubbed_core_modules does nothing if no stubs exist" {
-  run @go.restore_stubbed_core_modules
-  assert_success ''
-}
-
-@test "$SUITE: create_core_module_stub aborts if module unknown" {
-  [ ! -e "$_GO_CORE_DIR/lib/foobar" ]
-  run @go.create_core_module_stub 'foobar' 'echo Hello, World!'
-  assert_failure "No such core module: $_GO_CORE_DIR/lib/foobar"
+@test "$SUITE: create_module_test_stub to stub out builtin module" {
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "$@"'
+  @go.create_module_test_stub 'log' 'printf "INJECTED\n"'
+  run "$TEST_GO_SCRIPT" log
+  assert_success 'INJECTED'
 }
