@@ -6,7 +6,6 @@ load environment
 load "$_GO_CORE_DIR/lib/testing/stubbing"
 
 teardown() {
-  @go.restore_stubbed_core_modules
   @go.remove_test_go_rootdir
 }
 
@@ -104,7 +103,7 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
   create_bats_test_script "tests/bats/libexec/bats"
 
   # Stub the kcov lib to assert it's called correctly.
-  @go.create_core_module_stub 'kcov-ubuntu' \
+  @go.create_module_test_stub 'kcov-ubuntu' \
     "run_kcov() { IFS=\$'\n'; echo \"\$*\"; }"
 
   if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then

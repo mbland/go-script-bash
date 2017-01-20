@@ -1,43 +1,36 @@
 #! /bin/bash
 #
-# Helper functions for creating test stubs for core framework elements
+# Helper functions for creating test stubs for command and module scripts
+#
+# Useful when you need to model command script or module behavior, but don't
+# want it to do real work or want to avoid a potentially complicated test setup.
+#
+# This will assign and export values for `_GO_INJECT_SEARCH_PATH` and
+# `_GO_INJECT_MODULE_PATH`.
+#
+# You must import `_GO_CORE_DIR/lib/testing/environment` before importing this
+# script, and make sure to call `@go.remove_test_go_rootdir` from `teardown`.
 
-# Replace a module in `_GO_CORE_DIR/lib` with a stub implementation
-#
-# THIS IS POTENTIALLY DANGEROUS and you MUST call
-# `@go.restore_stubbed_core_modules` in your `teardown` function if you use it!
-#
-# Useful when you need to model core module behavior, but don't want it to do
-# real work or want to avoid a potentially complicated test setup.
+export _GO_INJECT_SEARCH_PATH="$TEST_GO_ROOTDIR/test-bin"
+export _GO_INJECT_MODULE_PATH="$TEST_GO_ROOTDIR/test-lib"
+
+# Creates a stub command script implementation in `_GO_INJECT_SEARCH_PATH`
 #
 # Arguments:
-#   module_name:  Name of the module to stub from `_GO_CORE_DIR/lib`
-#   ...:          Lines comprising the stubbed module implementation
-@go.create_core_module_stub() {
-  local module_path="$_GO_CORE_DIR/lib/$1"
-  shift
-
-  if [[ ! -f "$module_path" ]]; then
-    echo "No such core module: $module_path" >&2
-    return 1
-  fi
-
-  cp "$module_path"{,.stubbed}
-  echo '#! /bin/bash' > "$module_path"
-  printf '%s\n' "$@" >>"$module_path"
-  chmod 600 "$module_path"
+#   module_name:  Name of the command script to stub
+#   ...:          Lines comprising the stubbed command script implementation
+@go.create_command_script_test_stub() {
+  local script_path="$_GO_INJECT_SEARCH_PATH/$1"
+  create_bats_test_script "${script_path#$BATS_TEST_ROOTDIR/}" "${@:2}"
 }
 
-# Restore all core modules stubbed by `@go.create_core_module_stub`
+# Creates a stub module implementation in `_GO_INJECT_MODULE_PATH`
 #
-# YOU MUST CALL THIS FROM TEARDOWN IF YOU USE `@go.create_core_module_stub`!
-@go.restore_stubbed_core_modules() {
-  local module
-  local stubbed_modules=("$_GO_CORE_DIR/lib"/*.stubbed)
-
-  if [[ "${stubbed_modules#$_GO_CORE_DIR/lib/}" != '*.stubbed' ]]; then
-    for module in "${stubbed_modules[@]}"; do
-      mv "$module" "${module%.stubbed}"
-    done
-  fi
+# Arguments:
+#   module_name:  Name of the module to stub
+#   ...:          Lines comprising the stubbed module implementation
+@go.create_module_test_stub() {
+  local module_path="$_GO_INJECT_MODULE_PATH/$1"
+  create_bats_test_script "${module_path#$BATS_TEST_ROOTDIR/}" "${@:2}"
+  chmod 600 "$module_path"
 }
