@@ -14,24 +14,15 @@ teardown() {
   @go.remove_test_go_rootdir
 }
 
-@test "$SUITE: initialize constants without plugins" {
+@test "$SUITE: initialize constants without plugins dir" {
   run "$TEST_GO_SCRIPT"
   assert_success
 
   local expected_paths=("$_GO_ROOTDIR/libexec" "$TEST_GO_SCRIPTS_DIR")
 
-  assert_line_equals 0 '_GO_PLUGINS_DIR: '
-  assert_line_equals 1 '_GO_PLUGINS_PATHS: '
-  assert_line_equals 2 "_GO_SEARCH_PATHS: ${expected_paths[*]}"
-}
-
-@test "$SUITE: initialize constants with plugins dir" {
-  run "$TEST_GO_SCRIPT"
-  assert_success
-
-  local expected_paths=("$_GO_ROOTDIR/libexec" "$TEST_GO_SCRIPTS_DIR")
-
-  assert_line_equals 0 '_GO_PLUGINS_DIR: '
+  # Even if the plugins dir doesn't exist, we still set the value so its
+  # existence can be checked for generically.
+  assert_line_equals 0 "_GO_PLUGINS_DIR: $TEST_GO_PLUGINS_DIR"
   assert_line_equals 1 '_GO_PLUGINS_PATHS: '
   assert_line_equals 2 "_GO_SEARCH_PATHS: ${expected_paths[*]}"
 }
@@ -48,12 +39,11 @@ teardown() {
 
   local expected_paths=(
     "$_GO_ROOTDIR/libexec"
-    "$TEST_GO_PLUGINS_DIR"
     "${plugin_bindirs[@]}"
     "$TEST_GO_SCRIPTS_DIR")
 
   assert_line_equals 0 "_GO_PLUGINS_DIR: $TEST_GO_PLUGINS_DIR"
   assert_line_equals 1 \
-    "_GO_PLUGINS_PATHS: $TEST_GO_PLUGINS_DIR ${plugin_bindirs[*]}"
+    "_GO_PLUGINS_PATHS: ${plugin_bindirs[*]}"
   assert_line_equals 2 "_GO_SEARCH_PATHS: ${expected_paths[*]}"
 }

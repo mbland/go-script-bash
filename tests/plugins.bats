@@ -18,7 +18,9 @@ teardown() {
   assert_failure ''
 }
 
-@test "$SUITE: tab completion returns flags if plugins dir present" {
+@test "$SUITE: tab completion returns flags if plugins present" {
+  @go.create_test_command_script 'plugins/foo/bin/foo'
+
   run "$TEST_GO_SCRIPT" complete 1 plugins ''
   local expected=('--paths' '--summaries')
   assert_success "${expected[@]}"
@@ -61,15 +63,14 @@ teardown() {
     fi
   done
 
+  # Note that only `/bin` scripts from each plugin directory are included.
   run "$TEST_GO_SCRIPT" plugins
-  assert_success "${plugins[@]##*/}"
+  assert_success 'bar' 'baz' 'plugh'
 
   local paths=(
     'bar    scripts/plugins/bar/bin/bar'
     'baz    scripts/plugins/bar/bin/baz'
-    'foo    scripts/plugins/foo'
-    'plugh  scripts/plugins/plugh/bin/plugh'
-    'xyzzy  scripts/plugins/xyzzy')
+    'plugh  scripts/plugins/plugh/bin/plugh')
 
   run "$TEST_GO_SCRIPT" plugins --paths
   assert_success "${paths[@]}"
@@ -77,9 +78,7 @@ teardown() {
   local summaries=(
     '  bar    Does bar stuff'
     '  baz    Does baz stuff'
-    '  foo    Does foo stuff'
-    '  plugh  Does plugh stuff'
-    '  xyzzy  Does xyzzy stuff')
+    '  plugh  Does plugh stuff')
 
   run "$TEST_GO_SCRIPT" plugins --summaries
   assert_success "${summaries[@]}"

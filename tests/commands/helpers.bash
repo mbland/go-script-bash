@@ -56,22 +56,11 @@ merge_scripts() {
 }
 
 add_scripts() {
-  local scripts_dir="$1/"
-  shift
-
-  local relative_dir="${scripts_dir#$TEST_GO_ROOTDIR/}"
   local script_names=("$@")
 
-  if [[ ! -d "$scripts_dir" ]]; then
-    mkdir "$scripts_dir"
-  fi
+  merge_scripts "${script_names[@]/#/$TEST_GO_SCRIPTS_RELATIVE_DIR/}"
 
-  merge_scripts "${script_names[@]/#/$relative_dir}"
-
-  # chmod is neutralized in MSYS2 on Windows; `#!` makes files executable.
-  local script_path
-  for script_path in "${script_names[@]/#/$scripts_dir}"; do
-    echo '#!' > "$script_path"
+  for script_path in "${script_names[@]}"; do
+    @go.create_test_command_script "$script_path"
   done
-  chmod 700 "${script_names[@]/#/$scripts_dir}"
 }

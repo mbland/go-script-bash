@@ -47,7 +47,7 @@ quotify_expected() {
     'declare -- _GO_INJECT_MODULE_PATH=""'
     'declare -- _GO_INJECT_SEARCH_PATH=""'
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
-    'declare -- _GO_PLUGINS_DIR=""'
+    "declare -- _GO_PLUGINS_DIR=\"$TEST_GO_PLUGINS_DIR\""
     'declare -a _GO_PLUGINS_PATHS=()'
     "declare -rx _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
@@ -81,17 +81,15 @@ quotify_expected() {
   assert_success
 
   local cmd_argv=('[0]="foo"' '[1]="bar"' '[2]="baz quux"' '[3]="xyzzy"')
-  local plugins_paths=("[0]=\"$TEST_GO_PLUGINS_DIR\""
-    "[1]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
-    "[2]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
-    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\"")
+  local plugins_paths=("[0]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
+    "[1]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
+    "[2]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\"")
   local search_paths=("[0]=\"$TEST_GO_ROOTDIR/bin\""
     "[1]=\"$_GO_CORE_DIR/libexec\""
-    "[2]=\"$TEST_GO_PLUGINS_DIR\""
-    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
-    "[4]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
-    "[5]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\""
-    "[6]=\"$TEST_GO_SCRIPTS_DIR\"")
+    "[2]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
+    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
+    "[4]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\""
+    "[5]=\"$TEST_GO_SCRIPTS_DIR\"")
 
   # Note that the `format` module imports `strings` and `validation`.
   local expected_modules=('[0]="module_0"'

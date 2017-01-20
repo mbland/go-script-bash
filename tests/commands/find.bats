@@ -4,6 +4,7 @@ load ../environment
 load helpers
 
 setup() {
+  test_filter
   @go.create_test_go_script \
     '. "$_GO_CORE_DIR/lib/internal/path"' \
     '. "$_GO_CORE_DIR/lib/internal/commands"' \
@@ -15,9 +16,7 @@ setup() {
     'fi' \
     'echo LONGEST NAME LEN: "$__go_longest_name_len"' \
     'echo COMMAND_NAMES: "${__go_command_names[@]}"' \
-    "IFS=$'\n'" \
-    'echo "${__go_command_scripts[*]}"' \
-
+    'printf -- "%s\n" "${__go_command_scripts[@]}"'
   find_builtins
 }
 
@@ -65,11 +64,10 @@ assert_command_scripts_equal() {
 
 @test "$SUITE: return builtins and user scripts" {
   local longest_name="extra-long-name-that-no-one-would-use"
-  # user_commands must remain hand-sorted.
-  local user_commands=('bar' 'baz' "$longest_name" 'foo')
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
+  # Command script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' "$longest_name" 'foo'
   run "$TEST_GO_SCRIPT"
   assert_success
 
@@ -80,13 +78,14 @@ assert_command_scripts_equal() {
 
 @test "$SUITE: return builtins, plugins, and user scripts" {
   local longest_name="super-extra-long-name-that-no-one-would-use"
-  # user_commands and plugin_commands must remain hand-sorted.
-  local user_commands=('bar' 'baz' 'foo')
-  local plugin_commands=('plugh' 'quux' "$longest_name" 'xyzzy')
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    "plugins/$longest_name/bin/$longest_name" \
+    'plugins/xyzzy/bin/xyzzy'
   run "$TEST_GO_SCRIPT"
   assert_success
 
@@ -97,10 +96,9 @@ assert_command_scripts_equal() {
 
 @test "$SUITE: return error if duplicates exists" {
   local duplicate_cmd="${BUILTIN_SCRIPTS[0]##*/}"
-  local user_commands=("$duplicate_cmd")
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
+  add_scripts "$duplicate_cmd"
   run "$TEST_GO_SCRIPT"
   assert_failure
 
@@ -120,8 +118,9 @@ assert_command_scripts_equal() {
   local subcommands=('plugh' 'quux' "$longest_name" 'xyzzy')
   local __all_scripts=()
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${parent_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/foo.d" "${subcommands[@]}"
+  # Command script names must remain hand-sorted
+  add_scripts 'bar' 'baz' 'foo' \
+    'foo.d/plugh' 'foo.d/quux' "foo.d/$longest_name" 'foo.d/xyzzy'
   run "$TEST_GO_SCRIPT" "$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d"
   assert_success
 
