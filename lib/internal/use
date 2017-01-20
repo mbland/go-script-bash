@@ -45,8 +45,9 @@
 #
 #   - the `_GO_INJECT_MODULE_PATH` directory
 #   - the `lib/` directory of the framework (`scripts/go-script-bash/lib`)
-#   - the `lib/` directory of installed plugins (`scripts/plugins/*/lib`)
 #   - the `lib/` directory in your project scripts directory (`scripts/lib`)
+#   - the `lib/` directory of `_GO_ROOTDIR` (i.e. exported scripts)
+#   - the `lib/` directory of installed plugins (`scripts/plugins/*/lib`)
 #
 # For modules contained in plugin directories, you must specify the path as
 # `<plugin-name>/<module-name>`. There is no need to include the `lib/`
@@ -55,6 +56,10 @@
 # project repository), you could import the module via:
 #
 #   . "$_GO_USE_MODULES" 'foo/bar'
+#
+# Note that if there is a module with the relative path `foo/bar` in one of the
+# other directories, such as `_GO_ROOTDIR/lib/foo/bar`, it will take precedence
+# over the plugin `scripts/plugins/foo/lib/bar`.
 #
 # Module loading is idempotent, as the names of imported modules are added to
 # the `_GO_IMPORTED_MODULES` array and are not sourced again if their names are
@@ -92,16 +97,20 @@ for __go_module_name in "$@"; do
   __go_module_file="${__go_module_file:-$_GO_CORE_DIR/lib/$__go_module_name}"
 
   if [[ ! -f "$__go_module_file" ]]; then
-    # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
-    __go_module_file="$_GO_SCRIPTS_DIR/plugins/${__go_module_name/\///lib/}"
+    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
 
     if [[ ! -f "$__go_module_file" ]]; then
-      __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
+      __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
 
       if [[ ! -f "$__go_module_file" ]]; then
-        @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
-        @go.print_stack_trace 1 >&2
-        exit 1
+        # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
+        __go_module_file="$_GO_SCRIPTS_DIR/plugins/${__go_module_name/\///lib/}"
+
+        if [[ ! -f "$__go_module_file" ]]; then
+          @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
+          @go.print_stack_trace 1 >&2
+          exit 1
+        fi
       fi
     fi
   fi
