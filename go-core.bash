@@ -120,9 +120,18 @@ declare _GO_PLUGINS_DIR=
 # Directories containing executable plugin scripts.
 declare _GO_PLUGINS_PATHS=()
 
-# Directories that are searched for executable command scripts. After they are
-# initialized, _GO_PLUGINS_PATHS and _GO_SCRIPTS_DIR will be added.
-declare _GO_SEARCH_PATHS=("$_GO_CORE_DIR/libexec")
+# Directories that are searched for executable command scripts.
+declare _GO_SEARCH_PATHS=()
+
+# Directory to search for command scripts prior to _GO_SEARCH_PATHS.
+# Should be an absolute path. Use this for stubbing out scripts during testing
+# or debugging, or for experimenting with new implementations of existing
+# scripts.
+declare _GO_INJECT_SEARCH_PATH="$_GO_INJECT_SEARCH_PATH"
+
+# Directory to search for module scripts first.
+# Similar to _GO_INJECT_SEARCH_PATHS above, but for `. "$_GO_USE_MODULES"`.
+declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 
 # Invokes printf builtin, then folds output to $COLUMNS width
 #

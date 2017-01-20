@@ -1,6 +1,10 @@
 #! /bin/bash
 
-if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 1 ]]; then
+if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
+  if [[ -n "$_GO_INJECT_SEARCH_PATH" ]]; then
+    _GO_SEARCH_PATHS+=("$_GO_INJECT_SEARCH_PATH")
+  fi
+  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec")
   if [[ -d "$_GO_SCRIPTS_DIR/plugins" ]]; then
     _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
     _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR" "$_GO_PLUGINS_DIR"/*/bin)

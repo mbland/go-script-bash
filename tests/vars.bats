@@ -44,6 +44,8 @@ quotify_expected() {
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     'declare -a _GO_IMPORTED_MODULES=()'
+    'declare -- _GO_INJECT_MODULE_PATH=""'
+    'declare -- _GO_INJECT_SEARCH_PATH=""'
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
     'declare -- _GO_PLUGINS_DIR=""'
     'declare -a _GO_PLUGINS_PATHS=()'
@@ -60,14 +62,22 @@ quotify_expected() {
 
 @test "$SUITE: all _GO_* variables for Bash subcommand contain values" {
   @go.create_test_command_script 'test-command.d/test-subcommand' \
-    '. "$_GO_USE_MODULES" "complete" "format"' \
+    '. "$_GO_USE_MODULES" "module_0" "module_1"' \
     '@go vars'
+
+  mkdir -p "$TEST_GO_ROOTDIR/lib"
+  printf '' >"$TEST_GO_ROOTDIR/lib/module_0"
+  printf '' >"$TEST_GO_ROOTDIR/lib/module_1"
 
   mkdir "$TEST_GO_PLUGINS_DIR"
   mkdir "$TEST_GO_PLUGINS_DIR/plugin"{0,1,2}
   mkdir "$TEST_GO_PLUGINS_DIR/plugin"{0,1,2}"/bin"
 
-  run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy
+  # Note that defining the `_GO_INJECT_*_PATH` variables before the `run`
+  # command causes them to be exported.
+  _GO_INJECT_SEARCH_PATH="$TEST_GO_ROOTDIR/bin" \
+    _GO_INJECT_MODULE_PATH="$TEST_GO_ROOTDIR/lib" \
+    run "$TEST_GO_SCRIPT" test-command test-subcommand foo bar 'baz quux' xyzzy
   assert_success
 
   local cmd_argv=('[0]="foo"' '[1]="bar"' '[2]="baz quux"' '[3]="xyzzy"')
@@ -75,18 +85,17 @@ quotify_expected() {
     "[1]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
     "[2]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
     "[3]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\"")
-  local search_paths=("[0]=\"$_GO_CORE_DIR/libexec\""
-    "[1]=\"$TEST_GO_PLUGINS_DIR\""
-    "[2]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
-    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
-    "[4]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\""
-    "[5]=\"$TEST_GO_SCRIPTS_DIR\"")
+  local search_paths=("[0]=\"$TEST_GO_ROOTDIR/bin\""
+    "[1]=\"$_GO_CORE_DIR/libexec\""
+    "[2]=\"$TEST_GO_PLUGINS_DIR\""
+    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
+    "[4]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
+    "[5]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\""
+    "[6]=\"$TEST_GO_SCRIPTS_DIR\"")
 
   # Note that the `format` module imports `strings` and `validation`.
-  local expected_modules=('[0]="complete"'
-    '[1]="format"'
-    '[2]="strings"'
-    '[3]="validation"')
+  local expected_modules=('[0]="module_0"'
+    '[1]="module_1"')
   local expected=("declare -x _GO_BATS_COVERAGE_DIR=\"$_GO_BATS_COVERAGE_DIR\""
     "declare -x _GO_BATS_DIR=\"$_GO_BATS_DIR\""
     "declare -x _GO_BATS_PATH=\"$_GO_BATS_PATH\""
@@ -101,6 +110,8 @@ quotify_expected() {
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     "declare -a _GO_IMPORTED_MODULES=(${expected_modules[*]})"
+    "declare -x _GO_INJECT_MODULE_PATH=\"$TEST_GO_ROOTDIR/lib\""
+    "declare -x _GO_INJECT_SEARCH_PATH=\"$TEST_GO_ROOTDIR/bin\""
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
     "declare -- _GO_PLUGINS_DIR=\"$TEST_GO_PLUGINS_DIR\""
     "declare -a _GO_PLUGINS_PATHS=(${plugins_paths[*]})"
