@@ -9,6 +9,9 @@
 #   @go.join
 #     Joins multiple items into a string variable defined by the caller
 #
+#   @go.common_prefix
+#     Determines the common prefix for a set of strings
+#
 # These functions help avoid `IFS`-related pitfalls as described by:
 #
 #   http://mywiki.wooledge.org/Arguments
@@ -53,4 +56,36 @@
   @go.validate_identifier_or_die 'Result variable name' "$2"
   local IFS="$1"
   printf -v "$2" -- '%s' "${*:3}"
+}
+
+# Determines the common prefix for a set of strings
+#
+# Will return the empty string for a single argument. This facilitates prefix
+# removal without requiring that the caller check that there is more than one
+# element in an array of strings to avoid checking for the special case of a
+# single string being its own prefix.
+#
+# Arguments:
+#   var_name:   Name of caller's variable to which to assign the common prefix
+#   ...:        Strings to examine to determine the common prefix
+@go.common_prefix() {
+  @go.validate_identifier_or_die 'Result variable name' "$1"
+  local _gcp_prefix="$2"
+  local _gcp_prefix_len="${#_gcp_prefix}"
+  local _gcp_item
+
+  for _gcp_item in "${@:3}"; do
+    while [[ "${_gcp_item:0:$_gcp_prefix_len}" != "$_gcp_prefix" ]]; do
+      ((--_gcp_prefix_len))
+      _gcp_prefix="${_gcp_prefix:0:$_gcp_prefix_len}"
+    done
+    if [[ "$_gcp_prefix_len" -eq '0' ]]; then
+      break
+    fi
+  done
+
+  if [[ "$#" -lt '3' ]]; then
+    _gcp_prefix=''
+  fi
+  printf -v "$1" -- '%s' "$_gcp_prefix"
 }
