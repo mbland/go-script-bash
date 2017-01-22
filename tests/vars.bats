@@ -86,10 +86,10 @@ quotify_expected() {
     "[2]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\"")
   local search_paths=("[0]=\"$TEST_GO_ROOTDIR/bin\""
     "[1]=\"$_GO_CORE_DIR/libexec\""
-    "[2]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
-    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
-    "[4]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\""
-    "[5]=\"$TEST_GO_SCRIPTS_DIR\"")
+    "[2]=\"$TEST_GO_SCRIPTS_DIR\""
+    "[3]=\"$TEST_GO_PLUGINS_DIR/plugin0/bin\""
+    "[4]=\"$TEST_GO_PLUGINS_DIR/plugin1/bin\""
+    "[5]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\"")
 
   # Note that the `format` module imports `strings` and `validation`.
   local expected_modules=('[0]="module_0"'

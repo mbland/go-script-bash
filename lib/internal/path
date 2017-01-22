@@ -13,7 +13,7 @@ if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
       unset '_GO_PLUGINS_PATHS'
     fi
   fi
-  _GO_SEARCH_PATHS+=("${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
+  _GO_SEARCH_PATHS+=("$_GO_SCRIPTS_DIR" "${_GO_PLUGINS_PATHS[@]}")
 fi
 
 _@go.list_available_commands() {
