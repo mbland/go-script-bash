@@ -96,7 +96,7 @@
 # Removes the common path prefix from a set of file paths
 #
 # Arguments:
-#   array_name:  Name of caller's array variable into which to store fields
+#   array_name:  Name of caller's array into which to store the updated paths
 #   ...:         File paths from which to remove the common path prefix
 @go.remove_common_path_prefix() {
   @go.validate_identifier_or_die 'Result variable name' "$1"
