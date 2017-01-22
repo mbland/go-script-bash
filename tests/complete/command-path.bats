@@ -69,13 +69,13 @@ assert_completions_match() {
 }
 
 @test "$SUITE: all top-level commands for zeroth or first argument" {
-  # user_commands and plugin_commands must remain hand-sorted.
-  local user_commands=('bar' 'baz' 'foo')
-  local plugin_commands=('plugh' 'quux' 'xyzzy')
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    'plugins/xyzzy/bin/xyzzy'
 
   # Aliases will get printed before all other commands.
   local __expected_results=($(./go 'aliases') "${__all_scripts[@]##*/}")

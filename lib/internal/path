@@ -5,11 +5,12 @@ if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
     _GO_SEARCH_PATHS+=("$_GO_INJECT_SEARCH_PATH")
   fi
   _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec")
-  if [[ -d "$_GO_SCRIPTS_DIR/plugins" ]]; then
-    _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
-    _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR" "$_GO_PLUGINS_DIR"/*/bin)
-    if [[ "${_GO_PLUGINS_PATHS[1]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
-      unset '_GO_PLUGINS_PATHS[1]'
+  _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+
+  if [[ -d "$_GO_PLUGINS_DIR" ]]; then
+    _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR"/*/bin)
+    if [[ "${_GO_PLUGINS_PATHS[0]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
+      unset '_GO_PLUGINS_PATHS'
     fi
   fi
   _GO_SEARCH_PATHS+=("${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")

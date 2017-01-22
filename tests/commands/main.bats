@@ -127,37 +127,40 @@ teardown() {
 }
 
 @test "$SUITE: list top-level builtins, plugins, and scripts by default" {
-  local user_commands=('bar' 'baz' 'foo')
-  local plugin_commands=('plugh' 'quux' 'xyzzy')
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    'plugins/xyzzy/bin/xyzzy'
 
   local cmd_name
 
-  mkdir "$TEST_GO_SCRIPTS_DIR/"{bar,baz,foo}.d
   @go.create_test_command_script 'bar.d/child0'
   @go.create_test_command_script 'baz.d/child1'
   @go.create_test_command_script 'foo.d/child2'
-  mkdir "$TEST_GO_SCRIPTS_DIR/plugins/"{plugh,quux,xyzzy}.d
-  @go.create_test_command_script 'plugins/plugh.d/child3'
-  @go.create_test_command_script 'plugins/quux.d/child4'
-  @go.create_test_command_script 'plugins/xyzzy.d/child5'
+  @go.create_test_command_script 'plugins/plugh/bin/plugh.d/child3'
+  @go.create_test_command_script 'plugins/quux/bin/quux.d/child4'
+  @go.create_test_command_script 'plugins/xyzzy/bin/xyzzy.d/child5'
 
   run "$TEST_GO_SCRIPT" commands
   assert_success "${__all_scripts[@]##*/}"
 }
 
 @test "$SUITE: specify plugins and user search paths, omit builtins" {
-  local user_commands=('bar' 'baz' 'foo')
-  local plugin_commands=('plugh' 'quux' 'xyzzy')
   local __all_scripts=()
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
-  local search_paths="$TEST_GO_SCRIPTS_DIR/plugins:$TEST_GO_SCRIPTS_DIR"
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    'plugins/xyzzy/bin/xyzzy'
+  local search_paths=()
 
+  test_join ':' search_paths \
+    "$TEST_GO_SCRIPTS_DIR/plugins/"{plugh,quux,xyzzy}"/bin" \
+    "$TEST_GO_SCRIPTS_DIR"
   run "$TEST_GO_SCRIPT" commands "${search_paths[*]}"
   assert_success "${__all_scripts[@]##*/}"
 }
@@ -185,8 +188,11 @@ generate_expected_paths() {
   local plugin_commands=('plugh' 'quux' 'xyzzy')
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
-  add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
-  add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    'plugins/xyzzy/bin/xyzzy'
 
   local __expected_paths=()
   generate_expected_paths
