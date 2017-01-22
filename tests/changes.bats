@@ -28,10 +28,10 @@ teardown() {
   assert_success "${versions[*]}"
 
   run ./go complete 1 changes 'v1.0'
-  assert_success 'v1.0.0'
+  assert_success 'v1.0.0 '
 
   run ./go complete 2 changes 'v1.0.0' 'v1.1'
-  assert_success 'v1.1.0'
+  assert_success 'v1.1.0 '
 
   run ./go complete 3 changes 'v1.0.0' 'v1.1.0' ''
   assert_failure ''

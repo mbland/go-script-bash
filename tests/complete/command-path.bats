@@ -4,6 +4,8 @@ load ../environment
 load ../commands/helpers
 
 setup() {
+  test_filter
+
   # We add a prefix to each of the echo statements to ensure that blank lines
   # are not elided from the Bats `lines` array.
   @go.create_test_go_script '. "$_GO_CORE_DIR/lib/internal/complete"' \

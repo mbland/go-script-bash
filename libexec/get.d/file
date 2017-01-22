@@ -43,7 +43,8 @@ _@go.get_file_tab_completions() {
     ;;
   1)
     if [[ "$1" == '-f' ]]; then
-      compgen -f -- "$2"
+      . "$_GO_USE_MODULES" 'complete'
+      @go.compgen -f -- "$2"
     fi
     ;;
   esac

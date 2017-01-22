@@ -2,25 +2,29 @@
 
 load environment
 
+setup() {
+  test_filter
+}
+
 teardown() {
   @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: tab completions" {
+  . "$_GO_USE_MODULES" 'complete'
   local expected=('--existing')
-  expected+=($(compgen -f))
+  expected+=($(@go.compgen -f))
 
   run ./go complete 1 fullpath ''
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run ./go complete 1 fullpath '-'
-  assert_success '--existing'
+  assert_success '--existing '
 
-  expected=($(compgen -f -- 'li'))
-  [ "${#expected[@]}" -ne '0' ]
+  expected=($(@go.compgen -f -- 'li'))
+  fail_if equal '0' "${#expected[@]}"
   run ./go complete 1 fullpath 'li'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: prints rootdir when no arguments" {

@@ -3,6 +3,7 @@
 load environment
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
   mkdir "$TEST_GO_PLUGINS_DIR"
 }
@@ -20,11 +21,10 @@ teardown() {
 @test "$SUITE: tab completion returns flags if plugins dir present" {
   run "$TEST_GO_SCRIPT" complete 1 plugins ''
   local expected=('--paths' '--summaries')
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 1 plugins '--paths'
-  assert_success '--paths'
+  assert_success '--paths '
 }
 
 @test "$SUITE: error if no scripts/plugin directory" {
@@ -50,7 +50,6 @@ teardown() {
   local longest_plugin_len=0
   local plugin_path
   local summary
-  local IFS=$'\n'
 
   for plugin in "${plugins[@]}"; do
     @go.create_test_command_script "plugins/$plugin" \
@@ -63,7 +62,7 @@ teardown() {
   done
 
   run "$TEST_GO_SCRIPT" plugins
-  assert_success "${plugins[*]##*/}"
+  assert_success "${plugins[@]##*/}"
 
   local paths=(
     'bar    scripts/plugins/bar/bin/bar'
@@ -73,7 +72,7 @@ teardown() {
     'xyzzy  scripts/plugins/xyzzy')
 
   run "$TEST_GO_SCRIPT" plugins --paths
-  assert_success "${paths[*]}"
+  assert_success "${paths[@]}"
 
   local summaries=(
     '  bar    Does bar stuff'
@@ -83,5 +82,5 @@ teardown() {
     '  xyzzy  Does xyzzy stuff')
 
   run "$TEST_GO_SCRIPT" plugins --summaries
-  assert_success "${summaries[*]}"
+  assert_success "${summaries[@]}"
 }

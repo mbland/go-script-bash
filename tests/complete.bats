@@ -6,6 +6,7 @@ load commands/helpers
 setup() {
   @go.create_test_go_script '@go "$@"'
   find_builtins
+  . "$_GO_USE_MODULES" 'complete'
 }
 
 teardown() {
@@ -14,16 +15,16 @@ teardown() {
 
 @test "$SUITE: complete help flag variations" {
   run "$TEST_GO_SCRIPT" complete 0 -h
-  assert_success '-h'
+  assert_success '-h '
 
   run "$TEST_GO_SCRIPT" complete 0 -he
-  assert_success '-help'
+  assert_success '-help '
 
   run "$TEST_GO_SCRIPT" complete 0 -
-  assert_success '--help'
+  assert_success '--help '
 
   run "$TEST_GO_SCRIPT" complete 0 --
-  assert_success '--help'
+  assert_success '--help '
 }
 
 @test "$SUITE: all top-level commands for zeroth or first argument" {
@@ -31,11 +32,10 @@ teardown() {
   local __all_commands=("$(./go 'aliases')" "${BUILTIN_CMDS[@]}")
 
   run "$TEST_GO_SCRIPT" complete 0
-  local IFS=$'\n'
-  assert_success "${__all_commands[*]}"
+  assert_success "${__all_commands[@]}"
 
   run "$TEST_GO_SCRIPT" complete 0 complete
-  assert_success 'complete'
+  assert_success 'complete '
 
   run "$TEST_GO_SCRIPT" complete 0 complete-not
   assert_failure ''
@@ -47,23 +47,22 @@ teardown() {
   mkdir -p "${subdirs[@]/#/$TEST_GO_SCRIPTS_DIR/}"
   touch "${files[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
-  run "$TEST_GO_SCRIPT" complete 1 cd ''
-  assert_success 'scripts'
+  run "$TEST_GO_SCRIPT" complete 1 cd
+  assert_success 'scripts/'
   run "$TEST_GO_SCRIPT" complete 1 pushd ''
-  assert_success 'scripts'
+  assert_success 'scripts/'
 
   local expected=()
   local item
 
   while IFS= read -r item; do
     expected+=("${item#$TEST_GO_ROOTDIR/}")
-  done<<<"$(compgen -d "$TEST_GO_SCRIPTS_DIR/")"
+  done<<<"$(@go.compgen -d "$TEST_GO_SCRIPTS_DIR/")"
 
   run "$TEST_GO_SCRIPT" complete 1 cd 'scripts/'
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
   run "$TEST_GO_SCRIPT" complete 1 pushd 'scripts/'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: edit, run, and aliases complete directories and files" {
@@ -78,26 +77,25 @@ teardown() {
 
   while IFS= read -r item; do
     top_level+=("${item#$TEST_GO_ROOTDIR/}")
-  done <<<"$(compgen -f "$TEST_GO_ROOTDIR/")"
+  done <<<"$(@go.compgen -f "$TEST_GO_ROOTDIR/")"
 
   while IFS= read -r item; do
     all_scripts_entries+=("${item#$TEST_GO_ROOTDIR/}")
-  done <<<"$(compgen -f "$TEST_GO_SCRIPTS_DIR/")"
+  done <<<"$(@go.compgen -f "$TEST_GO_SCRIPTS_DIR/")"
 
   run "$TEST_GO_SCRIPT" complete 1 edit ''
-  local IFS=$'\n'
-  assert_success "${top_level[*]}"
+  assert_success "${top_level[@]}"
   run "$TEST_GO_SCRIPT" complete 1 run ''
-  assert_success "${top_level[*]}"
+  assert_success "${top_level[@]}"
   run "$TEST_GO_SCRIPT" complete 1 ls ''
-  assert_success "${top_level[*]}"
+  assert_success "${top_level[@]}"
 
   run "$TEST_GO_SCRIPT" complete 1 edit 'scripts/'
-  assert_success "${all_scripts_entries[*]}"
+  assert_success "${all_scripts_entries[@]}"
   run "$TEST_GO_SCRIPT" complete 1 run 'scripts/'
-  assert_success "${all_scripts_entries[*]}"
+  assert_success "${all_scripts_entries[@]}"
   run "$TEST_GO_SCRIPT" complete 1 ls 'scripts/'
-  assert_success "${all_scripts_entries[*]}"
+  assert_success "${all_scripts_entries[@]}"
 }
 
 @test "$SUITE: unenv, unknown flags, and unknown commands return errors" {
@@ -119,19 +117,18 @@ teardown() {
     'fi'
 
   run "$TEST_GO_SCRIPT" complete 0 foo
-  assert_success 'foo'
+  assert_success 'foo '
 
   local expected=('bar' 'baz' 'quux')
-  local IFS=$'\n'
   run "$TEST_GO_SCRIPT" complete 1 foo ''
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   expected=('bar' 'baz')
   run "$TEST_GO_SCRIPT" complete 1 foo 'b'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 foo 'b' 'q'
-  assert_success 'quux'
+  assert_success 'quux '
 
   run "$TEST_GO_SCRIPT" complete 1 foo 'x'
   assert_failure ''
@@ -144,7 +141,7 @@ teardown() {
     'fi'
 
   run "$TEST_GO_SCRIPT" complete 0 foo
-  assert_success 'foo'
+  assert_success 'foo '
 
   run "$TEST_GO_SCRIPT" complete 1 foo ''
   assert_failure ''
@@ -166,30 +163,29 @@ teardown() {
     'fi'
 
   run "$TEST_GO_SCRIPT" complete 0 foo
-  assert_success 'foo'
+  assert_success 'foo '
 
   # Note that 'bar' should show up automatically because it is in foo.d, even
   # though it isn't in the compgen word list inside foo.
   local expected=('bar' 'baz' 'quux')
-  local IFS=$'\n'
   run "$TEST_GO_SCRIPT" complete 1 foo ''
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 1 foo bar
-  assert_success 'bar'
+  assert_success 'bar '
 
   local expected=('plugh' 'xyzzy')
   run "$TEST_GO_SCRIPT" complete 2 foo bar ''
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: -h, -help, and --help invoke help command completion" {
   run "$TEST_GO_SCRIPT" complete 1 -h 'complet'
-  assert_success 'complete'
+  assert_success 'complete '
 
   run "$TEST_GO_SCRIPT" complete 1 -help 'complet'
-  assert_success 'complete'
+  assert_success 'complete '
 
   run "$TEST_GO_SCRIPT" complete 1 --help 'complet'
-  assert_success 'complete'
+  assert_success 'complete '
 }

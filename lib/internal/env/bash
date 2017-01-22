@@ -4,8 +4,10 @@
 
 __go_func() {
   unset 'COMP_WORDS[0]'
-  COMPREPLY=($("$_GO_SCRIPT" 'complete' "$((COMP_CWORD-1))" "${COMP_WORDS[@]}"))
-  cd "$_GO_ROOTDIR"
+  local item
+  while IFS= read -r item; do
+    COMPREPLY+=("$item")
+  done < <("$_GO_SCRIPT" 'complete' "$((COMP_CWORD-1))" "${COMP_WORDS[@]}")
 }
 
 _go_func() {
@@ -25,4 +27,4 @@ _go_func() {
   esac
 }
 
-complete -o filenames -F __go_func _go_func
+complete -o nospace -F __go_func _go_func

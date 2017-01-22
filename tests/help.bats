@@ -3,6 +3,7 @@
 load environment
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
 }
 
@@ -14,14 +15,13 @@ teardown() {
   local subcommands=('plugh' 'quux' 'xyzzy')
   @go.create_parent_and_subcommands foo "${subcommands[@]}"
   run "$TEST_GO_SCRIPT" complete 1 help 'foo'
-  assert_success 'foo'
+  assert_success 'foo '
 
-  local IFS=$'\n'
   run "$TEST_GO_SCRIPT" complete 2 help 'foo' ''
-  assert_success "${subcommands[*]}"
+  assert_success "${subcommands[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 help 'foo' 'q'
-  assert_success 'quux'
+  assert_success 'quux '
 }
 
 @test "$SUITE: produce message with successful return for help command" {
@@ -97,8 +97,7 @@ teardown() {
   local expected_errors=(
     'ERROR: command script "bogus/path/to/nowhere" does not exist'
     'ERROR: failed to parse description from bogus/path/to/nowhere')
-  local IFS=$'\n'
-  assert_failure "${expected_errors[*]}"
+  assert_failure "${expected_errors[@]}"
 }
 
 @test "$SUITE: parse description from command script" {
@@ -116,8 +115,7 @@ teardown() {
     "$TEST_GO_SCRIPT foo - Does foo stuff in $TEST_GO_ROOTDIR"
     ''
     "Usage: $TEST_GO_SCRIPT foo <argument>")
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: call help filter on command script" {
@@ -151,8 +149,7 @@ teardown() {
     "$TEST_GO_SCRIPT foo - Does foo stuff"
     ''
     "Usage: $TEST_GO_SCRIPT foo <bar|baz|quux>")
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: add subcommand summaries" {
@@ -177,6 +174,5 @@ teardown() {
     '  bar   Does bar stuff'
     '  baz   Does baz stuff'
     '  quux  Does quux stuff')
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
