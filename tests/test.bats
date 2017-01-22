@@ -5,6 +5,10 @@
 load environment
 load "$_GO_CORE_DIR/lib/testing/stubbing"
 
+setup() {
+  test_filter
+}
+
 teardown() {
   @go.remove_test_go_rootdir
 }
@@ -12,8 +16,7 @@ teardown() {
 @test "$SUITE: tab complete flags" {
   run ./go complete 1 test '-'
   local expected=('--coverage' '--edit' '--list')
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: tab complete flags, first-level tests and directories" {
@@ -23,15 +26,13 @@ teardown() {
   [ "${#expected[@]}" -ne 1 ]
 
   run ./go complete 1 test ''
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: tab completion matches test file and matching directory" {
   expected=('core' 'core/')
   run ./go complete 1 test 'core'
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 _trim_expected() {
@@ -44,8 +45,7 @@ _trim_expected() {
   _trim_expected
 
   run ./go complete 1 test 'core/'
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: no arguments after --list lists all tests" {
@@ -54,8 +54,7 @@ _trim_expected() {
   [ "${#expected[@]}" -ne 0 ]
 
   run ./go test --list
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list specific files and directories" {
@@ -64,8 +63,7 @@ _trim_expected() {
   local expected=(test aliases builtins tests/builtins/*)
   _trim_expected
 
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: open EDITOR on --edit" {

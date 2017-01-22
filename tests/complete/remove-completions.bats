@@ -2,7 +2,7 @@
 
 load ../environment
 
-. "$_GO_ROOTDIR/lib/complete"
+. "$_GO_USE_MODULES" 'complete'
 
 @test "$SUITE: empty args, empty completions" {
   local argv=()

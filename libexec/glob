@@ -193,7 +193,8 @@ _@go.glob_tab_completion() {
     return
   elif [[ -z "$__go_glob_rootdir" ]]; then
     echo "${__go_glob_flags[@]}"
-    compgen -d -- "$__go_glob_complete_word"
+    . "$_GO_USE_MODULES" 'complete'
+    @go.compgen -d -- "$__go_glob_complete_word"
     return
   fi
 

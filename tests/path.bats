@@ -3,6 +3,7 @@
 load environment
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
 }
 
@@ -14,14 +15,13 @@ teardown() {
   local subcommands=('plugh' 'quux' 'xyzzy')
   @go.create_parent_and_subcommands foo "${subcommands[@]}"
   run "$TEST_GO_SCRIPT" complete 1 path 'foo'
-  assert_success 'foo'
+  assert_success 'foo '
 
-  local IFS=$'\n'
   run "$TEST_GO_SCRIPT" complete 2 path 'foo' ''
-  assert_success "${subcommands[*]}"
+  assert_success "${subcommands[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 path 'foo' 'q'
-  assert_success 'quux'
+  assert_success 'quux '
 }
 
 @test "$SUITE: shell alias" {

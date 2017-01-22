@@ -4,6 +4,7 @@ load ../environment
 load helpers
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
   find_builtins
 
@@ -22,25 +23,24 @@ teardown() {
   run "$TEST_GO_SCRIPT" complete 1 commands ''
   local flags=('--paths' '--summaries')
   local expected=("${flags[@]}" "${BUILTIN_CMDS[@]}")
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 1 commands --
   local flags=('--paths' '--summaries')
-  assert_success "${flags[*]}"
+  assert_success "${flags[@]}"
 
   run "$TEST_GO_SCRIPT" complete 1 commands --p
   local flags=('--paths')
-  assert_success '--paths'
+  assert_success '--paths '
 
   run "$TEST_GO_SCRIPT" complete 1 commands --foo
   assert_failure
 
   run "$TEST_GO_SCRIPT" complete 2 commands --paths
-  assert_success "${BUILTIN_CMDS[*]}"
+  assert_success "${BUILTIN_CMDS[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 commands --summaries
-  assert_success "${BUILTIN_CMDS[*]}"
+  assert_success "${BUILTIN_CMDS[@]}"
 }
 
 @test "$SUITE: no tab completions for or after search paths" {
@@ -63,12 +63,11 @@ teardown() {
   done
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo b
   expected=('bar' 'baz')
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo g
   assert_failure
@@ -90,8 +89,7 @@ teardown() {
 
   run "$TEST_GO_SCRIPT" complete 1 commands '' foo
   expected=('--paths' '--summaries')
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo '' bar
   assert_failure
@@ -148,8 +146,7 @@ teardown() {
   @go.create_test_command_script 'plugins/xyzzy.d/child5'
 
   run "$TEST_GO_SCRIPT" commands
-  local IFS=$'\n'
-  assert_success "${__all_scripts[*]##*/}"
+  assert_success "${__all_scripts[@]##*/}"
 }
 
 @test "$SUITE: specify plugins and user search paths, omit builtins" {
@@ -159,12 +156,10 @@ teardown() {
 
   add_scripts "$TEST_GO_SCRIPTS_DIR" "${user_commands[@]}"
   add_scripts "$TEST_GO_SCRIPTS_DIR/plugins" "${plugin_commands[@]}"
-  local IFS=':'
-  local search_paths=("$TEST_GO_SCRIPTS_DIR/plugins" "$TEST_GO_SCRIPTS_DIR")
+  local search_paths="$TEST_GO_SCRIPTS_DIR/plugins:$TEST_GO_SCRIPTS_DIR"
 
   run "$TEST_GO_SCRIPT" commands "${search_paths[*]}"
-  IFS=$'\n'
-  assert_success "${__all_scripts[*]##*/}"
+  assert_success "${__all_scripts[@]##*/}"
 }
 
 generate_expected_paths() {
@@ -197,8 +192,7 @@ generate_expected_paths() {
   generate_expected_paths
 
   run "$TEST_GO_SCRIPT" commands --paths
-  local IFS=$'\n'
-  assert_success "${__expected_paths[*]}"
+  assert_success "${__expected_paths[@]}"
 }
 
 create_script_with_description() {
@@ -218,12 +212,11 @@ create_script_with_description() {
   done
 
   run "$TEST_GO_SCRIPT" commands --summaries "$TEST_GO_SCRIPTS_DIR"
-  local IFS=$'\n'
   local expected=(
     '  bar  Does bar stuff'
     '  baz  Does baz stuff'
     '  foo  Does foo stuff')
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: subcommand list, paths, and summaries" {
@@ -244,8 +237,7 @@ create_script_with_description() {
   done
 
   run "$TEST_GO_SCRIPT" commands 'foo'
-  local IFS=$'\n'
-  assert_success "${subcommands[*]}"
+  assert_success "${subcommands[@]}"
 
   local expected_paths=(
     'plugh  scripts/foo.d/plugh'
@@ -253,12 +245,12 @@ create_script_with_description() {
     'xyzzy  scripts/foo.d/xyzzy')
 
   run "$TEST_GO_SCRIPT" commands --paths 'foo'
-  assert_success "${expected_paths[*]}"
+  assert_success "${expected_paths[@]}"
 
   local expected_summaries=(
     '  plugh  Does plugh stuff'
     '  quux   Does quux stuff'
     '  xyzzy  Does xyzzy stuff')
   run "$TEST_GO_SCRIPT" commands --summaries 'foo'
-  assert_success "${expected_summaries[*]}"
+  assert_success "${expected_summaries[@]}"
 }

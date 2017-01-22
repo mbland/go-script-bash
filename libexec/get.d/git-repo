@@ -54,7 +54,8 @@ _@go.get_git_repo() {
   if [[ "$1" == '--complete' ]]; then
     # Tab completions
     if [[ "$2" -eq '2' ]]; then
-      compgen -f -- "$3"
+      . "$_GO_USE_MODULES" 'complete'
+      @go.compgen -f -- "$3"
     fi
     return
   fi

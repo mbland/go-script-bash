@@ -25,6 +25,12 @@
 #
 # * Notes on implementing argument completion:
 #
+# - Considering calling `. "$_GO_USE_MODULES" 'complete'` to make use of common
+# helper functions.
+#
+# - If you need to call `compgen -f` or `compgen -d`, you must use `@go.compgen`
+# from `lib/complete` or otherwise ensure that directory names end with `/`.
+#
 # - If you wish to implement custom argument completion in your own command
 # scripts, your script must contain a `# Tab completions` comment and respond to
 # the `--complete` command line interface described above.
@@ -37,6 +43,8 @@
 # - Subcommand scripts stored in `<parent>.d` directories are automatically
 # added to the argument completions for `{{go}} <parent>` and do not need to be
 # explicitly implemented.
+
+. "$_GO_USE_MODULES" 'complete'
 
 _@go.complete_command() {
   local __go_complete_word_index
@@ -66,16 +74,16 @@ _@go.complete_args() {
   if [[ "$word_index" -eq '0' ]]; then
     case "$cmd_name" in
     -h)
-      echo '-h'
+      printf -- '-h \n'
       ;;
     -he*)
-      echo '-help'
+      printf -- '-help \n'
       ;;
     -|--*)
-      echo '--help'
+      printf -- '--help \n'
       ;;
     *)
-      compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name"
+      @go.compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name"
       ;;
     esac
     return
@@ -83,11 +91,11 @@ _@go.complete_args() {
 
   case "$cmd_name" in
   cd|pushd)
-    compgen -d -- "$word"
+    @go.compgen -d -- "$word"
     return
     ;;
   edit|run)
-    compgen -f -- "$word"
+    @go.compgen -f -- "$word"
     return
     ;;
   -h|-help|--help)
@@ -99,12 +107,12 @@ _@go.complete_args() {
   esac
 
   if _@go.source_builtin 'aliases' --exists "$cmd_name"; then
-    compgen -f -- "$word"
+    @go.compgen -f -- "$word"
     return
   fi
 
   unset 'args[0]'
-  compgen -W \
+  @go.compgen -W \
     "$(_@go.complete_command "$word_index" "$cmd_name" "${args[@]}")" -- "$word"
 }
 

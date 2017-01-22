@@ -17,7 +17,8 @@ _@go.fullpath_tab_completion() {
   if [[ "$word_index" -eq '0' ]]; then
     echo '--existing'
   fi
-  compgen -f -- "$word"
+  . "$_GO_USE_MODULES" 'complete'
+  @go.compgen -f -- "$word"
 }
 
 _@go.fullpath() {

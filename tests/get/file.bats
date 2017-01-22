@@ -27,13 +27,14 @@ teardown() {
 
   local expected=()
   local item
+
+  . "$_GO_USE_MODULES" 'complete'
   while IFS= read -r item; do
     expected+=("$item")
-  done <<<"$(compgen -f -- "$TEST_GO_ROOTDIR/")"
-  test_join $'\n' expected "${expected[@]#$TEST_GO_ROOTDIR/}"
+  done <<<"$(@go.compgen -f -- "$TEST_GO_ROOTDIR/")"
 
   run "$TEST_GO_SCRIPT" get file --complete 1 -f
-  assert_success "$expected"
+  assert_success "${expected[@]#$TEST_GO_ROOTDIR/}"
 }
 
 @test "$SUITE: fail if neither curl nor wget installed" {

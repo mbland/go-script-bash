@@ -11,10 +11,10 @@ load environment
 
 @test "$SUITE: tab completions" {
   run ./go complete 1 aliases ''
-  assert_success '--exists'
+  assert_success '--exists '
 
   run ./go complete 1 aliases -
-  assert_success '--exists'
+  assert_success '--exists '
 
   run ./go complete 2 aliases --exists
   assert_failure ''

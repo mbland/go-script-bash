@@ -12,10 +12,10 @@ teardown() {
 
 @test "$SUITE: tab completions" {
   run "$TEST_GO_SCRIPT" complete 1 env ''
-  assert_success '-'
+  assert_success '- '
 
   run "$TEST_GO_SCRIPT" complete 1 env '-'
-  assert_success '-'
+  assert_success '- '
 
   run "$TEST_GO_SCRIPT" complete 1 env '--foo'
   assert_failure ''
@@ -96,11 +96,10 @@ teardown() {
   run declare -f "_$script_name"
   assert_success
   assert_line_equals 0 "_$script_name () "
-  assert_output_matches "\"$go_script\" 'complete'"
-  assert_line_matches -2 "cd \\\"$TEST_GO_ROOTDIR\\\""
+  assert_line_matches -2 "done < <\(\\\"$go_script\\\" 'complete'"
 
   run complete -p "$script_name"
-  assert_success "complete -o filenames -F _$script_name $script_name"
+  assert_success "complete -o nospace -F _$script_name $script_name"
 
   "$script_name" 'unenv'
   ! command -v "_$script_name"
@@ -128,11 +127,10 @@ teardown() {
   run declare -f "_$func_name"
   assert_success
   assert_line_equals 0 "_$func_name () "
-  assert_output_matches "\"$TEST_GO_SCRIPT\" 'complete'"
-  assert_line_matches -2 "cd \\\"$TEST_GO_ROOTDIR\\\""
+  assert_line_matches -2 "done < <\(\\\"$TEST_GO_SCRIPT\\\" 'complete'"
 
   run complete -p "$func_name"
-  assert_success "complete -o filenames -F _$func_name $func_name"
+  assert_success "complete -o nospace -F _$func_name $func_name"
 
   "$func_name" 'unenv'
   ! command -v "_$func_name"
