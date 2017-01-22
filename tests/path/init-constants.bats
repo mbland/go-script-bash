@@ -39,8 +39,8 @@ teardown() {
 
   local expected_paths=(
     "$_GO_ROOTDIR/libexec"
-    "${plugin_bindirs[@]}"
-    "$TEST_GO_SCRIPTS_DIR")
+    "$TEST_GO_SCRIPTS_DIR"
+    "${plugin_bindirs[@]}")
 
   assert_line_equals 0 "_GO_PLUGINS_DIR: $TEST_GO_PLUGINS_DIR"
   assert_line_equals 1 \
