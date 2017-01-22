@@ -146,24 +146,15 @@ _@go.glob_tab_completion_parse_argv() {
 }
 
 _@go.glob_emit_completion_matches() {
-  local prefix="${__go_glob_matches[0]}"
-  local prefix_len="${#prefix}"
-  local match
-
-  for match in "${__go_glob_matches[@]}"; do
-    while [[ "${match:0:$prefix_len}" != "$prefix" ]]; do
-      ((--prefix_len))
-      prefix="${prefix:0:$prefix_len}"
-    done
-    if [[ "$prefix_len" -eq '0' ]]; then
-      break
-    fi
-  done
-
+  local prefix
   local suffix
   local trimmed_suffix
+  local match
   local prev
   local results=()
+
+  . "$_GO_USE_MODULES" 'strings'
+  @go.common_prefix 'prefix' "${__go_glob_matches[@]}"
 
   for match in "${__go_glob_matches[@]}"; do
     suffix="${match:${#prefix}}"
