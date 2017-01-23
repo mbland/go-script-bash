@@ -1,19 +1,22 @@
 #! /bin/bash
 
-if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
+_@go.set_search_paths() {
+  local plugins_paths=("$_GO_SCRIPTS_DIR"/plugins/*/bin)
+
   if [[ -n "$_GO_INJECT_SEARCH_PATH" ]]; then
     _GO_SEARCH_PATHS+=("$_GO_INJECT_SEARCH_PATH")
   fi
-  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec")
-  _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec" "$_GO_SCRIPTS_DIR")
 
-  if [[ -d "$_GO_PLUGINS_DIR" ]]; then
-    _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR"/*/bin)
-    if [[ "${_GO_PLUGINS_PATHS[0]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
-      unset '_GO_PLUGINS_PATHS'
-    fi
+  if [[ "${plugins_paths[0]}" != "$_GO_SCRIPTS_DIR/plugins/*/bin" ]]; then
+    _GO_PLUGINS_PATHS=("${plugins_paths[@]}" "${_GO_PLUGINS_PATHS[@]}")
+    _GO_SEARCH_PATHS+=("${_GO_PLUGINS_PATHS[@]}")
   fi
-  _GO_SEARCH_PATHS+=("$_GO_SCRIPTS_DIR" "${_GO_PLUGINS_PATHS[@]}")
+}
+
+if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
+  _@go.set_search_paths
+  _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
 fi
 
 _@go.list_available_commands() {
