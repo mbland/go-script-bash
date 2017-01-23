@@ -21,6 +21,9 @@
 
 . "$_GO_USE_MODULES" 'validation'
 
+# DO NOT EDIT: Number of stack trace levels to skip when validation fails.
+export __GO_STRINGS_VALIDATION_SKIP_CALLERS=2
+
 # Splits fields from a delimited string into an array defined by the caller
 #
 # While `IFS= read -ra array_name <<<"$value"` is idiomatic, this function
@@ -72,7 +75,8 @@
 #   var_name:   Name of caller's variable to which to assign the common prefix
 #   ...:        Strings to examine to determine the common prefix
 @go.common_prefix() {
-  @go.validate_identifier_or_die 'Result variable name' "$1"
+  @go.validate_identifier_or_die 'Result variable name' "$1" \
+    "${__GO_STRINGS_VALIDATION_SKIP_CALLERS}"
   local _gcp_prefix="$2"
   local _gcp_prefix_len="${#_gcp_prefix}"
   local _gcp_item
@@ -93,24 +97,20 @@
   printf -v "$1" -- '%s' "$_gcp_prefix"
 }
 
-# Removes the common path prefix from a set of file paths
+# Determines the common parent directory path from a set of file paths
 #
 # Arguments:
-#   array_name:  Name of caller's array into which to store the updated paths
-#   ...:         File paths from which to remove the common path prefix
-@go.remove_common_path_prefix() {
-  @go.validate_identifier_or_die 'Result variable name' "$1"
-  local _grcpp_prefix
-  local _grcpp_paths=("${@:2}")
+#   var_name:  Name of caller's variable to which to assign the parent path
+#   ...:       File paths to examine to determine the common parent directory
+@go.common_parent_path() {
+  ((++__GO_STRINGS_VALIDATION_SKIP_CALLERS))
+  @go.common_prefix "$1" "${@:2}"
+  ((--__GO_STRINGS_VALIDATION_SKIP_CALLERS))
 
-  @go.common_prefix '_grcpp_prefix' "${_grcpp_paths[@]}"
-
-  if [[ "$_grcpp_prefix" =~ / ]]; then
-    _grcpp_prefix="${_grcpp_prefix%/*}/"
+  if [[ "${!1}" =~ / ]]; then
+    printf -v "$1" -- '%s' "${!1%/*}/"
   else
-    _grcpp_prefix=''
+    # Bash 3.2 won't perform the assignment if the format is the empty string.
+    printf -v "$1" '%s' ''
   fi
-
-  local IFS=$'\x1f'
-  read -ra "$1" <<<"${_grcpp_paths[*]#$_grcpp_prefix}"
 }
