@@ -51,7 +51,7 @@ cd "${0%/*}" || exit 1
 #
 # This is directory containing the main ./go script. All functions, commands,
 # and scripts are invoked relative to this directory.
-declare -r -x _GO_ROOTDIR="$PWD"
+declare -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
   cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit 1
@@ -258,13 +258,28 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   if ! _@go.set_command_path_and_argv "$cmd" "$@"; then
     return 1
   fi
-  _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
+
+  if [[ "$__go_cmd_path" =~ ^$_GO_SCRIPTS_DIR/plugins ]]; then
+    _@go.run_plugin_command_script "$__go_cmd_path" "${__go_argv[@]}"
+  else
+    _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
+  fi
 }
 
 _@go.source_builtin() {
   local c="$1"
   shift
   . "$_GO_CORE_DIR/libexec/$c"
+}
+
+_@go.run_plugin_command_script() {
+  local _GO_SCRIPTS_DIR="${__go_cmd_path%/*}"
+  local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/*}"
+  local _GO_PLUGINS_PATHS=("${_GO_PLUGINS_PATHS[@]}")
+  local _GO_SEARCH_PATHS=()
+
+  _@go.set_search_paths
+  _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
 }
 
 _@go.run_command_script() {
