@@ -3,20 +3,42 @@
 load ../environment
 load "$_GO_CORE_DIR/lib/testing/stubbing"
 
+BUILTIN_MODULE_FILE="$_GO_CORE_DIR/lib/builtin-test"
+PLUGIN_MODULE_FILE="$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
+EXPORT_MODULE_FILE="$TEST_GO_ROOTDIR/lib/export-test"
+INTERNAL_MODULE_FILE="$TEST_GO_SCRIPTS_DIR/lib/internal-test"
+
 TEST_MODULES=(
-  "$_GO_CORE_DIR/lib/builtin-test"
-  "$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
-  "$TEST_GO_ROOTDIR/lib/export-test"
-  "$TEST_GO_SCRIPTS_DIR/lib/internal-test"
-)
-IMPORTS=('test-plugin/plugin-test' 'internal-test' 'builtin-test' 'export-test')
+  "$BUILTIN_MODULE_FILE"
+  "$PLUGIN_MODULE_FILE"
+  "$EXPORT_MODULE_FILE"
+  "$INTERNAL_MODULE_FILE")
+
+IMPORTS=(
+  'test-plugin/plugin-test'
+  'internal-test'
+  'builtin-test'
+  'export-test')
+
+CALLER="$TEST_GO_SCRIPT:3 main"
+
 EXPECTED=(
-  "plugin-test loaded"
-  "internal-test loaded"
-  "builtin-test loaded"
-  "export-test loaded"
-  "modules: ${IMPORTS[*]}"
-)
+  'plugin-test loaded'
+  'internal-test loaded'
+  'builtin-test loaded'
+  'export-test loaded'
+  'module: test-plugin/plugin-test'
+  "source: $PLUGIN_MODULE_FILE"
+  "caller: $CALLER"
+  'module: internal-test'
+  "source: $INTERNAL_MODULE_FILE"
+  "caller: $CALLER"
+  'module: builtin-test'
+  "source: $BUILTIN_MODULE_FILE"
+  "caller: $CALLER"
+  'module: export-test'
+  "source: $EXPORT_MODULE_FILE"
+  "caller: $CALLER")
 
 setup() {
   test_filter
@@ -31,7 +53,12 @@ setup() {
 
   @go.create_test_go_script \
     ". \"\$_GO_USE_MODULES\" $*" \
-    'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
+    'for ((i=0; i != ${#_GO_IMPORTED_MODULES[@]}; ++i)); do' \
+    "  printf -- 'module: %s\nsource: %s\ncaller: %s\n' \\" \
+    "    \"\${_GO_IMPORTED_MODULES[\$i]}\" \\" \
+    "    \"\${_GO_IMPORTED_MODULE_FILES[\$i]}\" \\" \
+    "    \"\${_GO_IMPORTED_MODULE_CALLERS[\$i]}\""  \
+    'done'
 
   local module
   for module in "${TEST_MODULES[@]}"; do
@@ -46,14 +73,14 @@ teardown() {
 }
 
 @test "$SUITE: no modules imported by default" {
-  @go.create_test_go_script 'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
+  @go.create_test_go_script 'printf -- "%s\n" "${_GO_IMPORTED_MODULES[@]}"'
   run "$TEST_GO_SCRIPT"
-  assert_success 'modules: '
+  assert_success ''
 }
 
 @test "$SUITE: does nothing if no modules specified" {
   run "$TEST_GO_SCRIPT"
-  assert_success 'modules: '
+  assert_success ''
 }
 
 @test "$SUITE: error if nonexistent module specified" {
@@ -61,17 +88,20 @@ teardown() {
 
   local expected=('ERROR: Module bogus-test-module not found at:'
     "  $TEST_GO_SCRIPT:3 main")
-  assert_failure "${expected[@]}"
+  assert_failure
+  assert_lines_equal "${expected[@]}"
 }
 
 @test "$SUITE: import modules successfully" {
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
-  assert_success "${EXPECTED[@]}"
+  assert_success
+  assert_lines_equal "${EXPECTED[@]}"
 }
 
 @test "$SUITE: import each module only once" {
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}" "${IMPORTS[@]}" "${IMPORTS[@]}"
-  assert_success "${EXPECTED[@]}"
+  assert_success
+  assert_lines_equal "${EXPECTED[@]}"
 }
 
 @test "$SUITE: prevent self, circular, and multiple importing" {
@@ -82,7 +112,28 @@ teardown() {
   done
 
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
-  assert_success "${EXPECTED[@]}"
+  assert_success
+
+  # Note the change in `caller:` values. Basically, each module is loaded by the
+  # module loaded immediately before it. Only the first one is loaded by the
+  # `TEST_GO_SCRIPT`.
+  assert_lines_equal \
+    'plugin-test loaded' \
+    'internal-test loaded' \
+    'builtin-test loaded' \
+    'export-test loaded' \
+    'module: test-plugin/plugin-test' \
+    "source: $PLUGIN_MODULE_FILE" \
+    "caller: $CALLER" \
+    'module: internal-test' \
+    "source: $INTERNAL_MODULE_FILE" \
+    "caller: $PLUGIN_MODULE_FILE:2 source" \
+    'module: builtin-test' \
+    "source: $BUILTIN_MODULE_FILE" \
+    "caller: $INTERNAL_MODULE_FILE:2 source" \
+    'module: export-test' \
+    "source: $EXPORT_MODULE_FILE" \
+    "caller: $BUILTIN_MODULE_FILE:2 source"
 }
 
 @test "$SUITE: error if module contains errors" {

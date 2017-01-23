@@ -92,6 +92,14 @@ declare -r -x _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
 # See `./go vars` and `./go help vars`.
 declare _GO_IMPORTED_MODULES=()
 
+# Tracks the locations of files corresponding to _GO_IMPORTED_MODULES
+# Used for to detect and warn about plugin module namespace collisions.
+declare _GO_IMPORTED_MODULE_FILES=()
+
+# Tracks where each module _GO_IMPORTED_MODULES was first imported
+# Used in the plugin module namespace collision warning message.
+declare _GO_IMPORTED_MODULE_CALLERS=()
+
 # Path to the project's script directory
 declare _GO_SCRIPTS_DIR=
 

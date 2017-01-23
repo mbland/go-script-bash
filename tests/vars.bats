@@ -44,6 +44,8 @@ quotify_expected() {
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     'declare -a _GO_IMPORTED_MODULES=()'
+    'declare -a _GO_IMPORTED_MODULE_CALLERS=()'
+    'declare -a _GO_IMPORTED_MODULE_FILES=()'
     'declare -- _GO_INJECT_MODULE_PATH=""'
     'declare -- _GO_INJECT_SEARCH_PATH=""'
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
@@ -92,8 +94,14 @@ quotify_expected() {
     "[5]=\"$TEST_GO_PLUGINS_DIR/plugin2/bin\"")
 
   # Note that the `format` module imports `strings` and `validation`.
+  local command_script_trace="$TEST_GO_SCRIPTS_DIR/"
+  command_script_trace+="test-command.d/test-subcommand:2 source"
   local expected_modules=('[0]="module_0"'
     '[1]="module_1"')
+  local expected_module_callers=("[0]=\"$command_script_trace\""
+    "[1]=\"$command_script_trace\"")
+  local expected_module_files=("[0]=\"$TEST_GO_ROOTDIR/lib/module_0\""
+    "[1]=\"$TEST_GO_ROOTDIR/lib/module_1\"")
   local expected=("declare -x _GO_BATS_COVERAGE_DIR=\"$_GO_BATS_COVERAGE_DIR\""
     "declare -x _GO_BATS_DIR=\"$_GO_BATS_DIR\""
     "declare -x _GO_BATS_PATH=\"$_GO_BATS_PATH\""
@@ -108,6 +116,8 @@ quotify_expected() {
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     "declare -a _GO_IMPORTED_MODULES=(${expected_modules[*]})"
+    "declare -a _GO_IMPORTED_MODULE_CALLERS=(${expected_module_callers[*]})"
+    "declare -a _GO_IMPORTED_MODULE_FILES=(${expected_module_files[*]})"
     "declare -x _GO_INJECT_MODULE_PATH=\"$TEST_GO_ROOTDIR/lib\""
     "declare -x _GO_INJECT_SEARCH_PATH=\"$TEST_GO_ROOTDIR/bin\""
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
