@@ -21,6 +21,9 @@
 
 . "$_GO_USE_MODULES" 'validation'
 
+# DO NOT EDIT: Number of stack trace levels to skip when validation fails.
+export __GO_STRINGS_VALIDATION_SKIP_CALLERS=2
+
 # Splits fields from a delimited string into an array defined by the caller
 #
 # While `IFS= read -ra array_name <<<"$value"` is idiomatic, this function
@@ -72,7 +75,8 @@
 #   var_name:   Name of caller's variable to which to assign the common prefix
 #   ...:        Strings to examine to determine the common prefix
 @go.common_prefix() {
-  @go.validate_identifier_or_die 'Result variable name' "$1"
+  @go.validate_identifier_or_die 'Result variable name' "$1" \
+    "${__GO_STRINGS_VALIDATION_SKIP_CALLERS}"
   local _gcp_prefix="$2"
   local _gcp_prefix_len="${#_gcp_prefix}"
   local _gcp_item
@@ -99,8 +103,9 @@
 #   var_name:  Name of caller's variable to which to assign the parent path
 #   ...:       File paths to examine to determine the common parent directory
 @go.common_parent_path() {
-  @go.validate_identifier_or_die 'Result variable name' "$1"
+  ((++__GO_STRINGS_VALIDATION_SKIP_CALLERS))
   @go.common_prefix "$1" "${@:2}"
+  ((--__GO_STRINGS_VALIDATION_SKIP_CALLERS))
 
   if [[ "${!1}" =~ / ]]; then
     printf -v "$1" -- '%s' "${!1%/*}/"
