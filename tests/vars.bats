@@ -49,7 +49,7 @@ quotify_expected() {
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
     "declare -- _GO_PLUGINS_DIR=\"$TEST_GO_PLUGINS_DIR\""
     'declare -a _GO_PLUGINS_PATHS=()'
-    "declare -rx _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
+    "declare -x _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
     "declare -- _GO_SCRIPTS_DIR=\"$TEST_GO_SCRIPTS_DIR\""
     "declare -a _GO_SEARCH_PATHS=(${search_paths[*]})"
@@ -113,7 +113,7 @@ quotify_expected() {
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
     "declare -- _GO_PLUGINS_DIR=\"$TEST_GO_PLUGINS_DIR\""
     "declare -a _GO_PLUGINS_PATHS=(${plugins_paths[*]})"
-    "declare -rx _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
+    "declare -x _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
     "declare -- _GO_SCRIPTS_DIR=\"$TEST_GO_SCRIPTS_DIR\""
     "declare -a _GO_SEARCH_PATHS=(${search_paths[*]})"

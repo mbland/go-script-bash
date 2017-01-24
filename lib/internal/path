@@ -1,19 +1,32 @@
 #! /bin/bash
 
-if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
+_@go.set_search_paths() {
+  local plugin_path
+
   if [[ -n "$_GO_INJECT_SEARCH_PATH" ]]; then
     _GO_SEARCH_PATHS+=("$_GO_INJECT_SEARCH_PATH")
   fi
-  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec")
-  _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec" "$_GO_SCRIPTS_DIR")
 
-  if [[ -d "$_GO_PLUGINS_DIR" ]]; then
-    _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR"/*/bin)
-    if [[ "${_GO_PLUGINS_PATHS[0]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
-      unset '_GO_PLUGINS_PATHS'
+  # A plugin's _GO_SCRIPTS_DIR may continue to appear in _GO_PLUGINS_PATHS so
+  # that it's available to other plugins that depend upon it as a circular
+  # dependency (though such dependencies are strongly discouraged). However, we
+  # will ensure its _GO_SCRIPTS_DIR isn't duplicated in _GO_SEARCH_PATHS.
+  for plugin_path in "${_GO_PLUGINS_PATHS[@]}"; do
+    if [[ "$plugin_path" != "$_GO_SCRIPTS_DIR" ]]; then
+      _GO_SEARCH_PATHS+=("$plugin_path")
     fi
+  done
+}
+
+if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
+  _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+  _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR"/*/bin)
+
+  if [[ "${_GO_PLUGINS_PATHS[0]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
+    unset '_GO_PLUGINS_PATHS[0]'
   fi
-  _GO_SEARCH_PATHS+=("$_GO_SCRIPTS_DIR" "${_GO_PLUGINS_PATHS[@]}")
+  _@go.set_search_paths
 fi
 
 _@go.list_available_commands() {
