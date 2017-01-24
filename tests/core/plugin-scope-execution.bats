@@ -140,3 +140,15 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'foo'
   assert_success "$TEST_GO_SCRIPTS_DIR/plugins/baz/bin/baz"
 }
+
+@test "$SUITE: nested plugins dir doesn't leak to sibling plugin" {
+  @go.create_test_command_script 'plugins/foo/bin/foo' '@go bar'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/bin/bar' '@go baz'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/quux/bin/quux' \
+    "$PRINT_SOURCE"
+  @go.create_test_command_script 'plugins/baz/bin/baz' '@go quux'
+
+  run "$TEST_GO_SCRIPT" 'foo'
+  assert_failure
+  assert_line_equals 0 'Unknown command: quux'
+}

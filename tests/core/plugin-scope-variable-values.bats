@@ -25,14 +25,16 @@ setup() {
     'printf "TOP LEVEL SCOPE:\n"' \
     "${print_scope_implementation[@]}"
   @go.create_test_command_script 'plugins/first/bin/first' \
-    'printf "FIRST LEVEL PLUGIN SCOPE:\n"' \
+    'printf "FIRST PLUGIN SCOPE:\n"' \
     "${print_scope_implementation[@]}"
+
+  # This script will execute one of the other plugins based on its argument.
   @go.create_test_command_script 'plugins/second/bin/second' \
-    "@go third" \
-    'printf "FIRST LEVEL PLUGIN SCOPE:\n"' \
+    '@go "$1"' \
+    'printf "SECOND PLUGIN SCOPE:\n"' \
     "${print_scope_implementation[@]}"
   @go.create_test_command_script 'plugins/second/bin/plugins/third/bin/third' \
-    'printf "SECOND LEVEL PLUGIN SCOPE:\n"' \
+    'printf "THIRD PLUGIN SCOPE:\n"' \
     "${print_scope_implementation[@]}"
 
   EXPECTED_ROOT_SCOPE_PLUGINS_PATHS=("$TEST_GO_PLUGINS_DIR/first/bin"
@@ -96,7 +98,7 @@ assert_scope_values_equal() {
   # common plugin in the top-level _GO_PLUGINS_DIR. The plugin's _GO_SCRIPTS_DIR
   # will still appear in _GO_PLUGINS_PATHS, but won't be duplicated in
   # _GO_SEARCH_PATHS.
-  assert_scope_values_equal 'FIRST LEVEL PLUGIN' \
+  assert_scope_values_equal 'FIRST PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/first" \
     '_GO_SCRIPTS_DIR:' \
@@ -112,8 +114,8 @@ assert_scope_values_equal() {
   assert_scope_values_equal 'ROOT LEVEL' "${EXPECTED_ROOT_SCOPE_VALUES[@]}"
 }
 
-@test "$SUITE: second-level plugin script" {
-  run "$TEST_GO_SCRIPT" second
+@test "$SUITE: first-level plugin script invoking own second-level plugin" {
+  run "$TEST_GO_SCRIPT" second third
   assert_success
 
   # As with the previous test case, _GO_PLUGINS_PATHS is inherited, and the
@@ -123,7 +125,7 @@ assert_scope_values_equal() {
   # Its parent's _GO_SCRIPTS_DIR is in both _GO_PLUGINS_PATHS and
   # _GO_SEARCH_PATHS, since its parent is also a plugin. This could support a
   # circular dependency, though such dependencies are strongly discouraged.
-  assert_scope_values_equal 'SECOND LEVEL PLUGIN' \
+  assert_scope_values_equal 'THIRD PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third" \
     '_GO_SCRIPTS_DIR:' \
@@ -141,7 +143,45 @@ assert_scope_values_equal() {
   # The first level plugin's own plugin paths will appear before any inherited
   # _GO_PLUGINS_PATHS, to support a plugin's own installed plugin version to
   # take precedence over other installed versions.
-  assert_scope_values_equal 'FIRST LEVEL PLUGIN' \
+  assert_scope_values_equal 'SECOND PLUGIN' \
+    '_GO_ROOTDIR:' \
+    "$TEST_GO_PLUGINS_DIR/second" \
+    '_GO_SCRIPTS_DIR:' \
+    "$TEST_GO_PLUGINS_DIR/second/bin" \
+    '_GO_PLUGINS_PATHS:' \
+    "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
+    "$TEST_GO_PLUGINS_DIR/first/bin" \
+    "$TEST_GO_PLUGINS_DIR/second/bin" \
+    '_GO_SEARCH_PATHS:' \
+    "$_GO_CORE_DIR/libexec" \
+    "$TEST_GO_PLUGINS_DIR/second/bin" \
+    "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
+    "$TEST_GO_PLUGINS_DIR/first/bin"
+
+  assert_scope_values_equal 'ROOT LEVEL' "${EXPECTED_ROOT_SCOPE_VALUES[@]}"
+}
+
+@test "$SUITE: first-level plugin script invoking sibling first-level plugin" {
+  run "$TEST_GO_SCRIPT" second first
+  assert_success
+
+  # Since `second` is invoking its sibling `first`, its plugin directory
+  # shouldn't leak into the environment of `first`.
+  assert_scope_values_equal 'FIRST PLUGIN' \
+    '_GO_ROOTDIR:' \
+    "$TEST_GO_PLUGINS_DIR/first" \
+    '_GO_SCRIPTS_DIR:' \
+    "$TEST_GO_PLUGINS_DIR/first/bin" \
+    '_GO_PLUGINS_PATHS:' \
+    "$TEST_GO_PLUGINS_DIR/first/bin" \
+    "$TEST_GO_PLUGINS_DIR/second/bin" \
+    '_GO_SEARCH_PATHS:' \
+    "$_GO_CORE_DIR/libexec" \
+    "$TEST_GO_PLUGINS_DIR/first/bin" \
+    "$TEST_GO_PLUGINS_DIR/second/bin"
+
+  # `second`'s plugin environment should be the same as it ever was.
+  assert_scope_values_equal 'SECOND PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/second" \
     '_GO_SCRIPTS_DIR:' \

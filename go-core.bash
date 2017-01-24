@@ -259,7 +259,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     return 1
   fi
 
-  if [[ "$__go_cmd_path" =~ ^$_GO_SCRIPTS_DIR/plugins ]]; then
+  if [[ "$__go_cmd_path" =~ ^$_GO_PLUGINS_DIR/ ]]; then
     _@go.run_plugin_command_script "$__go_cmd_path" "${__go_argv[@]}"
   else
     _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
@@ -275,8 +275,24 @@ _@go.source_builtin() {
 _@go.run_plugin_command_script() {
   local _GO_SCRIPTS_DIR="${__go_cmd_path%/*}"
   local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/*}"
-  local _GO_PLUGINS_PATHS=("${_GO_PLUGINS_PATHS[@]}")
   local _GO_SEARCH_PATHS=()
+  local _GO_PLUGINS_PATHS=()
+  local plugins_dir="$_GO_SCRIPTS_DIR/plugins"
+  local plugin_paths=()
+
+  # A plugin's own local plugin paths will appear before inherited ones. If
+  # there is a version incompatibility issue with other installed plugins, this
+  # allows a plugin's preferred version to take precedence.
+  while true; do
+    plugin_paths=("$plugins_dir"/*/bin)
+    if [[ "${plugin_paths[0]}" != "$plugins_dir/*/bin" ]]; then
+      _GO_PLUGINS_PATHS+=("${plugin_paths[@]}")
+    fi
+    if [[ "$plugins_dir" == "$_GO_PLUGINS_DIR" ]]; then
+      break
+    fi
+    plugins_dir="${plugins_dir%/plugins/*}/plugins"
+  done
 
   _@go.set_search_paths
   _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"

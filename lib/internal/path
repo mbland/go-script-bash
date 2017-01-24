@@ -1,20 +1,12 @@
 #! /bin/bash
 
 _@go.set_search_paths() {
-  local plugins_paths=("$_GO_SCRIPTS_DIR"/plugins/*/bin)
   local plugin_path
 
   if [[ -n "$_GO_INJECT_SEARCH_PATH" ]]; then
     _GO_SEARCH_PATHS+=("$_GO_INJECT_SEARCH_PATH")
   fi
   _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec" "$_GO_SCRIPTS_DIR")
-
-  # A plugin's own local plugin paths will appear before inherited ones. If
-  # there is a version incompatibility issue with other installed plugins, this
-  # allows a plugin's preferred version to take precedence.
-  if [[ "${plugins_paths[0]}" != "$_GO_SCRIPTS_DIR/plugins/*/bin" ]]; then
-    _GO_PLUGINS_PATHS=("${plugins_paths[@]}" "${_GO_PLUGINS_PATHS[@]}")
-  fi
 
   # A plugin's _GO_SCRIPTS_DIR may continue to appear in _GO_PLUGINS_PATHS so
   # that it's available to other plugins that depend upon it as a circular
@@ -28,8 +20,13 @@ _@go.set_search_paths() {
 }
 
 if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
-  _@go.set_search_paths
   _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+  _GO_PLUGINS_PATHS=("$_GO_PLUGINS_DIR"/*/bin)
+
+  if [[ "${_GO_PLUGINS_PATHS[0]}" == "$_GO_PLUGINS_DIR/*/bin" ]]; then
+    unset '_GO_PLUGINS_PATHS[0]'
+  fi
+  _@go.set_search_paths
 fi
 
 _@go.list_available_commands() {
