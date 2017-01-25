@@ -93,10 +93,12 @@ teardown() {
 }
 
 @test "$SUITE: counts isolated across files" {
+  # Note we're using `$0` instead of `BASH_SOURCE[0]` because of a bug in Bash
+  # versions before 4.4 wherein `BASH_SOURCE` isn't set for the main script.
   create_bats_test_script 'test-break-after-n' \
     'for ((i=0; i != 5; ++i)); do' \
-    '  . "${BASH_SOURCE[0]%/*}/foo"' \
-    '  . "${BASH_SOURCE[0]%/*}/bar"' \
+    '  . "${0%/*}/foo"' \
+    '  . "${0%/*}/bar"' \
     'done'
   create_bats_test_script 'foo' \
     '  test_break_after_num_iterations "$(($1+1))"'
@@ -111,16 +113,14 @@ teardown() {
 
 @test "$SUITE: prints values of variables on break" {
   create_bats_test_script 'test-break-after-n' \
+    'declare stuff=("foo" "bar" "baz")' \
     'for ((i=0; i != 5; ++i)); do' \
-    '  test_break_after_num_iterations "$@"' \
+    '  test_break_after_num_iterations "$@" "stuff[*]" i' \
     'done'
 
-  TEST_DEBUG='true' run "$BATS_TEST_ROOTDIR/test-break-after-n" 5 \
-    'BASH_SOURCE[1]' 'BASH_LINENO[0]' 'FUNCNAME[1]' 'i'
+  TEST_DEBUG='true' run "$BATS_TEST_ROOTDIR/test-break-after-n" 5
   assert_failure 'Breaking after iteration 5 at:' \
-    "  $BATS_TEST_ROOTDIR/test-break-after-n:3 main" \
-    "BASH_SOURCE[1]: $BATS_TEST_ROOTDIR/test-break-after-n" \
-    'BASH_LINENO[0]: 3' \
-    'FUNCNAME[1]: main' \
+    "  $BATS_TEST_ROOTDIR/test-break-after-n:4 main" \
+    'stuff[*]: foo bar baz' \
     'i: 4'
 }

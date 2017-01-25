@@ -257,7 +257,11 @@ export -f test_printf
 #     zero otherwise
 test_break_after_num_iterations() {
   local __tbani_num_iterations="$1"
-  local __tbani_id="${BASH_SOURCE[1]}_${BASH_LINENO[0]}_${FUNCNAME[1]}"
+
+  # In Bash versions earlier than 4.4, `BASH_SOURCE` isn't set properly for the
+  # main script, so it will be empty. So we use $0 in that case instead.
+  local __tbani_id="${BASH_SOURCE[1]:-$0}_${BASH_LINENO[0]}_${FUNCNAME[1]}"
+
   local __tbani_var="__tbani_current_iteration_${__tbani_id//[^[:alnum:]]/_}"
   local __tbani_caller_var
   local __tbani_do_exit
@@ -269,7 +273,7 @@ test_break_after_num_iterations() {
   elif [[ -z "$TEST_DEBUG" ]]; then
     return
   else
-    printf -v "$__tbani_var" -- '%d' "$((${!__tbani_var:-0} + 1))"
+    printf -v "$__tbani_var" -- '%d' "$((${!__tbani_var} + 1))"
     if [[ "${!__tbani_var}" -eq "$__tbani_num_iterations" ]]; then
       printf 'Breaking after iteration %d at:\n' "$__tbani_num_iterations" >&2
       __tbani_do_exit='true'
@@ -278,7 +282,8 @@ test_break_after_num_iterations() {
 
   if [[ -n "$__tbani_do_exit" ]]; then
     for ((__tbani_i=1; __tbani_i != "${#FUNCNAME[@]}"; ++__tbani_i)); do
-      printf '  %s:%s %s\n' "${BASH_SOURCE[$__tbani_i]}" \
+      # Again notice the use of $0 to cover the case when BASH_SOURCE isn't set.
+      printf '  %s:%s %s\n' "${BASH_SOURCE[$__tbani_i]:-$0}" \
         "${BASH_LINENO[$((__tbani_i-1))]}" "${FUNCNAME[$__tbani_i]}" >&2
     done
 
