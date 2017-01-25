@@ -141,14 +141,94 @@ teardown() {
   assert_success "$TEST_GO_SCRIPTS_DIR/plugins/baz/bin/baz"
 }
 
-@test "$SUITE: nested plugins dir doesn't leak to sibling plugin" {
-  @go.create_test_command_script 'plugins/foo/bin/foo' '@go bar'
-  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/bin/bar' '@go baz'
-  @go.create_test_command_script 'plugins/foo/bin/plugins/quux/bin/quux' \
+@test "$SUITE: plugin doesn't leak own plugins to sibling plugin" {
+  @go.create_test_command_script 'plugins/foo/bin/foo' '@go baz'
+  @go.create_test_command_script 'plugins/bar/bin/bar' '@go foo'
+  @go.create_test_command_script 'plugins/bar/bin/plugins/baz/bin/baz' \
     "$PRINT_SOURCE"
-  @go.create_test_command_script 'plugins/baz/bin/baz' '@go quux'
+
+  run "$TEST_GO_SCRIPT" 'bar'
+  assert_failure
+  assert_line_equals 0 'Unknown command: baz'
+}
+
+@test "$SUITE: plugin doesn't leak own plugins to parent plugin" {
+  @go.create_test_command_script 'plugins/foo/bin/foo' '@go baz'
+  @go.create_test_command_script 'plugins/foo/bin/bar' '@go quux'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/baz/bin/baz' '@go bar'
+  @go.create_test_command_script \
+    'plugins/foo/bin/plugins/baz/bin/plugins/quux/bin/quux' \
+    "$PRINT_SOURCE"
 
   run "$TEST_GO_SCRIPT" 'foo'
   assert_failure
   assert_line_equals 0 'Unknown command: quux'
+}
+
+@test "$SUITE: non-plugin script when _GO_SCRIPTS_DIR contains /plugins/" {
+  create_bats_test_script 'go' \
+    ". '$_GO_CORE_DIR/go-core.bash' 'plugins'" \
+    '@go "$@"'
+  create_bats_test_script 'plugins/foo' \
+    '@go.print_stack_trace 1'
+
+  run "$TEST_GO_SCRIPT" 'foo'
+  assert_success
+  assert_line_matches 0 \
+    "  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script"
+  fail_if line_matches 1 \
+    "  $_GO_CORE_DIR/go-core.bash:[1-9]+ _@go.run_plugin_command_script"
+}
+
+@test "$SUITE: non-plugin script when /plugins/ in relative path" {
+  create_bats_test_script 'go' \
+    ". '$_GO_CORE_DIR/go-core.bash' 'plugins'" \
+    '@go "$@"'
+  create_bats_test_script 'plugins/plugins/foo' \
+    '@go.print_stack_trace 1'
+
+  run "$TEST_GO_SCRIPT" 'plugins/foo'
+  assert_success
+  assert_line_matches 0 \
+    "  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script"
+  fail_if line_matches 1 \
+    "  $_GO_CORE_DIR/go-core.bash:[1-9]+ _@go.run_plugin_command_script"
+}
+
+@test "$SUITE: script isn't a plugin if /plugins/ in _GO_ROOTDIR" {
+  local test_rootdir="$TEST_GO_ROOTDIR/plugins/rootdir"
+  mkdir -p "$test_rootdir"
+  mv "$TEST_GO_SCRIPT" "$test_rootdir"
+
+  # We can't use `@go.create_test_command_script` since we can't change the
+  # readonly `TEST_GO_*` variables.
+  create_bats_test_script "${test_rootdir#$BATS_TEST_ROOTDIR/}/scripts/foo" \
+    '@go.print_stack_trace 1'
+
+  run "$test_rootdir/go" 'foo'
+  assert_success
+  assert_line_matches 0 \
+    "  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script"
+  fail_if line_matches 1 \
+    "  $_GO_CORE_DIR/go-core.bash:[1-9]+ _@go.run_plugin_command_script"
+}
+
+@test "$SUITE: script isn't a plugin despite /plugins/ paths all the way down" {
+  local test_rootdir="$TEST_GO_ROOTDIR/plugins/plugins"
+  local test_scripts_dir="$test_rootdir/plugins"
+  mkdir -p "$test_scripts_dir/plugins"
+
+  create_bats_test_script "${test_rootdir#$BATS_TEST_ROOTDIR/}/go" \
+    ". '$_GO_CORE_DIR/go-core.bash' 'plugins'" \
+    '@go "$@"'
+  create_bats_test_script \
+    "${test_rootdir#$BATS_TEST_ROOTDIR/}/plugins/plugins/foo" \
+    '@go.print_stack_trace 1'
+
+  run "$test_rootdir/go" 'plugins/foo'
+  assert_success
+  assert_line_matches 0 \
+    "  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script"
+  fail_if line_matches 1 \
+    "  $_GO_CORE_DIR/go-core.bash:[1-9]+ _@go.run_plugin_command_script"
 }
