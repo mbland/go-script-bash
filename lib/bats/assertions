@@ -149,7 +149,7 @@ fail_if() {
   local constraints=()
   local constraint
   local i
-  local bats_fail_no_output='true'
+  local bats_fail_no_output=''
 
   if [[ "$assertion" =~ _match ]]; then
     operation='match'
@@ -157,11 +157,13 @@ fail_if() {
 
   case "$assertion" in
   assert_equal|assert_matches)
+    bats_fail_no_output='true'
     label="${3:-value}"
     constraints=("$1")
     value="$2"
     ;;
   assert_output*|assert_status)
+    bats_fail_no_output='true'
     label="${assertion#assert_}"
     label="${label%_*}"
     constraints=("$@")
@@ -173,12 +175,10 @@ fail_if() {
     value="${lines[$1]}"
     ;;
   assert_lines_*)
-    bats_fail_no_output=
     label="lines"
     constraints=("${@}")
     ;;
   assert_file_*)
-    bats_fail_no_output=
     label="'$1'"
     constraints=("${@:2}")
     ;;
