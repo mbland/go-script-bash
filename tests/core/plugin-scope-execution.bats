@@ -30,6 +30,40 @@ teardown() {
   assert_line_equals 0 'Unknown command: bar'
 }
 
+@test "$SUITE: plugin runs command from own _GO_SCRIPTS_DIR not as plugin" {
+  @go.create_test_command_script 'plugins/foo/bin/foo' '@go bar'
+  @go.create_test_command_script 'plugins/foo/bin/bar' '@go.print_stack_trace'
+
+  run "$TEST_GO_SCRIPT" 'foo'
+  assert_success
+
+  # It shouldn't invoke its own scripts as though they were separate plugins.
+  assert_line_matches 0 \
+    "  $TEST_GO_PLUGINS_DIR/foo/bin/bar:2 source"
+  assert_line_matches 1 \
+    "  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script"
+  fail_if line_matches 2 \
+    "  $_GO_CORE_DIR/go-core.bash:[1-9]+ _@go.run_plugin_command_script"
+}
+
+@test "$SUITE: plugin subcommand finds correct command in own plugin" {
+  @go.create_test_command_script 'plugins/foo/bin/foo' '@go.print_stack_trace'
+  @go.create_test_command_script 'plugins/foo/bin/bar' "$PRINT_SOURCE"
+  @go.create_test_command_script 'plugins/foo/bin/bar.d/baz' '@go foo'
+  @go.create_test_command_script 'plugins/aaa/bin/foo' "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'bar' 'baz'
+  assert_success
+
+  # It shouldn't invoke its own scripts as though they were separate plugins.
+  assert_line_matches 0 \
+    "  $TEST_GO_PLUGINS_DIR/foo/bin/foo:2 source"
+  assert_line_matches 1 \
+    "  $_GO_CORE_DIR/go-core.bash:[0-9]+ _@go.run_command_script"
+  fail_if line_matches 2 \
+    "  $_GO_CORE_DIR/go-core.bash:[1-9]+ _@go.run_plugin_command_script"
+}
+
 @test "$SUITE: plugin can use script from top-level _GO_PLUGINS_DIR" {
   @go.create_test_command_script 'plugins/foo/bin/foo' '@go bar'
   @go.create_test_command_script 'plugins/bar/bin/bar' "$PRINT_SOURCE"
