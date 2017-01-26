@@ -259,7 +259,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     return 1
   fi
 
-  if [[ "${__go_cmd_path#$_GO_SCRIPTS_DIR}" =~ /plugins/ ]]; then
+  if [[ "${__go_cmd_path#$_GO_SCRIPTS_DIR}" =~ /plugins/[^/]+/bin/ ]]; then
     _@go.run_plugin_command_script "$__go_cmd_path" "${__go_argv[@]}"
   else
     _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"

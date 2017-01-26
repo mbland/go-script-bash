@@ -13,7 +13,7 @@ _@go.set_search_paths() {
   # A plugin's own local plugin paths will appear before inherited ones. If
   # there is a version incompatibility issue with other installed plugins, this
   # allows a plugin's preferred version to take precedence.
-  while true; do
+  while [[ "$plugins_dir" =~ ^$_GO_PLUGINS_DIR ]]; do
     plugin_paths=("$plugins_dir"/*/bin)
     if [[ "${plugin_paths[0]}" != "$plugins_dir/*/bin" ]]; then
       _GO_PLUGINS_PATHS+=("${plugin_paths[@]}")

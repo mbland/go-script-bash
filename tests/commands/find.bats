@@ -94,21 +94,19 @@ assert_command_scripts_equal() {
   assert_command_scripts_equal "${__all_scripts[@]}"
 }
 
-@test "$SUITE: return error if duplicates exists" {
+@test "$SUITE: commands from earlier paths precede duplicates in later paths" {
+  # In this case, we're trying to duplicate a builtin. Since
+  # `_GO_CORE_DIR/libexec` comes first in `_GO_SEARCH_PATHS`, it takes
+  # precedence over the duplicate we add.
   local duplicate_cmd="${BUILTIN_SCRIPTS[0]##*/}"
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
   add_scripts "$duplicate_cmd"
   run "$TEST_GO_SCRIPT"
-  assert_failure
-
-  assert_line_equals 0 "ERROR: duplicate command $duplicate_cmd:"
-
-  # Because the go-core.bash file is in the test's $_GO_ROOTDIR, and the test
-  # script has a different $_GO_ROOTDIR, the builtin scripts will retain their
-  # absolute path, whereas user scripts will be relative.
-  assert_line_equals 1 "  $_GO_ROOTDIR/${BUILTIN_SCRIPTS[0]}"
-  assert_line_equals 2 "  scripts/$duplicate_cmd"
+  assert_success
+  assert_line_equals 0 "LONGEST NAME LEN: ${#LONGEST_BUILTIN_NAME}"
+  assert_line_equals 1 "COMMAND_NAMES: ${__all_scripts[*]##*/}"
+  assert_command_scripts_equal "${__all_scripts[@]}"
 }
 
 @test "$SUITE: return subcommands only" {

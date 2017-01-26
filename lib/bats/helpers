@@ -223,6 +223,9 @@ test_join() {
 # When debugging a piece of code, you may wish to source this file and
 # temporarily include `test_printf` to trace values in your program.
 #
+# Globals:
+#   TEST_DEBUG:  prints to stderr when not null, disables printing otherwise
+#
 # Arguments:
 #    ...:  Arguments to `printf`
 test_printf() {
@@ -231,6 +234,66 @@ test_printf() {
   fi
 }
 export -f test_printf
+
+# Breaks execution after a number of iterations and prints context to stderr
+#
+# After reaching the number of iterations, this function prints to standard
+# error the caller's stack trace, prints the names and values of any variables
+# specified in the argument list (one per line), and exits the program with an
+# error.
+#
+# Add this to a point in your program to determine how a program reached a
+# certain line of execution and to examine its context.
+#
+# Globals:
+#   TEST_DEBUG:  enables breaking when not null, disables breaking otherwise
+#
+# Arguments:
+#   num_iterations:  The number of iterations after which execution will break
+#   ...:             Names of variables to print to standard error on break
+#
+# Returns:
+#   Nonzero if `TEST_DEBUG` is set and `num_iterations` has been reached,
+#     zero otherwise
+test_break_after_num_iterations() {
+  local __tbani_num_iterations="$1"
+
+  # In Bash versions earlier than 4.4, `BASH_SOURCE` isn't set properly for the
+  # main script, so it will be empty. So we use $0 in that case instead.
+  local __tbani_id="${BASH_SOURCE[1]:-$0}_${BASH_LINENO[0]}_${FUNCNAME[1]}"
+
+  local __tbani_var="__tbani_current_iteration_${__tbani_id//[^[:alnum:]]/_}"
+  local __tbani_caller_var
+  local __tbani_do_exit
+  local __tbani_i
+
+  if [[ ! "$__tbani_num_iterations" =~ ^[1-9][0-9]*$ ]]; then
+    printf 'The argument to %s must be a positive integer at:\n' "$FUNCNAME" >&2
+    __tbani_do_exit='true'
+  elif [[ -z "$TEST_DEBUG" ]]; then
+    return
+  else
+    printf -v "$__tbani_var" -- '%d' "$((${!__tbani_var} + 1))"
+    if [[ "${!__tbani_var}" -eq "$__tbani_num_iterations" ]]; then
+      printf 'Breaking after iteration %d at:\n' "$__tbani_num_iterations" >&2
+      __tbani_do_exit='true'
+    fi
+  fi
+
+  if [[ -n "$__tbani_do_exit" ]]; then
+    for ((__tbani_i=1; __tbani_i != "${#FUNCNAME[@]}"; ++__tbani_i)); do
+      # Again notice the use of $0 to cover the case when BASH_SOURCE isn't set.
+      printf '  %s:%s %s\n' "${BASH_SOURCE[$__tbani_i]:-$0}" \
+        "${BASH_LINENO[$((__tbani_i-1))]}" "${FUNCNAME[$__tbani_i]}" >&2
+    done
+
+    for __tbani_caller_var in "${@:2}"; do
+      printf -- '%s: %s\n' "$__tbani_caller_var" "${!__tbani_caller_var}" >&2
+    done
+    exit 1
+  fi
+}
+export -f test_break_after_num_iterations
 
 # Skips a test if `TEST_FILTER` is set but doesn't match `BATS_TEST_DESCRIPTION`
 #

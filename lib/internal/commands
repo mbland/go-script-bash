@@ -23,9 +23,9 @@ _@go.merge_scripts_into_list() {
     rhs_name="${rhs_script##*/}"
 
     if [[ "$lhs_name" == "$rhs_name" ]]; then
-      printf "ERROR: duplicate command $lhs_name:\n\n  %s\n  %s\n" \
-        "$lhs_script" "$rhs_script" >&2
-      return 1
+      result+=("$lhs_script")
+      ((++i))
+      ((++j))
     elif [[ "$lhs_name" < "$rhs_name" ]]; then
       result+=("$lhs_script")
       ((++i))
@@ -56,10 +56,7 @@ _@go.find_commands() {
         scripts+=("$script")
       fi
     done
-
-    if ! _@go.merge_scripts_into_list "${scripts[@]#$_GO_ROOTDIR/}"; then
-      return 1
-    fi
+    _@go.merge_scripts_into_list "${scripts[@]#$_GO_ROOTDIR/}"
   done
 
   if [[ "${#__go_command_scripts[@]}" -eq '0' ]]; then

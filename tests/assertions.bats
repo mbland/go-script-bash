@@ -613,7 +613,10 @@ teardown() {
   expect_assertion_failure "echo 'Hello, world!'" \
     "fail_if line_equals '0' 'Hello, world!'" \
     'Expected line 0 not to equal:' \
-    "  'Hello, world!'"
+    "  'Hello, world!'" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    'Hello, world!'
 }
 
 @test "$SUITE: fail_if succeeds when assert_line_matches fails" {
@@ -627,7 +630,10 @@ teardown() {
     'Expected line 0 not to match:' \
     "  'Hello'" \
     'Value:' \
-    "  'Hello, world!'"
+    "  'Hello, world!'" \
+    'STATUS: 0' \
+    'OUTPUT:' \
+    'Hello, world!'
 }
 
 @test "$SUITE: fail_if succeeds when assert_lines_match fails" {
