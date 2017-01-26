@@ -114,7 +114,10 @@ declare -x _GO_CMD_NAME=
 # string with the arguments delimited by the ASCII Unit Separator ($'\x1f').
 declare -x _GO_CMD_ARGV=
 
-# The directory in which plugins are installed.
+# The top-level directory in which plugins are installed.
+#
+# If a command script is running as a plugin, this value will be the plugins
+# directory of the top-level `./go` script.
 declare _GO_PLUGINS_DIR=
 
 # Directories containing executable plugin scripts.
@@ -202,6 +205,52 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
       "${FUNCNAME[$i]}"
   done
   return "$result"
+}
+
+# Searches through plugin directories using a helper function
+#
+# The search will begin in `_GO_SCRIPTS_DIR/plugins`. As long as `search_func`
+# returns nonzero, every parent `/plugins/` directory will be searched, up to
+# and including the top-level `_GO_PLUGINS_DIR`. The search will end either when
+# `search_func` returns zero, or when all of the plugin paths are exhausted.
+#
+# The helper function, `search_func`, will receive the current plugin directory
+# being searched as its sole argument. The `@go.search_plugins` caller's
+# variables will be available in its scope. It should return zero when the
+# search criteria are satisfied, nonzero if the search should continue.
+#
+# For example, to search for a particular item in a particular plugin:
+#
+# find_plugin_item() {
+#   [[ -e "$1/item_path" ]] && item_path="$1/item_path"
+# }
+#
+# my_func() {
+#   local item_path='foo/bar'
+#   if @go.search_plugins find_plugin_item; then
+#     # Do something with $item_path
+#   fi
+# }
+#
+# Arguments:
+#   search_func:  Helper function implementing the search operation
+#
+# Returns:
+#   Zero if `search_func` ever returns zero, nonzero otherwise
+@go.search_plugins() {
+  local __gsp_plugins_dir="$_GO_SCRIPTS_DIR/plugins"
+
+  # Set `_GO_PLUGINS_DIR` if called from a top-level `./go` script before `@go`.
+  _GO_PLUGINS_DIR="${_GO_PLUGINS_DIR:-$_GO_SCRIPTS_DIR/plugins}"
+
+  while true; do
+    if "$1" "$__gsp_plugins_dir"; then
+      return
+    elif [[ "$__gsp_plugins_dir" == "$_GO_PLUGINS_DIR" ]]; then
+      return 1
+    fi
+    __gsp_plugins_dir="${__gsp_plugins_dir%/plugins/*}/plugins"
+  done
 }
 
 # Main driver of ./go script functionality.
