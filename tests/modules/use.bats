@@ -83,6 +83,13 @@ teardown() {
   assert_success ''
 }
 
+@test "$SUITE: import builtin module" {
+  run "$TEST_GO_SCRIPT" 'complete'
+  assert_success 'module: complete' \
+    "source: $_GO_CORE_DIR/lib/complete" \
+    "caller: $TEST_GO_SCRIPT:3 main"
+}
+
 @test "$SUITE: error if nonexistent module specified" {
   run "$TEST_GO_SCRIPT" 'bogus-test-module'
 
