@@ -19,6 +19,8 @@ EXPECTED=(
 )
 
 setup() {
+  test_filter
+
   local core_test_module
   for core_test_module in 'builtin-test' 'go-use-modules-test'; do
     if [[ -e "$_GO_CORE_DIR/lib/$core_test_module" ]]; then
@@ -59,20 +61,17 @@ teardown() {
 
   local expected=('ERROR: Module bogus-test-module not found at:'
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: import modules successfully" {
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
-  local IFS=$'\n'
-  assert_success "${EXPECTED[*]}"
+  assert_success "${EXPECTED[@]}"
 }
 
 @test "$SUITE: import each module only once" {
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}" "${IMPORTS[@]}" "${IMPORTS[@]}"
-  local IFS=$'\n'
-  assert_success "${EXPECTED[*]}"
+  assert_success "${EXPECTED[@]}"
 }
 
 @test "$SUITE: prevent self, circular, and multiple importing" {
@@ -83,8 +82,7 @@ teardown() {
   done
 
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
-  local IFS=$'\n'
-  assert_success "${EXPECTED[*]}"
+  assert_success "${EXPECTED[@]}"
 }
 
 @test "$SUITE: error if module contains errors" {
@@ -99,8 +97,7 @@ teardown() {
     "$module_file: line 1: This: command not found"
     "ERROR: Failed to import $module module from $module_file at:"
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: error if module returns an error" {
@@ -117,8 +114,7 @@ teardown() {
     "$error_message"
     "ERROR: Failed to import $module module from $module_file at:"
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: import order: injected; core; internal; exported; plugin" {
