@@ -66,7 +66,6 @@ teardown() {
   assert_success "$TEST_GO_PLUGINS_DIR/$module_path" 'bar/bar' 'bar/bar-2'
 }
 
-
 @test "$SUITE: nested plugin imports own exported module" {
   local module_path='foo/bin/plugins/bar/lib/bar-2'
   @go.create_test_command_script 'plugins/foo/bin/foo' \
@@ -89,6 +88,19 @@ teardown() {
 
   run "$TEST_GO_SCRIPT" 'foo'
   assert_success "$TEST_GO_PLUGINS_DIR/$module_path" 'bar/bar' 'baz/baz'
+}
+
+@test "$SUITE: nested plugin imports own module instead of parent module" {
+  local module_path='foo/bin/plugins/bar/lib/bar-2'
+  @go.create_test_command_script 'plugins/foo/bin/foo' \
+    '. "$_GO_USE_MODULES" bar/bar'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/lib/bar' \
+    '. "$_GO_USE_MODULES" bar-2'
+  @go.create_test_command_script "plugins/foo/lib/bar-2" "$PRINT_SOURCE"
+  @go.create_test_command_script "plugins/$module_path" "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/$module_path" 'bar/bar' 'bar/bar-2'
 }
 
 @test "$SUITE: nested plugin imports module from parent plugin" {

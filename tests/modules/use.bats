@@ -114,33 +114,42 @@ teardown() {
 @test "$SUITE: prevent self, circular, and multiple importing" {
   local module
 
-  for module in "${TEST_MODULES[@]}"; do
-    echo ". \"\$_GO_USE_MODULES\" ${IMPORTS[@]}" >> "$module"
-  done
+  # We have to be careful because the plugin module can only access itself and
+  # the builtin module.
+  printf '. "$_GO_USE_MODULES" %s' \
+    "internal-test export-test test-plugin/plugin-test" \
+      >>"$INTERNAL_MODULE_FILE"
+  printf '. "$_GO_USE_MODULES" %s' \
+    "internal-test export-test test-plugin/plugin-test" \
+    >>"$EXPORT_MODULE_FILE"
+  printf '. "$_GO_USE_MODULES" %s' \
+    "test-plugin/plugin-test builtin-test" \
+    >>"$PLUGIN_MODULE_FILE"
+  printf '. "$_GO_USE_MODULES" %s' \
+    "builtin-test" \
+    >>"$BUILTIN_MODULE_FILE"
 
-  run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
+  run "$TEST_GO_SCRIPT" 'internal-test' 'export-test' 'builtin-test' \
+    'test-plugin/plugin-test'
   assert_success
 
-  # Note the change in `caller:` values. Basically, each module is loaded by the
-  # module loaded immediately before it. Only the first one is loaded by the
-  # `TEST_GO_SCRIPT`.
   assert_lines_equal \
-    'plugin-test loaded' \
     'internal-test loaded' \
-    'builtin-test loaded' \
     'export-test loaded' \
-    'module: test-plugin/plugin-test' \
-    "source: $PLUGIN_MODULE_FILE" \
-    "caller: $CALLER" \
+    'plugin-test loaded' \
+    'builtin-test loaded' \
     'module: internal-test' \
     "source: $INTERNAL_MODULE_FILE" \
-    "caller: $PLUGIN_MODULE_FILE:2 source" \
-    'module: builtin-test' \
-    "source: $BUILTIN_MODULE_FILE" \
-    "caller: $INTERNAL_MODULE_FILE:2 source" \
+    "caller: $CALLER" \
     'module: export-test' \
     "source: $EXPORT_MODULE_FILE" \
-    "caller: $BUILTIN_MODULE_FILE:2 source"
+    "caller: $INTERNAL_MODULE_FILE:2 source" \
+    'module: test-plugin/plugin-test' \
+    "source: $PLUGIN_MODULE_FILE" \
+    "caller: $EXPORT_MODULE_FILE:2 source" \
+    'module: builtin-test' \
+    "source: $BUILTIN_MODULE_FILE" \
+    "caller: $PLUGIN_MODULE_FILE:2 source"
 }
 
 @test "$SUITE: error if module contains errors" {

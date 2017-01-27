@@ -93,7 +93,7 @@ declare -r -x _GO_USE_MODULES="$_GO_CORE_DIR/lib/internal/use"
 declare _GO_IMPORTED_MODULES=()
 
 # Tracks the locations of files corresponding to _GO_IMPORTED_MODULES
-# Used for to detect and warn about plugin module namespace collisions.
+# Used to detect and warn about plugin module namespace collisions.
 declare _GO_IMPORTED_MODULE_FILES=()
 
 # Tracks where each module _GO_IMPORTED_MODULES was first imported

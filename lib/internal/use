@@ -86,30 +86,30 @@ _@go.set_use_caller() {
   __go_use_caller="${BASH_SOURCE[2]}:${BASH_LINENO[1]} ${FUNCNAME[2]}"
 }
 
-_@go.find_plugin_module_impl() {
+_@go.find_plugin_module() {
   [[ -f "$1/$__go_module_file" ]] && __go_module_file="$1/$__go_module_file"
 }
 
-_@go.find_plugin_module() {
+_@go.find_module() {
   # If a script imports a plugin module, and that module (`__go_use_caller`)
   # tries to import another module from the same plugin, this block will adjust
   # the search parameters accordingly.
-  if [[ "$__go_use_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
+  if [[ -n "$_GO_PLUGINS_DIR" &&
+        "$__go_use_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
     local _GO_SCRIPTS_DIR="${__go_use_caller%/lib/*}/bin"
+    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
+  fi
+  __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
 
-    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
-    if [[ -f "$__go_module_file" ]]; then
-      return
-    fi
-    __go_module_file="${__go_module_file%/bin/*}/lib/$__go_module_name"
-    if [[ -f "$__go_module_file" ]]; then
-      return
+  if [[ ! -f "$__go_module_file" ]]; then
+    __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
+
+    if [[ ! -f "$__go_module_file" ]]; then
+      # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
+      __go_module_file="${__go_module_name/\///lib/}"
+      @go.search_plugins '_@go.find_plugin_module'
     fi
   fi
-
-  # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
-  __go_module_file="${__go_module_name/\///lib/}"
-  @go.search_plugins '_@go.find_plugin_module_impl'
 }
 
 for __go_module_name in "$@"; do
@@ -125,18 +125,10 @@ for __go_module_name in "$@"; do
     fi
   fi
 
-  if [[ ! -f "$__go_module_file" ]]; then
-    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
-
-    if [[ ! -f "$__go_module_file" ]]; then
-      __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
-
-      if [[ ! -f "$__go_module_file" ]] && ! _@go.find_plugin_module; then
-        @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
-        @go.print_stack_trace 1 >&2
-        exit 1
-      fi
-    fi
+  if [[ ! -f "$__go_module_file" ]] && ! _@go.find_module; then
+    @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
+    @go.print_stack_trace 1 >&2
+    exit 1
   fi
 
   # If we found the module in our project, but we're installed as a plugin,
