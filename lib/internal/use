@@ -76,44 +76,99 @@
 declare __go_module_name
 declare __go_module_file
 declare __go_loaded_module
+declare __go_loaded_file
+declare __go_module_index
+declare __go_use_caller
+declare __go_use_prev_caller
+
+# Wrapper function necessary due to BASH_SOURCE and FUNCNAME bug in Bash <4.3.
+_@go.set_use_caller() {
+  __go_use_caller="${BASH_SOURCE[2]}:${BASH_LINENO[1]} ${FUNCNAME[2]}"
+}
+
+_@go.find_plugin_module() {
+  [[ -f "$1/$__go_module_file" ]] && __go_module_file="$1/$__go_module_file"
+}
+
+_@go.find_module() {
+  # If a script imports a plugin module, and that module (`__go_use_caller`)
+  # tries to import another module from the same plugin, this block will adjust
+  # the search parameters accordingly.
+  if [[ -n "$_GO_PLUGINS_DIR" &&
+        "$__go_use_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
+    local _GO_SCRIPTS_DIR="${__go_use_caller%/lib/*}/bin"
+    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
+  fi
+  __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
+
+  if [[ ! -f "$__go_module_file" ]]; then
+    __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
+
+    if [[ ! -f "$__go_module_file" ]]; then
+      # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
+      __go_module_file="${__go_module_name/\///lib/}"
+      @go.search_plugins '_@go.find_plugin_module'
+    fi
+  fi
+}
 
 for __go_module_name in "$@"; do
-  for __go_loaded_module in "${_GO_IMPORTED_MODULES[@]}"; do
-    if [[ "$__go_module_name" == "$__go_loaded_module" ]]; then
-      continue 2
-    fi
-  done
-
-  # Prevent self- and circular importing by registering name before sourcing.
-  _GO_IMPORTED_MODULES+=("$__go_module_name")
-  __go_module_file=''
+  # Since every import is in the same scope, setting the caller each time is
+  # necessary in case any imported modules import other modules.
+  _@go.set_use_caller
+  __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
 
   if [[ -n "$_GO_INJECT_MODULE_PATH" ]]; then
     __go_module_file="$_GO_INJECT_MODULE_PATH/$__go_module_name"
     if [[ ! -f "$__go_module_file" ]]; then
-      __go_module_file=''
+      __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
     fi
   fi
-  __go_module_file="${__go_module_file:-$_GO_CORE_DIR/lib/$__go_module_name}"
 
-  if [[ ! -f "$__go_module_file" ]]; then
-    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
+  if [[ ! -f "$__go_module_file" ]] && ! _@go.find_module; then
+    @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
+    @go.print_stack_trace 1 >&2
+    exit 1
+  fi
 
-    if [[ ! -f "$__go_module_file" ]]; then
-      __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
+  # If we found the module in our project, but we're installed as a plugin,
+  # change the loaded module name to reflect that.
+  #
+  # Using `##` to trim the string instead of `#` flattens the module name
+  # namespace. We could use `#` to keep it hierarchical, but since the Bash
+  # namespace itself is flat, this might lead to hard-to-debug collisions if
+  # functions and variables get redefined. Keeping a flat module name namespace
+  # allows us to detect such potential collisions and issue a warning below.
+  if [[ -n "$_GO_PLUGINS_DIR" &&
+        "$__go_module_file" =~ ^$_GO_PLUGINS_DIR ]]; then
+    __go_module_name="${__go_module_file##*/plugins/}"
+    __go_module_name="${__go_module_name/\/bin\///}"
+    __go_module_name="${__go_module_name/\/lib\///}"
+  fi
 
-      if [[ ! -f "$__go_module_file" ]]; then
-        # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
-        __go_module_file="$_GO_SCRIPTS_DIR/plugins/${__go_module_name/\///lib/}"
+  __go_module_index=0
+  for __go_loaded_module in "${_GO_IMPORTED_MODULES[@]}"; do
+    if [[ "$__go_module_name" == "$__go_loaded_module" ]]; then
+      __go_loaded_file="${_GO_IMPORTED_MODULE_FILES[$__go_module_index]}"
+      __go_use_prev_caller="${_GO_IMPORTED_MODULE_CALLERS[$__go_module_index]}"
 
-        if [[ ! -f "$__go_module_file" ]]; then
-          @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
-          @go.print_stack_trace 1 >&2
-          exit 1
-        fi
+      # This may happen if a plugin appears more than once in a project tree.
+      if [[ "$__go_module_file" != "$__go_loaded_file" ]]; then
+        @go.printf '%s\n' "WARNING: Module: $__go_module_name" \
+          "imported at: $__go_use_caller" \
+          "from file: $__go_module_file" \
+          "previously imported at: $__go_use_prev_caller" \
+          "from file: $__go_loaded_file" >&2
       fi
+      continue 2
     fi
-  fi
+    ((++__go_module_index))
+  done
+
+  # Prevent self- and circular importing by registering info before sourcing.
+  _GO_IMPORTED_MODULES+=("$__go_module_name")
+  _GO_IMPORTED_MODULE_FILES+=("$__go_module_file")
+  _GO_IMPORTED_MODULE_CALLERS+=("$__go_use_caller")
 
   if ! . "$__go_module_file"; then
     @go.printf 'ERROR: Failed to import %s module from %s at:\n' \
@@ -123,6 +178,10 @@ for __go_module_name in "$@"; do
   fi
 done
 
+unset __go_use_prev_caller
+unset __go_use_caller
+unset __go_module_index
+unset __go_loaded_file
 unset __go_loaded_module
 unset __go_module_file
 unset __go_module_name

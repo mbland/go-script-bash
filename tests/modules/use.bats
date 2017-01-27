@@ -3,22 +3,46 @@
 load ../environment
 load "$_GO_CORE_DIR/lib/testing/stubbing"
 
+BUILTIN_MODULE_FILE="$_GO_CORE_DIR/lib/builtin-test"
+PLUGIN_MODULE_FILE="$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
+EXPORT_MODULE_FILE="$TEST_GO_ROOTDIR/lib/export-test"
+INTERNAL_MODULE_FILE="$TEST_GO_SCRIPTS_DIR/lib/internal-test"
+
 TEST_MODULES=(
-  "$_GO_CORE_DIR/lib/builtin-test"
-  "$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
-  "$TEST_GO_ROOTDIR/lib/export-test"
-  "$TEST_GO_SCRIPTS_DIR/lib/internal-test"
-)
-IMPORTS=('test-plugin/plugin-test' 'internal-test' 'builtin-test' 'export-test')
+  "$BUILTIN_MODULE_FILE"
+  "$PLUGIN_MODULE_FILE"
+  "$EXPORT_MODULE_FILE"
+  "$INTERNAL_MODULE_FILE")
+
+IMPORTS=(
+  'test-plugin/plugin-test'
+  'internal-test'
+  'builtin-test'
+  'export-test')
+
+CALLER="$TEST_GO_SCRIPT:3 main"
+
 EXPECTED=(
-  "plugin-test loaded"
-  "internal-test loaded"
-  "builtin-test loaded"
-  "export-test loaded"
-  "modules: ${IMPORTS[*]}"
-)
+  'plugin-test loaded'
+  'internal-test loaded'
+  'builtin-test loaded'
+  'export-test loaded'
+  'module: test-plugin/plugin-test'
+  "source: $PLUGIN_MODULE_FILE"
+  "caller: $CALLER"
+  'module: internal-test'
+  "source: $INTERNAL_MODULE_FILE"
+  "caller: $CALLER"
+  'module: builtin-test'
+  "source: $BUILTIN_MODULE_FILE"
+  "caller: $CALLER"
+  'module: export-test'
+  "source: $EXPORT_MODULE_FILE"
+  "caller: $CALLER")
 
 setup() {
+  test_filter
+
   local core_test_module
   for core_test_module in 'builtin-test' 'go-use-modules-test'; do
     if [[ -e "$_GO_CORE_DIR/lib/$core_test_module" ]]; then
@@ -29,7 +53,12 @@ setup() {
 
   @go.create_test_go_script \
     ". \"\$_GO_USE_MODULES\" $*" \
-    'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
+    'for ((i=0; i != ${#_GO_IMPORTED_MODULES[@]}; ++i)); do' \
+    "  printf -- 'module: %s\nsource: %s\ncaller: %s\n' \\" \
+    "    \"\${_GO_IMPORTED_MODULES[\$i]}\" \\" \
+    "    \"\${_GO_IMPORTED_MODULE_FILES[\$i]}\" \\" \
+    "    \"\${_GO_IMPORTED_MODULE_CALLERS[\$i]}\""  \
+    'done'
 
   local module
   for module in "${TEST_MODULES[@]}"; do
@@ -44,14 +73,21 @@ teardown() {
 }
 
 @test "$SUITE: no modules imported by default" {
-  @go.create_test_go_script 'echo modules: "${_GO_IMPORTED_MODULES[*]}"'
+  @go.create_test_go_script 'printf -- "%s\n" "${_GO_IMPORTED_MODULES[@]}"'
   run "$TEST_GO_SCRIPT"
-  assert_success 'modules: '
+  assert_success ''
 }
 
 @test "$SUITE: does nothing if no modules specified" {
   run "$TEST_GO_SCRIPT"
-  assert_success 'modules: '
+  assert_success ''
+}
+
+@test "$SUITE: import builtin module" {
+  run "$TEST_GO_SCRIPT" 'complete'
+  assert_success 'module: complete' \
+    "source: $_GO_CORE_DIR/lib/complete" \
+    "caller: $TEST_GO_SCRIPT:3 main"
 }
 
 @test "$SUITE: error if nonexistent module specified" {
@@ -59,32 +95,61 @@ teardown() {
 
   local expected=('ERROR: Module bogus-test-module not found at:'
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure
+  assert_lines_equal "${expected[@]}"
 }
 
 @test "$SUITE: import modules successfully" {
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
-  local IFS=$'\n'
-  assert_success "${EXPECTED[*]}"
+  assert_success
+  assert_lines_equal "${EXPECTED[@]}"
 }
 
 @test "$SUITE: import each module only once" {
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}" "${IMPORTS[@]}" "${IMPORTS[@]}"
-  local IFS=$'\n'
-  assert_success "${EXPECTED[*]}"
+  assert_success
+  assert_lines_equal "${EXPECTED[@]}"
 }
 
 @test "$SUITE: prevent self, circular, and multiple importing" {
   local module
 
-  for module in "${TEST_MODULES[@]}"; do
-    echo ". \"\$_GO_USE_MODULES\" ${IMPORTS[@]}" >> "$module"
-  done
+  # We have to be careful because the plugin module can only access itself and
+  # the builtin module.
+  printf '. "$_GO_USE_MODULES" %s' \
+    "internal-test export-test test-plugin/plugin-test" \
+      >>"$INTERNAL_MODULE_FILE"
+  printf '. "$_GO_USE_MODULES" %s' \
+    "internal-test export-test test-plugin/plugin-test" \
+    >>"$EXPORT_MODULE_FILE"
+  printf '. "$_GO_USE_MODULES" %s' \
+    "test-plugin/plugin-test builtin-test" \
+    >>"$PLUGIN_MODULE_FILE"
+  printf '. "$_GO_USE_MODULES" %s' \
+    "builtin-test" \
+    >>"$BUILTIN_MODULE_FILE"
 
-  run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
-  local IFS=$'\n'
-  assert_success "${EXPECTED[*]}"
+  run "$TEST_GO_SCRIPT" 'internal-test' 'export-test' 'builtin-test' \
+    'test-plugin/plugin-test'
+  assert_success
+
+  assert_lines_equal \
+    'internal-test loaded' \
+    'export-test loaded' \
+    'plugin-test loaded' \
+    'builtin-test loaded' \
+    'module: internal-test' \
+    "source: $INTERNAL_MODULE_FILE" \
+    "caller: $CALLER" \
+    'module: export-test' \
+    "source: $EXPORT_MODULE_FILE" \
+    "caller: $INTERNAL_MODULE_FILE:2 source" \
+    'module: test-plugin/plugin-test' \
+    "source: $PLUGIN_MODULE_FILE" \
+    "caller: $EXPORT_MODULE_FILE:2 source" \
+    'module: builtin-test' \
+    "source: $BUILTIN_MODULE_FILE" \
+    "caller: $PLUGIN_MODULE_FILE:2 source"
 }
 
 @test "$SUITE: error if module contains errors" {
@@ -99,8 +164,7 @@ teardown() {
     "$module_file: line 1: This: command not found"
     "ERROR: Failed to import $module module from $module_file at:"
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: error if module returns an error" {
@@ -117,8 +181,7 @@ teardown() {
     "$error_message"
     "ERROR: Failed to import $module module from $module_file at:"
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: import order: injected; core; internal; exported; plugin" {

@@ -10,6 +10,7 @@ FIRST_CORE_MOD_SUMMARY=
 LAST_CORE_MOD_SUMMARY=
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
   setup_test_modules
 
@@ -78,8 +79,7 @@ get_first_and_last_core_module_summaries() {
   )
 
   run "$TEST_GO_SCRIPT" modules --imported
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list by class, all modules" {
@@ -94,8 +94,7 @@ get_first_and_last_core_module_summaries() {
   )
 
   run "$TEST_GO_SCRIPT" modules
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list using glob, all modules" {
@@ -105,8 +104,7 @@ get_first_and_last_core_module_summaries() {
   )
 
   run "$TEST_GO_SCRIPT" modules '*'
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list by class, only core modules present" {
@@ -117,16 +115,14 @@ get_first_and_last_core_module_summaries() {
   rm "${TEST_PLUGIN_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}" \
     "${TEST_PROJECT_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}"
   run "$TEST_GO_SCRIPT" modules
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list using glob, only core modules present" {
   rm "${TEST_PLUGIN_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}" \
     "${TEST_PROJECT_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}"
   run "$TEST_GO_SCRIPT" modules '*'
-  local IFS=$'\n'
-  assert_success "${CORE_MODULES[*]}"
+  assert_success "${CORE_MODULES[@]}"
 }
 
 @test "$SUITE: paths by class" {
@@ -224,21 +220,18 @@ get_first_and_last_core_module_summaries() {
 
 @test "$SUITE: list only test modules" {
   run "$TEST_GO_SCRIPT" modules '_*'
-  local IFS=$'\n'
-  assert_success "${TEST_PLUGIN_MODULES[*]}"$'\n'"${TEST_PROJECT_MODULES[*]}"
+  assert_success "${TEST_PLUGIN_MODULES[@]}" "${TEST_PROJECT_MODULES[@]}"
 }
 
 @test "$SUITE: list only test project modules" {
   run "$TEST_GO_SCRIPT" modules '_fr*'
-  local IFS=$'\n'
-  assert_success "${TEST_PROJECT_MODULES[*]}"
+  assert_success "${TEST_PROJECT_MODULES[@]}"
 }
 
 @test "$SUITE: list only modules in the _bar and _baz plugins" {
   run "$TEST_GO_SCRIPT" modules '_ba*/_*u*'
   local expected=('_bar/_plugh' '_bar/_quux' '_baz/_plugh' '_baz/_quux')
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list test modules using multiple globs" {
@@ -253,6 +246,5 @@ get_first_and_last_core_module_summaries() {
     '_bar/_quux'
     '_bar/_xyzzy'
   )
-  local IFS=$'\n'
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 }
