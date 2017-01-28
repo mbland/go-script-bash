@@ -90,10 +90,10 @@ assert_command_script_is_executable() {
   touch "${internal_modules[@]}"
 
   local expected
-  @go.test_compgen 'expected' "$TEST_GO_SCRIPTS_DIR/lib"
+  @go.test_compgen 'expected' -f "$TEST_GO_SCRIPTS_DIR/lib"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--internal'
-  assert_success "${expected[@]}"
+  assert_success "${expected[@]#$TEST_GO_SCRIPTS_DIR/lib/}"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--internal' 'f'
   assert_success 'foo '
@@ -111,8 +111,11 @@ assert_command_script_is_executable() {
   mkdir -p "$TEST_GO_ROOTDIR/lib/"
   touch "${public_modules[@]}"
 
+  local expected
+  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/lib"
+
   run "$TEST_GO_SCRIPT" complete 2 new '--public'
-  assert_success "${public_modules[@]#$TEST_GO_ROOTDIR/lib/}"
+  assert_success "${expected[@]#$TEST_GO_ROOTDIR/lib/}"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--public' 'q'
   assert_success 'quux '
@@ -130,8 +133,11 @@ assert_command_script_is_executable() {
   mkdir -p "$TEST_GO_ROOTDIR/tests/"
   touch "${test_files[@]}"
 
+  local expected
+  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/$_GO_TEST_DIR"
+
   run "$TEST_GO_SCRIPT" complete 2 new '--test'
-  assert_success "${test_files[@]#$TEST_GO_ROOTDIR/tests/}"
+  assert_success "${expected[@]#$TEST_GO_ROOTDIR/$_GO_TEST_DIR/}"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--test' 'f'
   assert_success 'frotz.bats '
@@ -150,19 +156,20 @@ assert_command_script_is_executable() {
   touch "${text_files[@]}"
 
   local expected
-  @go.test_compgen 'expected' "$TEST_GO_ROOTDIR/gue"
+  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/g"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--type'
   assert_failure ''
 
   run "$TEST_GO_SCRIPT" complete 3 new '--type' 'adversary' 'g'
-  assert_success "${expected[@]}"
+  assert_success "${expected[@]#$TEST_GO_ROOTDIR/}"
 
   run "$TEST_GO_SCRIPT" complete 3 new '--type' 'adversary' 'gu'
   assert_success 'gue/'
 
+  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/gue/"
   run "$TEST_GO_SCRIPT" complete 3 new '--type' 'adversary' 'gue/'
-  assert_success "${text_files[@]#$TEST_GO_ROOTDIR/}"
+  assert_success "${expected[@]#$TEST_GO_ROOTDIR/}"
 
   run "$TEST_GO_SCRIPT" complete 3 new '--type' 'adversary' 'gue/t'
   assert_success 'gue/thief.txt '
