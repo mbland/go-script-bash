@@ -93,33 +93,3 @@ teardown() {
   run test-go
   assert_success '_GO_CMD: test-go'
 }
-
-setup_go_test_compgen() {
-  local item
-
-  mkdir -p "$TEST_GO_ROOTDIR/lib"
-  printf 'foo' >"$TEST_GO_ROOTDIR/lib/foo"
-  printf 'bar' >"$TEST_GO_ROOTDIR/lib/bar"
-  printf 'baz' >"$TEST_GO_ROOTDIR/lib/baz"
-
-  . "$_GO_USE_MODULES" 'complete'
-  while IFS= read -r item; do
-    __expected+=("${item#$TEST_GO_ROOTDIR/}")
-  done < <(@go.compgen -f -- "$TEST_GO_ROOTDIR/lib/")
-}
-
-@test "$SUITE: @go.test_compgen" {
-  set "$DISABLE_BATS_SHELL_OPTIONS"
-  local __expected=()
-  setup_go_test_compgen
-  restore_bats_shell_options "$?"
-
-  export -f @go.test_compgen
-  @go.create_test_go_script \
-    'declare results=()' \
-    '@go.test_compgen "results" -f -- lib/' \
-    'printf "%s\n" "${results[@]}"'
-
-  run "$TEST_GO_SCRIPT"
-  assert_success "${__expected[@]}"
-}
