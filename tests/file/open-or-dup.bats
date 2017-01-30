@@ -4,8 +4,10 @@ load ../environment
 load "$_GO_CORE_DIR/lib/testing/stack-trace"
 
 FILE_PATH="$TEST_GO_ROOTDIR/hello.txt"
-GO_USE_MODULES_STACK_ITEM="$(@go.stack_trace_item "$_GO_USE_MODULES" source \
-  '_@go.use_modules "$@"')"
+GO_USE_MODULES_STACK_ITEMS=(
+  "$(@go.stack_trace_item "$_GO_USE_MODULES" '_@go.use_modules' \
+    '    if ! _@go.import_module; then')"
+  "$(@go.stack_trace_item "$_GO_USE_MODULES" source '_@go.use_modules "$@"')")
 
 setup() {
   test_filter
@@ -119,7 +121,7 @@ create_file_open_test_go_script() {
 
   local expected=(
     '_GO_MAX_FILE_DESCRIPTORS is "foobar", must be a number greater than 3.'
-    "$GO_USE_MODULES_STACK_ITEM"
+    "${GO_USE_MODULES_STACK_ITEMS[@]}"
     "  $TEST_GO_SCRIPT:3 main")
   assert_failure "${expected[@]}"
 }
@@ -130,7 +132,7 @@ create_file_open_test_go_script() {
 
   local expected=(
     '_GO_MAX_FILE_DESCRIPTORS is "3", must be a number greater than 3.'
-    "$GO_USE_MODULES_STACK_ITEM"
+    "${GO_USE_MODULES_STACK_ITEMS[@]}"
     "  $TEST_GO_SCRIPT:3 main")
   assert_failure "${expected[@]}"
 }

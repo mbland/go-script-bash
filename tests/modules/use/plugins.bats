@@ -54,6 +54,44 @@ teardown() {
   assert_success "$TEST_GO_PLUGINS_DIR/$module_path" 'foo/foo' 'bar/bar'
 }
 
+@test "$SUITE: @go plugins from own module shows plugin's own plugin" {
+  @go.create_test_command_script "plugins/foo/lib/foo" "@go plugins --paths"
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/bin/bar' \
+    "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success
+
+  # @go plugins will import additional modules, so only check the first
+  assert_line_equals 0 'bar  bin/plugins/bar/bin/bar'
+  assert_line_equals 1 'foo/foo'
+}
+
+@test "$SUITE: plugin's own module can execute own command script" {
+  @go.create_test_command_script "plugins/foo/lib/foo" "@go bar"
+  @go.create_test_command_script 'plugins/foo/bin/bar' "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/foo/bin/bar" 'foo/foo'
+}
+
+@test "$SUITE: plugin's own module can execute own plugin script" {
+  local plugin_path='foo/bin/plugins/bar/bin/bar'
+  @go.create_test_command_script "plugins/foo/lib/foo" "@go bar"
+  @go.create_test_command_script "plugins/$plugin_path" "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/$plugin_path" 'foo/foo'
+}
+
+@test "$SUITE: plugin's own module can execute top-level plugin script" {
+  @go.create_test_command_script "plugins/foo/lib/foo" "@go bar"
+  @go.create_test_command_script "plugins/bar/bin/bar" "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/bar/bin/bar" 'foo/foo'
+}
+
 @test "$SUITE: nested plugin imports own internal module" {
   local module_path='foo/bin/plugins/bar/bin/lib/bar-2'
   @go.create_test_command_script 'plugins/foo/lib/foo' \
@@ -145,6 +183,71 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'foo/foo'
   assert_success "$TEST_GO_PLUGINS_DIR/$module_path" \
     'foo/foo' 'bar/bar' 'baz/baz'
+}
+
+@test "$SUITE: @go plugins from own module shows nested plugin's plugins" {
+  local plugin_path='foo/bin/plugins/bar/bin/plugins/baz/bin/baz'
+  @go.create_test_command_script 'plugins/foo/lib/foo' '@go bar'
+  @go.create_test_command_script 'plugins/foo/bin/foo' "$PRINT_SOURCE"
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/bin/bar' \
+    '. "$_GO_USE_MODULES" bar/bar'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/lib/bar' \
+    '@go plugins --paths'
+  @go.create_test_command_script "plugins/$plugin_path" "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+
+  # Note that the parent plugin command script is included in the output.
+  # @go plugins will import additional modules, so only check the first.
+  assert_success
+  assert_line_equals 0 'baz  bin/plugins/baz/bin/baz'
+  assert_line_equals 1 "foo  $TEST_GO_PLUGINS_DIR/foo/bin/foo"
+  assert_line_equals 2 'foo/foo'
+  assert_line_equals 3 'bar/bar'
+}
+
+@test "$SUITE: nested plugin's own module can execute own command script" {
+  local plugin_path='foo/bin/plugins/bar/bin/plugins/baz/bin/baz'
+  @go.create_test_command_script 'plugins/foo/lib/foo' \
+    '. "$_GO_USE_MODULES" bar/bar'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/lib/bar' '@go baz'
+  @go.create_test_command_script "plugins/foo/bin/plugins/bar/bin/baz" \
+    "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/foo/bin/plugins/bar/bin/baz" \
+    'foo/foo' 'bar/bar'
+}
+
+@test "$SUITE: nested plugin's own module can execute own plugin script" {
+  local plugin_path='foo/bin/plugins/bar/bin/plugins/baz/bin/baz'
+  @go.create_test_command_script 'plugins/foo/lib/foo' \
+    '. "$_GO_USE_MODULES" bar/bar'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/lib/bar' '@go baz'
+  @go.create_test_command_script "plugins/$plugin_path" "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/$plugin_path" 'foo/foo' 'bar/bar'
+}
+
+@test "$SUITE: nested plugin's own module can execute parent command script" {
+  @go.create_test_command_script 'plugins/foo/lib/foo' \
+    '. "$_GO_USE_MODULES" bar/bar'
+  @go.create_test_command_script 'plugins/foo/bin/baz' "$PRINT_SOURCE"
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/lib/bar' '@go baz'
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/foo/bin/baz" 'foo/foo' 'bar/bar'
+}
+
+@test "$SUITE: nested plugin's own module can execute top-level plugin script" {
+  @go.create_test_command_script 'plugins/foo/lib/foo' \
+    '. "$_GO_USE_MODULES" bar/bar'
+  @go.create_test_command_script 'plugins/foo/bin/plugins/bar/lib/bar' '@go baz'
+  @go.create_test_command_script "plugins/baz/bin/baz" "$PRINT_SOURCE"
+
+  run "$TEST_GO_SCRIPT" 'foo/foo'
+  assert_success "$TEST_GO_PLUGINS_DIR/baz/bin/baz" 'foo/foo' 'bar/bar'
 }
 
 @test "$SUITE: module collision produces warning message, top level first" {

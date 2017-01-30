@@ -101,6 +101,21 @@ _@go.find_module() {
   fi
 }
 
+_@go.import_module() {
+  if [[ "${__go_module_file#$_GO_SCRIPTS_DIR}" =~ /plugins/[^/]+/lib/ ]]; then
+    local _GO_SCRIPTS_DIR="${__go_module_file%/lib/*}/bin"
+    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
+    local _GO_PLUGINS_PATHS=()
+    local _GO_SEARCH_PATHS=()
+  fi
+
+  # Prevent self- and circular importing by registering info before sourcing.
+  _GO_IMPORTED_MODULES+=("$__go_module_name")
+  _GO_IMPORTED_MODULE_FILES+=("$__go_module_file")
+  _GO_IMPORTED_MODULE_CALLERS+=("$current_caller")
+  . "$__go_module_file"
+}
+
 _@go.use_modules() {
   local __go_module_name
   local __go_module_file
@@ -109,14 +124,6 @@ _@go.use_modules() {
   local module_index
   local current_caller="${BASH_SOURCE[2]}:${BASH_LINENO[1]} ${FUNCNAME[2]}"
   local prev_caller
-
-  # If a script imports a plugin module, and that module (`current_caller`)
-  # tries to import another module from the same plugin, this block will adjust
-  # the search parameters accordingly.
-  if [[ "$current_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
-    local _GO_SCRIPTS_DIR="${current_caller%/lib/*}/bin"
-    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
-  fi
 
   for __go_module_name in "$@"; do
     if ! _@go.find_module; then
@@ -159,12 +166,7 @@ _@go.use_modules() {
       ((++module_index))
     done
 
-    # Prevent self- and circular importing by registering info before sourcing.
-    _GO_IMPORTED_MODULES+=("$__go_module_name")
-    _GO_IMPORTED_MODULE_FILES+=("$__go_module_file")
-    _GO_IMPORTED_MODULE_CALLERS+=("$current_caller")
-
-    if ! . "$__go_module_file"; then
+    if ! _@go.import_module; then
       @go.printf 'ERROR: Failed to import %s module from %s at:\n' \
         "$__go_module_name" "$__go_module_file" >&2
       @go.print_stack_trace 1 >&2
