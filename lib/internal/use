@@ -78,15 +78,25 @@ _@go.find_plugin_module() {
 }
 
 _@go.find_module() {
-  __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
+  if [[ -n "$_GO_INJECT_MODULE_PATH" ]]; then
+    __go_module_file="$_GO_INJECT_MODULE_PATH/$__go_module_name"
+    if [[ -f "$__go_module_file" ]]; then
+      return
+    fi
+  fi
+  __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
 
   if [[ ! -f "$__go_module_file" ]]; then
-    __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
+    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
 
     if [[ ! -f "$__go_module_file" ]]; then
-      # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
-      __go_module_file="${__go_module_name/\///lib/}"
-      @go.search_plugins '_@go.find_plugin_module'
+      __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
+
+      if [[ ! -f "$__go_module_file" ]]; then
+        # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
+        __go_module_file="${__go_module_name/\///lib/}"
+        @go.search_plugins '_@go.find_plugin_module'
+      fi
     fi
   fi
 }
@@ -109,16 +119,7 @@ _@go.use_modules() {
   fi
 
   for __go_module_name in "$@"; do
-    __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
-
-    if [[ -n "$_GO_INJECT_MODULE_PATH" ]]; then
-      __go_module_file="$_GO_INJECT_MODULE_PATH/$__go_module_name"
-      if [[ ! -f "$__go_module_file" ]]; then
-        __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
-      fi
-    fi
-
-    if [[ ! -f "$__go_module_file" ]] && ! _@go.find_module; then
+    if ! _@go.find_module; then
       @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
       @go.print_stack_trace 1 >&2
       exit 1
