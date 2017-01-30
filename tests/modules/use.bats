@@ -1,6 +1,7 @@
 #! /usr/bin/env bats
 
 load ../environment
+load "$_GO_CORE_DIR/lib/testing/stack-trace"
 load "$_GO_CORE_DIR/lib/testing/stubbing"
 
 BUILTIN_MODULE_FILE="$_GO_CORE_DIR/lib/builtin-test"
@@ -39,6 +40,9 @@ EXPECTED=(
   'module: export-test'
   "source: $EXPORT_MODULE_FILE"
   "caller: $CALLER")
+
+GO_USE_MODULES_STACK_ITEM="$(@go.stack_trace_item "$_GO_USE_MODULES" source \
+  '_@go.use_modules "$@"')"
 
 setup() {
   test_filter
@@ -94,6 +98,7 @@ teardown() {
   run "$TEST_GO_SCRIPT" 'bogus-test-module'
 
   local expected=('ERROR: Module bogus-test-module not found at:'
+    "$GO_USE_MODULES_STACK_ITEM"
     "  $TEST_GO_SCRIPT:3 main")
   assert_failure
   assert_lines_equal "${expected[@]}"
@@ -163,6 +168,7 @@ teardown() {
   local expected=("${IMPORTS[0]##*/} loaded"
     "$module_file: line 1: This: command not found"
     "ERROR: Failed to import $module module from $module_file at:"
+    "$GO_USE_MODULES_STACK_ITEM"
     "  $TEST_GO_SCRIPT:3 main")
   assert_failure "${expected[@]}"
 }
@@ -180,6 +186,7 @@ teardown() {
   local expected=("${IMPORTS[0]##*/} loaded"
     "$error_message"
     "ERROR: Failed to import $module module from $module_file at:"
+    "$GO_USE_MODULES_STACK_ITEM"
     "  $TEST_GO_SCRIPT:3 main")
   assert_failure "${expected[@]}"
 }

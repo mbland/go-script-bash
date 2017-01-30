@@ -1,10 +1,14 @@
 #! /usr/bin/env bats
 
 load ../environment
+load "$_GO_CORE_DIR/lib/testing/stack-trace"
 
 FILE_PATH="$TEST_GO_ROOTDIR/hello.txt"
+GO_USE_MODULES_STACK_ITEM="$(@go.stack_trace_item "$_GO_USE_MODULES" source \
+  '_@go.use_modules "$@"')"
 
 setup() {
+  test_filter
   mkdir -p "$TEST_GO_ROOTDIR"
   echo "Hello, World!" >"$FILE_PATH"
 }
@@ -115,9 +119,9 @@ create_file_open_test_go_script() {
 
   local expected=(
     '_GO_MAX_FILE_DESCRIPTORS is "foobar", must be a number greater than 3.'
+    "$GO_USE_MODULES_STACK_ITEM"
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: error if _GO_MAX_FILE_DESCRIPTORS isn't greater than 3" {
@@ -126,9 +130,9 @@ create_file_open_test_go_script() {
 
   local expected=(
     '_GO_MAX_FILE_DESCRIPTORS is "3", must be a number greater than 3.'
+    "$GO_USE_MODULES_STACK_ITEM"
     "  $TEST_GO_SCRIPT:3 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: validates file_path_or_fd contains no meta or control chars" {
@@ -143,8 +147,7 @@ create_file_open_test_go_script() {
 
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: error if mode is unknown" {
@@ -154,8 +157,7 @@ create_file_open_test_go_script() {
 
   local expected=('Unknown mode: bogus'
     "  $TEST_GO_SCRIPT:5 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: error if no file descriptor variable reference given" {
@@ -168,8 +170,7 @@ create_file_open_test_go_script() {
 
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: validates variable reference contains no meta or control chars" {
@@ -185,8 +186,7 @@ create_file_open_test_go_script() {
 
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }
 
 @test "$SUITE: error opening file path with escaped \`" {
@@ -213,6 +213,5 @@ create_file_open_test_go_script() {
 
   local expected=("No file descriptors < 10 available; failed at:"
     "  $TEST_GO_SCRIPT:7 main")
-  local IFS=$'\n'
-  assert_failure "${expected[*]}"
+  assert_failure "${expected[@]}"
 }

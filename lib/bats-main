@@ -77,7 +77,7 @@ export _GO_COVERALLS_URL="${_GO_COVERALLS_URL}"
 
 # Collect coverage on Travis. Doesn't seem to slow anything down substantially.
 if [[ -n "$_GO_COVERALLS_URL" && "$TRAVIS_OS_NAME" == 'linux' ]]; then
-  declare _GO_COLLECT_BATS_COVERAGE='true'
+  _GO_COLLECT_BATS_COVERAGE='true'
 fi
 
 # Array of `./go glob` arguments to select Bats test files in `_GO_TEST_DIR`
