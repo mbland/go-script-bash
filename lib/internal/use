@@ -78,13 +78,6 @@ _@go.find_plugin_module() {
 }
 
 _@go.find_module() {
-  # If a script imports a plugin module, and that module (`__go_use_caller`)
-  # tries to import another module from the same plugin, this block will adjust
-  # the search parameters accordingly.
-  if [[ "$__go_use_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
-    local _GO_SCRIPTS_DIR="${__go_use_caller%/lib/*}/bin"
-    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
-  fi
   __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
 
   if [[ ! -f "$__go_module_file" ]]; then
@@ -104,8 +97,16 @@ _@go.use_modules() {
   local loaded_module
   local loaded_file
   local module_index
-  local __go_use_caller="${BASH_SOURCE[2]}:${BASH_LINENO[1]} ${FUNCNAME[2]}"
+  local current_caller="${BASH_SOURCE[2]}:${BASH_LINENO[1]} ${FUNCNAME[2]}"
   local prev_caller
+
+  # If a script imports a plugin module, and that module (`current_caller`)
+  # tries to import another module from the same plugin, this block will adjust
+  # the search parameters accordingly.
+  if [[ "$current_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
+    local _GO_SCRIPTS_DIR="${current_caller%/lib/*}/bin"
+    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
+  fi
 
   for __go_module_name in "$@"; do
     __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
@@ -132,7 +133,7 @@ _@go.use_modules() {
     # functions and variables get redefined. Keeping a flat module name
     # namespace allows us to detect such potential collisions and issue a
     # warning below.
-    if [[ "$__go_module_file" =~ ^$_GO_PLUGINS_DIR ]]; then
+    if [[ "$__go_module_file" =~ ^$_GO_PLUGINS_DIR/ ]]; then
       __go_module_name="${__go_module_file##*/plugins/}"
       __go_module_name="${__go_module_name/\/bin\///}"
       __go_module_name="${__go_module_name/\/lib\///}"
@@ -147,7 +148,7 @@ _@go.use_modules() {
         # This may happen if a plugin appears more than once in a project tree.
         if [[ "$__go_module_file" != "$loaded_file" ]]; then
           @go.printf '%s\n' "WARNING: Module: $__go_module_name" \
-            "imported at: $__go_use_caller" \
+            "imported at: $current_caller" \
             "from file: $__go_module_file" \
             "previously imported at: $prev_caller" \
             "from file: $loaded_file" >&2
@@ -160,7 +161,7 @@ _@go.use_modules() {
     # Prevent self- and circular importing by registering info before sourcing.
     _GO_IMPORTED_MODULES+=("$__go_module_name")
     _GO_IMPORTED_MODULE_FILES+=("$__go_module_file")
-    _GO_IMPORTED_MODULE_CALLERS+=("$__go_use_caller")
+    _GO_IMPORTED_MODULE_CALLERS+=("$current_caller")
 
     if ! . "$__go_module_file"; then
       @go.printf 'ERROR: Failed to import %s module from %s at:\n' \
