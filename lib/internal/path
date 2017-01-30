@@ -30,7 +30,6 @@ _@go.set_search_paths() {
 }
 
 if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
-  _GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
   _@go.set_search_paths
 fi
 

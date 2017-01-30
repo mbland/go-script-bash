@@ -94,8 +94,7 @@ _@go.find_module() {
   # If a script imports a plugin module, and that module (`__go_use_caller`)
   # tries to import another module from the same plugin, this block will adjust
   # the search parameters accordingly.
-  if [[ -n "$_GO_PLUGINS_DIR" &&
-        "$__go_use_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
+  if [[ "$__go_use_caller" =~ ^$_GO_PLUGINS_DIR/.*/lib/ ]]; then
     local _GO_SCRIPTS_DIR="${__go_use_caller%/lib/*}/bin"
     local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
   fi
@@ -139,8 +138,7 @@ for __go_module_name in "$@"; do
   # namespace itself is flat, this might lead to hard-to-debug collisions if
   # functions and variables get redefined. Keeping a flat module name namespace
   # allows us to detect such potential collisions and issue a warning below.
-  if [[ -n "$_GO_PLUGINS_DIR" &&
-        "$__go_module_file" =~ ^$_GO_PLUGINS_DIR ]]; then
+  if [[ "$__go_module_file" =~ ^$_GO_PLUGINS_DIR ]]; then
     __go_module_name="${__go_module_file##*/plugins/}"
     __go_module_name="${__go_module_name/\/bin\///}"
     __go_module_name="${__go_module_name/\/lib\///}"
