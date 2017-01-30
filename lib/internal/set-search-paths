@@ -2,8 +2,15 @@
 
 _@go.set_search_paths_add_plugin_paths() {
   local plugin_paths=("$1"/*/bin)
+  local plugin_path
+
   if [[ "${plugin_paths[0]}" != "$1/*/bin" ]]; then
-    _GO_PLUGINS_PATHS+=("${plugin_paths[@]}")
+    # Ensure a plugin's _GO_SCRIPTS_DIR isn't duplicated in _GO_PLUGINS_PATHS.
+    for plugin_path in "${plugin_paths[@]}"; do
+      if [[ "$plugin_path" != "$_GO_SCRIPTS_DIR" ]]; then
+        _GO_PLUGINS_PATHS+=("$plugin_path")
+      fi
+    done
   fi
   return 1
 }
@@ -20,13 +27,7 @@ _@go.set_search_paths() {
   # there is a version incompatibility issue with other installed plugins, this
   # allows a plugin's preferred version to take precedence.
   @go.search_plugins '_@go.set_search_paths_add_plugin_paths'
-
-  # Ensure a plugin's _GO_SCRIPTS_DIR isn't duplicated in _GO_SEARCH_PATHS.
-  for plugin_path in "${_GO_PLUGINS_PATHS[@]}"; do
-    if [[ "$plugin_path" != "$_GO_SCRIPTS_DIR" ]]; then
-      _GO_SEARCH_PATHS+=("$plugin_path")
-    fi
-  done
+  _GO_SEARCH_PATHS+=("${_GO_PLUGINS_PATHS[@]}")
 }
 
 if [[ "${#_GO_SEARCH_PATHS[@]}" -eq 0 ]]; then
