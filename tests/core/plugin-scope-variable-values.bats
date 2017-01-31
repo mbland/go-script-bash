@@ -104,7 +104,6 @@ assert_scope_values_equal() {
     '_GO_SCRIPTS_DIR:' \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
     '_GO_PLUGINS_PATHS:' \
-    "$TEST_GO_PLUGINS_DIR/first/bin" \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_SEARCH_PATHS:' \
     "$_GO_CORE_DIR/libexec" \
@@ -131,7 +130,6 @@ assert_scope_values_equal() {
     '_GO_SCRIPTS_DIR:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
     '_GO_PLUGINS_PATHS:' \
-    "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_SEARCH_PATHS:' \
@@ -151,7 +149,6 @@ assert_scope_values_equal() {
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
-    "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_SEARCH_PATHS:' \
     "$_GO_CORE_DIR/libexec" \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
@@ -173,7 +170,6 @@ assert_scope_values_equal() {
     '_GO_SCRIPTS_DIR:' \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
     '_GO_PLUGINS_PATHS:' \
-    "$TEST_GO_PLUGINS_DIR/first/bin" \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_SEARCH_PATHS:' \
     "$_GO_CORE_DIR/libexec" \
@@ -189,7 +185,6 @@ assert_scope_values_equal() {
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
-    "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_SEARCH_PATHS:' \
     "$_GO_CORE_DIR/libexec" \
     "$TEST_GO_PLUGINS_DIR/second/bin" \

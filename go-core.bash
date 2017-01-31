@@ -248,9 +248,6 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 @go.search_plugins() {
   local __gsp_plugins_dir="$_GO_SCRIPTS_DIR/plugins"
 
-  # Set `_GO_PLUGINS_DIR` if called from a top-level `./go` script before `@go`.
-  _GO_PLUGINS_DIR="${_GO_PLUGINS_DIR:-$_GO_SCRIPTS_DIR/plugins}"
-
   while true; do
     if "$1" "$__gsp_plugins_dir"; then
       return
@@ -412,3 +409,4 @@ elif [[ -z "$COLUMNS" ]]; then
   fi
   export COLUMNS="${COLUMNS:-80}"
 fi
+_GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
