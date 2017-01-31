@@ -72,6 +72,7 @@ teardown() {
   git init
   git config user.email 'mbland@example.com'
   git config user.name 'Mike Bland'
+  git config commit.gpgsign false
   printf '# This is a test\n' >README.md
   git add README.md
   git commit -m 'Initial commit'
