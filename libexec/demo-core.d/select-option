@@ -1,0 +1,49 @@
+#! /usr/bin/env bash
+#
+# Demonstration of the `@go.select_option` function
+#
+# Usage:
+#   [PS3=<VALUE>] {{go}} {{cmd}} [option...]
+#
+# Where:
+#   PS3        environment variable defining the selection prompt
+#   option...  (Optional) list of user-selectable options, overriding defaults
+#
+# Use this program to get a feel for the core `@go.select_option` function, and
+# for an example of how to use it in your own scripts.
+
+select_option_demo() {
+  local options=("$@")
+  local selected
+  local finish
+
+  if [[ "${#options[@]}" -eq '0' ]]; then
+    options=('Hello, World!' 'Goodbye, World!')
+  fi
+
+  while [[ -z "$finish" ]]; do
+    @go.printf 'Please select one of the following options:\n'
+
+    if @go.select_option 'selected' "${options[@]}"; then
+      @go.printf 'You selected: "%s"\n\n' "$selected"
+    else
+      @go.printf 'You declined to select an option.\n\n'
+    fi
+
+    @go.printf 'Would you like to select another option?\n'
+
+    if @go.select_option 'selected' 'Yes' 'No'; then
+      if  [[ "$selected" == 'No' ]]; then
+        @go.printf 'Exiting...\n'
+        finish='true'
+      else
+        printf '\n'
+      fi
+    else
+      @go.printf 'You declined to select an option. Exiting...\n'
+      finish='true'
+    fi
+  done
+}
+
+select_option_demo "$@"
