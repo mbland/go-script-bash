@@ -1,0 +1,59 @@
+#! /usr/bin/env bats
+
+load ../environment
+
+setup() {
+  test_filter
+  @go.create_test_go_script 'declare selection' \
+    'if @go.select_option "selection" "$@"; then' \
+    '  printf "\nSelection: \"%s\"\n" "$selection"' \
+    'else' \
+    '  exit 1' \
+    'fi'
+  export PS3='Selection> '
+}
+
+teardown() {
+  @go.remove_test_go_rootdir
+}
+
+@test "$SUITE: no options exits instantly" {
+  run "$TEST_GO_SCRIPT"
+  assert_failure ''
+}
+
+@test "$SUITE: single option selection" {
+  run "$TEST_GO_SCRIPT" 'foo' <<<"1"
+  assert_success '1) foo' \
+  "$PS3" \
+  'Selection: "foo"'
+}
+
+@test "$SUITE: multiple option selection" {
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz' <<<"2"
+  assert_success '1) foo' \
+  '2) bar' \
+  '3) baz' \
+  "$PS3" \
+  'Selection: "bar"'
+}
+
+@test "$SUITE: select valid option after invalid option" {
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz' <<<$'0\n3'
+  assert_success '1) foo' \
+  '2) bar' \
+  '3) baz' \
+  "$PS3\"0\" is not a valid option." \
+  "$PS3" \
+  'Selection: "baz"'
+}
+
+@test "$SUITE: no selection with invalid option followed by end-of-file" {
+  printf '4\n' >"$TEST_GO_ROOTDIR/input.txt"
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz' <"$TEST_GO_ROOTDIR/input.txt"
+  assert_failure '1) foo' \
+  '2) bar' \
+  '3) baz' \
+  "$PS3\"4\" is not a valid option." \
+  "$PS3"
+}

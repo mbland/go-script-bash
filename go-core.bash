@@ -215,6 +215,43 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   return "$result"
 }
 
+# Prompts the user to select one item from a list of options.
+#
+# This is a thin wrapper around the `select` builtin command for
+# straightforward, single-option user prompts. If you need to do anything more
+# complex, use the `select` builtin command directly.
+#
+# This will prompt the user for a single input, returned in the caller-declared
+# variable identified by `result_var`. If the user enters an invalid option,
+# this will notify the user and prompt again. If the user terminates input (via
+# EOF, i.e. Ctrl-D), `result_var` will remain unchanged and the function will
+# return nonzero.
+#
+# Globals:
+#   PS3  environment variable defining the selection prompt
+#
+# Arguments:
+#   result_var:  Name of the caller-declared variable used to store the option
+#   ...:         Strings representing options available for the user to select
+#
+# Returns:
+#   zero if `result_var` contains the user's selection, nonzero otherwise
+@go.select_option() {
+  local __go_selected_option
+  select __go_selected_option in "${@:2}"; do
+    case "$__go_selected_option" in
+    '')
+      @go.printf '"%s" is not a valid option.\n' "$REPLY" >&2
+      ;;
+    *)
+      printf -v "$1" -- '%s' "$__go_selected_option"
+      break
+      ;;
+    esac
+  done
+  [[ -n "$__go_selected_option" ]]
+}
+
 # Searches through plugin directories using a helper function
 #
 # The search will begin in `_GO_SCRIPTS_DIR/plugins`. As long as `search_func`
