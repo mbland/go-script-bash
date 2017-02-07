@@ -57,3 +57,18 @@ teardown() {
   run "$TEST_GO_SCRIPT"
   assert_success 'foobarbaz'
 }
+
+@test "$SUITE: don't loop infinitely if line contains pattern characters" {
+  # `[alias]` and `[builtin]` were previously interpreted as character sets, not
+  # literal strings in and of themselves, when appering in `$prefix` in the
+  # expression `${line#$prefix}`.
+  local test_string='  path       '
+  test_string+='Prints the path to the <command> script, [alias] or [builtin]'
+
+  @go.create_test_go_script "@go.printf '%s' '$test_string'"
+  COLUMNS=27 run "$TEST_GO_SCRIPT"
+  assert_success '  path       Prints the' \
+    'path to the <command>' \
+    'script, [alias] or' \
+    '[builtin]'
+}

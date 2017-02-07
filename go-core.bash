@@ -166,7 +166,9 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     while [[ "${#line}" -gt "$COLUMNS" ]]; do
       prefix="${line:0:$COLUMNS}"
       prefix="${prefix%[[:space:]]*}"
-      line="${line#$prefix}"
+
+      # Trim `line` using an index in case `prefix` contains pattern characters.
+      line="${line:${#prefix}}"
 
       if [[ "$prefix" =~ [[:space:]]+$ ]]; then
         prefix="${prefix%${BASH_REMATCH[0]}}"
