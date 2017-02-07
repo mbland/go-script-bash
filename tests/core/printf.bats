@@ -49,3 +49,11 @@ teardown() {
   COLUMNS=15 run "$TEST_GO_SCRIPT"
   assert_success $'123456789012345\n67890\n1234567890'
 }
+
+@test "$SUITE: don't add newline if format doesn't include one" {
+  @go.create_test_go_script "@go.printf '%s' 'foo'" \
+    "@go.printf '%s' 'bar'" \
+    "@go.printf '%s' 'baz'"
+  run "$TEST_GO_SCRIPT"
+  assert_success 'foobarbaz'
+}

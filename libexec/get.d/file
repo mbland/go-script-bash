@@ -96,7 +96,7 @@ _@go.get_file_download_command() {
     if [[ -n "$dl_cmd" ]]; then
       @go.printf 'Download program not supported: %s\n' "$dl_cmd" >&2
     fi
-    @go.printf 'Please install curl or wget before running "%s".' \
+    @go.printf 'Please install curl or wget before running "%s".\n' \
       "${_GO_CMD_NAME[*]}" >&2
     return 1
     ;;
@@ -144,7 +144,7 @@ _@go.get_file_impl() {
   if ! "${__go_get_file_download_cmd[@]}" "$url" 2>"$errfile"; then
     errmsg="$(< "$errfile")"
     printf '%s\n' "$errmsg" >&2
-    @go.printf 'Failed to download using %s: %s' \
+    @go.printf 'Failed to download using %s: %s\n' \
       "${__go_get_file_download_cmd[0]}" "$url" >&2
 
     if [[ "${__go_get_file_download_cmd[0]}" != 'curl' ]]; then
