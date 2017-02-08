@@ -154,7 +154,6 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   local result
   local line
   local prefix
-  local IFS=
 
   if [[ "$#" -eq 0 ]]; then
     format="${format//\%/%%}"
@@ -162,12 +161,14 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   printf -v result -- "$format" "$@"
   result="${result//$'\r\n'/$'\n'}"
 
-  # If `result` ends with a newline, chomp it, since the loop will add one.
-  while read -r line; do
+  # Use the ASCII Unit Separator as a delimiter to preserve true line endings.
+  while IFS= read -r -d $'\x1f' line; do
     while [[ "${#line}" -gt "$COLUMNS" ]]; do
       prefix="${line:0:$COLUMNS}"
-      prefix="${prefix% *}"
-      line="${line#$prefix}"
+      prefix="${prefix%[[:space:]]*}"
+
+      # Trim `line` using an index in case `prefix` contains pattern characters.
+      line="${line:${#prefix}}"
 
       if [[ "$prefix" =~ [[:space:]]+$ ]]; then
         prefix="${prefix%${BASH_REMATCH[0]}}"
@@ -177,8 +178,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
       fi
       printf '%s\n' "$prefix"
     done
-    printf '%s\n' "$line"
-  done <<<"${result%$'\n'}"
+    printf '%s' "$line"
+  done <<<"${result//$'\n'/$'\n\x1f'}"$'\x1f'
 }
 
 # Prints the stack trace at the point of the call.
