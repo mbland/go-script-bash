@@ -91,11 +91,11 @@ get_first_and_last_core_module_summaries() {
   local expected=('From the core framework library:'
     "${CORE_MODULES[@]/#/  }"
     ''
-    'From the installed plugin libraries:'
-    "${TEST_PLUGIN_MODULES[@]/#/  }"
-    ''
     'From the project library:'
     "${TEST_PROJECT_MODULES[@]/#/  }"
+    ''
+    'From the installed plugin libraries:'
+    "${TEST_PLUGIN_MODULES[@]/#/  }"
   )
 
   run "$TEST_GO_SCRIPT" modules
@@ -104,8 +104,8 @@ get_first_and_last_core_module_summaries() {
 
 @test "$SUITE: list using glob, all modules" {
   local expected=("${CORE_MODULES[@]}"
-    "${TEST_PLUGIN_MODULES[@]}"
     "${TEST_PROJECT_MODULES[@]}"
+    "${TEST_PLUGIN_MODULES[@]}"
   )
 
   run "$TEST_GO_SCRIPT" modules '*'
@@ -138,17 +138,17 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches "  ${CORE_MODULES[0]} +${CORE_MODULES_PATHS[0]}"$'\n'
   assert_output_matches "  $LAST_CORE_MODULE +$LAST_CORE_MODULE_PATH"$'\n\n'
 
+  # Note the padding is relative to only the project modules.
+  assert_output_matches $'  _frobozz  scripts/lib/_frobozz\n'
+  assert_output_matches $'  _frotz    scripts/lib/_frotz\n\n'
+
   # Note the padding is relative to only the plugin modules. Use a variable to
-  # keep the assertion lines under 80 columns.
+  # keep the assertion lines under 80 columns. Bats trims the last newline of
+  # the output.
   local plugins='scripts/plugins'
   assert_output_matches "  _bar/_plugh  $plugins/_bar/lib/_plugh"$'\n'
   assert_output_matches "  _foo/_quux   $plugins/_foo/lib/_quux"$'\n'
-  assert_output_matches "  _foo/_xyzzy  $plugins/_foo/lib/_xyzzy"$'\n\n'
-
-  # Note the padding is relative to only the project modules. Bats trims
-  # the last newline of the output.
-  assert_output_matches $'  _frobozz  scripts/lib/_frobozz\n'
-  assert_output_matches "  _frotz    scripts/lib/_frotz$"
+  assert_output_matches "  _foo/_xyzzy  $plugins/_foo/lib/_xyzzy$"
 
   # Since the 'lines' array doesn't contain blank lines, we only add '3' to
   # account for the 'From the...' line starting each class section.
@@ -167,15 +167,15 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches \
     $'\n'"$LAST_CORE_MODULE  +$LAST_CORE_MODULE_PATH"$'\n'
   assert_output_matches \
+    $'\n_frobozz     +scripts/lib/_frobozz\n'
+  assert_output_matches \
+    $'\n_frotz       +scripts/lib/_frotz\n'
+  assert_output_matches \
     $'\n_bar/_plugh  +scripts/plugins/_bar/lib/_plugh\n'
   assert_output_matches \
     $'\n_foo/_quux   +scripts/plugins/_foo/lib/_quux\n'
   assert_output_matches \
-    $'\n_foo/_xyzzy  +scripts/plugins/_foo/lib/_xyzzy\n'
-  assert_output_matches \
-    $'\n_frobozz     +scripts/lib/_frobozz\n'
-  assert_output_matches \
-    $'\n_frotz       +scripts/lib/_frotz$'
+    $'\n_foo/_xyzzy  +scripts/plugins/_foo/lib/_xyzzy$'
 
   assert_equal "$TOTAL_NUM_MODULES" "${#lines[@]}"
 }
@@ -189,15 +189,15 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches "  ${CORE_MODULES[0]} +$FIRST_CORE_MOD_SUMMARY"$'\n'
   assert_output_matches "  $LAST_CORE_MODULE +$LAST_CORE_MOD_SUMMARY"$'\n\n'
 
-  # Note the padding is relative to only the plugin modules.
+  # Note the padding is relative to only the project modules.
+  assert_output_matches $'  _frobozz  Summary for _frobozz\n'
+  assert_output_matches $'  _frotz    Summary for _frotz\n'
+
+  # Note the padding is relative to only the plugin modules. Bats trims
+  # the last newline of the output.
   assert_output_matches $'  _bar/_plugh  Summary for _bar/_plugh\n'
   assert_output_matches $'  _foo/_quux   Summary for _foo/_quux\n'
-  assert_output_matches $'  _foo/_xyzzy  Summary for _foo/_xyzzy\n\n'
-
-  # Note the padding is relative to only the project modules. Bats trims
-  # the last newline of the output.
-  assert_output_matches $'  _frobozz  Summary for _frobozz\n'
-  assert_output_matches "  _frotz    Summary for _frotz$"
+  assert_output_matches '  _foo/_xyzzy  Summary for _foo/_xyzzy$'
 
   # Since the 'lines' array doesn't contain blank lines, we only add '3' to
   # account for the 'From the...' line starting each class section.
@@ -214,18 +214,18 @@ get_first_and_last_core_module_summaries() {
   get_first_and_last_core_module_summaries
   assert_output_matches "${CORE_MODULES[0]}  +$FIRST_CORE_MOD_SUMMARY"$'\n'
   assert_output_matches "$LAST_CORE_MODULE  +$LAST_CORE_MOD_SUMMARY"$'\n'
+  assert_output_matches $'_frobozz     +Summary for _frobozz\n'
+  assert_output_matches $'_frotz       +Summary for _frotz\n'
   assert_output_matches $'_bar/_plugh  +Summary for _bar/_plugh\n'
   assert_output_matches $'_foo/_quux   +Summary for _foo/_quux\n'
-  assert_output_matches $'_foo/_xyzzy  +Summary for _foo/_xyzzy\n'
-  assert_output_matches $'_frobozz     +Summary for _frobozz\n'
-  assert_output_matches $'_frotz       +Summary for _frotz$'
+  assert_output_matches $'_foo/_xyzzy  +Summary for _foo/_xyzzy$'
 
   assert_equal "$TOTAL_NUM_MODULES" "${#lines[@]}"
 }
 
 @test "$SUITE: list only test modules" {
   run "$TEST_GO_SCRIPT" modules '_*'
-  assert_success "${TEST_PLUGIN_MODULES[@]}" "${TEST_PROJECT_MODULES[@]}"
+  assert_success "${TEST_PROJECT_MODULES[@]}" "${TEST_PLUGIN_MODULES[@]}"
 }
 
 @test "$SUITE: list only test project modules" {

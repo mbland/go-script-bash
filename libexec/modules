@@ -182,11 +182,11 @@ _@go.modules_search() {
   _@go.modules_find_all_in_dir "$_GO_CORE_DIR" "$glob"
   __go_core_modules_end="${#__go_modules[@]}"
 
-  @go.search_plugins '_@go.modules_search_plugins'
-  __go_plugin_modules_end="${#__go_modules[@]}"
-
   _@go.modules_find_all_in_dir "$_GO_SCRIPTS_DIR" "$glob"
   __go_project_modules_end="${#__go_modules[@]}"
+
+  @go.search_plugins '_@go.modules_search_plugins'
+  __go_plugin_modules_end="${#__go_modules[@]}"
 }
 
 _@go.modules_emit_class() {
@@ -208,18 +208,18 @@ _@go.modules_list_by_class() {
   local action="$1"
   local __go_modules=()
   local __go_core_modules_end=0
-  local __go_plugin_modules_end=0
   local __go_project_modules_end=0
+  local __go_plugin_modules_end=0
   local __go_all_modules
 
   _@go.modules_search
   __go_all_modules=("${__go_modules[@]}")
   _@go.modules_emit_class 'core framework library' "$action" \
     0 "$__go_core_modules_end"
-  _@go.modules_emit_class 'installed plugin libraries' "$action" \
-    "$__go_core_modules_end" "$__go_plugin_modules_end"
   _@go.modules_emit_class 'project library' "$action" \
-    "$__go_plugin_modules_end" "$__go_project_modules_end"
+    "$__go_core_modules_end" "$__go_project_modules_end"
+  _@go.modules_emit_class 'installed plugin libraries' "$action" \
+    "$__go_project_modules_end" "$__go_plugin_modules_end"
 }
 
 _@go.modules_list() {
