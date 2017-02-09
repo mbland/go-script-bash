@@ -27,7 +27,7 @@ teardown() {
 assert_command_scripts_equal() {
   set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
   unset 'lines[0]' 'lines[1]'
-  lines=("${lines[@]#$_GO_ROOTDIR/}")
+  lines=("${lines[@]}")
   assert_lines_equal "$@"
   return_from_bats_assertion "$?"
 }
@@ -73,7 +73,7 @@ assert_command_scripts_equal() {
 
   assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
   assert_line_equals 1 "COMMAND_NAMES: ${__all_scripts[*]##*/}"
-  assert_command_scripts_equal "${__all_scripts[@]}"
+  assert_command_scripts_equal "${__all_scripts[@]#$TEST_GO_ROOTDIR/}"
 }
 
 @test "$SUITE: return builtins, plugins, and user scripts" {
@@ -91,7 +91,28 @@ assert_command_scripts_equal() {
 
   assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
   assert_line_equals 1 "COMMAND_NAMES: ${__all_scripts[*]##*/}"
-  assert_command_scripts_equal "${__all_scripts[@]}"
+  assert_command_scripts_equal "${__all_scripts[@]#$TEST_GO_ROOTDIR/}"
+}
+
+@test "$SUITE: return paths relative to PWD when _GO_STANDALONE is set" {
+  local longest_name="super-extra-long-name-that-no-one-would-use"
+  local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
+
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    "plugins/$longest_name/bin/$longest_name" \
+    'plugins/xyzzy/bin/xyzzy'
+  cd "$HOME"
+  _GO_STANDALONE='true' run "$TEST_GO_SCRIPT"
+  assert_success
+
+  test_printf 'SCRIPT: %s\n' "${__all_scripts[@]}"
+
+  assert_line_equals 0 "LONGEST NAME LEN: ${#longest_name}"
+  assert_line_equals 1 "COMMAND_NAMES: ${__all_scripts[*]##*/}"
+  assert_command_scripts_equal "${__all_scripts[@]#$HOME/}"
 }
 
 @test "$SUITE: commands from earlier paths precede duplicates in later paths" {

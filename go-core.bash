@@ -50,7 +50,8 @@ cd "${0%/*}" || exit 1
 # Path to the project's root directory
 #
 # This is directory containing the main ./go script. All functions, commands,
-# and scripts are invoked relative to this directory.
+# and scripts are invoked relative to this directory (unless `_GO_STANDALONE`
+# is set).
 declare -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
@@ -58,11 +59,19 @@ if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
 else
   cd "${BASH_SOURCE[0]%/*}" || exit 1
 fi
-unset __go_orig_dir
 
 # Path to the ./go script framework's directory
 declare -r -x _GO_CORE_DIR="$PWD"
-cd "$_GO_ROOTDIR" || exit 1
+
+# Set _GO_STANDALONE if your script is a standalone program.
+#
+# See the "Standalone mode" section of README.md for more information.
+if [[ -z "$_GO_STANDALONE" ]]; then
+  cd "$_GO_ROOTDIR" || exit 1
+else
+  cd "$__go_orig_dir" || exit 1
+fi
+unset __go_orig_dir
 
 # Path to the script used to import optional library modules.
 #

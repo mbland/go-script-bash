@@ -4,6 +4,7 @@ load environment
 load commands/helpers
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
   find_builtins
   . "$_GO_USE_MODULES" 'complete'
@@ -28,17 +29,29 @@ teardown() {
 }
 
 @test "$SUITE: all top-level commands for zeroth or first argument" {
-  # Aliases will get printed before all other commands.
-  local __all_commands=("$(./go 'aliases')" "${BUILTIN_CMDS[@]}")
+  local __all_scripts=("${BUILTIN_CMDS[@]}")
 
+  # The script name arguments must remain alphabetically sorted by basename.
+  add_scripts 'bar' 'plugins/baz/bin/baz' 'foo'
+
+  # Aliases will get printed before all other commands.
   run "$TEST_GO_SCRIPT" complete 0
-  assert_success "${__all_commands[@]}"
+  assert_success $(./go 'aliases') "${__all_scripts[@]##*/}"
 
   run "$TEST_GO_SCRIPT" complete 0 complete
   assert_success 'complete '
 
   run "$TEST_GO_SCRIPT" complete 0 complete-not
   assert_failure ''
+}
+
+@test "$SUITE: _GO_STANDALONE only completes 'help' and project scripts" {
+  @go.create_test_command_script 'foo'
+  @go.create_test_command_script 'bar'
+  @go.create_test_command_script 'plugins/baz/bin/baz'
+
+  _GO_STANDALONE='true' run "$TEST_GO_SCRIPT" complete 0
+  assert_success 'help' 'bar' 'foo'
 }
 
 @test "$SUITE: cd and pushd complete directories" {

@@ -15,8 +15,9 @@
 #   <command>     is the command supporting argument completion
 #
 # Aliases and some builtin commands will complete file and directory paths
-# relative to {{root}}. Other commands may implement their own specific
-# completion schemes.
+# relative to {{root}} (unless `_GO_STANDALONE` is set, in which case they'll be
+# relative to the caller's `PWD`). Other commands may implement their own
+# specific completion schemes.
 #
 # This behavior is normally accessible by using `{{go}} env` to set up your
 # shell environment for argument completion. Running `{{go}} {{cmd}}` or `{{go}}
