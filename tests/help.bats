@@ -27,7 +27,7 @@ teardown() {
 @test "$SUITE: produce message with successful return for help command" {
   @go.create_test_command_script 'foo' '# Does foo stuff'
   @go.create_test_command_script 'bar' '# Does bar stuff'
-  @go.create_test_command_script 'baz' '# Does baz stuff'
+  @go.create_test_command_script 'plugins/baz/bin/baz' '# Does baz stuff'
   run "$TEST_GO_SCRIPT" help
 
   assert_success
@@ -35,6 +35,22 @@ teardown() {
   assert_output_matches '  foo  Does foo stuff'
   assert_output_matches '  bar  Does bar stuff'
   assert_output_matches '  baz  Does baz stuff'
+  assert_output_matches "Use \"$TEST_GO_SCRIPT help builtins\" for help on "
+}
+
+@test "$SUITE: only show top-level commands when _GO_STANDALONE is set" {
+  @go.create_test_command_script 'foo' '# Does foo stuff'
+  @go.create_test_command_script 'bar' '# Does bar stuff'
+  @go.create_test_command_script 'plugins/baz/bin/baz' '# Does baz stuff'
+  cd "$HOME"
+  _GO_STANDALONE='true' run "$TEST_GO_SCRIPT" help
+
+  assert_success
+  assert_line_equals 0 "Usage: $TEST_GO_SCRIPT <command> [arguments...]"
+  assert_output_matches '  foo  Does foo stuff'
+  assert_output_matches '  bar  Does bar stuff'
+  fail_if output_matches '  baz  Does baz stuff'
+  fail_if output_matches "Use \"$TEST_GO_SCRIPT help builtins\" for help on "
 }
 
 @test "$SUITE: produce usage message when error retrieving command summaries" {

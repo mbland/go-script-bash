@@ -10,7 +10,7 @@ find_builtins() {
   local cmd_script
   local cmd_name
 
-  for cmd_script in "$_GO_ROOTDIR"/libexec/*; do
+  for cmd_script in "$_GO_CORE_DIR"/libexec/*; do
     if [[ ! (-f "$cmd_script" && -x "$cmd_script") ]]; then
       continue
     fi
@@ -22,9 +22,6 @@ find_builtins() {
       LONGEST_BUILTIN_NAME="$cmd_name"
     fi
   done
-
-  # Strip the rootdir to make output less noisy.
-  BUILTIN_SCRIPTS=("${BUILTIN_SCRIPTS[@]#$_GO_ROOTDIR/}")
 }
 
 merge_scripts() {
@@ -58,9 +55,9 @@ merge_scripts() {
 add_scripts() {
   local script_names=("$@")
 
-  merge_scripts "${script_names[@]/#/$TEST_GO_SCRIPTS_RELATIVE_DIR/}"
+  merge_scripts "${script_names[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
   for script_path in "${script_names[@]}"; do
-    @go.create_test_command_script "$script_path"
+    @go.create_test_command_script "${script_path#$TEST_GO_ROOTDIR/}"
   done
 }

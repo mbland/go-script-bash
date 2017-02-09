@@ -160,6 +160,22 @@ under Bash 3.2, 4.2, 4.3, and 4.4 across OS X, Ubuntu Linux, Arch Linux, Alpine
 Linux, FreeBSD 9.3, FreeBSD 10.3, and Windows 10 (using all the environments
 described in the "Will this work on Windows?" section above).
 
+#### Can I use it to write standalone programs that aren't project scripts?
+
+Actually, yes. See the [Standalone mode](#standalone-mode) section below.
+
+Also see the following question...
+
+#### Can I have more than one ./go script in the same project source tree?
+
+Yes. You can share one copy of the go-bash-framework sources, and even have
+common code in the `lib/` directory, but set each script to use its own command
+scripts dir.
+
+This may be especially useful if you're writing a [standalone](#standalone-mode)
+program, in which one script provides the actual program interface, and the
+other provides the development-only interface.
+
 #### How is it tested?
 
 The project's own `./go test` command does it all. Combined with automatic
@@ -297,6 +313,20 @@ better yet, [send a pull request](#feedback-and-contributions)!
 To learn the API for adding tab completion to your own command scripts, run
 `./go help complete`. You can also learn by reading the scripts for the builtin
 commands.
+
+#### Standalone mode
+
+If you wish to use the framework to write a standalone program, rather than a
+project-specific development script, set `_GO_STANDALONE` in your top-level
+script to prevent alias commands, builtin commands, and plugin commands from
+showing up in `help` output or from being offered as tab completions. (`help`
+will still appear as a top-level tab completion.) All of these commands will
+still be available, but users won't be presented with them directly.
+
+`_GO_STANDALONE` also prevents the script from setting `PWD` to `_GO_ROOTDIR`,
+enabling the script to process relative file path arguments anywhere in the file
+system. Note that then you'll have to add `_GO_ROOTDIR` manually to any
+`_GO_ROOTDIR`-relative paths in your own scripts.
 
 #### Including common code
 

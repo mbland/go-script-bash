@@ -7,12 +7,6 @@ setup() {
   test_filter
   @go.create_test_go_script '@go "$@"'
   find_builtins
-
-  # We have to add back the _GO_ROOTDIR that was stripped from the beginning of
-  # each element of BUILTIN_SCRIPTS, because it will be different from the
-  # _GO_ROOTDIR of the generated test script. Thus, `$TEST_GO_SCRIPT commands`
-  # will report builtin command paths as absolute.
-  BUILTIN_SCRIPTS=("${BUILTIN_SCRIPTS[@]/#/$_GO_ROOTDIR/}")
 }
 
 teardown() {
@@ -183,9 +177,7 @@ generate_expected_paths() {
   done
 }
 
-@test "$SUITE: command paths" {
-  local user_commands=('bar' 'baz' 'foo')
-  local plugin_commands=('plugh' 'quux' 'xyzzy')
+@test "$SUITE: command paths are relative to _GO_ROOTDIR by default" {
   local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
 
   # Command script and plugin script names must remain hand-sorted.
@@ -195,9 +187,28 @@ generate_expected_paths() {
     'plugins/xyzzy/bin/xyzzy'
 
   local __expected_paths=()
+  __all_scripts=("${__all_scripts[@]#$TEST_GO_ROOTDIR/}")
   generate_expected_paths
 
   run "$TEST_GO_SCRIPT" commands --paths
+  assert_success "${__expected_paths[@]}"
+}
+
+@test "$SUITE: command paths are relative to PWD when _GO_STANDALONE is set" {
+  local __all_scripts=("${BUILTIN_SCRIPTS[@]}")
+
+  # Command script and plugin script names must remain hand-sorted.
+  add_scripts 'bar' 'baz' 'foo' \
+    'plugins/plugh/bin/plugh' \
+    'plugins/quux/bin/quux' \
+    'plugins/xyzzy/bin/xyzzy'
+
+  local __expected_paths=()
+  __all_scripts=("${__all_scripts[@]#$HOME/}")
+  generate_expected_paths
+
+  cd "$HOME"
+  _GO_STANDALONE='true' run "$TEST_GO_SCRIPT" commands --paths
   assert_success "${__expected_paths[@]}"
 }
 

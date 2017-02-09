@@ -55,9 +55,13 @@
 # enforced.
 
 _@go.usage() {
-  local cmd_paths=("${_GO_PLUGINS_PATHS[@]}" "$_GO_SCRIPTS_DIR")
+  local cmd_paths=("$_GO_SCRIPTS_DIR")
   local summaries
   local summaries_status=0
+
+  if [[ -z "$_GO_STANDALONE" ]]; then
+    cmd_paths+=("${_GO_PLUGINS_PATHS[@]}")
+  fi
 
   . "$_GO_USE_MODULES" 'strings'
   @go.join ':' 'cmd_paths' "${cmd_paths[@]}"
@@ -69,14 +73,18 @@ _@go.usage() {
     summaries_status=1
   fi
 
-  @go.printf "%s\n\n%s\n\n%s\n\n%s %s\n\n%s %s\n\n" \
+  @go.printf "%s\n\n%s\n\n%s\n\n%s %s\n\n" \
     "Usage: $_GO_CMD <command> [arguments...]" \
     "Where <command> is one of:" \
     "$summaries" \
     "Use \"$_GO_CMD help <command>\" for more information about that command," \
-    "if available." \
-    "Use \"$_GO_CMD help builtins\" for help on builtin commands," \
-    "and \"$_GO_CMD help aliases\" for information on shell alias commands."
+    "if available."
+
+  if [[ -z "$_GO_STANDALONE" ]]; then
+    @go.printf '%s %s\n\n' \
+      "Use \"$_GO_CMD help builtins\" for help on builtin commands," \
+      "and \"$_GO_CMD help aliases\" for information on shell alias commands."
+  fi
   [[ "$?" -eq '0' && "$summaries_status" -eq '0' ]]
 }
 

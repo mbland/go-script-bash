@@ -1,8 +1,13 @@
 #! /bin/bash
 
 _@go.complete_top_level_commands() {
-  _@go.source_builtin 'aliases'
-  _@go.source_builtin 'commands'
+  if [[ -z "$_GO_STANDALONE" ]]; then
+    _@go.source_builtin 'aliases'
+    _@go.source_builtin 'commands'
+  else
+    printf 'help\n'
+    _@go.source_builtin 'commands' "$_GO_SCRIPTS_DIR"
+  fi
 }
 
 # A successful return status from this function is a signal that __go_cmd_path

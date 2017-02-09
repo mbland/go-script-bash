@@ -56,11 +56,15 @@ _@go.find_commands() {
         scripts+=("$script")
       fi
     done
-    _@go.merge_scripts_into_list "${scripts[@]#$_GO_ROOTDIR/}"
+    _@go.merge_scripts_into_list "${scripts[@]}"
   done
 
   if [[ "${#__go_command_scripts[@]}" -eq '0' ]]; then
     return 1
+  elif [[ -z "$_GO_STANDALONE" ]]; then
+    __go_command_scripts=("${__go_command_scripts[@]#$_GO_ROOTDIR/}")
+  else
+    __go_command_scripts=("${__go_command_scripts[@]#$PWD/}")
   fi
 
   __go_command_names=("${__go_command_scripts[@]##*/}")
