@@ -354,11 +354,15 @@ _@go.modules_list_imported() {
   # Collect imported module info before _GO_USE_MODULES imports possibly more.
   local imported_modules=("${_GO_IMPORTED_MODULES[@]}")
   local imported_files=("${_GO_IMPORTED_MODULE_FILES[@]#$_GO_ROOTDIR/}")
+  local imported_callers=("${_GO_IMPORTED_MODULE_CALLERS[@]#$_GO_ROOTDIR/}")
+  local caller_pad
   local imported_listing=()
 
   . "$_GO_USE_MODULES" 'format'
   @go.pad_items imported_modules "${imported_modules[@]}"
   @go.zip_items imported_modules imported_files '  ' imported_listing
+  printf -v 'caller_pad' -- "\n%$((${#imported_modules[0]} + 4))s" ''
+  @go.zip_items imported_listing imported_callers "$caller_pad" imported_listing
   printf '%s\n' "${imported_listing[@]}"
 }
 

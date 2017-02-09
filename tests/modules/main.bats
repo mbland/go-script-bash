@@ -66,17 +66,22 @@ get_first_and_last_core_module_summaries() {
 
 @test "$SUITE: --imported" {
   @go.create_test_go_script \
-    '. "$_GO_USE_MODULES" "complete" "_foo/_plugh" "_bar/_quux" "_frotz"' \
+    '. "$_GO_USE_MODULES" "complete" "_foo/_plugh"' \
+    '. "$_GO_USE_MODULES" "_bar/_quux"  "_foo/_plugh"' \
+    '. "$_GO_USE_MODULES" "_frotz"' \
     '@go "$@"'
 
   # The first will be an absolute path because the script's _GO_ROOTDIR doesn't
   # contain the framework sources.
   local expected=(
     "complete     $_GO_ROOTDIR/lib/complete"
+    "               go:3 main"
     "_foo/_plugh  scripts/plugins/_foo/lib/_plugh"
+    "               go:3 main"
     "_bar/_quux   scripts/plugins/_bar/lib/_quux"
+    "               go:4 main"
     "_frotz       scripts/lib/_frotz"
-  )
+    "               go:5 main")
 
   run "$TEST_GO_SCRIPT" modules --imported
   assert_success "${expected[@]}"
