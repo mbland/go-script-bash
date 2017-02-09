@@ -4,6 +4,7 @@ load ../environment
 load helpers
 
 setup() {
+  test_filter
   @go.create_test_go_script '@go "$@"'
   setup_test_modules
 }
