@@ -136,25 +136,20 @@ _@go.modules_produce_listing() {
     return
   fi
 
-  . "$_GO_CORE_DIR/lib/format"
-
-  local padded_modules=()
-  local zipped_modules=()
-
-  @go.pad_items padded_modules "${modules[@]}"
-  modules=("${padded_modules[@]}")
+  . "$_GO_USE_MODULES" 'format'
+  @go.pad_items modules "${modules[@]}"
 
   case "$action" in
   paths)
     local relative_paths=("${__go_modules[@]#$_GO_ROOTDIR/}")
-    @go.zip_items modules relative_paths '  ' zipped_modules
+    @go.zip_items modules relative_paths '  ' modules
     ;;
   summaries)
     local __go_modules_summaries=()
     if ! _@go.modules_summaries; then
       return 1
     fi
-    @go.zip_items modules __go_modules_summaries '  ' zipped_modules
+    @go.zip_items modules __go_modules_summaries '  ' modules
     ;;
   *)
     # Should only happen if _@go.modules is updated and this case statement
@@ -162,7 +157,7 @@ _@go.modules_produce_listing() {
     @go.printf 'ERROR: Unknown action: %s\n' "$action" >&2
     return 1
   esac
-  __go_modules_listing=("${zipped_modules[@]}")
+  __go_modules_listing=("${modules[@]}")
 }
 
 _@go.modules_search_plugins() {
@@ -204,8 +199,8 @@ _@go.modules_emit_class() {
 
   if [[ "${#__go_modules[@]}" -ne '0' ]] &&
         _@go.modules_produce_listing "$action"; then
-    local IFS=$'\n'
-    printf "From the %s:\n%s\n\n" "$class" "${__go_modules_listing[*]/#/  }"
+    printf 'From the %s:\n' "$class"
+    printf '%s\n' "${__go_modules_listing[@]/#/  }" ''
   fi
 }
 
@@ -253,12 +248,10 @@ _@go.modules_list() {
   done
 
   local __go_modules_listing=()
-  if _@go.modules_produce_listing "$action"; then
-    local IFS=$'\n'
-    echo "${__go_modules_listing[*]}"
-  else
+  if ! _@go.modules_produce_listing "$action"; then
     return 1
   fi
+  printf '%s\n' "${__go_modules_listing[@]}"
 }
 
 _@go.modules_tab_completion_plugins() {
@@ -342,15 +335,31 @@ _@go.modules_tab_completion() {
   fi
 
   local __go_modules_listing=()
-  if _@go.modules_produce_listing; then
-    completions+=("${__go_modules_listing[@]}")
-    @go.complete_remove_completions_already_present \
-      'args' 'completions' "${#completions[@]}"
-    echo "${completions[@]}"
-  else
+  if ! _@go.modules_produce_listing; then
     # Shouldn't happen, since modules_produce_listing isn't parsing summaries.
     return 1
   fi
+  completions+=("${__go_modules_listing[@]}")
+  @go.complete_remove_completions_already_present \
+    'args' 'completions' "${#completions[@]}"
+  echo "${completions[@]}"
+}
+
+_@go.modules_list_imported() {
+  if [[ "$#" -ne 0 ]]; then
+    @go.printf 'The --imported option takes no other arguments.\n' >&2
+    return 1
+  fi
+
+  # Collect imported module info before _GO_USE_MODULES imports possibly more.
+  local imported_modules=("${_GO_IMPORTED_MODULES[@]}")
+  local imported_files=("${_GO_IMPORTED_MODULE_FILES[@]#$_GO_ROOTDIR/}")
+  local imported_listing=()
+
+  . "$_GO_USE_MODULES" 'format'
+  @go.pad_items imported_modules "${imported_modules[@]}"
+  @go.zip_items imported_modules imported_files '  ' imported_listing
+  printf '%s\n' "${imported_listing[@]}"
 }
 
 _@go.modules() {
@@ -374,12 +383,7 @@ _@go.modules() {
     fi
     ;;
   --imported)
-    if [[ "$#" -ne 0 ]]; then
-      @go.printf 'The --imported option takes no other arguments.\n' >&2
-      return 1
-    elif [[ "${#_GO_IMPORTED_MODULES[@]}" -ne '0' ]]; then
-      _@go.modules_list 'paths' "${_GO_IMPORTED_MODULES[@]}"
-    fi
+    _@go.modules_list_imported "$@"
     ;;
   -*)
     @go.printf "Unknown option: $action\n" >&2
