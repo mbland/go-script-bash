@@ -35,10 +35,12 @@ create_template_script() {
   create_template_script "$_GO_CORE_DIR" "$_GO_CORE_VERSION"
   run "$TEST_GO_ROOTDIR/go-template"
 
-  # The script will return an error without a command, but the core repo should
-  # exist as expected.
+  # Without a command argument, the script will print the top-level help and
+  # return an error, but the core repo should exist as expected.
   assert_failure
-  assert_output_matches "Cloning $_GO_CORE_DIR into $TEST_CLONE_DIR\.\.\."
+  assert_output_matches "Cloning framework from '$_GO_CORE_DIR'\.\.\."
+  assert_output_matches "Cloning into '$TEST_CLONE_DIR'\.\.\."
+  assert_output_matches "Clone of '$_GO_CORE_DIR' successful\."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   [[ -f "$TEST_GO_ROOTDIR/scripts/go-script-bash/go-core.bash" ]]
 
@@ -51,7 +53,7 @@ create_template_script() {
 @test "$SUITE: fail to clone a nonexistent repo" {
   create_template_script 'bogus-repo-that-does-not-exist'
   run "$TEST_GO_ROOTDIR/go-template"
-  assert_failure \
-    "Cloning bogus-repo-that-does-not-exist into $TEST_CLONE_DIR..." \
-    'Failed to clone bogus-repo-that-does-not-exist; aborting.'
+  assert_failure "Cloning framework from 'bogus-repo-that-does-not-exist'..." \
+    "fatal: repository 'bogus-repo-that-does-not-exist' does not exist" \
+    "Failed to clone 'bogus-repo-that-does-not-exist'; aborting."
 }
