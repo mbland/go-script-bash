@@ -68,7 +68,7 @@ get_first_and_last_core_module_summaries() {
   @go.create_test_go_script \
     '. "$_GO_USE_MODULES" "complete" "_foo/_plugh"' \
     '. "$_GO_USE_MODULES" "_bar/_quux"  "_foo/_plugh"' \
-    '. "$_GO_USE_MODULES" "_frotz"' \
+    '. "$_GO_USE_MODULES" "_frotz" "_blorple"' \
     '@go "$@"'
 
   # The first will be an absolute path because the script's _GO_ROOTDIR doesn't
@@ -81,6 +81,8 @@ get_first_and_last_core_module_summaries() {
     "_bar/_quux   scripts/plugins/_bar/lib/_quux"
     "               go:4 main"
     "_frotz       scripts/lib/_frotz"
+    "               go:5 main"
+    "_blorple     lib/_blorple"
     "               go:5 main")
 
   run "$TEST_GO_SCRIPT" modules --imported
@@ -91,8 +93,11 @@ get_first_and_last_core_module_summaries() {
   local expected=('From the core framework library:'
     "${CORE_MODULES[@]/#/  }"
     ''
-    'From the project library:'
-    "${TEST_PROJECT_MODULES[@]/#/  }"
+    'From the internal project library:'
+    "${TEST_INTERNAL_MODULES[@]/#/  }"
+    ''
+    'From the public project library:'
+    "${TEST_PUBLIC_MODULES[@]/#/  }"
     ''
     'From the installed plugin libraries:'
     "${TEST_PLUGIN_MODULES[@]/#/  }"
@@ -104,7 +109,8 @@ get_first_and_last_core_module_summaries() {
 
 @test "$SUITE: list using glob, all modules" {
   local expected=("${CORE_MODULES[@]}"
-    "${TEST_PROJECT_MODULES[@]}"
+    "${TEST_INTERNAL_MODULES[@]}"
+    "${TEST_PUBLIC_MODULES[@]}"
     "${TEST_PLUGIN_MODULES[@]}"
   )
 
@@ -118,14 +124,16 @@ get_first_and_last_core_module_summaries() {
   )
 
   rm "${TEST_PLUGIN_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}" \
-    "${TEST_PROJECT_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}"
+    "${TEST_INTERNAL_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}" \
+    "${TEST_PUBLIC_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}"
   run "$TEST_GO_SCRIPT" modules
   assert_success "${expected[@]}"
 }
 
 @test "$SUITE: list using glob, only core modules present" {
   rm "${TEST_PLUGIN_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}" \
-    "${TEST_PROJECT_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}"
+    "${TEST_INTERNAL_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}" \
+    "${TEST_PUBLIC_MODULES_PATHS[@]/#/$TEST_GO_ROOTDIR/}"
   run "$TEST_GO_SCRIPT" modules '*'
   assert_success "${CORE_MODULES[@]}"
 }
@@ -141,6 +149,8 @@ get_first_and_last_core_module_summaries() {
   # Note the padding is relative to only the project modules.
   assert_output_matches $'  _frobozz  scripts/lib/_frobozz\n'
   assert_output_matches $'  _frotz    scripts/lib/_frotz\n\n'
+  assert_output_matches $'  _blorple  lib/_blorple\n'
+  assert_output_matches $'  _rezrov   lib/_rezrov\n\n'
 
   # Note the padding is relative to only the plugin modules. Use a variable to
   # keep the assertion lines under 80 columns. Bats trims the last newline of
@@ -150,9 +160,9 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches "  _foo/_quux   $plugins/_foo/lib/_quux"$'\n'
   assert_output_matches "  _foo/_xyzzy  $plugins/_foo/lib/_xyzzy$"
 
-  # Since the 'lines' array doesn't contain blank lines, we only add '3' to
+  # Since the 'lines' array doesn't contain blank lines, we only add '4' to
   # account for the 'From the...' line starting each class section.
-  assert_equal "$((TOTAL_NUM_MODULES + 3))" "${#lines[@]}"
+  assert_equal "$((TOTAL_NUM_MODULES + 4))" "${#lines[@]}"
 }
 
 @test "$SUITE: paths using glob, all modules" {
@@ -170,6 +180,10 @@ get_first_and_last_core_module_summaries() {
     $'\n_frobozz     +scripts/lib/_frobozz\n'
   assert_output_matches \
     $'\n_frotz       +scripts/lib/_frotz\n'
+  assert_output_matches \
+    $'\n_blorple     +lib/_blorple\n'
+  assert_output_matches \
+    $'\n_rezrov      +lib/_rezrov\n'
   assert_output_matches \
     $'\n_bar/_plugh  +scripts/plugins/_bar/lib/_plugh\n'
   assert_output_matches \
@@ -192,6 +206,8 @@ get_first_and_last_core_module_summaries() {
   # Note the padding is relative to only the project modules.
   assert_output_matches $'  _frobozz  Summary for _frobozz\n'
   assert_output_matches $'  _frotz    Summary for _frotz\n'
+  assert_output_matches $'  _blorple  Summary for _blorple\n'
+  assert_output_matches $'  _rezrov   Summary for _rezrov\n'
 
   # Note the padding is relative to only the plugin modules. Bats trims
   # the last newline of the output.
@@ -199,9 +215,9 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches $'  _foo/_quux   Summary for _foo/_quux\n'
   assert_output_matches '  _foo/_xyzzy  Summary for _foo/_xyzzy$'
 
-  # Since the 'lines' array doesn't contain blank lines, we only add '3' to
+  # Since the 'lines' array doesn't contain blank lines, we only add '4' to
   # account for the 'From the...' line starting each class section.
-  assert_equal "$((TOTAL_NUM_MODULES + 3))" "${#lines[@]}"
+  assert_equal "$((TOTAL_NUM_MODULES + 4))" "${#lines[@]}"
 }
 
 @test "$SUITE: summaries using glob, all modules" {
@@ -216,6 +232,8 @@ get_first_and_last_core_module_summaries() {
   assert_output_matches "$LAST_CORE_MODULE  +$LAST_CORE_MOD_SUMMARY"$'\n'
   assert_output_matches $'_frobozz     +Summary for _frobozz\n'
   assert_output_matches $'_frotz       +Summary for _frotz\n'
+  assert_output_matches $'_blorple     +Summary for _blorple\n'
+  assert_output_matches $'_rezrov      +Summary for _rezrov\n'
   assert_output_matches $'_bar/_plugh  +Summary for _bar/_plugh\n'
   assert_output_matches $'_foo/_quux   +Summary for _foo/_quux\n'
   assert_output_matches $'_foo/_xyzzy  +Summary for _foo/_xyzzy$'
@@ -225,12 +243,13 @@ get_first_and_last_core_module_summaries() {
 
 @test "$SUITE: list only test modules" {
   run "$TEST_GO_SCRIPT" modules '_*'
-  assert_success "${TEST_PROJECT_MODULES[@]}" "${TEST_PLUGIN_MODULES[@]}"
+  assert_success "${TEST_INTERNAL_MODULES[@]}" "${TEST_PUBLIC_MODULES[@]}" \
+    "${TEST_PLUGIN_MODULES[@]}"
 }
 
 @test "$SUITE: list only test project modules" {
-  run "$TEST_GO_SCRIPT" modules '_fr*'
-  assert_success "${TEST_PROJECT_MODULES[@]}"
+  run "$TEST_GO_SCRIPT" modules '_fr*' '_blor*' '_rezr*'
+  assert_success "${TEST_INTERNAL_MODULES[@]}" "${TEST_PUBLIC_MODULES[@]}"
 }
 
 @test "$SUITE: list only modules in the _bar and _baz plugins" {

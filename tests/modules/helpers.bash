@@ -5,8 +5,11 @@
 CORE_MODULES=()
 CORE_MODULES_PATHS=()
 
-TEST_PROJECT_MODULES=('_frobozz' '_frotz')
-TEST_PROJECT_MODULES_PATHS=()
+TEST_INTERNAL_MODULES=('_frobozz' '_frotz')
+TEST_INTERNAL_MODULES_PATHS=()
+
+TEST_PUBLIC_MODULES=('_blorple' '_rezrov')
+TEST_PUBLIC_MODULES_PATHS=()
 
 # We start all the test plugin and module names with '_' to avoid collisions
 # with any potential module names added to the core framework.
@@ -28,11 +31,19 @@ setup_test_modules() {
     fi
   done
 
-  for module in "${TEST_PROJECT_MODULES[@]}"; do
+  for module in "${TEST_INTERNAL_MODULES[@]}"; do
     module_file="$TEST_GO_SCRIPTS_DIR/lib/$module"
     mkdir -p "${module_file%/*}"
     printf '# Summary for %s\n' "$module" > "$module_file"
-    TEST_PROJECT_MODULES_PATHS+=("${module_file#$TEST_GO_ROOTDIR/}")
+    TEST_INTERNAL_MODULES_PATHS+=("${module_file#$TEST_GO_ROOTDIR/}")
+    ((++TOTAL_NUM_MODULES))
+  done
+
+  for module in "${TEST_PUBLIC_MODULES[@]}"; do
+    module_file="$TEST_GO_ROOTDIR/lib/$module"
+    mkdir -p "${module_file%/*}"
+    printf '# Summary for %s\n' "$module" > "$module_file"
+    TEST_PUBLIC_MODULES_PATHS+=("${module_file#$TEST_GO_ROOTDIR/}")
     ((++TOTAL_NUM_MODULES))
   done
 

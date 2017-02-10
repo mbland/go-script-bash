@@ -16,7 +16,8 @@ teardown() {
 @test "$SUITE: zero arguments" {
   run "$TEST_GO_SCRIPT" complete 1 modules ''
   local expected=('-h' '-help' '--help' '--paths' '--summaries' '--imported'
-    "${CORE_MODULES[@]}" "${TEST_PROJECT_MODULES[@]}" "${TEST_PLUGINS[@]/%//}")
+    "${CORE_MODULES[@]}" "${TEST_INTERNAL_MODULES[@]}"
+    "${TEST_PUBLIC_MODULES[@]}" "${TEST_PLUGINS[@]/%//}")
   assert_success "${expected[@]}"
 }
 
@@ -57,8 +58,8 @@ teardown() {
 
 @test "$SUITE: return plugin dirs, core and project modules for flag" {
   # Note that plugins are offered last
-  local expected=(
-    "${CORE_MODULES[@]}" "${TEST_PROJECT_MODULES[@]}" "${TEST_PLUGINS[@]/%//}")
+  local expected=("${CORE_MODULES[@]}" "${TEST_INTERNAL_MODULES[@]}"
+    "${TEST_PUBLIC_MODULES[@]}" "${TEST_PLUGINS[@]/%//}")
   run "$TEST_GO_SCRIPT" complete 2 modules --help ''
   assert_success "${expected[@]}"
 }
@@ -71,7 +72,7 @@ teardown() {
 
 @test "$SUITE: return only matching plugin names" {
   local expected=('_bar/' '_baz/')
-  run "$TEST_GO_SCRIPT" complete 2 modules help '_b'
+  run "$TEST_GO_SCRIPT" complete 2 modules help '_ba'
   assert_success "${expected[@]}"
 }
 
@@ -116,7 +117,8 @@ teardown() {
 }
 
 @test "$SUITE: don't complete plugins when all modules already present" {
-  local expected=("${CORE_MODULES[@]}" '_frobozz' '_frotz' '_bar/' '_baz/')
+  local expected=("${CORE_MODULES[@]}" '_frobozz' '_frotz' \
+    '_blorple' '_rezrov' '_bar/' '_baz/')
   run "$TEST_GO_SCRIPT" complete 4 modules \
     '_foo/_plugh' '_foo/_quux' '_foo/_xyzzy' ''
   assert_success "${expected[@]}"
