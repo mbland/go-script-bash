@@ -206,12 +206,29 @@ If you do not see this, follow the instructions in the [Installing
 Bash](#installing-bash) section later in this document.
 
 __Note: While Bash is required to run this framework, your individual command
-scripts can be in any other interpreted language.__
+scripts can be in any other interpreted language installed on the host system.__
 
 ### How to use this framework
 
 First you'll need a copy of this framework available in your project sources.
-Archives are available at:
+The most expedient way to bootstrap your program is to use the [`go-template`
+file](https://github.com/mbland/go-script-bash/blob/master/go-template) as a
+starting point (replacing `curl` with `wget`, `fetch`, or whichever tool you
+prefer):
+
+```bash
+$ curl https://raw.githubusercontent.com/mbland/go-script-bash/master/go-template >./go
+$ chmod ugo+rx ./go
+```
+
+You may rename this file whatever you wish (i.e. it doesn't have to be named
+`./go`), update its documentation and variables to fit your project, and check
+it into your project repository. See the `go-template` comments for details.
+
+If you'd prefer to download a copy of the framework and check it into your
+sources, versioned archives are available from the [go-script-bash Releases
+page](https://github.com/mbland/go-script-bash/releases). The archives for the
+current release are:
 
 - https://github.com/mbland/go-script-bash/archive/v1.3.0.tar.gz
 - https://github.com/mbland/go-script-bash/archive/v1.3.0.zip
@@ -228,9 +245,10 @@ $ git submodule update --init
 where `<target-dir>` is any point inside your project directory structure that
 you prefer.
 
-Then create a bash script in the root directory of your project to act as the
-main `./go` script. This script need not be named `go`, but it must contain the
-following as the first and last executable lines, respectively:
+If you're not using `go-template`, create a bash script in the root directory of
+your project to act as the main `./go` script. This script need not be named
+`go`, but it must contain the following lines, with `@go "$@"` as the last line
+of the script:
 
 ```bash
 . "${0%/*}/go-core.bash" "scripts"
@@ -238,11 +256,13 @@ following as the first and last executable lines, respectively:
 ```
 
 where:
-- `"${0%/*}"` produces the path to the project's root directory
-- `go-core.bash` is the path to the file of the same name imported from this
-repository
+- `${0%/*}` produces the path to the project's root directory based on the path
+  to the `./go` script
+- `${0%/*}/go-core.bash` produces the path to the framework's `go-core.bash`
+  file within your project's copy of the framework (adjusted to reflect where
+  your copy of `go-script-bash` actually resides)
 - `scripts` is the path to the directory holding your project's command scripts
-  relative to the project root
+  relative to the project root (it can be any name you like)
 
 #### Directory structure
 
@@ -489,8 +509,8 @@ need the following utilities installed:
 - `tput` (ncurses) on Linux, OS X, UNIX
 - `mode.com` should be present on Windows
 
-To use the `get` builtin, the `curl`, `wget`, and `git` programs must be
-installed on your system.
+To use the `get file` builtin, either `curl`, `wget`, or `fetch` must be
+installed on your system. `get git-repo` requires `git`, naturally.
 
 ### Open Source License
 
