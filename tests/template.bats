@@ -2,8 +2,6 @@
 
 load environment
 
-TEST_CLONE_DIR="$TEST_GO_ROOTDIR/scripts/go-script-bash"
-
 setup() {
   test_filter
   mkdir "$TEST_GO_ROOTDIR"
@@ -39,7 +37,10 @@ create_template_script() {
   # return an error, but the core repo should exist as expected.
   assert_failure
   assert_output_matches "Cloning framework from '$_GO_CORE_DIR'\.\.\."
-  assert_output_matches "Cloning into '$TEST_CLONE_DIR'\.\.\."
+
+  # Use `.*/scripts/go-script-bash` to account for the fact that `git clone` on
+  # MSYS2 will output `C:/Users/<user>/AppData/Local/Temp/` in place of `/tmp`.
+  assert_output_matches "Cloning into '.*/scripts/go-script-bash'\.\.\."
   assert_output_matches "Clone of '$_GO_CORE_DIR' successful\."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   [[ -f "$TEST_GO_ROOTDIR/scripts/go-script-bash/go-core.bash" ]]
