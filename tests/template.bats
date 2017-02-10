@@ -54,18 +54,18 @@ create_template_script() {
 }
 
 @test "$SUITE: clone the go-script-bash repository from $GO_CORE_URL" {
-  create_template_script "$_GO_CORE_DIR" "$_GO_CORE_VERSION"
+  create_template_script "$GO_CORE_URL" "$_GO_CORE_VERSION"
   run "$TEST_GO_ROOTDIR/go-template"
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
   assert_failure
-  assert_output_matches "Cloning framework from '$_GO_CORE_DIR'\.\.\."
+  assert_output_matches "Cloning framework from '$GO_CORE_URL'\.\.\."
 
   # Use `.*/scripts/go-script-bash` to account for the fact that `git clone` on
   # MSYS2 will output `C:/Users/<user>/AppData/Local/Temp/` in place of `/tmp`.
   assert_output_matches "Cloning into '.*/scripts/go-script-bash'\.\.\."
-  assert_output_matches "Clone of '$_GO_CORE_DIR' successful\."$'\n\n'
+  assert_output_matches "Clone of '$GO_CORE_URL' successful\."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   [[ -f "$TEST_GO_ROOTDIR/scripts/go-script-bash/go-core.bash" ]]
 
