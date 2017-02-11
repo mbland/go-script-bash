@@ -112,6 +112,9 @@ declare _GO_IMPORTED_MODULE_CALLERS=()
 # Path to the project's script directory
 declare _GO_SCRIPTS_DIR=
 
+# Directory containing Bats tests, relative to `_GO_ROOTDIR`
+declare -r -x _GO_TEST_DIR="${_GO_TEST_DIR:-tests}"
+
 # Path to the main ./go script in the project's root directory
 declare -r -x _GO_SCRIPT="$_GO_ROOTDIR/${0##*/}"
 
