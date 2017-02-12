@@ -118,7 +118,7 @@ write_bats_dummy_stub_kcov_lib_and_copy_test_script() {
   local expected_kcov_args=(
     'tests/kcov'
     'tests/coverage'
-    'go,go-core.bash,lib/,libexec/,scripts/'
+    'go,go-core.bash,go-template,lib/,libexec/,scripts/'
     '/tmp/,tests/bats/'
     'https://coveralls.io/github/mbland/go-script-bash'
     "$TEST_GO_SCRIPT"

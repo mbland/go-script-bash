@@ -26,7 +26,8 @@
 # Passes all arguments through to `@go.bats_main` from `lib/bats-main`.
 _test_main() {
   local _GO_BATS_COVERAGE_INCLUDE
-  _GO_BATS_COVERAGE_INCLUDE=('go' 'go-core.bash' 'lib/' 'libexec/' 'scripts/')
+  _GO_BATS_COVERAGE_INCLUDE=('go' 'go-core.bash' 'go-template'
+    'lib/' 'libexec/' 'scripts/')
   local _GO_COVERALLS_URL='https://coveralls.io/github/mbland/go-script-bash'
 
   . "$_GO_USE_MODULES" 'bats-main'

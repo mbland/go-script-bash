@@ -5,8 +5,18 @@ load ../environment
 TEST_COMMAND_SCRIPT_PATH="$TEST_GO_SCRIPTS_DIR/test-command"
 
 setup() {
-  . 'lib/internal/command_descriptions'
+  test_filter
 
+  @go.create_test_go_script \
+    ". '$_GO_CORE_DIR/lib/internal/command_descriptions'" \
+    'declare __go_cmd_desc=""' \
+    '"$@"' \
+    'declare result="$?"' \
+    'printf "%s\n" "$__go_cmd_desc"' \
+    'exit "$result"'
+}
+
+create_script_with_description() {
   local script='#
 # Command that does something in {{root}}
 #
@@ -51,14 +61,14 @@ teardown() {
 
 @test "$SUITE: return error if there's an error reading" {
   skip_if_cannot_trigger_file_permission_failure
+  printf '\n' >"$TEST_COMMAND_SCRIPT_PATH"
   chmod ugo-r "$TEST_COMMAND_SCRIPT_PATH"
 
-  run _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
+  run "$TEST_GO_SCRIPT" _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
   assert_failure
   assert_output_matches "ERROR: problem reading $TEST_COMMAND_SCRIPT_PATH\$"
 
-  output=''
-  run _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
+  run "$TEST_GO_SCRIPT" _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
   assert_failure
   assert_output_matches "ERROR: problem reading $TEST_COMMAND_SCRIPT_PATH\$"
 }
@@ -67,39 +77,32 @@ teardown() {
   @go.create_test_command_script 'test-command' \
     'echo "This script has no description"'
 
-  local __go_cmd_desc=''
-  _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
-  assert_equal 'No description available' "$__go_cmd_desc" 'command summary'
+  run "$TEST_GO_SCRIPT" _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
+  assert_success 'No description available'
 
   __go_cmd_desc=''
-  _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
-  assert_equal 'No description available' "$__go_cmd_desc" 'command description'
+  run "$TEST_GO_SCRIPT" _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
+  assert_success 'No description available'
 }
 
 @test "$SUITE: parse summary from command script" {
-  _GO_ROOTDIR='/foo/bar'
-  _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
-  assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
-    'command summary'
+  create_script_with_description
+  run "$TEST_GO_SCRIPT" _@go.command_summary "$TEST_COMMAND_SCRIPT_PATH"
+  assert_success "Command that does something in $TEST_GO_ROOTDIR"
 }
 
 @test "$SUITE: one-line description from command script has no trailing space" {
   echo '# Command that does something in {{root}}' > "$TEST_COMMAND_SCRIPT_PATH"
-  _GO_ROOTDIR='/foo/bar'
-  COLUMNS=40
-
-  _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
-  assert_equal 'Command that does something in /foo/bar' "$__go_cmd_desc" \
-    'one-line command description'
+  COLUMNS=40 run "$TEST_GO_SCRIPT" _@go.command_description \
+    "$TEST_COMMAND_SCRIPT_PATH"
+  assert_success "Command that does something in $TEST_GO_ROOTDIR"
 }
 
 @test "$SUITE: parse description from command script" {
-  _GO_CMD='test-go'
-  _GO_ROOTDIR='/foo/bar'
-  COLUMNS=40
-  _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
+  create_script_with_description
+  COLUMNS=40 run test-go _@go.command_description "$TEST_COMMAND_SCRIPT_PATH"
 
-  local expected='Command that does something in /foo/bar
+  local expected='Command that does something in TEST_GO_ROOTDIR
 
 Usage: test-go test-command [args...]
 
@@ -125,13 +128,12 @@ Indented lines that look like tables (there are two or more adjacent spaces afte
   xyzzy  all work and no play makes
            mike a Dull Boy.
   plugh  all werk and no play makes
-           mike a dull Boy
-'
+           mike a dull Boy'
 
   # With this test, I learned that you _do_ have to quote strings even inside of
   # '[[' and ']]' in case the strings themselves contain '[' or ']', as with
   # '[args...]' above.
-  assert_equal "$expected" "$__go_cmd_desc" 'command description'
+  assert_success "${expected/TEST_GO_ROOTDIR/$TEST_GO_ROOTDIR}"
 }
 
 @test "$SUITE: format subcommand description" {
@@ -144,15 +146,9 @@ Indented lines that look like tables (there are two or more adjacent spaces afte
 echo The command script starts now.
 '
 
-  local _GO_CMD='test-go'
-  local expected=("Leaf command that does something in $_GO_ROOTDIR"
-    ''
-    "Usage: $_GO_CMD root-command node-command leaf-command [args...]"
-    '')
-  local __go_cmd_desc
-  _@go.command_description \
+  run test-go _@go.command_description \
     "$TEST_GO_SCRIPTS_DIR/root-command.d/node-command.d/leaf-command"
-
-  local IFS=$'\n'
-  assert_equal "${expected[*]}" "$__go_cmd_desc"
+  assert_success "Leaf command that does something in $TEST_GO_ROOTDIR" \
+    '' \
+    "Usage: test-go root-command node-command leaf-command [args...]"
 }

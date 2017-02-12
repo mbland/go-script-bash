@@ -40,9 +40,6 @@
 # make the Bats repository a submodule if so desired. The Bats version so cloned
 # may be set by overriding `_GO_BATS_VERSION`.
 
-# Directory containing Bats tests, relative to `_GO_ROOTDIR`
-export _GO_TEST_DIR="${_GO_TEST_DIR:-tests}"
-
 # Directory in which kcov will be built
 export _GO_KCOV_DIR="${_GO_KCOV_DIR:-$_GO_TEST_DIR/kcov}"
 

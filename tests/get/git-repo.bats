@@ -24,10 +24,8 @@ teardown() {
   run "$TEST_GO_SCRIPT" get git-repo --complete 1
   assert_success ''
 
-  . "$_GO_USE_MODULES" 'complete'
-  while IFS= read -r item; do
-    expected+=("$item")
-  done <<<"$(@go.compgen -f -- "$TEST_GO_ROOTDIR/")"
+  local expected=()
+  @go.test_compgen expected -f -- "$TEST_GO_ROOTDIR/"
 
   run "$TEST_GO_SCRIPT" get git-repo --complete 2
   assert_success "${expected[@]#$TEST_GO_ROOTDIR/}"

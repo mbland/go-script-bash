@@ -108,3 +108,19 @@ test-go() {
     @go.create_test_command_script "$parent.d/$subcommand"
   done
 }
+
+# Assigns the results of `@go.compgen` to a caller-defined test data array
+#
+# While more compact than writing a `while` loop by hand, it's also faster
+# thanks to the fact that it disables the Bats function tracing mechanism.
+#
+# Arguments:
+#   result:  Name of the caller-declared output array
+#   ...:     Arguments passed directly to `@go.compgen`
+@go.test_compgen() {
+  . "$_GO_CORE_DIR/lib/bats/assertions"
+  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  . "$_GO_USE_MODULES" 'complete' 'strings'
+  @go.split $'\n' "$(@go.compgen "${@:2}")" "$1"
+  return_from_bats_assertion
+}
