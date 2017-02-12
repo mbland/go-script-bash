@@ -70,7 +70,7 @@ teardown() {
 
   while IFS= read -r item; do
     expected+=("${item#$TEST_GO_ROOTDIR/}")
-  done<<<"$(@go.compgen -d "$TEST_GO_SCRIPTS_DIR/")"
+  done < <(@go.compgen -d "$TEST_GO_SCRIPTS_DIR/")
 
   run "$TEST_GO_SCRIPT" complete 1 cd 'scripts/'
   assert_success "${expected[@]}"
@@ -85,16 +85,12 @@ teardown() {
   touch "${files[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
   local top_level=()
+  @go.test_compgen top_level -f "$TEST_GO_ROOTDIR/"
+  top_level=("${top_level[@]#$TEST_GO_ROOTDIR/}")
+
   local all_scripts_entries=()
-  local item
-
-  while IFS= read -r item; do
-    top_level+=("${item#$TEST_GO_ROOTDIR/}")
-  done <<<"$(@go.compgen -f "$TEST_GO_ROOTDIR/")"
-
-  while IFS= read -r item; do
-    all_scripts_entries+=("${item#$TEST_GO_ROOTDIR/}")
-  done <<<"$(@go.compgen -f "$TEST_GO_SCRIPTS_DIR/")"
+  @go.test_compgen all_scripts_entries -f "$TEST_GO_SCRIPTS_DIR/"
+  all_scripts_entries=("${all_scripts_entries[@]#$TEST_GO_ROOTDIR/}")
 
   run "$TEST_GO_SCRIPT" complete 1 edit ''
   assert_success "${top_level[@]}"
