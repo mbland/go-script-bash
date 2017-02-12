@@ -5,8 +5,6 @@
 # DO NOT USE THIS FILE DIRECTLY! Source `_GO_CORE_DIR/lib/testing/stack-trace`
 # and use the `stack_trace_item` function instead.
 
-. "$_GO_CORE_DIR/lib/bats/helpers"
-
 __@go.stack_trace_item() {
   local filepath="$1"
   local function_name="$2"
