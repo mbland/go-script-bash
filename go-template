@@ -16,40 +16,44 @@
 # your project or check in a versioned copy of the sources. See the "How to use
 # this framework" section of `README.md` for details.
 #
-# Make sure the `_GO_STANDALONE`, `SCRIPTS_DIR`, and `GO_SCRIPT_BASH_VERSION`
-# variables within this script are configured as necessary for your program.
-# You can also add any other initialization or configuration logic between:
+# Make sure the variables within this script are configured as necessary for
+# your program. You can add any other initialization or configuration between:
 #
-#   . "$_GO_SCRIPT_BASH_CORE" "${SCRIPTS_DIR##*/}"`
+#   . "$_GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "$GO_SCRIPTS_DIR"`
 #   `@go "$@"`
 
-# Set `_GO_STANDALONE='true'` if your program isn't a project-specific script.
-readonly _GO_STANDALONE=
+# Set to 'true' if your script is a standalone program, i.e. not bound to
+# execute only from the directory in which it resides. See the "Standalone mode"
+# section in README.md.
+export _GO_STANDALONE=
 
-# Set SCRIPTS_DIR to the path where your command scripts reside.
+# The path where your command scripts reside
 #
 # For `_GO_STANDALONE` programs and plugins containing command scripts, you may
-# wish to set SCRIPTS_DIR to end with `bin` and have a separate `./go` script to
+# wish to set GO_SCRIPTS_DIR to `bin` and have a separate `./go` script to
 # manage project tasks that finds its command scripts in `scripts`.
-readonly SCRIPTS_DIR="${0%/*}/scripts"
+declare GO_SCRIPTS_DIR="${GO_SCRIPTS_DIR:-scripts}"
 
-# Set this to the `GO_SCRIPT_BASH_REPO_URL` tag or branch you wish to use.
-readonly GO_SCRIPT_BASH_VERSION='v1.3.0'
+# The `GO_SCRIPT_BASH_REPO_URL` tag or branch you wish to use
+declare GO_SCRIPT_BASH_VERSION="${GO_SCRIPT_BASH_VERSION:-v1.3.0}"
 
-readonly GO_SCRIPT_BASH_CORE="$SCRIPTS_DIR/go-script-bash/go-core.bash"
-readonly GO_SCRIPT_BASH_REPO_URL='https://github.com/mbland/go-script-bash.git'
+# The go-script-bash installation directory within your project
+declare GO_SCRIPT_BASH_CORE_DIR="${GO_SCRIPT_BASH_CORE_DIR:-${0%/*}/$GO_SCRIPTS_DIR/go-script-bash}"
 
-if [[ ! -e "$GO_SCRIPT_BASH_CORE" ]]; then
+# The URL of the go-script-bash framework sources
+declare GO_SCRIPT_BASH_REPO_URL="${GO_SCRIPT_BASH_REPO_URL:-https://github.com/mbland/go-script-bash.git}"
+
+if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
   printf "Cloning framework from '%s'...\n" "$GO_SCRIPT_BASH_REPO_URL"
   if ! git clone --depth 1 -c advice.detachedHead=false \
       -b "$GO_SCRIPT_BASH_VERSION" "$GO_SCRIPT_BASH_REPO_URL" \
-      "${GO_SCRIPT_BASH_CORE%/*}"; then
+      "$GO_SCRIPT_BASH_CORE_DIR"; then
     printf "Failed to clone '%s'; aborting.\n" "$GO_SCRIPT_BASH_REPO_URL" >&2
     exit 1
   fi
   printf "Clone of '%s' successful.\n\n" "$GO_SCRIPT_BASH_REPO_URL"
 fi
 
-. "$GO_SCRIPT_BASH_CORE" "${SCRIPTS_DIR##*/}"
+. "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "$GO_SCRIPTS_DIR"
 # Add any other configuration or initialization steps here.
 @go "$@"
