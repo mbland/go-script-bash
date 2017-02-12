@@ -15,7 +15,7 @@
 # `-f` or `-d` options to generate file or directory paths.
 #
 # Arguments:
-#   ...:  Arguments passed directly ot the builtin `compgen`
+#   ...:  Arguments passed directly to the builtin `compgen`
 @go.compgen() {
   local add_slashes
   local compreply=()
