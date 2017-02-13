@@ -18,32 +18,55 @@ teardown() {
   assert_matches ' ' "$BATS_TEST_ROOTDIR" "BATS_TEST_ROOTDIR"
 }
 
+check_dirs_do_not_exist() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __check_dirs_do_not_exist "$@"
+  restore_bats_shell_options "$?"
+}
+
+__check_dirs_do_not_exist() {
+  local test_dir
+
+  for test_dir in "$@"; do
+    if [[ -d "$BATS_TEST_ROOTDIR/$test_dir" ]]; then
+      printf "'$test_dir' already present in '$BATS_TEST_ROOTDIR'\n" >&2
+      return 1
+    fi
+  done
+}
+
+check_dirs_exist() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __check_dirs_exist "$@"
+  restore_bats_shell_options "$?"
+}
+
+__check_dirs_exist() {
+  local test_dir
+
+  for test_dir in "${test_dirs[@]}"; do
+    if [[ ! -d "$BATS_TEST_ROOTDIR/$test_dir" ]]; then
+      printf "Failed to create '$test_dir' in '$BATS_TEST_ROOTDIR'\n" >&2
+      return 1
+    fi
+  done
+}
+
 @test "$SUITE: {create,remove}_bats_test_dirs" {
   local test_dirs=('foo'
     'bar/baz'
     'quux/xyzzy'
     'quux/plugh'
   )
-  local test_dir
 
   if [[ -d "$BATS_TEST_ROOTDIR" ]]; then
     fail "'$BATS_TEST_ROOTDIR' already exists"
   fi
-
-  for test_dir in "${test_dirs[@]}"; do
-    if [[ -d "$BATS_TEST_ROOTDIR/$test_dir" ]]; then
-      fail "'$test_dir' already present in '$BATS_TEST_ROOTDIR'"
-    fi
-  done
+  check_dirs_do_not_exist "${test_dirs[@]}"
 
   run create_bats_test_dirs "${test_dirs[@]}"
   assert_success
-
-  for test_dir in "${test_dirs[@]}"; do
-    if [[ ! -d "$BATS_TEST_ROOTDIR/$test_dir" ]]; then
-      fail "Failed to create '$test_dir' in '$BATS_TEST_ROOTDIR'"
-    fi
-  done
+  check_dirs_exist "${test_dirs[@]}"
 
   run remove_bats_test_dirs
   assert_success
