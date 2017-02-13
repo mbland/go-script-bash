@@ -41,6 +41,8 @@
 # This is good practice even if you call `remove_bats_test_dirs` in your
 # `environment.bash` file.
 
+. "${BASH_SOURCE%/*}/helper-function"
+
 # A subdirectory of BATS_TMPDIR that contains a space.
 #
 # Using this path instead of BATS_TMPDIR directly helps ensure that shell
@@ -61,8 +63,9 @@ BATS_TEST_BINDIR="$BATS_TEST_ROOTDIR/bin"
 # Arguments:
 #   $1:  Path to the project's top-level test directory
 set_bats_test_suite_name() {
-  local test_rootdir="$(cd "$1" && echo "$PWD")"
-  local relative_filename="${BATS_TEST_FILENAME#$test_rootdir/}"
+  cd "$1"
+  local relative_filename="${BATS_TEST_FILENAME#$PWD/}"
+  cd - &>/dev/null
   readonly SUITE="${relative_filename%.bats}"
 }
 
@@ -74,18 +77,9 @@ set_bats_test_suite_name() {
 # Arguments:
 #   $@:  Paths of subdirectories relative to BATS_TEST_ROOTDIR
 create_bats_test_dirs() {
-  local dirs_to_create=()
-  local test_dir
-
-  for test_dir in "${@/#/$BATS_TEST_ROOTDIR/}"; do
-    if [[ ! -d "$test_dir" ]]; then
-      dirs_to_create+=("$test_dir")
-    fi
-  done
-
-  if [[ "${#dirs_to_create[@]}" -ne '0' ]]; then
-    mkdir -p "${dirs_to_create[@]}"
-  fi
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __create_bats_test_dirs "$@"
+  restore_bats_shell_options "$?"
 }
 
 # Creates a test script relative to BATS_TEST_ROOTDIR
@@ -100,26 +94,9 @@ create_bats_test_dirs() {
 #   $1:   Path of the script relative to BATS_TEST_ROOTDIR
 #   ...:  Lines comprising the script
 create_bats_test_script() {
-  local script="$1"
-  shift
-  local script_dir="${script%/*}"
-
-  if [[ -z "$script" ]]; then
-    echo "No test script specified" >&2
-    exit 1
-  elif [[ "$script_dir" == "$script" ]]; then
-    script_dir=''
-  fi
-
-  create_bats_test_dirs "$script_dir"
-  script="$BATS_TEST_ROOTDIR/$script"
-  rm -f "$script"
-
-  if [[ "${1:0:2}" != '#!' ]]; then
-    echo "#! /usr/bin/env bash" >"$script"
-  fi
-  printf '%s\n' "$@" >>"$script"
-  chmod 700 "$script"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __create_bats_test_script "$@"
+  restore_bats_shell_options "$?"
 }
 
 # Recursively removes `BATS_TEST_ROOTDIR` and its subdirectories
@@ -183,18 +160,15 @@ skip_if_cannot_trigger_file_permission_failure() {
 # Arguments:
 #   ...:  System programs that must be present for the test case to proceed
 skip_if_system_missing() {
-  local missing=()
-  local program
+  local __missing=()
 
-  for program in "$@"; do
-    if ! command -v "$program" >/dev/null; then
-      missing+=("$program")
-    fi
-  done
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __search_for_missing_programs "$@"
+  restore_bats_shell_options "$?"
 
-  if [[ "${#missing[@]}" -ne '0' ]]; then
-    printf -v missing '%s, ' "${missing[@]}"
-    skip "${missing%, } not installed on the system"
+  if [[ "${#__missing[@]}" -ne '0' ]]; then
+    printf -v __missing '%s, ' "${__missing[@]}"
+    skip "${__missing%, } not installed on the system"
   fi
 }
 
@@ -311,12 +285,9 @@ test_filter() {
 # compare the exact lines of `output` using `assert_lines_equal` and other
 # `lines`-based assertions.
 split_bats_output_into_lines() {
-  local line
-  lines=()
-
-  while IFS= read -r line; do
-    lines+=("${line%$'\r'}")
-  done <<<"$output"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __split_bats_output_into_lines
+  restore_bats_shell_options "$?"
 }
 
 # Creates a stub program in PATH for testing purposes
@@ -334,4 +305,81 @@ stub_program_in_path() {
     export PATH="$BATS_TEST_BINDIR:$PATH"
   fi
   create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$1" "${@:2}"
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# Implementation for `create_bats_test_dirs`
+#
+# Arguments:
+#   $@:  Paths of subdirectories relative to BATS_TEST_ROOTDIR
+__create_bats_test_dirs() {
+  local dirs_to_create=()
+  local test_dir
+
+  for test_dir in "${@/#/$BATS_TEST_ROOTDIR/}"; do
+    if [[ ! -d "$test_dir" ]]; then
+      dirs_to_create+=("$test_dir")
+    fi
+  done
+
+  if [[ "${#dirs_to_create[@]}" -ne '0' ]]; then
+    mkdir -p "${dirs_to_create[@]}"
+  fi
+}
+
+# Implementation for `create_bats_test_script`
+#
+# Arguments:
+#   $1:   Path of the script relative to BATS_TEST_ROOTDIR
+#   ...:  Lines comprising the script
+__create_bats_test_script() {
+  local script="$1"
+  shift
+  local script_dir="${script%/*}"
+
+  if [[ -z "$script" ]]; then
+    echo "No test script specified" >&2
+    exit 1
+  elif [[ "$script_dir" == "$script" ]]; then
+    script_dir=''
+  fi
+
+  create_bats_test_dirs "$script_dir"
+  script="$BATS_TEST_ROOTDIR/$script"
+  rm -f "$script"
+
+  if [[ "${1:0:2}" != '#!' ]]; then
+    echo "#! /usr/bin/env bash" >"$script"
+  fi
+  printf '%s\n' "$@" >>"$script"
+  chmod 700 "$script"
+}
+
+# Enumerates programs not installed on the system for `skip_if_system_missing`
+#
+# Arguments:
+#   ...:  System programs that must be present for the test case to proceed
+__search_for_missing_programs() {
+  local program
+
+  for program in "$@"; do
+    if ! command -v "$program" >/dev/null; then
+      __missing+=("$program")
+    fi
+  done
+}
+
+# Implementation for `split_bats_output_into_lines`
+__split_bats_output_into_lines() {
+  local line
+  lines=()
+
+  while IFS= read -r line; do
+    lines+=("${line%$'\r'}")
+  done <<<"$output"
 }
