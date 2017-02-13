@@ -28,7 +28,12 @@ teardown() {
 }
 
 assert_completions_match() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __assert_completions_match_impl "$@"
+  restore_bats_shell_options "$?"
+}
+
+__assert_completions_match_impl() {
   # Trim the last three lines of output from the script to compare separately
   # from the output of _@go.complete_command_path.
   local num_lines="${#lines[@]}"
@@ -55,11 +60,7 @@ assert_completions_match() {
   if ! assert_equal "${__expected_argv[*]}" "${var_lines[2]}" 'argv list'; then
     ((++num_errors))
   fi
-  if [[ "$num_errors" -ne '0' ]]; then
-    return_from_bats_assertion '1'
-  else
-    return_from_bats_assertion
-  fi
+  [[ "$num_errors" -eq '0' ]]
 }
 
 @test "$SUITE: error on empty arguments" {
