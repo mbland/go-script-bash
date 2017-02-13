@@ -160,6 +160,12 @@ teardown() {
 }
 
 generate_expected_paths() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __generate_expected_paths
+  restore_bats_shell_options "$?"
+}
+
+__generate_expected_paths() {
   local script
   local cmd_name
   local longest_cmd_name_len
@@ -236,9 +242,7 @@ create_script_with_description() {
   assert_success "${expected[@]}"
 }
 
-@test "$SUITE: subcommand list, paths, and summaries" {
-  local top_level_commands=('bar' 'baz' 'foo')
-  local subcommands=('plugh' 'quux' 'xyzzy')
+create_top_level_and_subcommand_scripts() {
   local cmd_name
   local subcmd_dir
   local subcmd_name
@@ -252,6 +256,15 @@ create_script_with_description() {
       create_script_with_description "$cmd_name.d/$subcmd_name"
     done
   done
+}
+
+@test "$SUITE: subcommand list, paths, and summaries" {
+  local top_level_commands=('bar' 'baz' 'foo')
+  local subcommands=('plugh' 'quux' 'xyzzy')
+
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  create_top_level_and_subcommand_scripts
+  restore_bats_shell_options "$?"
 
   run "$TEST_GO_SCRIPT" commands 'foo'
   assert_success "${subcommands[@]}"
