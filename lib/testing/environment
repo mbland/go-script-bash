@@ -12,6 +12,7 @@
 # `$_GO_CORE_DIR/lib/bats/helpers`. See the comments for those functions for
 # further details.
 
+. "$_GO_CORE_DIR/lib/bats/helper-function"
 . "$_GO_CORE_DIR/lib/bats/helpers"
 
 # Avoid having to fold our test strings. Tests that verify folding behavior will
@@ -40,7 +41,9 @@ readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 # Call this from `teardown` if your tests create any files or directories in
 # `TEST_GO_ROOTDIR`.
 @go.remove_test_go_rootdir() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   remove_bats_test_dirs
+  restore_bats_shell_options "$?"
 }
 
 # Creates an executable `./go` script as `TEST_GO_SCRIPT`
@@ -51,6 +54,7 @@ readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 # Arguments:
 #   ...:  Lines comprising the `./go` script
 @go.create_test_go_script() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   create_bats_test_script 'go' \
     ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     "$@"
@@ -60,6 +64,7 @@ readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
   if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then
     mkdir "$TEST_GO_SCRIPTS_DIR"
   fi
+  restore_bats_shell_options "$?"
 }
 
 # Sets `_GO_CMD` to make for neater test output when running `TEST_GO_SCRIPT`
@@ -83,7 +88,9 @@ test-go() {
 #   script_name:  Name of the command script
 #   ...:          Lines comprising the `./go` command script
 @go.create_test_command_script() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   create_bats_test_script "$TEST_GO_SCRIPTS_RELATIVE_DIR/$1" "${@:2}"
+  restore_bats_shell_options "$?"
 }
 
 # Creates empty "parent" and "child" command scripts in `TEST_GO_SCRIPTS_DIR`
@@ -98,6 +105,7 @@ test-go() {
 #   parent_name:  Name of the "parent" command script
 #   ...:          Names of "child" command scripts
 @go.create_parent_and_subcommands() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local parent="$1"
   shift
   local subcommand
@@ -107,6 +115,7 @@ test-go() {
   for subcommand in "$@"; do
     @go.create_test_command_script "$parent.d/$subcommand"
   done
+  restore_bats_shell_options "$?"
 }
 
 # Assigns the results of `@go.compgen` to a caller-defined test data array
@@ -118,9 +127,8 @@ test-go() {
 #   result:  Name of the caller-declared output array
 #   ...:     Arguments passed directly to `@go.compgen`
 @go.test_compgen() {
-  . "$_GO_CORE_DIR/lib/bats/assertions"
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   . "$_GO_USE_MODULES" 'complete' 'strings'
   @go.split $'\n' "$(@go.compgen "${@:2}")" "$1"
-  return_from_bats_assertion
+  restore_bats_shell_options "$?"
 }
