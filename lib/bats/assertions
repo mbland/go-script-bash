@@ -465,10 +465,6 @@ return_from_bats_assertion() {
     unset 'BATS_CURRENT_STACK_TRACE[0]'
     set -eET
   fi
-  if [[ "${BATS_PREVIOUS_STACK_TRACE[0]}" =~ $target_stack_item_pattern ]]; then
-    unset 'BATS_PREVIOUS_STACK_TRACE[0]'
-    set -eET
-  fi
   return "$result"
 }
 
