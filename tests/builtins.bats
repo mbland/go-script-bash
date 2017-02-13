@@ -11,13 +11,12 @@ load environment
 
 @test "$SUITE: tab completions" {
   local expected=('--exists' '--summaries')
-  local IFS=$'\n'
 
   run ./go complete 1 builtins ''
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run ./go complete 1 builtins -
-  assert_success "${expected[*]}"
+  assert_success "${expected[@]}"
 
   run ./go complete 2 builtins --exists
   assert_failure ''
@@ -58,7 +57,7 @@ load environment
   assert_failure 'ERROR: unknown flag: --foobar'
 }
 
-@test "$SUITE: list builtin command summaries" {
+setup_list_builtin_command_summaries() {
   local builtins=($(./go builtins))
   local longest_name_len=0
   local cmd_name
@@ -69,23 +68,32 @@ load environment
     fi
   done
 
-  run ./go builtins --summaries
-  assert_success
-
   . lib/internal/command_descriptions
   local __go_cmd_desc=''
   local first_cmd="${builtins[0]}"
   local last_cmd="${builtins[$((${#builtins[@]} - 1))]}"
 
   _@go.command_summary "libexec/$first_cmd"
-  assert_line_equals 0 \
-    "$(_@go.format_summary "$first_cmd" "$__go_cmd_desc" "$longest_name_len")" \
-    "first builtin summary"
+  __expected_first_cmd_summary="$(_@go.format_summary "$first_cmd" \
+    "$__go_cmd_desc" "$longest_name_len")"
 
   _@go.command_summary "libexec/$last_cmd"
-  assert_line_equals -1 \
-    "$(_@go.format_summary "$last_cmd" "$__go_cmd_desc" "$longest_name_len")" \
-    "last builtin summary"
+  __expected_last_cmd_summary="$(_@go.format_summary "$last_cmd" \
+    "$__go_cmd_desc" "$longest_name_len")"
+}
+
+@test "$SUITE: list builtin command summaries" {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local __expected_first_cmd_summary
+  local __expected_last_cmd_summary
+  setup_list_builtin_command_summaries
+  restore_bats_shell_options "$?"
+
+  run ./go builtins --summaries
+  assert_success
+
+  assert_line_equals 0 "$__expected_first_cmd_summary"
+  assert_line_equals -1 "$__expected_last_cmd_summary"
 }
 
 @test "$SUITE: help filter" {
