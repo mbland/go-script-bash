@@ -5,6 +5,7 @@
 # You must source `_GO_CORE_DIR/lib/testing/environment` before this file.
 
 . "${BASH_SOURCE[0]%/*}/stack-trace"
+. "$_GO_CORE_DIR/lib/bats/helper-function"
 . "$_GO_CORE_DIR/lib/bats/assertions"
 
 # Log timestamps are disabled by for testing by default.
@@ -21,12 +22,14 @@ export _GO_LOG_TIMESTAMP_FORMAT=
 # Arguments:
 #   ...:  Lines comprising the `./go` script
 @go.create_log_script(){
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   @go.create_test_go_script \
     ". \"\$_GO_USE_MODULES\" 'log'" \
     'if [[ -n "$TEST_LOG_FILE" ]]; then' \
     '  @go.log_add_output_file "$TEST_LOG_FILE"' \
     'fi' \
     "$@"
+  restore_bats_shell_options "$?"
 }
 
 # Creates and executes a `./go` script that imports the `log` module
@@ -42,6 +45,7 @@ export _GO_LOG_TIMESTAMP_FORMAT=
 # Arguments:
 #   label:  Log level label to format
 @go.format_log_label() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local label="$1"
 
   . "$_GO_USE_MODULES" 'log'
@@ -53,6 +57,7 @@ export _GO_LOG_TIMESTAMP_FORMAT=
     exit 1
   fi
   printf '%s' "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
+  restore_bats_shell_options "$?"
 }
 
 # Validates that `output` matches the expected `@go.log` output
@@ -78,38 +83,9 @@ export _GO_LOG_TIMESTAMP_FORMAT=
 # Arguments:
 #   ...:  Lines of expected log output
 @go.assert_log_equals() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
-  local __log_level_label
-  local expected=()
-  local i
-
-  . "$_GO_USE_MODULES" 'format' 'log'
-  _@go.log_init
-
-  for ((i=0; $# != 0; ++i)); do
-    if __@go.parse_log_level_label "$1"; then
-      expected+=("$__log_level_label $2")
-
-      if [[ "${__log_level_label:0:1}" == $'\e' ]]; then
-        expected["$((${#expected[@]} - 1))"]+=$'\e[0m'
-      fi
-
-      if ! shift 2; then
-        printf 'ERROR: Wrong number of arguments for log line %d.\n' "$i" >&2
-        return_from_bats_assertion 1
-        return
-      fi
-    else
-      expected+=("$1")
-      shift
-    fi
-  done
-
-  if ! assert_lines_equal "${expected[@]}"; then
-    return_from_bats_assertion '1'
-  else
-    return_from_bats_assertion
-  fi
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __@go.assert_log_equals "$@"
+  restore_bats_shell_options "$?"
 }
 
 # Validates that a file matches the expected `@go.log` output
@@ -131,15 +107,15 @@ export _GO_LOG_TIMESTAMP_FORMAT=
 #   log_file:  Path to the log file to validate
 #   ...:       Lines of expected log output
 @go.assert_log_file_equals() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local log_file="$1"
   shift
 
   if ! set_bats_output_and_lines_from_file "$log_file"; then
-    return_from_bats_assertion '1'
+    restore_bats_shell_options '1'
   else
     @go.assert_log_equals "$@"
-    return_from_bats_assertion "$?"
+    restore_bats_shell_options "$?"
   fi
 }
 
@@ -156,6 +132,7 @@ export _GO_LOG_TIMESTAMP_FORMAT=
 #     Stack trace lines from `@go.log_command` comprising the command logging
 #     mechanism
 @go.set_log_command_stack_trace_items() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   if [[ "${#LOG_COMMAND_STACK_TRACE_ITEMS[@]}" -eq '0' ]]; then
     export LOG_COMMAND_STACK_TRACE_ITEMS
     LOG_COMMAND_STACK_TRACE_ITEMS=(
@@ -166,6 +143,7 @@ export _GO_LOG_TIMESTAMP_FORMAT=
         # definition, not the actual `done < <(_@go.log_command_invoke)` line.
       "$(@go.stack_trace_item "$_GO_CORE_DIR/lib/log" '@go.log_command')")
   fi
+  restore_bats_shell_options "$?"
 }
 
 # --------------------------------
@@ -173,6 +151,38 @@ export _GO_LOG_TIMESTAMP_FORMAT=
 #
 # None of the functions below this line are part of the public interface.
 # --------------------------------
+
+# Implementation for `@go.assert_log_equals`, extracted for efficiency
+#
+# Arguments:
+#   ...:  Lines of expected log output
+__@go.assert_log_equals() {
+  local __log_level_label
+  local expected=()
+  local i
+
+  . "$_GO_USE_MODULES" 'format' 'log'
+  _@go.log_init
+
+  for ((i=0; $# != 0; ++i)); do
+    if __@go.parse_log_level_label "$1"; then
+      expected+=("$__log_level_label $2")
+
+      if [[ "${__log_level_label:0:1}" == $'\e' ]]; then
+        expected["$((${#expected[@]} - 1))"]+=$'\e[0m'
+      fi
+
+      if ! shift 2; then
+        printf 'ERROR: Wrong number of arguments for log line %d.\n' "$i" >&2
+        return 1
+      fi
+    else
+      expected+=("$1")
+      shift
+    fi
+  done
+  assert_lines_equal "${expected[@]}"
+}
 
 # Determines whether a log level label is a valid member of `_GO_LOG_LEVELS`.
 #
