@@ -8,7 +8,7 @@ teardown() {
 }
 
 run_log_script_and_assert_success() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local result=0
 
   @go.run_log_script "$@" \
@@ -23,7 +23,7 @@ run_log_script_and_assert_success() {
     '@go.log INFO   Goodbye, World!'
 
   assert_success
-  return_from_bats_assertion "$?"
+  restore_bats_shell_options "$?"
 }
 
 @test "$SUITE: default _GO_LOG_LEVEL_FILTER is RUN" {

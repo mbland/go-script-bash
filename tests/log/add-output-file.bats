@@ -8,7 +8,7 @@ teardown() {
 }
 
 run_log_script_and_assert_status_and_output() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local num_errors
   local expected
 
@@ -28,9 +28,9 @@ run_log_script_and_assert_status_and_output() {
       "$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")")
 
     @go.assert_log_equals "${expected[@]}"
-    return_from_bats_assertion "$?"
+    restore_bats_shell_options "$?"
   else
-    return_from_bats_assertion 1
+    restore_bats_shell_options 1
   fi
 }
 

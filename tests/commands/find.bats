@@ -25,11 +25,11 @@ teardown() {
 }
 
 assert_command_scripts_equal() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   unset 'lines[0]' 'lines[1]'
   lines=("${lines[@]}")
   assert_lines_equal "$@"
-  return_from_bats_assertion "$?"
+  restore_bats_shell_options "$?"
 }
 
 @test "$SUITE: return only builtin commands" {

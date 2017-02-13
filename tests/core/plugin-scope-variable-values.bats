@@ -57,7 +57,12 @@ teardown() {
 }
 
 assert_scope_values_equal() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __assert_scope_values_equal_impl "$@"
+  restore_bats_shell_options "$?"
+}
+
+__assert_scope_values_equal_impl() {
   local scope="$1"
   shift
   local orig_lines=("${lines[@]}")
@@ -71,15 +76,14 @@ assert_scope_values_equal() {
         result='1'
       fi
       lines=("${orig_lines[@]}")
-      return_from_bats_assertion "$result"
-      return
+      return "$result"
     fi
   done
 
   if [[ "$i" -eq "${#lines[@]}" ]]; then
     printf 'ERROR: could not find "%s" in output.\nOUTPUT:\n%s\n' \
       "$scope SCOPE:" "$output" >&2
-    return_from_bats_assertion '1'
+    return '1'
   fi
 }
 

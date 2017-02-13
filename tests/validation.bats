@@ -7,24 +7,24 @@ teardown() {
 }
 
 assert_error_on_invalid_input() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   run "$TEST_GO_SCRIPT" "$1"
 
   if [[ "$status" -eq '0' ]]; then
     echo "Expected input to fail validation: $1" >&2
-    return_from_bats_assertion 1
+    restore_bats_shell_options 1
   else
-    return_from_bats_assertion
+    restore_bats_shell_options
   fi
 }
 
 assert_success_on_valid_input() {
-  set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   run "$TEST_GO_SCRIPT" "$1"
 
   if [[ "$status" -ne '0' ]]; then
     printf 'Expected input to pass validation: %s\n' "$1" >&2
-    return_from_bats_assertion 1
+    restore_bats_shell_options 1
     return
   fi
 
@@ -32,9 +32,9 @@ assert_success_on_valid_input() {
 
   if [[ -n "$output" ]]; then
     fail "Evaluating input still produced output: $1" >&2
-    return_from_bats_assertion 1
+    restore_bats_shell_options 1
   else
-    return_from_bats_assertion
+    restore_bats_shell_options
   fi
 }
 
