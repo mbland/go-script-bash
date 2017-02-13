@@ -22,7 +22,16 @@ KCOV_ARGV_START=(
 
 setup() {
   test_filter
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  setup_fake_binaries
+  restore_bats_shell_options "$?"
+}
 
+teardown() {
+  @go.remove_test_go_rootdir
+}
+
+setup_fake_binaries() {
   local fake_binaries=(
     'apt-get'
     'cmake'
@@ -36,10 +45,6 @@ setup() {
     stub_program_in_path "$fake_binary" \
       'echo "$@" >"$0.out" 2>&1'
   done
-}
-
-teardown() {
-  @go.remove_test_go_rootdir
 }
 
 write_kcov_go_script() {
