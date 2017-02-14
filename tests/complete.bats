@@ -2,12 +2,12 @@
 
 load environment
 load commands/helpers
+. "$_GO_USE_MODULES" 'complete'
 
 setup() {
   test_filter
   @go.create_test_go_script '@go "$@"'
   find_builtins
-  . "$_GO_USE_MODULES" 'complete'
 }
 
 teardown() {
