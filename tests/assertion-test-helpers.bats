@@ -154,7 +154,7 @@ __check_failure_output() {
     "# 'test_assertion' should not produce output when successful."
 }
 
-@test "$SUITE: successful assertion must call return_from_bats_assertion" {
+@test "$SUITE: successful assertion must call restore_bats_shell_options" {
   SKIP_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
   [ "$status" -eq '1' ]
 
@@ -175,7 +175,7 @@ __check_failure_output() {
     "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }
 
-@test "$SUITE: successful assertion return_from_bats_assertion must be direct" {
+@test "$SUITE: successful assertion restore_bats_shell_options must be direct" {
   DELEGATE_RETURN_FROM_BATS_ASSERTION='true' run_assertion_test 'success'
   [ "$status" -eq '1' ]
 
@@ -278,7 +278,7 @@ __check_failure_output() {
     "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }
 
-@test "$SUITE: failing assertion must call return_from_bats_assertion" {
+@test "$SUITE: failing assertion must call restore_bats_shell_options" {
   ASSERTION_STATUS='1' SKIP_RETURN_FROM_BATS_ASSERTION='true' \
     run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
@@ -300,7 +300,7 @@ __check_failure_output() {
     "# $EXPECTED_TEST_SCRIPT_FAILURE_MESSAGE"
 }
 
-@test "$SUITE: failing assertion return_from_bats_assertion must be direct" {
+@test "$SUITE: failing assertion restore_bats_shell_options must be direct" {
   ASSERTION_STATUS='1' DELEGATE_RETURN_FROM_BATS_ASSERTION='true' \
     run_assertion_test 'failure' 'foo bar baz'
   [ "$status" -eq '1' ]
