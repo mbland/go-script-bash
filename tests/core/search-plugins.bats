@@ -119,18 +119,13 @@ teardown() {
 @test "$SUITE: /plugins/ in _GO_ROOTDIR, _GO_SCRIPTS_DIR (pathological)" {
   local test_rootdir="$TEST_GO_ROOTDIR/plugins/plugins"
   local test_go_script="$test_rootdir/go"
+  local test_go_script_impl="$(< "$TEST_GO_SCRIPT")"
   local test_scripts_dir="$test_rootdir/plugins"
   local test_plugins_dir="$test_scripts_dir/plugins"
   mkdir -p "$test_plugins_dir/foo/bin/plugins/bar/bin/plugins"
 
-  local line
-  while IFS= read -r line; do
-    line="${line%$'\r'}"
-    if [[ "$line" =~ go-core\.bash ]]; then
-      line=". '$_GO_CORE_DIR/go-core.bash' 'plugins'"
-    fi
-    printf '%s\n' "$line" >> "$test_go_script"
-  done < "$TEST_GO_SCRIPT"
+  printf '%s\n' "${test_go_script_impl/$TEST_GO_SCRIPTS_RELATIVE_DIR/plugins}" \
+    >"$test_go_script"
   chmod 700 "$test_go_script"
 
   local foo_path="${test_plugins_dir#$BATS_TEST_ROOTDIR/}/foo/bin/foo"
@@ -141,10 +136,6 @@ teardown() {
   create_bats_test_script "$foo_path" '@go bar'
   create_bats_test_script "$bar_path" 'collect_dirs'
 
-  test_printf 'test_go_script: %s\n' "$test_go_script" >&2
-  test_printf 'test_plugins_dir: %s\n' "$test_plugins_dir" >&2
-  test_printf 'foo_path: %s\n' "${foo_path}" >&2
-  test_printf 'bar_path: %s\n' "${bar_path}" >&2
   COLLECT_DIRS_SUCCESS_AFTER_NUM_ITERATIONS='10' run "$test_go_script" 'foo'
   assert_failure "$test_plugins_dir/foo/bin/plugins/bar/bin/plugins" \
     "$test_plugins_dir/foo/bin/plugins" \

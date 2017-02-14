@@ -7,6 +7,12 @@ declare BUILTIN_SCRIPTS
 declare LONGEST_BUILTIN_NAME
 
 find_builtins() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __find_builtins
+  restore_bats_shell_options "$?"
+}
+
+__find_builtins() {
   local cmd_script
   local cmd_name
 
@@ -25,6 +31,12 @@ find_builtins() {
 }
 
 merge_scripts() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __merge_scripts "$@"
+  restore_bats_shell_options "$?"
+}
+
+__merge_scripts() {
   local args=("$@")
   local i=0
   local j=0
@@ -53,6 +65,12 @@ merge_scripts() {
 }
 
 add_scripts() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __add_scripts "$@"
+  restore_bats_shell_options "$?"
+}
+
+__add_scripts() {
   local script_names=("$@")
 
   merge_scripts "${script_names[@]/#/$TEST_GO_SCRIPTS_DIR/}"

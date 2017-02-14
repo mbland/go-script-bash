@@ -1,13 +1,13 @@
 #! /usr/bin/env bats
 
 load ../environment
+. "$_GO_USE_MODULES" 'complete'
 
 TESTS_DIR="$TEST_GO_ROOTDIR/tests"
 
 setup() {
   test_filter
   mkdir -p "$TESTS_DIR"
-  . "$_GO_USE_MODULES" 'complete'
 }
 
 teardown() {

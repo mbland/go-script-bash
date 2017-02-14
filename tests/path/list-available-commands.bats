@@ -12,25 +12,29 @@ teardown() {
   @go.remove_test_go_rootdir
 }
 
-@test "$SUITE: list available commands" {
-  # Since we aren't creating any new commands, and _@go.find_commands is already
-  # thoroughly tested in isolation, we only check that builtins are available.
+setup_list_available_commands() {
   local builtin_cmd
-  local expected=()
-
   for builtin_cmd in "$_GO_ROOTDIR"/libexec/*; do
     if [[ -f "$builtin_cmd" && -x "$builtin_cmd" ]]; then
       expected+=("${builtin_cmd[@]##*/}")
     fi
   done
+}
+
+@test "$SUITE: list available commands" {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  # Since we aren't creating any new commands, and _@go.find_commands is already
+  # thoroughly tested in isolation, we only check that builtins are available.
+  local expected=()
+  setup_list_available_commands
+  restore_bats_shell_options "$?"
 
   run "$TEST_GO_SCRIPT" "$_GO_ROOTDIR/libexec"
   assert_success
   assert_line_equals 0 'Available commands are:'
 
-  unset 'lines[0]'
-  local IFS=$'\n'
-  assert_equal "${expected[*]/#/  }" "${lines[*]}" 'available commands'
+  lines=("${lines[@]:1}")
+  assert_lines_equal "${expected[@]/#/  }"
 }
 
 @test "$SUITE: error if no commands available" {

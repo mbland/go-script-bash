@@ -27,6 +27,7 @@ quotify_expected() {
   run "$TEST_GO_SCRIPT" vars
   assert_success
 
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local search_paths=("[0]=\"$_GO_CORE_DIR/libexec\""
     "[1]=\"$TEST_GO_SCRIPTS_DIR\"")
 
@@ -59,10 +60,12 @@ quotify_expected() {
     "declare -rx _GO_USE_MODULES=\"$_GO_CORE_DIR/lib/internal/use\"")
 
   quotify_expected
+  restore_bats_shell_options "$?"
   assert_lines_equal "${expected[@]}"
 }
 
 @test "$SUITE: all _GO_* variables for Bash subcommand contain values" {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   @go.create_test_command_script 'test-command.d/test-subcommand' \
     '. "$_GO_USE_MODULES" "module_0" "module_1"' \
     '@go vars'
@@ -131,6 +134,7 @@ quotify_expected() {
     "declare -rx _GO_USE_MODULES=\"$_GO_CORE_DIR/lib/internal/use\"")
 
   quotify_expected
+  restore_bats_shell_options "$?"
   assert_lines_equal "${expected[@]}"
 }
 

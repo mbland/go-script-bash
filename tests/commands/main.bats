@@ -46,22 +46,18 @@ teardown() {
 }
 
 @test "$SUITE: tab complete subcommand" {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   @go.create_test_command_script 'foo'
-  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
-
-  local expected=('bar' 'baz' 'quux')
-  local subcommand
-
-  for subcommand in "${expected[@]}"; do
-    @go.create_test_command_script "foo.d/$subcommand"
-  done
+  @go.create_test_command_script 'foo.d/bar'
+  @go.create_test_command_script 'foo.d/baz'
+  @go.create_test_command_script 'foo.d/quux'
+  restore_bats_shell_options "$?"
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo
-  assert_success "${expected[@]}"
+  assert_success 'bar' 'baz' 'quux'
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo b
-  expected=('bar' 'baz')
-  assert_success "${expected[@]}"
+  assert_success 'bar' 'baz'
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo g
   assert_failure
@@ -71,19 +67,15 @@ teardown() {
 }
 
 @test "$SUITE: only tab complete flags before other args" {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   @go.create_test_command_script 'foo'
-  mkdir "$TEST_GO_SCRIPTS_DIR/foo.d"
-
-  local subcommands=('bar' 'baz' 'quux')
-  local subcommand
-
-  for subcommand in "${subcommands[@]}"; do
-    @go.create_test_command_script "foo.d/$subcommand"
-  done
+  @go.create_test_command_script 'foo.d/bar'
+  @go.create_test_command_script 'foo.d/baz'
+  @go.create_test_command_script 'foo.d/quux'
+  restore_bats_shell_options "$?"
 
   run "$TEST_GO_SCRIPT" complete 1 commands '' foo
-  expected=('--paths' '--summaries')
-  assert_success "${expected[@]}"
+  assert_success '--paths' '--summaries'
 
   run "$TEST_GO_SCRIPT" complete 2 commands foo '' bar
   assert_failure
@@ -160,6 +152,12 @@ teardown() {
 }
 
 generate_expected_paths() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __generate_expected_paths
+  restore_bats_shell_options "$?"
+}
+
+__generate_expected_paths() {
   local script
   local cmd_name
   local longest_cmd_name_len
@@ -222,23 +220,19 @@ create_script_with_description() {
 }
 
 @test "$SUITE: command summaries" {
-  local user_commands=('bar' 'baz' 'foo')
-
-  for cmd_name in "${user_commands[@]}"; do
-    create_script_with_description "$cmd_name"
-  done
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  create_script_with_description 'foo'
+  create_script_with_description 'bar'
+  create_script_with_description 'baz'
+  restore_bats_shell_options "$?"
 
   run "$TEST_GO_SCRIPT" commands --summaries "$TEST_GO_SCRIPTS_DIR"
-  local expected=(
-    '  bar  Does bar stuff'
-    '  baz  Does baz stuff'
-    '  foo  Does foo stuff')
-  assert_success "${expected[@]}"
+  assert_success '  bar  Does bar stuff' \
+    '  baz  Does baz stuff' \
+    '  foo  Does foo stuff'
 }
 
-@test "$SUITE: subcommand list, paths, and summaries" {
-  local top_level_commands=('bar' 'baz' 'foo')
-  local subcommands=('plugh' 'quux' 'xyzzy')
+create_top_level_and_subcommand_scripts() {
   local cmd_name
   local subcmd_dir
   local subcmd_name
@@ -252,6 +246,15 @@ create_script_with_description() {
       create_script_with_description "$cmd_name.d/$subcmd_name"
     done
   done
+}
+
+@test "$SUITE: subcommand list, paths, and summaries" {
+  local top_level_commands=('bar' 'baz' 'foo')
+  local subcommands=('plugh' 'quux' 'xyzzy')
+
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  create_top_level_and_subcommand_scripts
+  restore_bats_shell_options "$?"
 
   run "$TEST_GO_SCRIPT" commands 'foo'
   assert_success "${subcommands[@]}"

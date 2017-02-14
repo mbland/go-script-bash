@@ -2,12 +2,12 @@
 
 load environment
 load commands/helpers
+. "$_GO_USE_MODULES" 'complete'
 
 setup() {
   test_filter
   @go.create_test_go_script '@go "$@"'
   find_builtins
-  . "$_GO_USE_MODULES" 'complete'
 }
 
 teardown() {
@@ -66,11 +66,8 @@ teardown() {
   assert_success 'scripts/'
 
   local expected=()
-  local item
-
-  while IFS= read -r item; do
-    expected+=("${item#$TEST_GO_ROOTDIR/}")
-  done < <(@go.compgen -d "$TEST_GO_SCRIPTS_DIR/")
+  @go.test_compgen expected -d "$TEST_GO_SCRIPTS_DIR/"
+  expected=("${expected[@]#$TEST_GO_ROOTDIR/}")
 
   run "$TEST_GO_SCRIPT" complete 1 cd 'scripts/'
   assert_success "${expected[@]}"

@@ -106,15 +106,7 @@ test-go() {
 #   ...:          Names of "child" command scripts
 @go.create_parent_and_subcommands() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
-  local parent="$1"
-  shift
-  local subcommand
-
-  @go.create_test_command_script "$parent"
-
-  for subcommand in "$@"; do
-    @go.create_test_command_script "$parent.d/$subcommand"
-  done
+  __@go.create_parent_and_subcommands "$@"
   restore_bats_shell_options "$?"
 }
 
@@ -131,4 +123,27 @@ test-go() {
   . "$_GO_USE_MODULES" 'complete' 'strings'
   @go.split $'\n' "$(@go.compgen "${@:2}")" "$1"
   restore_bats_shell_options "$?"
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# Implementation for `@go.create_parent_and_subcommands`
+#
+# Arguments:
+#   parent_name:  Name of the "parent" command script
+#   ...:          Names of "child" command scripts
+__@go.create_parent_and_subcommands() {
+  local parent="$1"
+  shift
+  local subcommand
+
+  @go.create_test_command_script "$parent"
+
+  for subcommand in "$@"; do
+    @go.create_test_command_script "$parent.d/$subcommand"
+  done
 }

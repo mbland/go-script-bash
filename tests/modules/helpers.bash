@@ -20,6 +20,12 @@ TEST_PLUGIN_MODULES_PATHS=()
 TOTAL_NUM_MODULES=0
 
 setup_test_modules() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __setup_test_modules
+  restore_bats_shell_options "$?"
+}
+
+__setup_test_modules() {
   local module
   local module_file
 

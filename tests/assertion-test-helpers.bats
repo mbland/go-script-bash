@@ -24,6 +24,13 @@ emit_debug_info() {
 }
 
 run_assertion_test() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  setup_assertion_test "$@"
+  restore_bats_shell_options
+  run "$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
+}
+
+setup_assertion_test() {
   local expected_output=("${@:2}")
   local expected_output_line
 
@@ -43,11 +50,15 @@ run_assertion_test() {
     "@test \"$BATS_TEST_DESCRIPTION\" {" \
     "  $ASSERTION" \
     '}'
-  run "$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
 }
 
 check_failure_output() {
-  set +eET
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  __check_failure_output "$@"
+  restore_bats_shell_options "$?"
+}
+
+__check_failure_output() {
   local test_script="$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
   local assertion_line="${ASSERTION%%$'\n'*}"
   local expected_output
@@ -69,7 +80,6 @@ check_failure_output() {
     result='1'
   fi
   unset 'BATS_CURRENT_STACK_TRACE[0]' 'BATS_PREVIOUS_STACK_TRACE[0]'
-  set -eET
   return "$result"
 }
 
