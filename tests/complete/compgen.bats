@@ -58,17 +58,23 @@ teardown() {
   assert_success "${expected[@]/%//}"
 }
 
-@test "$SUITE: adds trailing slashes when called with -f" {
-  mkdir -p "${TEST_GO_ROOTDIR}"/{foo,bar,baz}
-  run "$TEST_GO_SCRIPT" -f -- ''
-
-  # Remember that `compgen` won't add trailing slashes by itself.
-  local expected=($(cd "$TEST_GO_ROOTDIR"; compgen -f -- ''))
+add_trailing_slashes() {
   local i
   for ((i=0; i != "${#expected[@]}"; ++i)); do
     if [[ -d "$TEST_GO_ROOTDIR/${expected[$i]}" ]]; then
       expected[$i]+='/'
     fi
   done
+}
+
+@test "$SUITE: adds trailing slashes when called with -f" {
+  mkdir -p "${TEST_GO_ROOTDIR}"/{foo,bar,baz}
+  run "$TEST_GO_SCRIPT" -f -- ''
+
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  # Remember that `compgen` won't add trailing slashes by itself.
+  local expected=($(cd "$TEST_GO_ROOTDIR"; compgen -f -- ''))
+  add_trailing_slashes
+  restore_bats_shell_options "$?"
   assert_success "${expected[@]}"
 }
