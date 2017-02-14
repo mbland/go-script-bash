@@ -17,17 +17,37 @@ setup() {
 
 teardown() {
   remove_bats_test_dirs
+  rm -rf "$BATS_TMPDIR/bin"
 }
 
 emit_debug_info() {
   printf 'STATUS: %s\nOUTPUT:\n%s\n' "$status" "$output" >&2
 }
 
+create_failing_test_stub() {
+  local cmd_name="$1"
+  local cmd_path="$BATS_TMPDIR/bin/$cmd_name"
+
+  if [[ ! -d "$BATS_TMPDIR/bin" ]]; then
+    mkdir -p "$BATS_TMPDIR/bin"
+  fi
+  printf '%s\n' 'printf "ARG: \"%s\"\n" "$@"' 'exit 1' >"$cmd_path"
+  chmod 755 "$cmd_path"
+  PATH="$BATS_TMPDIR/bin:$PATH"
+  hash "$cmd_name"
+}
+
+remove_failing_test_stub() {
+  local cmd_name="$1"
+  rm -f "$BATS_TMPDIR/bin/$cmd_name"
+  hash "$cmd_name"
+}
+
 run_assertion_test() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
   setup_assertion_test "$@"
   restore_bats_shell_options
-  run "$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
+  run "$ASSERTION_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
 }
 
 setup_assertion_test() {
@@ -59,7 +79,7 @@ check_failure_output() {
 }
 
 __check_failure_output() {
-  local test_script="$BATS_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
+  local test_script="$ASSERTION_TEST_ROOTDIR/$EXPECT_ASSERTION_TEST_SCRIPT"
   local assertion_line="${ASSERTION%%$'\n'*}"
   local expected_output
   local result='0'
@@ -81,6 +101,10 @@ __check_failure_output() {
   fi
   unset 'BATS_CURRENT_STACK_TRACE[0]' 'BATS_PREVIOUS_STACK_TRACE[0]'
   return "$result"
+}
+
+check_matches() {
+  [[ "$1" =~ $2 ]]
 }
 
 @test "$SUITE: printf_with_error" {
@@ -111,6 +135,58 @@ __check_failure_output() {
   local err_msg='"ASSERTION_SOURCE" must be set before sourcing '
   err_msg+="$_GO_CORE_DIR/lib/bats/assertion-test-helpers."
   [ "$output" == "$err_msg" ]
+}
+
+@test "$SUITE: fail to create assertion test script parent dir" {
+  create_failing_test_stub 'mkdir'
+  run __run_assertion_test_script
+  remove_failing_test_stub 'mkdir'
+
+  local expected
+  printf -v expected '%s\n' 'ARG: "-p"' "ARG: \"${ASSERTION_TEST_SCRIPT%/*}\""
+  expected+='Failed to create parent directory for assertion test script: '
+  expected+="$ASSERTION_TEST_SCRIPT"
+
+  printf 'EXPECTED OUTPUT:\n%s\n' "$expected"
+  emit_debug_info
+  [ "$status" -eq '1' ]
+  [ "$output" == "$expected" ]
+}
+
+@test "$SUITE: fail to create the assertion test script" {
+  skip_if_cannot_trigger_file_permission_failure
+  mkdir "$ASSERTION_TEST_ROOTDIR"
+  chmod ugo-w "$ASSERTION_TEST_ROOTDIR"
+  run __run_assertion_test_script
+
+  local printf_err_pattern="$_GO_CORE_DIR/lib/bats/assertion-test-helpers: "
+  printf_err_pattern+="line [1-9][0-9]*: $ASSERTION_TEST_SCRIPT: "
+  printf_err_pattern+='Permission denied'
+  printf 'EXPECTED PRINTF ERROR PATTERN:\n%s\n' "$printf_err_pattern" >&2
+
+  local err_msg="Failed to create assertion test script: $ASSERTION_TEST_SCRIPT"
+  printf 'EXPECTED FAILURE MESSAGE:\n%s\n' "$err_msg" >&2
+
+  emit_debug_info
+  [ "$status" -eq '1' ]
+  check_matches "${lines[0]}" "$printf_err_pattern"
+  [ "${lines[1]}" == "$err_msg" ]
+}
+
+@test "$SUITE: fail to set permissions for the assertion test script" {
+  create_failing_test_stub 'chmod'
+  run __run_assertion_test_script
+  remove_failing_test_stub 'chmod'
+
+  local expected
+  printf -v expected '%s\n' 'ARG: "755"' "ARG: \"$ASSERTION_TEST_SCRIPT\""
+  expected+='Failed to set permissions for assertion test script: '
+  expected+="$ASSERTION_TEST_SCRIPT"
+
+  printf 'EXPECTED OUTPUT:\n%s\n' "$expected"
+  emit_debug_info
+  [ "$status" -eq '1' ]
+  [ "$output" == "$expected" ]
 }
 
 @test "$SUITE: successful assertion" {
