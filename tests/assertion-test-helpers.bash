@@ -16,27 +16,27 @@ __test_assertion_impl() {
   fi
 
   if [[ -n "$DELEGATE_RETURN_FROM_BATS_ASSERTION" ]]; then
-    return_from_bats_assertion "$assertion_status"
+    restore_bats_shell_options "$assertion_status"
   else
     return "$assertion_status"
   fi
 }
 
 test_assertion() {
-  # If an assertion fails to call `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`,
-  # then when it fails, the stack trace will show the implementation details of
-  # the assertion, rather than just the line at which it was called.
-  set "${TEST_ASSERTION_SHELL_OPTIONS:-$BATS_ASSERTION_DISABLE_SHELL_OPTIONS}"
+  # If an assertion fails to call `set "$DISABLE_BATS_SHELL_OPTIONS"`, then when
+  # it fails, the stack trace will show the implementation details of the
+  # assertion, rather than just the line at which it was called.
+  set "${TEST_ASSERTION_SHELL_OPTIONS:-$DISABLE_BATS_SHELL_OPTIONS}"
 
   __test_assertion_impl "$@"
   local result="$?"
 
-  # If an assertion calls `set "$BATS_ASSERTION_DISABLE_SHELL_OPTIONS"`, but not
-  # `return_from_bats_assertion`, it will fail to scrub the stack and restore
+  # If an assertion calls `set "$DISABLE_BATS_SHELL_OPTIONS"`, but not
+  # `restore_bats_shell_options`, it will fail to scrub the stack and restore
   # `set -eET`.
   if [[ -z "$SKIP_RETURN_FROM_BATS_ASSERTION" &&
         -z "$DELEGATE_RETURN_FROM_BATS_ASSERTION" ]]; then
-    return_from_bats_assertion "$result"
+    restore_bats_shell_options "$result"
   else
     return "$result"
   fi
