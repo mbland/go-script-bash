@@ -11,17 +11,16 @@ teardown() {
 }
 
 @test "$SUITE: tab completions" {
-  . "$_GO_USE_MODULES" 'complete'
-  local expected=('--existing')
-  expected+=($(@go.compgen -f))
+  local expected=()
+  @go.test_compgen expected -f
 
   run ./go complete 1 fullpath ''
-  assert_success "${expected[@]}"
+  assert_success '--existing' "${expected[@]}"
 
   run ./go complete 1 fullpath '-'
   assert_success '--existing '
 
-  expected=($(@go.compgen -f -- 'li'))
+  @go.test_compgen expected -f -- 'li'
   fail_if equal '0' "${#expected[@]}"
   run ./go complete 1 fullpath 'li'
   assert_success "${expected[@]}"
