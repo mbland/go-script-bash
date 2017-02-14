@@ -74,54 +74,8 @@ END_OF_FAILURE_MESSAGE
 #   assertion:  The full assertion to evaluate as a single string
 expect_assertion_success() {
   set +eET
-  local run_cmd="$1"
-  local assertion="$2"
-  local test_script="$ASSERTION_TEST_SCRIPT"
-  local __assertion_output
-  local __assertion_status
-  local expected_output=()
-
-  if ! __run_command_and_assertion_in_subshell "$run_cmd" "$assertion"; then
-    __return_from_expect_assertion '1'
-  elif [[ "$__assertion_status" -ne '0' ]]; then
-    printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
-      "$__assertion_status" "$__assertion_output" >&2
-    __return_from_expect_assertion '1'
-  elif ! __check_expected_output "$__assertion_output"; then
-    printf "'%s' should not produce output when successful.\n" \
-      "${assertion%% *}" >&2
-    __return_from_expect_assertion '1'
-  else
-    # Although we expect the assertion under test to pass, this script injects a
-    # failing assertion after it to check that the assertion under test directly
-    # calls `restore_bats_shell_options` upon returning. If it doesn't, `set
-    # -eET` will not be in effect, so the failing assertion will not trigger the
-    # ERR trap or fail the test case.
-    #
-    # In an earlier incarnation of `restore_bats_shell_options` that only
-    # restored `set -o functrace` (and when tests only started with `set +o
-    # functrace`, equivalent to `set +T`), the failing assertion would fire the
-    # ERR trap and exit the test case, but Bats would show the passing
-    # assertion's stack, per issue #48.
-    __run_assertion_test_script \
-      "  run $run_cmd" \
-      "  failing_assertion() { [ 0 -eq 1 ]; }" \
-      "  $assertion" \
-      "  failing_assertion"
-
-    expected_output=('1..1'
-      "not ok 1 $BATS_TEST_DESCRIPTION"
-      "# (from function \`failing_assertion' in file $test_script, line 5,"
-      "#  in test file $test_script, line 7)"
-      "#   \`failing_assertion' failed")
-
-    if ! __check_expected_output "$output" "${expected_output[@]}"; then
-      printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
-      __return_from_expect_assertion '1'
-    else
-      __return_from_expect_assertion
-    fi
-  fi
+  __expect_assertion_success "$@"
+  __return_from_expect_assertion "$?"
 }
 
 # Validates that an assertion fails for the provided inputs
@@ -137,44 +91,8 @@ expect_assertion_success() {
 #   expected:   The expected output of the assertion failure
 expect_assertion_failure() {
   set +eET
-  local run_cmd="$1"
-  local assertion="$2"
-  shift 2
-  local __assertion_output
-  local __assertion_status
-  local with_status
-  local expected_output=()
-
-  if ! __run_command_and_assertion_in_subshell "$run_cmd" "$assertion"; then
-    __return_from_expect_assertion '1'
-  elif [[ "$__assertion_status" -eq '0' ]]; then
-    printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
-      "$__assertion_output" >&2
-    __return_from_expect_assertion '1'
-  else
-    if [[ "$__assertion_status" -ne '1' ]]; then
-      with_status=" with status $__assertion_status"
-    fi
-
-    if ! __check_expected_output "$__assertion_output" "$@"; then
-      __return_from_expect_assertion '1'
-    else
-      __run_assertion_test_script "  run $run_cmd" "  $assertion"
-
-      expected_output=('1..1'
-        "not ok 1 $BATS_TEST_DESCRIPTION"
-        "# (in test file $ASSERTION_TEST_SCRIPT, line 5)"
-        "#   \`$assertion' failed${with_status}"
-        "${@/#/# }")
-
-      if ! __check_expected_output "$output" "${expected_output[@]}"; then
-        printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
-        __return_from_expect_assertion '1'
-      else
-        __return_from_expect_assertion
-      fi
-    fi
-  fi
+  __expect_assertion_failure "$@"
+  __return_from_expect_assertion "$?"
 }
 
 # Calls `printf` on its arguments and returns an error
@@ -220,6 +138,103 @@ export -f printf_to_test_output_file
 # None of the functions below this line are part of the public interface.
 # --------------------------------
 
+# Implementation for `expect_assertion_success`
+#
+# Arguments:
+#   run_cmd:    The full command to pass to `run` as a single string
+#   assertion:  The full assertion to evaluate as a single string
+__expect_assertion_success() {
+  local run_cmd="$1"
+  local assertion="$2"
+  local test_script="$ASSERTION_TEST_SCRIPT"
+  local __assertion_output
+  local __assertion_status
+  local expected_output=()
+
+  if ! __run_command_and_assertion_in_subshell "$run_cmd" "$assertion"; then
+    return '1'
+  elif [[ "$__assertion_status" -ne '0' ]]; then
+    printf "In subshell: expected passing status, actual %d\nOutput:\n%s\n" \
+      "$__assertion_status" "$__assertion_output" >&2
+    return '1'
+  elif ! __check_expected_output "$__assertion_output"; then
+    printf "'%s' should not produce output when successful.\n" \
+      "${assertion%% *}" >&2
+    return '1'
+  fi
+
+  # Although we expect the assertion under test to pass, this script injects a
+  # failing assertion after it to check that the assertion under test directly
+  # calls `restore_bats_shell_options` upon returning. If it doesn't, `set
+  # -eET` will not be in effect, so the failing assertion will not trigger the
+  # ERR trap or fail the test case.
+  #
+  # In an earlier incarnation of `restore_bats_shell_options` that only
+  # restored `set -o functrace` (and when tests only started with `set +o
+  # functrace`, equivalent to `set +T`), the failing assertion would fire the
+  # ERR trap and exit the test case, but Bats would show the passing
+  # assertion's stack, per issue #48.
+  __run_assertion_test_script \
+    "  run $run_cmd" \
+    "  failing_assertion() { [ 0 -eq 1 ]; }" \
+    "  $assertion" \
+    "  failing_assertion"
+
+  expected_output=('1..1'
+    "not ok 1 $BATS_TEST_DESCRIPTION"
+    "# (from function \`failing_assertion' in file $test_script, line 5,"
+    "#  in test file $test_script, line 7)"
+    "#   \`failing_assertion' failed")
+
+  if ! __check_expected_output "$output" "${expected_output[@]}"; then
+    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
+    return '1'
+  fi
+}
+
+# Implementation for `expect_assertion_failure`
+#
+# Arguments:
+#   run_cmd:    The full command to pass to `run` as a single string
+#   assertion:  The full assertion to evaluate as a single string
+#   expected:   The expected output of the assertion failure
+__expect_assertion_failure() {
+  local run_cmd="$1"
+  local assertion="$2"
+  shift 2
+  local __assertion_output
+  local __assertion_status
+  local with_status
+  local expected_output=()
+
+  if ! __run_command_and_assertion_in_subshell "$run_cmd" "$assertion"; then
+    return '1'
+  elif [[ "$__assertion_status" -eq '0' ]]; then
+    printf "In subshell: expected failure, but succeeded\nOutput:\n%s\n" \
+      "$__assertion_output" >&2
+    return '1'
+  fi
+
+  if [[ "$__assertion_status" -ne '1' ]]; then
+    with_status=" with status $__assertion_status"
+  elif ! __check_expected_output "$__assertion_output" "$@"; then
+    return '1'
+  fi
+
+  __run_assertion_test_script "  run $run_cmd" "  $assertion"
+
+  expected_output=('1..1'
+    "not ok 1 $BATS_TEST_DESCRIPTION"
+    "# (in test file $ASSERTION_TEST_SCRIPT, line 5)"
+    "#   \`$assertion' failed${with_status}"
+    "${@/#/# }")
+
+  if ! __check_expected_output "$output" "${expected_output[@]}"; then
+    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
+    return '1'
+  fi
+}
+
 # Passes the target command to `run`, the executes the `assertion` in a subshell
 #
 # The `run_cmd` is executed in-process to set `output`, `status`, and `lines`.
@@ -262,7 +277,7 @@ __run_command_and_assertion_in_subshell() {
   elif [[ -z "$__assertion_status" ]]; then
     __assertion_output="${__assertion_output%exit:*}"
 
-    if [[ "${FUNCNAME[1]}" == 'expect_assertion_failure' ]]; then
+    if [[ "${FUNCNAME[1]}" == '__expect_assertion_failure' ]]; then
       printf '"%s" output does not end with a newline character:\n%s\n' \
         "${assertion%% *}" "${__assertion_output%exit:*}" >&2
       return 1
