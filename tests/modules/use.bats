@@ -46,7 +46,17 @@ GO_USE_MODULES_STACK_ITEM="$(@go.stack_trace_item "$_GO_USE_MODULES" source \
 
 setup() {
   test_filter
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  do_setup
+  restore_bats_shell_options "$?"
+}
 
+teardown() {
+  rm -rf "$_GO_CORE_DIR/lib/"{builtin-test,go-use-modules-test}
+  @go.remove_test_go_rootdir
+}
+
+do_setup() {
   local core_test_module
   for core_test_module in 'builtin-test' 'go-use-modules-test'; do
     if [[ -e "$_GO_CORE_DIR/lib/$core_test_module" ]]; then
@@ -69,11 +79,6 @@ setup() {
     mkdir -p "${module%/*}"
     echo "echo '${module##*/}' loaded" > "$module"
   done
-}
-
-teardown() {
-  rm -rf "$_GO_CORE_DIR/lib/"{builtin-test,go-use-modules-test}
-  @go.remove_test_go_rootdir
 }
 
 @test "$SUITE: no modules imported by default" {
@@ -192,6 +197,7 @@ teardown() {
 }
 
 @test "$SUITE: import order: injected; core; internal; exported; plugin" {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local module_dir='go-use-modules-test'
   local module_name='test-module'
   local module_path="$module_dir/$module_name"
@@ -210,6 +216,8 @@ teardown() {
     >"$TEST_GO_PLUGINS_DIR/${module_dir}/lib/${module_name}"
 
   @go.create_test_go_script ". \"\$_GO_USE_MODULES\" '${module_path}'"
+  restore_bats_shell_options "$?"
+
   run "$TEST_GO_SCRIPT"
   assert_success 'INJECTED'
 
