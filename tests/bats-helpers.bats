@@ -236,7 +236,7 @@ __check_dirs_exist() {
   assert_lines_equal '' '' 'foo' '' 'bar' '' 'baz'
 }
 
-@test "$SUITE: stub_program_in_path" {
+@test "$SUITE: stub_program_in_path for testing external program" {
   local bats_bindir_pattern="^${BATS_TEST_BINDIR}:"
   fail_if matches "$bats_bindir_pattern" "$PATH"
 
@@ -245,4 +245,21 @@ __check_dirs_exist() {
 
   run git Hello, World!
   assert_success 'Hello, World!'
+}
+
+@test "$SUITE: {stub,restore}_program_in_path for testing in-process function" {
+  local orig_path="$(command -v mkdir)"
+
+  stub_program_in_path --in-process 'mkdir' 'echo "$@"'
+  run command -v mkdir
+  assert_success "$BATS_TEST_BINDIR/mkdir"
+
+  restore_program_in_path 'mkdir'
+  run command -v mkdir
+  assert_success "$orig_path"
+}
+
+@test "$SUITE: restore_program_in_path fails when stub doesn't exist" {
+  run restore_program_in_path 'foobar'
+  assert_failure "Bats test stub program doesn't exist: foobar"
 }

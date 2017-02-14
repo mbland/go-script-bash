@@ -295,16 +295,54 @@ split_bats_output_into_lines() {
 # The script is written as `$BATS_TEST_BINDIR/$cmd_name`. `$BATS_TEST_BINDIR` is
 # added to `PATH` and exported if it isn't already present.
 #
+# You may need to call `restore_program_in_path` immediately after `run` to
+# avoid side-effects in the rest of your test program, especially when using the
+# `--in-process` option.
+#
+# Options:
+#   --in-process  Set this when calling `run` on an in-process function
+#
 # Arguments:
 #   cmd_name:  Name of the command from PATH to stub
 #   ...:       Lines comprising the stub script
 stub_program_in_path() {
   local bindir_pattern="^${BATS_TEST_BINDIR}:"
+  local in_process
+
+  if [[ "$1" == '--in-process' ]]; then
+    in_process='true'
+    shift
+  fi
 
   if [[ ! "$PATH" =~ $bindir_pattern ]]; then
     export PATH="$BATS_TEST_BINDIR:$PATH"
   fi
   create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$1" "${@:2}"
+
+  if [[ -n "$in_process" ]]; then
+    hash "$1"
+  fi
+}
+
+# Removes a stub program from `PATH`
+#
+# This will return an error if the stub doesn't exist, to help avoid errors
+# when the `cmd_name` arguments to `stub_program_in_path` and this function
+# don't match.
+#
+# Arguments:
+#   cmd_name:  Name of the command from PATH to stub
+#
+# Returns:
+#   Zero if the stub program exists and is removed, nonzero otherwise
+restore_program_in_path() {
+  if [[ -e "$BATS_TEST_BINDIR/$1" ]]; then
+    rm -f "$BATS_TEST_BINDIR/$1"
+    hash "$1"
+  else
+    printf "Bats test stub program doesn't exist: %s\n" "$1"
+    return 1
+  fi
 }
 
 # --------------------------------
