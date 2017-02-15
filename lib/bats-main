@@ -53,10 +53,10 @@ export _GO_BATS_DIR="${_GO_BATS_DIR:-$_GO_TEST_DIR/bats}"
 export _GO_BATS_PATH="$_GO_BATS_DIR/libexec/bats"
 
 # Version of Bats to fetch if `_GO_BATS_DIR` is missing
-export _GO_BATS_VERSION="${_GO_BATS_VERSION:-master}"
+export _GO_BATS_VERSION="${_GO_BATS_VERSION:-optimized-20170205}"
 
 # URL of the Bats git repository to clone to `_GO_BATS_DIR`
-export _GO_BATS_URL="${_GO_BATS_URL:-https://github.com/sstephenson/bats.git}"
+export _GO_BATS_URL="${_GO_BATS_URL:-https://github.com/mbland/bats.git}"
 
 # Set this to nonempty if you wish to collect coverage using kcov by default
 export _GO_COLLECT_BATS_COVERAGE="$_GO_COLLECT_BATS_COVERAGE"
