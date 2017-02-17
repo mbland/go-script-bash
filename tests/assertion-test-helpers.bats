@@ -31,7 +31,8 @@ create_failing_test_stub() {
   if [[ ! -d "$BATS_TMPDIR/bin" ]]; then
     mkdir -p "$BATS_TMPDIR/bin"
   fi
-  printf '%s\n' 'printf "ARG: \"%s\"\n" "$@"' 'exit 1' >"$cmd_path"
+  printf '%s\n' '#! /usr/bin/env bash' \
+    'printf "ARG: \"%s\"\n" "$@"' 'exit 1' >"$cmd_path"
   chmod 755 "$cmd_path"
   PATH="$BATS_TMPDIR/bin:$PATH"
   hash "$cmd_name"
