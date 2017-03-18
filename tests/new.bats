@@ -84,7 +84,8 @@ assert_command_script_is_executable() {
   run "$TEST_GO_SCRIPT" complete 1 new '--i'
   assert_success '--internal '
 
-  local internal_modules=("$TEST_GO_SCRIPTS_DIR/lib/"{bar,baz,foo})
+  local internal_modules
+  internal_modules=("$TEST_GO_SCRIPTS_DIR/lib/"{bar,baz,foo})
   mkdir -p "$TEST_GO_SCRIPTS_DIR/lib/"
   touch "${internal_modules[@]}"
 
@@ -102,7 +103,8 @@ assert_command_script_is_executable() {
   run "$TEST_GO_SCRIPT" complete 1 new '--p'
   assert_success '--public '
 
-  local public_modules=("$TEST_GO_ROOTDIR/lib/"{plugh,quux,xyzzy})
+  local public_modules
+  public_modules=("$TEST_GO_ROOTDIR/lib/"{plugh,quux,xyzzy})
   mkdir -p "$TEST_GO_ROOTDIR/lib/"
   touch "${public_modules[@]}"
 
@@ -120,7 +122,8 @@ assert_command_script_is_executable() {
   run "$TEST_GO_SCRIPT" complete 1 new '--te'
   assert_success '--test '
 
-  local test_files=("$TEST_GO_ROOTDIR/tests/"{aimfiz,blorple,frotz}.bats)
+  local test_files
+  test_files=("$TEST_GO_ROOTDIR/tests/"{aimfiz,blorple,frotz}.bats)
   mkdir -p "$TEST_GO_ROOTDIR/tests/"
   touch "${test_files[@]}"
 
@@ -138,7 +141,8 @@ assert_command_script_is_executable() {
   run "$TEST_GO_SCRIPT" complete 1 new '--ty'
   assert_success '--type '
 
-  local text_files=("$TEST_GO_ROOTDIR/gue/"{dungeonmaster,thief,wizard}.txt)
+  local text_files
+  text_files=("$TEST_GO_ROOTDIR/gue/"{dungeonmaster,thief,wizard}.txt)
   mkdir -p "$TEST_GO_ROOTDIR/gue"
   touch "${text_files[@]}"
 
