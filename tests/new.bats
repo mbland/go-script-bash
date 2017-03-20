@@ -90,7 +90,7 @@ assert_command_script_is_executable() {
   touch "${internal_modules[@]}"
 
   local expected
-  @go.test_compgen 'expected' -f "$TEST_GO_SCRIPTS_DIR/lib"
+  @go.test_compgen 'expected' -f "$TEST_GO_SCRIPTS_DIR/lib/"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--internal'
   assert_success "${expected[@]#$TEST_GO_SCRIPTS_DIR/lib/}"
@@ -112,7 +112,7 @@ assert_command_script_is_executable() {
   touch "${public_modules[@]}"
 
   local expected
-  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/lib"
+  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/lib/"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--public'
   assert_success "${expected[@]#$TEST_GO_ROOTDIR/lib/}"
@@ -134,7 +134,7 @@ assert_command_script_is_executable() {
   touch "${test_files[@]}"
 
   local expected
-  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/$_GO_TEST_DIR"
+  @go.test_compgen 'expected' -f "$TEST_GO_ROOTDIR/$_GO_TEST_DIR/"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--test'
   assert_success "${expected[@]#$TEST_GO_ROOTDIR/$_GO_TEST_DIR/}"
