@@ -89,8 +89,11 @@ assert_command_script_is_executable() {
   mkdir -p "$TEST_GO_SCRIPTS_DIR/lib/"
   touch "${internal_modules[@]}"
 
+  local expected
+  @go.test_compgen 'expected' "$TEST_GO_SCRIPTS_DIR/lib"
+
   run "$TEST_GO_SCRIPT" complete 2 new '--internal'
-  assert_success "${internal_modules[@]#$TEST_GO_SCRIPTS_DIR/lib/}"
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 2 new '--internal' 'f'
   assert_success 'foo '
@@ -146,11 +149,14 @@ assert_command_script_is_executable() {
   mkdir -p "$TEST_GO_ROOTDIR/gue"
   touch "${text_files[@]}"
 
+  local expected
+  @go.test_compgen 'expected' "$TEST_GO_ROOTDIR/gue"
+
   run "$TEST_GO_SCRIPT" complete 2 new '--type'
   assert_failure ''
 
   run "$TEST_GO_SCRIPT" complete 3 new '--type' 'adversary' 'g'
-  assert_success 'go' 'gue/'
+  assert_success "${expected[@]}"
 
   run "$TEST_GO_SCRIPT" complete 3 new '--type' 'adversary' 'gu'
   assert_success 'gue/'
@@ -297,12 +303,12 @@ assert_command_script_is_executable() {
 @test "$SUITE: new subcommand script" {
   run "$TEST_GO_SCRIPT" new --command foo
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo"
-  assert_file_matches "$TEST_GO_SCRIPTS_DIR/foo" $'\n_foo\(\) {\n'
+  assert_file_matches "$TEST_GO_SCRIPTS_DIR/foo" $'\n_foo\(\) \{\n'
   assert_command_script_is_executable 'foo'
 
   run "$TEST_GO_SCRIPT" new --command foo bar
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo.d/bar"
-  assert_file_matches  "$TEST_GO_SCRIPTS_DIR/foo.d/bar" $'\n_bar\(\) {\n'
+  assert_file_matches  "$TEST_GO_SCRIPTS_DIR/foo.d/bar" $'\n_bar\(\) \{\n'
   assert_command_script_is_executable 'foo.d/bar'
 }
 
@@ -321,7 +327,7 @@ assert_command_script_is_executable() {
     '' \
     '@go.show_subcommands'
   assert_file_matches "$TEST_GO_SCRIPTS_DIR/foo.d/bar" '@go.show_subcommands'
-  assert_file_matches  "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz" $'\n_baz\(\) {\n'
+  assert_file_matches "$TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz" $'\n_baz\(\) \{\n'
 
   assert_command_script_is_executable 'foo'
   assert_command_script_is_executable 'foo.d/bar'
@@ -415,7 +421,7 @@ assert_command_script_is_executable() {
   EDITOR= run "$TEST_GO_SCRIPT" new --test foo/bar/baz
   assert_success ''
   assert_file_matches "$TEST_GO_ROOTDIR/$_GO_TEST_DIR/foo/bar/baz.bats" \
-    $'\n@test "\$SUITE: short description of your first test case" {\n'
+    $'\n@test "\$SUITE: short description of your first test case" \{\n'
 }
 
 @test "$SUITE: --test fails if public module already exists" {
