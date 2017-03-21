@@ -26,7 +26,8 @@
 #           https://mike-bland.com/
 #           https://github.com/mbland
 
-if [[ "${BASH_VERSINFO[0]}" -lt '3' || "${BASH_VERSINFO[1]}" -lt '2' ]]; then
+if [[ "${BASH_VERSINFO[0]}" -lt '3' ||
+    ( "${BASH_VERSINFO[0]}" -eq '3' && "${BASH_VERSINFO[1]}" -lt '2' ) ]]; then
   printf "This module requires bash version 3.2 or greater:\n  %s %s\n" \
     "$BASH" "$BASH_VERSION"
   exit 1

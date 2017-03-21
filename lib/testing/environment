@@ -120,8 +120,19 @@ test-go() {
 #   ...:     Arguments passed directly to `@go.compgen`
 @go.test_compgen() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
+  local completions
+  local err_args
+
   . "$_GO_USE_MODULES" 'complete' 'strings'
-  @go.split $'\n' "$(@go.compgen "${@:2}")" "$1"
+  completions="$(@go.compgen "${@:2}")"
+
+  if [[ "$?" -ne '0' || -z "$completions" ]]; then
+    printf -v 'err_args' ' "%s"' "${@:2}"
+    printf 'compgen failed or results were empty:%s\n' "$err_args" >&2
+    restore_bats_shell_options '1'
+    return
+  fi
+  @go.split $'\n' "$completions" "$1"
   restore_bats_shell_options "$?"
 }
 
