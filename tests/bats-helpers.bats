@@ -240,11 +240,11 @@ __check_dirs_exist() {
   local bats_bindir_pattern="^${BATS_TEST_BINDIR}:"
   fail_if matches "$bats_bindir_pattern" "$PATH"
 
-  stub_program_in_path 'git' 'echo "$@"'
+  stub_program_in_path 'chmod' 'echo "$@"'
   assert_matches "$bats_bindir_pattern" "$PATH"
 
-  run git Hello, World!
-  assert_success 'Hello, World!'
+  run chmod ugo+rwx foo.txt
+  assert_success 'ugo+rwx foo.txt'
 }
 
 @test "$SUITE: {stub,restore}_program_in_path for testing in-process function" {

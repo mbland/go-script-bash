@@ -313,11 +313,11 @@ stub_program_in_path() {
     in_process='true'
     shift
   fi
+  create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$1" "${@:2}"
 
   if [[ ! "$PATH" =~ $bindir_pattern ]]; then
     export PATH="$BATS_TEST_BINDIR:$PATH"
   fi
-  create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$1" "${@:2}"
 
   if [[ -n "$in_process" ]]; then
     hash "$1"
