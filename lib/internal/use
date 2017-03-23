@@ -5,10 +5,9 @@
 # Usage:
 #   .  "$_GO_USE_MODULES" <module> [<module>...]
 #
-#   NOTE: It's important to wrap `$_GO_USE_MODULES` in double-quotes to ensure
-#   the statement is portable to environments in which the file paths may
-#   contain spaces. It's good practice to wrap each `<module>` in
-#   single-quotes as well.
+# NOTE: It's important to wrap `$_GO_USE_MODULES` in double-quotes to ensure the
+# statement is portable to environments in which the file paths may contain
+# spaces. It's good practice to wrap each `<module>` in single-quotes as well.
 #
 # Where:
 #   <module>  The name of an optional Bash library module
@@ -40,17 +39,20 @@
 # require the functionality can use `_GO_CORE_MODULES` on an as-needed basis,
 # rather than using it in the top-level `./go` script.
 #
-# The precedence for discovering modules is (with examples from the "Directory
-# structure" example from README.md):
+# The precedence for discovering modules is similar to that for discovering
+# command scripts:
 #
-#   - the `_GO_INJECT_MODULE_PATH` directory
-#   - the `lib/` directory of the framework (`scripts/go-script-bash/lib`)
-#   - the `lib/` directory in your project scripts directory (`scripts/lib`)
-#   - the `lib/` directory of `_GO_ROOTDIR` (i.e. exported scripts)
-#   - the `lib/` directory of installed plugins (`scripts/plugins/*/lib`)
+#   - `_GO_INJECT_MODULE_PATH` for module stubs injected during testing;
+#     see `lib/testing/stubbing`
+#   - `_GO_CORE_DIR/lib/` for core library modules
+#   - `_GO_SCRIPTS_DIR/lib` for project-internal modules
+#   - `_GO_ROOTDIR/lib` for publicly-exported modules (`./go` script plugins)
+#   - `_GO_SCRIPTS_DIR/plugins/*/lib` for installed plugin modules
+#   - Parent plugin dirs up to `_GO_PLUGINS_DIR/*/lib` for plugin modules
+#     installed in parent directories
 #
-# For modules contained in plugin directories, you must specify the path as
-# `<plugin-name>/<module-name>`. There is no need to include the `lib/`
+# To import a module exported from an installed plugin, you must specify the
+# path as `<plugin-name>/<module-name>`. There is no need to include the `lib/`
 # component.  For example, if you have a plugin called `foo` and it contains a
 # module file `lib/bar` (installed as `scripts/plugins/foo/lib/bar` in your
 # project repository), you could import the module via:
@@ -59,11 +61,15 @@
 #
 # Note that if there is a module with the relative path `foo/bar` in one of the
 # other directories, such as `_GO_ROOTDIR/lib/foo/bar`, it will take precedence
-# over the plugin `scripts/plugins/foo/lib/bar`.
+# over the plugin `scripts/plugins/foo/lib/bar`. See `{{go}} help plugins` for
+# more information on plugins and their operating constraints.
 #
 # Module loading is idempotent, as the names of imported modules are added to
 # the `_GO_IMPORTED_MODULES` array and are not sourced again if their names are
-# already in the array.
+# already in the array. If a potential collision between installed module names
+# is detected (possible with installed plugins), a verbose warning pinpointing
+# the collision points will be printed to standard error, but execution will
+# continue.
 #
 # To see what modules are currently imported and their corresponding files, use:
 #

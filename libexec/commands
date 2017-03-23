@@ -9,10 +9,21 @@
 #   --paths      List the path of each command script
 #   --summaries  List the summary of each command script
 #
+# The precedence for discovering commands executed via `@go` is:
+#
+#   - Command aliases; see `{{go}} help aliases`
+#   - `_GO_INJECT_SEARCH_PATH` for command script stubs injected during testing;
+#     see `lib/testing/stubbing`
+#   - `_GO_CORE_DIR/libexec` for core library command scripts
+#   - `_GO_SCRIPTS_DIR` for project command scripts
+#   - `_GO_SCRIPTS_DIR/plugins/*/bin` for installed plugin command scripts
+#   - Parent plugin dirs up to `_GO_PLUGINS_DIR/*/bin` for plugin command
+#     scripts
+#
 # If no <command-name> or <script-path> is given, lists all top-level builtins,
-# plugins, and user-defined commands. If <command-name> is given, lists the
-# subcommands for that command. If <script-paths> is given, lists top-level
-# commands within those directories.
+# plugins, and user-defined commands discovered via the above algorithm. If
+# <command-name> is given, lists the subcommands for that command. If
+# <script-paths> is given, lists top-level commands within those directories.
 #
 # Only one of <command-name> or <script-paths> may be specified. <command-name>
 # can be a multiple-word subcommand name, in which case its subcommands, if any,
@@ -21,6 +32,10 @@
 #
 # NOTE: This command will not return the names of shell aliases; use `{{go}}
 # aliases` for those.
+#
+# While executing a plugin command script, `_GO_ROOTDIR` and `_GO_SCRIPTS_DIR`
+# are scoped to the top-level directory of the plugin. See `{{go}} help plugins`
+# for more information on plugins and their operating constraints.
 
 _@go.summarize_commands() {
   . "$_GO_CORE_DIR/lib/internal/command_descriptions"
