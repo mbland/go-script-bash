@@ -291,6 +291,11 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #   fi
 # }
 #
+# Note that this algorithm is modeled after the `node_modules` search algorithm
+# used by `npm`. See:
+#
+#   https://docs.npmjs.com/files/folders#cycles-conflicts-and-folder-parsimony
+#
 # Arguments:
 #   search_func:  Helper function implementing the search operation
 #

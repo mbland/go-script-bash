@@ -274,17 +274,18 @@ interpreted as relative to the project root.
 Your project structure may look something like this:
 
 ```
-project/
+project-root/
   go - main ./go script
-  scripts/ - project ./go command scripts
+  lib/ - publicly-exported modules (if the project is a go-bash-script plugin)
+  scripts/ (or bin/) - project (or plugin) ./go command scripts
     lib/ - project-specific Bash library modules (see "Modules" section)
     plugins/ - (optional) third-party command scripts (see `./go help plugins`)
       .../
         bin/ - plugin ./go command scripts
-        lib/ - optional Bash library modules (see "Modules" section)
+        lib/ - publicly-exported Bash library modules (see "Modules" section)
     go-script-bash/
       go-core.bash - top-level functions
-      lib/ - optional Bash library modules (see "Modules" section)
+      lib/ - publicly-exported Bash library modules (see "Modules" section)
       libexec/ - builtin ./go command scripts
 ```
 
@@ -293,11 +294,20 @@ This structure implies that the first line of your `./go` script will be:
 . "${0%/*}/scripts/go-script-bash/go-core.bash" "scripts"
 ```
 
-The precedence for discovering commands is:
+#### Variables and plugin scoping
 
-- aliases/builtins (provided by this framework)
-- plugins (in `scripts/plugins` above)
-- project scripts (in `scripts` above)
+The following variables are set by the framework based on the above example
+(note there are many other variables set in `go-core.bash` and elsewhere; see
+`./go help vars`):
+
+* `_GO_ROOTDIR`: `/absolute/path/to/project-root`
+* `_GO_CORE_DIR`: `/absolute/path/to/project-root/scripts/go-script-bash`
+* `_GO_SCRIPTS_DIR`: `$_GO_ROOTDIR/scripts`
+* `_GO_PLUGINS_DIR`: `/absolute/path/to/project-root/plugins`
+
+For plugins, `_GO_ROOTDIR` and `_GO_SCRIPTS_DIR` will be scoped to the root
+directory of the plugin installation; the other variables will remain the same.
+See `./go help plugins` for more details.
 
 #### Command scripts
 
@@ -315,6 +325,9 @@ __Scripts can use any interpreted language available on the host system; they
 need not be written in Bash.__ Bash scripts will be sourced (i.e. imported into
 the same process running the `./go` script itself). Other languages will use the
 `PATH` environment variable to discover the interpreter for the script.
+
+See `./go help commands` for details on the algorithm used to discover command
+scripts for execution.
 
 #### Command summaries and help text
 
@@ -417,14 +430,15 @@ For more information, run `./go modules --help log`.
 #### Bats test assertions and helpers
 
 The assertions and helpers from the test suite have been extracted into the
-`lib/bats/assertions`, `lib/bats/helpers`, and `lib/bats/assertion-test-helpers`
-libraries. While these are not modules you can import with `_GO_USE_MODULES`,
-they are completely independent of the rest of the core framework and you may
-source them in your own Bats tests. (Whether or not these will ever become a
-separate library remains an open question.)
+`lib/bats` libraries. While these are not modules you can import with
+`_GO_USE_MODULES`, they are completely independent of the rest of the core
+framework and you may source them in your own Bats tests. (Whether or not these
+will ever become a separate library remains an open question.)
 
 Variables, helper functions, and assertions for testing features based on the
-core framework are available in the `lib/testing` directory.
+core framework are available in the `lib/testing` directory. The `lib/bats-main`
+library makes it easy to write a `./go test` command script with the same
+interface and features as the core framework's `./go test` command.
 
 Read the comments from each file for more information.
 
