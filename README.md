@@ -13,7 +13,9 @@ documents that may become out-of-date, and when maintained properly, should
 provide a cohesive and discoverable interface for common project tasks.
 
 For a five-minute overview of the framework, see [Mike Bland's go-script-bash
-lightning talk at Surge 2016](https://youtu.be/WX1vrLV9mFE?t=39m48s).
+lightning talk at Surge 2016][go-surge].
+
+[go-surge]: https://youtu.be/WX1vrLV9mFE?t=39m48s
 
 ### Table of contents
 
@@ -22,34 +24,38 @@ lightning talk at Surge 2016](https://youtu.be/WX1vrLV9mFE?t=39m48s).
 - [How to use this framework](#how-to-use-this-framework)
 - [Feedback and contributions](#feedback-and-contributions)
 - [Installing Bash](#installing-bash)
-- [Open Source](#open-source)
+- [Open Source](#open-source-license)
 - [Prior work](#prior-work)
 
 ### Introduction
 #### What's a `./go` script?
 
 The `./go` script idea came from Pete Hodgson's blog posts [In Praise of the
-./go Script: Part
-I](https://www.thoughtworks.com/insights/blog/praise-go-script-part-i) and [Part
-II](https://www.thoughtworks.com/insights/blog/praise-go-script-part-ii). To
-paraphrase Pete's original idea, rather than dump project setup, development,
-testing, and installation/deployment commands into a `README` that tends to get
-stale, or rely on oral tradition to transmit project maintenance knowledge,
-automate these tasks by encapsulating them all inside a single script in the
-root directory of your project source tree, conventionally named "`go`". Then
-the interface to these tasks becomes something like `./go setup`, `./go test`,
-and `./go deploy`. Not only would this script save time for people already
-familiar with the project, but it smooths the learning curve, prevents common
-mistakes, and lowers friction for new contributors. This is as desirable a state
-for Open Source projects as it is for internal ones.
+./go Script: Part I][hodg-1] and [Part II][hodg-2]. To paraphrase Pete's
+original idea, rather than dump project setup, development, testing, and
+installation/deployment commands into a `README` that tends to get stale, or
+rely on oral tradition to transmit project maintenance knowledge, automate these
+tasks by encapsulating them all inside a single script in the root directory of
+your project source tree, conventionally named "`go`". Then the interface to
+these tasks becomes something like `./go setup`, `./go test`, and `./go deploy`.
+Not only would this script save time for people already familiar with the
+project, but it smooths the learning curve, prevents common mistakes, and lowers
+friction for new contributors. This is as desirable a state for Open Source
+projects as it is for internal ones.
+
+[hodg-1]: https://www.thoughtworks.com/insights/blog/praise-go-script-part-i
+[hodg-2]: https://www.thoughtworks.com/insights/blog/praise-go-script-part-ii
 
 #### Is this related to the Go programming language?
 
 No. The `./go` script convention in general and this framework in particular are
-completely unrelated to the [Go programming language](https://golang.org). In
-fact, the actual `./go` script can be named anything. However, the [`go` command
-from the Go language distribution](https://golang.org/cmd/go/) encapsulates many
-common project functions in a similar fashion.
+completely unrelated to the [Go programming language][golang]. In fact, the
+actual `./go` script can be named anything. However, the [`go` command from the
+Go language distribution][golang-cmd] encapsulates many common project functions
+in a similar fashion.
+
+[golang]:     https://golang.org
+[golang-cmd]: https://golang.org/cmd/go/
 
 #### Why write a framework?
 
@@ -64,11 +70,12 @@ trying to avoid.
 The `./go` script framework makes it easy to provide a uniform and easy-to-use
 project maintenance interface that fits your project perfectly regardless of the
 mix of tools and languages, then it gets out of the way as fast as possible. The
-hope is that by [making the right thing the easy
-thing](https://mike-bland.com/2016/06/16/making-the-right-thing-the-easy-thing.html),
+hope is that by [making the right thing the easy thing][right-thing-easy],
 scripts using the framework will evolve and stay healthy along with the rest of
 your project sources, which makes everyone working with the code less frustrated
 and more productive all-around.
+
+[right-thing-easy]: https://mike-bland.com/2016/06/16/making-the-right-thing-the-easy-thing.html
 
 This framework accomplishes this by:
 
@@ -86,39 +93,53 @@ Plus, its own tests serve as a model for testing command scripts of all shapes
 and sizes.
 
 The inspiration for this model (and initial implementation hints) came from [Sam
-Stephenson's `rbenv` Ruby version manager](https://github.com/rbenv/rbenv).
+Stephenson's `rbenv` Ruby version manager][rbenv].
+
+[rbenv]: https://github.com/rbenv/rbenv
 
 #### Why Bash?
 
-[It's the ultimate backstage
-pass!](http://www.imdb.com/title/tt0118971/quotes?item=qt1467557) It's the
-default shell for most mainstream UNIX-based operating systems, easily installed
-on other UNIX-based operating systems, and is readily available even on Windows.
+[It's the ultimate backstage pass!][backstage] It's the default shell for most
+mainstream UNIX-based operating systems, easily installed on other UNIX-based
+operating systems, and is readily available even on Windows.
+
+[backstage]: http://www.imdb.com/title/tt0118971/quotes?item=qt1467557
 
 #### Will this work on Windows?
 
 Yes. It is an explicit goal to make it as easy to use the framework on Windows
-as possible. Since [Git for Windows](https://git-scm.com/downloads) in
-particular ships with Bash as part of its environment, and Bash is available
-within Windows 10 as part of the [Windows Subsystem for
-Linux](https://msdn.microsoft.com/en-us/commandline/wsl/about) (Ubuntu on
-Windows), it's more likely than not that Bash is already available on a Windows
-developer's system. It's also available from the
-[MSYS2](https://msys2.github.io/) and [Cygwin](https://www.cygwin.com/)
-environments.
+as possible. Since [Git for Windows][git-win] in particular ships with Bash as
+part of its environment, and Bash is available within Windows 10 as part of the
+[Windows Subsystem for Linux][wsl] (Ubuntu on Windows), it's more likely than
+not that Bash is already available on a Windows developer's system. It's also
+available from the [MSYS2][] and [Cygwin][] environments.
+
+[git-win]: https://git-scm.com/downloads
+[wsl]:     https://msdn.microsoft.com/en-us/commandline/wsl/about
+[msys2]:   https://msys2.github.io/
+[cygwin]:  https://www.cygwin.com/
 
 #### Why not use tool X instead?
 
 Of course there are many common tools that may be used for managing project
-tasks. For example: [Make](https://www.gnu.org/software/make/manual/),
-[Rake](http://rake.rubyforge.org/), [npm](https://docs.npmjs.com/),
-[Gulp](http://gulpjs.com/), [Grunt](http://gruntjs.com/),
-[Bazel](https://www.bazel.io/), and the Go programming language's `go` tool.
-There are certainly more powerful scripting languages:
-[Perl](https://www.perl.org/), [Python](https://www.python.org/),
-[Ruby](https://www.ruby-lang.org/en/), and even [Node.js](https://nodejs.org/)
+tasks. For example: [Make][], [Rake][], [npm][], [Gulp][], [Grunt][], [Bazel][],
+and the Go programming language's `go` tool.  There are certainly more powerful
+scripting languages: [Perl][], [Python][], [Ruby][], and even [Node.js][nodejs]
 is a possibility. There are even more powerful shells, such as the
-[Z-Shell](https://www.zsh.org/) and the [fish shell](https://fishshell.com/).
+[Z-Shell][zsh] and the [fish shell][fish].
+
+[make]:   https://www.gnu.org/software/make/manual/
+[rake]:   http://rake.rubyforge.org/
+[npm]:    https://docs.npmjs.com/
+[gulp]:   http://gulpjs.com/
+[grunt]:  http://gruntjs.com
+[bazel]:  https://www.bazel.io/
+[perl]:   https://www.perl.org/
+[python]: https://www.python.org/
+[ruby]:   https://www.ruby-lang.org/en/
+[nodejs]: https://nodejs.org/
+[zsh]:    https://www.zsh.org/
+[fish]:   https://fishshell.com/
 
 The `./go` script framework isn't intended to replace all those other tools and
 languages, but to make it easier to use each of them for what they're good for.
@@ -145,20 +166,22 @@ before being able to do anything.
 
 Even if `./go init` tells the user "go to this website and install this other
 thing", that's still an immediate, tactile experience that triggers a reward
-response and invites further exploration. (Think of
-[Zork](https://en.wikipedia.org/wiki/Zork) and the first ["open
-mailbox"](http://steel.lcc.gatech.edu/~marleigh/zork/transcript.html)
-command.)
+response and invites further exploration. (Think of [Zork][] and the first
+["open mailbox"][zork-open] command.)
+
+[zork]:      https://en.wikipedia.org/wiki/Zork
+[zork-open]: http://steel.lcc.gatech.edu/~marleigh/zork/transcript.html
 
 #### Where can I run it?
 
 The real question is: Where _can't_ you run it?
 
-The core framework is written 100% in
-[Bash](https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29) and it's been tested
-under Bash 3.2, 4.2, 4.3, and 4.4 across OS X, Ubuntu Linux, Arch Linux, Alpine
-Linux, FreeBSD 9.3, FreeBSD 10.3, and Windows 10 (using all the environments
-described in the "Will this work on Windows?" section above).
+The core framework is written 100% in [Bash][bash-wikipedia] and it's been
+tested under Bash 3.2, 4.2, 4.3, and 4.4 across OS X, Ubuntu Linux, Arch Linux,
+Alpine Linux, FreeBSD 9.3, FreeBSD 10.3, and Windows 10 (using all the
+environments described in the "Will this work on Windows?" section above).
+
+[bash-wikipedia]: https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29
 
 #### Can I use it to write standalone programs that aren't project scripts?
 
@@ -183,19 +206,22 @@ tab-completion enabled by `./go env` and pattern-matching via `./go glob`, the
 `./go test` command provides a convenient means of selecting subsets of test
 cases while focusing on a particular piece of behavior. (See `./go help test`.)
 
-The tests are written using [Sam Stephenson's Bash Automated Testing System
-(BATS)](https://github.com/sstephenson/bats). Code coverage comes from [Simon
-Kagstrom's `kcov` code coverage tool](https://github.com/SimonKagstrom/kcov),
-which not only provides code coverage for Bash scripts (!!!) but can push the
-results to Coveralls!
+The tests are written using [mbland/bats, an optimized version of Sam
+Stephenson's Bash Automated Testing System (BATS)][mbland/bats]. Code coverage
+comes from [Simon Kagstrom's `kcov` code coverage tool][kcov], which not only
+provides code coverage for Bash scripts (!!!) but can push the results to
+[Coveralls][cover-gos]!
+
+[mbland/bats]: https://github.com/mbland/bats
+[kcov]:        https://github.com/SimonKagstrom/kcov
+[cover-gos]:   https://coveralls.io/github/mbland/go-script-bash
 
 ### Environment setup
 
 To run a `./go` script that uses this module, or to add it to your own project,
-you must have [Bash](https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29)
-version 3.2 or greater installed on your system. Run `bash --version` to make
-sure Bash is in your `PATH` and is a compatible version. You should see output
-like this:
+you must have [Bash][bash-wikipedia] version 3.2 or greater installed on your
+system. Run `bash --version` to make sure Bash is in your `PATH` and is a
+compatible version. You should see output like this:
 
 ```
 GNU bash, version 3.2.57(1)-release (x86_64-apple-darwin15)
@@ -212,9 +238,13 @@ scripts can be in any other interpreted language installed on the host system.__
 
 First you'll need a copy of this framework available in your project sources.
 The most expedient way to bootstrap your program is to use the [`go-template`
-file](https://github.com/mbland/go-script-bash/blob/master/go-template) as a
-starting point (replacing `curl` with `wget`, `fetch`, or whichever tool you
-prefer):
+file][go-template] as a starting point (replacing [curl][] with [wget][],
+[fetch][], or whichever tool you prefer):
+
+[go-template]: https://github.com/mbland/go-script-bash/blob/master/go-template
+[curl]:        https://curl.haxx.se/
+[wget]:        https://www.gnu.org/software/wget/
+[fetch]:       https://www.freebsd.org/cgi/man.cgi?fetch(1)
 
 ```bash
 $ curl https://raw.githubusercontent.com/mbland/go-script-bash/master/go-template >./go
@@ -227,14 +257,16 @@ it into your project repository. See the `go-template` comments for details.
 
 If you'd prefer to download a copy of the framework and check it into your
 sources, versioned archives are available from the [go-script-bash Releases
-page](https://github.com/mbland/go-script-bash/releases). The archives for the
-current release are:
+page][go-rel]. The archives for the current release are:
+
+[go-rel]: https://github.com/mbland/go-script-bash/releases
 
 - https://github.com/mbland/go-script-bash/archive/v1.3.0.tar.gz
 - https://github.com/mbland/go-script-bash/archive/v1.3.0.zip
 
-You can also add this repository to your project as a [`Git
-submodule`](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
+You can also add this repository to your project as a [Git submodule][git-sub]:
+
+[git-sub]: (https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
 ```bash
 $ git submodule add https://github.com/mbland/go-script-bash <target-dir>
@@ -445,18 +477,19 @@ Read the comments from each file for more information.
 #### `kcov-ubuntu` module for test coverage on Linux
 
 The `kcov-ubuntu` module provides the `run_kcov` function that will download and
-compile [kcov](https://github.com/SimonKagstrom/kcov), then run `kcov` with the
-original `./go` command line arguments to collect test coverage. Only available
-on Ubuntu Linux for now, hence the name. Run `./go modules --help kcov-ubuntu`
-for more information and see `scripts/test` for an example of how it may be
-used.
+compile [kcov][], then run `kcov` with the original `./go` command line
+arguments to collect test coverage. Only available on Ubuntu Linux for now,
+hence the name. Run `./go modules --help kcov-ubuntu` for more information and
+see `scripts/test` for an example of how it may be used.
 
 ### Feedback and contributions
 
-Feel free to [comment on or file a new GitHub
-issue](https://github.com/mbland/go-script-bash/issues) or otherwise ping
-[@mbland](https://github.com/mbland) with any questions or comments you may
-have, especially if the current documentation hasn't addressed your needs.
+Feel free to [comment on or file a new GitHub issue][issues] or otherwise ping
+[@mbland][] with any questions or comments you may have, especially if the
+current documentation hasn't addressed your needs.
+
+[issues]: https://github.com/mbland/go-script-bash/issues
+[@mbland]: https://github.com/mbland
 
 If you'd care to contribute to this project, be it code fixes, documentation
 updates, or new features, please read the [CONTRIBUTING](CONTRIBUTING.md) file.
@@ -467,11 +500,9 @@ If you're using a flavor of UNIX (e.g. Linux, OS X), you likely already have a
 suitable version of Bash already installed and available. If not, use your
 system's package manager to install it.
 
-On Windows, the [Git for Windows](https://git-scm.com/downloads),
-[MSYS2](https://msys2.github.io/) and [Cygwin](https://www.cygwin.com/)
+On Windows, the [Git for Windows][git-win], [MSYS2][] and [Cygwin][]
 distributions all ship with a version of Bash. On Windows 10, you can also use
-the [Windows Subsystem for
-Linux](https://msdn.microsoft.com/en-us/commandline/wsl/about).
+the [Windows Subsystem for Linux][wsl].
 
 #### Updating your `PATH` environment variable
 
@@ -528,12 +559,16 @@ installed on your system. `get git-repo` requires `git`, naturally.
 
 ### Open Source License
 
-This software is made available as [Open Source
-software](https://opensource.org/osd-annotated) under the [ISC
-License](https://www.isc.org/downloads/software-support-policy/isc-license/).
-For the text of the license, see the [LICENSE](LICENSE.md) file.
+This software is made available as [Open Source software][oss-def] under the
+[ISC License][].  For the text of the license, see the [LICENSE](LICENSE.md)
+file.
+
+[oss-def]:     https://opensource.org/osd-annotated
+[isc license]: https://www.isc.org/downloads/software-support-policy/isc-license/
 
 ### Prior work
 
-This is a Bash-based alternative to the
-[18F/go_script](https://github.com/18F/go_script) Ruby implementation.
+This is a Bash-based alternative to the [18F/go_script][go-old] Ruby
+implementation.
+
+[go-old]: https://github.com/18F/go_script
