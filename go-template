@@ -35,7 +35,7 @@ export _GO_STANDALONE=
 declare GO_SCRIPTS_DIR="${GO_SCRIPTS_DIR:-scripts}"
 
 # The `GO_SCRIPT_BASH_REPO_URL` tag or branch you wish to use
-declare GO_SCRIPT_BASH_VERSION="${GO_SCRIPT_BASH_VERSION:-v1.3.0}"
+declare GO_SCRIPT_BASH_VERSION="${GO_SCRIPT_BASH_VERSION:-v1.4.0}"
 
 # The go-script-bash installation directory within your project
 declare GO_SCRIPT_BASH_CORE_DIR="${GO_SCRIPT_BASH_CORE_DIR:-${0%/*}/$GO_SCRIPTS_DIR/go-script-bash}"
