@@ -4,7 +4,8 @@ load ../environment
 
 setup() {
   test_filter
-  @go.create_test_go_script 'declare selection' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "prompt"' \
+    'declare selection' \
     'if @go.select_option "selection" "$@"; then' \
     '  printf "\nSelection: \"%s\"\n" "$selection"' \
     'else' \

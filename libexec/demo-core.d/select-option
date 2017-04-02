@@ -12,6 +12,8 @@
 # Use this program to get a feel for the core `@go.select_option` function, and
 # for an example of how to use it in your own scripts.
 
+. "$_GO_USE_MODULES" 'prompt'
+
 select_option_demo() {
   local options=("$@")
   local selected
