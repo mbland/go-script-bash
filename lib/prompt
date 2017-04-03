@@ -30,7 +30,7 @@
 # Returns:
 #   zero if `result_var` contains the user's selection, nonzero otherwise
 @go.select_option() {
-  @go.validate_identifier_or_die 'Result variable name' "$1"
+  @go.validate_identifier_or_die 'Input selection variable name' "$1"
 
   local __go_selected_option
   select __go_selected_option in "${@:2}"; do
