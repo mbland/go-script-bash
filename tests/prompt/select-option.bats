@@ -4,7 +4,8 @@ load ../environment
 
 setup() {
   test_filter
-  @go.create_test_go_script 'declare selection' \
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "prompt"' \
+    'declare selection' \
     'if @go.select_option "selection" "$@"; then' \
     '  printf "\nSelection: \"%s\"\n" "$selection"' \
     'else' \
@@ -15,6 +16,20 @@ setup() {
 
 teardown() {
   @go.remove_test_go_rootdir
+}
+
+@test "$SUITE: error if selection variable not a valid identifier" {
+  @go.create_test_go_script '. "$_GO_USE_MODULES" "prompt"' \
+    '@go.select_option "invalid;"'
+
+  run "$TEST_GO_SCRIPT"
+  assert_failure
+
+  local err_msg='Input selection variable name "invalid;" for '
+  err_msg+='@go.select_option contains invalid identifier characters at:'
+
+  assert_lines_match "^${err_msg}\$" \
+    "^  $TEST_GO_SCRIPT:[0-9] main$"
 }
 
 @test "$SUITE: no options exits instantly" {

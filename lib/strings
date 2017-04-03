@@ -82,6 +82,23 @@ export __GO_STRINGS_VALIDATION_SKIP_CALLERS=2
   printf -v "$2" -- '%s' "${*:3}"
 }
 
+# Trims the leading and trailing whitespace from a string
+#
+# Arguments:
+#   var_name:  Name of the caller's variable containing the string to trim
+@go.trim() {
+  @go.validate_identifier_or_die 'Input/output variable name' "$1"
+  local __go_trim_input__="${!1}"
+
+  if [[ "$__go_trim_input__" =~ ^[[:space:]]+ ]]; then
+    __go_trim_input__="${__go_trim_input__#${BASH_REMATCH[0]}}"
+  fi
+  if [[ "$__go_trim_input__" =~ [[:space:]]+$ ]]; then
+    __go_trim_input__="${__go_trim_input__%${BASH_REMATCH[0]}}"
+  fi
+  printf -v "$1" -- '%s' "$__go_trim_input__"
+}
+
 # Determines the common prefix for a set of strings
 #
 # Will return the empty string for a single argument. This facilitates prefix
