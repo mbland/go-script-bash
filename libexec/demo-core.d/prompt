@@ -23,10 +23,9 @@ _@go.prompt_demo() {
   @go.printf 'Nice to meet you, %s!\n' "$name"
 
   if @go.prompt_for_yes_or_no 'Do you have a quest?' 'yes'; then
-    # Default value applies if input is empty.
-    if ! @go.prompt_for_input 'quest' $'What is your quest?\n' "$quest"; then
-      return 1
-    fi
+    # Default value applies if input is empty. Since there is a default, this
+    # won't return an error on no input.
+    @go.prompt_for_input 'quest' $'What is your quest?\n' "$quest"
   elif ! @go.prompt_for_yes_or_no "Might I suggest: $quest" 'yes'; then
     @go.printf 'OK, no quest. Suit yourself!\n'
     return 1
