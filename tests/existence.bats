@@ -53,35 +53,35 @@ teardown() {
     'else' \
     '  exit 1' \
     'fi'
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
   assert_failure "None of the following commands were found on the system:" \
     '  foo' \
     '  bar' \
     '  baz'
 
   stub_program_in_path 'baz'
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
   assert_success 'baz'
 
   stub_program_in_path 'bar'
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
   assert_success 'bar'
 
   stub_program_in_path 'foo'
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
+  run "$TEST_GO_SCRIPT" 'foo' 'bar' 'baz'
   assert_success 'foo'
 }
 
 @test "$SUITE: check_command_installed" {
   @go.create_test_go_script '. "$_GO_USE_MODULES" "existence"' \
     '@go.check_command_installed "$@"'
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foobar'
+  run "$TEST_GO_SCRIPT" 'foobar'
   assert_failure 'Please install foobar on your system and try again.'
 
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foobar' 'Foo Bar'
+  run "$TEST_GO_SCRIPT" 'foobar' 'Foo Bar'
   assert_failure 'Please install Foo Bar on your system and try again.'
 
   stub_program_in_path 'foobar'
-  PATH="$BATS_TEST_BINDIR:/bin" run "$TEST_GO_SCRIPT" 'foobar' 'Foo Bar'
+  run "$TEST_GO_SCRIPT" 'foobar' 'Foo Bar'
   assert_success ''
 }
