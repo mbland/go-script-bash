@@ -431,7 +431,14 @@ assert_command_script_is_executable() {
     $'\n@test "\$SUITE: short description of your first test case" \{\n'
 }
 
-@test "$SUITE: --test fails if public module already exists" {
+@test "$SUITE: no '../' in environment load path for top-level test" {
+  run "$TEST_GO_SCRIPT" new --test foo
+  assert_success "EDITING: $TEST_GO_ROOTDIR/$_GO_TEST_DIR/foo.bats"
+  assert_file_matches "$TEST_GO_ROOTDIR/$_GO_TEST_DIR/foo.bats" \
+    $'\nload environment\n'
+}
+
+@test "$SUITE: --test fails if test already exists" {
   run "$TEST_GO_SCRIPT" new --test foo/bar/baz
   assert_success "EDITING: $TEST_GO_ROOTDIR/$_GO_TEST_DIR/foo/bar/baz.bats"
   run "$TEST_GO_SCRIPT" new --test foo/bar/baz

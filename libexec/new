@@ -226,7 +226,9 @@ _@go.new_test() {
   local parent_dir="${test_relpath%/*}"
   local impl
 
-  if [[ -n "$parent_dir" ]]; then
+  if [[ "$parent_dir" == "${test_path##*/}" ]]; then
+    parent_dir=''
+  else
     parent_dir="${parent_dir//[^\/]}/"
   fi
 
