@@ -52,8 +52,9 @@ readonly __GO_VALID_IDENTIFIER_PATTERN='^[[:alpha:]_][[:alnum:]_]*$'
   local skip_callers="${3:-2}"
 
   if ! @go.validate_input "$value"; then
-    printf '%s "%s" for %s contains invalid characters at:\n' \
-      "$description" "$value" "${FUNCNAME[$((skip_callers - 1))]}" >&2
+    printf '%s "%s" for %s contains %s at:\n' \
+      "$description" "$value" "${FUNCNAME[$((skip_callers - 1))]}" \
+      'unescaped shell metacharacters or control operators' >&2
     @go.print_stack_trace "$skip_callers" >&2
     exit 1
   fi

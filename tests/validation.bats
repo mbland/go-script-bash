@@ -92,7 +92,7 @@ assert_success_on_valid_input() {
   assert_failure
 
   local err_msg='^input argument "foo;bar" for @go\.validate_input_or_die '
-  err_msg+='contains invalid characters at:$'
+  err_msg+='contains unescaped shell metacharacters or control operators at:$'
 
   assert_lines_match "$err_msg" \
     "  $TEST_GO_SCRIPT:[0-9] main"
@@ -105,7 +105,7 @@ assert_success_on_valid_input() {
   run "$TEST_GO_SCRIPT"
   assert_failure
   assert_lines_match \
-    '^input argument "foo;bar" for test_func contains invalid characters at:$' \
+    '^input argument "foo;bar" for test_func contains unescaped .* at:$' \
     "  $TEST_GO_SCRIPT:[0-9] main"
 }
 
