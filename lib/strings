@@ -9,11 +9,14 @@
 #   @go.join
 #     Joins multiple items into a string variable defined by the caller
 #
+#   @go.trim
+#     Trims the leading and trailing whitespace from a string
+#
 #   @go.common_prefix
 #     Determines the common prefix for a set of strings
 #
-#   @go.remove_common_path_prefix
-#     Removes the common path prefix from a set of file paths
+#   @go.common_parent_path
+#     Determines the common parent directory path from a set of file paths
 #
 # These functions help avoid `IFS`-related pitfalls as described by:
 #
