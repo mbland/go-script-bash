@@ -145,7 +145,8 @@ create_file_open_test_go_script() {
   FILE_PATH_OR_FD="$file_path_or_fd" run "$TEST_GO_SCRIPT"
 
   local err_msg="file_path_or_fd \"$file_path_or_fd\" "
-  err_msg+='for @go.open_file_or_duplicate_fd contains invalid characters at:'
+  err_msg+='for @go.open_file_or_duplicate_fd contains '
+  err_msg+='unescaped shell metacharacters or control operators at:'
 
   local expected=("$err_msg"
     "  $TEST_GO_SCRIPT:5 main")

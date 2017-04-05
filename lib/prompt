@@ -9,6 +9,9 @@
 #   @go.prompt_for_input
 #     Prompts the user for a line of input
 #
+#   @go.prompt_for_safe_input
+#     Prompts the user for a line of input, then validates it isn't dangerous
+#
 #   @go.prompt_for_yes_or_no
 #     Prompts the user for a yes or no response
 #
@@ -57,6 +60,42 @@
 
   if [[ -z "${!1}" && -n "$4" ]]; then
     @go.printf '%s\n' "$4" >&2
+    return 1
+  fi
+}
+
+# Prompts the user for a line of input, then validates it isn't dangerous
+#
+# With the exception of the `--or-die` option, the arguments are the same as the
+# underlying `@go.prompt_for_input`. Useful if the input value may be used to
+# construct a command or query.
+#
+# Options (must be specified before arguments):
+#   --or-die <desc>  Print description and stack and exit with error if invalid
+#
+# Arguments:
+#   result_var  Name of the caller-declared variable for the result
+#   prompt      Text prompt for user input
+#   default     (Optional) Default value if response is empty
+#   fail_msg    (Optional) Failure message if empty input isn't valid
+@go.prompt_for_safe_input() {
+  local or_die
+  local description
+
+  if [[ "$1" == '--or-die' ]]; then
+    or_die='true'
+    description="$2"
+    shift 2
+  fi
+  @go.validate_identifier_or_die 'Input prompt response variable name' "$1"
+
+  if ! @go.prompt_for_input "$@"; then
+    return 1
+  elif [[ "$or_die" == 'true' ]]; then
+    @go.validate_input_or_die "$description" "${!1}"
+  elif ! @go.validate_input "${!1}"; then
+    @go.printf '"%s" is an invalid response, as it contains %s.\n' \
+      "${!1}" 'unescaped shell metacharacters or control operators' >&2
     return 1
   fi
 }
