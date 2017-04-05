@@ -261,8 +261,8 @@ page][go-rel]. The archives for the current release are:
 
 [go-rel]: https://github.com/mbland/go-script-bash/releases
 
-- https://github.com/mbland/go-script-bash/archive/v1.4.0.tar.gz
-- https://github.com/mbland/go-script-bash/archive/v1.4.0.zip
+- https://github.com/mbland/go-script-bash/archive/v1.5.0.tar.gz
+- https://github.com/mbland/go-script-bash/archive/v1.5.0.zip
 
 You can also add this repository to your project as a [Git submodule][git-sub]:
 
