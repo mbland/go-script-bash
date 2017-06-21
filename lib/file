@@ -22,7 +22,7 @@ readonly __GO_START_FD='3'
 # DO NOT EDIT: Pattern used to validate file descriptor parameters
 readonly __GO_FILE_DESCRIPTOR_PATTERN='^[1-9][0-9]*$'
 
-if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
+if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN || \
   "$_GO_MAX_FILE_DESCRIPTORS" -le "$__GO_START_FD" ]]; then
   printf "_GO_MAX_FILE_DESCRIPTORS is %s, must be a number greater than %d.\n" \
     "\"$_GO_MAX_FILE_DESCRIPTORS\"" "$__GO_START_FD" >&2
