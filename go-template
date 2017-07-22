@@ -65,7 +65,7 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
       return 1
     fi
     printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
-    if ! curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL" | tar -xz ; then
+    if ! curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL" | tar -xz 2>/dev/null ; then
       printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" >&2
       return 1
     fi
