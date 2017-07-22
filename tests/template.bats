@@ -118,3 +118,55 @@ teardown() {
   assert_success
   assert_output_matches "go-script-bash $_GO_CORE_VERSION"
 }
+
+@test "$SUITE: fail to create directory uses git clone" {
+  PATH="$BATS_TEST_BINDIR:$PATH" 
+  stub_program_in_path mkdir "exit 1"
+  run "$_GO_CORE_DIR/go-template"
+  restore_program_in_path mkdir
+
+  # Without a command argument, the script will print the top-level help and
+  # return an error, but the core repo should exist as expected.
+  assert_output_matches "Downloading framework from '${GO_SCRIPT_BASH_REPO_URL%.git}.*.tar.gz'\.\.\."
+  assert_output_matches "Failed to create scripts dir '$GO_SCRIPTS_DIR'"
+  assert_output_matches "Using git clone as fallback"
+  assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'\.\.\."
+
+  # Use `.*/scripts/go-script-bash` to account for the fact that `git clone` on
+  # MSYS2 will output `C:/Users/<user>/AppData/Local/Temp/` in place of `/tmp`.
+  assert_output_matches "Cloning into '.*/$GO_SCRIPTS_DIR/go-script-bash'\.\.\."
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+  assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
+  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
+
+  cd "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash"
+  run git log --oneline -n 1
+  assert_success
+  assert_output_matches "go-script-bash $_GO_CORE_VERSION"
+}
+
+@test "$SUITE: fail to move extracted directory uses git clone" {
+  PATH="$BATS_TEST_BINDIR:$PATH" 
+  stub_program_in_path mv "exit 1"
+  run "$_GO_CORE_DIR/go-template"
+  restore_program_in_path mv
+
+  # Without a command argument, the script will print the top-level help and
+  # return an error, but the core repo should exist as expected.
+  assert_output_matches "Downloading framework from '${GO_SCRIPT_BASH_REPO_URL%.git}.*.tar.gz'\.\.\."
+  assert_output_matches "Failed to install downloaded directory in '.*/$GO_SCRIPTS_DIR/go-script-bash'"
+  assert_output_matches "Using git clone as fallback"
+  assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'\.\.\."
+
+  # Use `.*/scripts/go-script-bash` to account for the fact that `git clone` on
+  # MSYS2 will output `C:/Users/<user>/AppData/Local/Temp/` in place of `/tmp`.
+  assert_output_matches "Cloning into '.*/$GO_SCRIPTS_DIR/go-script-bash'\.\.\."
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+  assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
+  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
+
+  cd "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash"
+  run git log --oneline -n 1
+  assert_success
+  assert_output_matches "go-script-bash $_GO_CORE_VERSION"
+}
