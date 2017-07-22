@@ -63,7 +63,7 @@ teardown() {
     "Failed to download from 'https://github.com/mbland/go-script-bash/archive/vnonexistent.tar.gz'." \
     "Using git clone as fallback" \
     "Cloning framework from 'https://github.com/mbland/go-script-bash.git'..." \
-    "Cloning into '/Users/paquete/octobot/repos/go-script-bash/tests/tmp/go-template-test-scripts/go-script-bash'..." \
+    "Cloning into '$PWD/$GO_SCRIPTS_DIR/go-script-bash'..." \
     "warning: Could not find remote branch vnonexistent to clone." \
     "fatal: Remote branch vnonexistent not found in upstream origin" \
     "Failed to clone 'https://github.com/mbland/go-script-bash.git'; aborting."
