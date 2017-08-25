@@ -49,50 +49,55 @@ declare GO_SCRIPT_BASH_REPO_URL="${GO_SCRIPT_BASH_REPO_URL:-https://github.com/m
 # URL with the release files
 declare GO_SCRIPT_BASH_DOWNLOAD_URL="${GO_SCRIPT_BASH_DOWNLOAD_URL:-${GO_SCRIPT_BASH_REPO_URL%.git}/archive}/$GO_SCRIPT_BASH_VERSION.tar.gz"
 
-if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
-  curl_download(){
-    local unpacked_dir="go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
+# Downloads `GO_SCRIPT_BASH_VERSION` as a tar.gz file and unpacks it.
+download_go_script_bash_tarball() {
+  local unpacked_dir="go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
 
-    if ! command curl -V >/dev/null; then
-      printf "Failed to find cURL or tar\n"
-      return 1
-    fi
-    if ! command tar --help >/dev/null; then
-      printf "Failed to find cURL or tar\n"
-      return 1
-    fi
-    printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
-    if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") 2>/dev/null ||
-      [[ ! -d "$unpacked_dir" ]]; then
-      printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" \
-        >&2
-      return 1
-    fi
-    if ! mkdir -p "$GO_SCRIPTS_DIR" ; then
-      printf "Failed to create scripts dir '%s'\n" "$GO_SCRIPTS_DIR" >&2
-      rm -rf "$unpacked_dir"
-      return 1
-    fi
-    if ! mv "$unpacked_dir" "$GO_SCRIPT_BASH_CORE_DIR"; then
-      printf "Failed to install downloaded directory in '%s'\n" \
-        "$GO_SCRIPT_BASH_CORE_DIR" >&2
-      rm -rf "$unpacked_dir"
-      return 1
-    fi
-    printf "Download of '%s' successful.\n\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
-    return 0
-  }
-  
-  if ! curl_download; then
+  if ! command curl -V >/dev/null; then
+    printf "Failed to find cURL or tar\n"
+    return 1
+  fi
+  if ! command tar --help >/dev/null; then
+    printf "Failed to find cURL or tar\n"
+    return 1
+  fi
+  printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
+  if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") 2>/dev/null ||
+    [[ ! -d "$unpacked_dir" ]]; then
+    printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" >&2
+    return 1
+  fi
+  if ! mkdir -p "$GO_SCRIPTS_DIR" ; then
+    printf "Failed to create scripts dir '%s'\n" "$GO_SCRIPTS_DIR" >&2
+    rm -rf "$unpacked_dir"
+    return 1
+  fi
+  if ! mv "$unpacked_dir" "$GO_SCRIPT_BASH_CORE_DIR"; then
+    printf "Failed to install downloaded directory in '%s'\n" \
+      "$GO_SCRIPT_BASH_CORE_DIR" >&2
+    rm -rf "$unpacked_dir"
+    return 1
+  fi
+  printf "Download of '%s' successful.\n\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
+}
+
+git_clone_go_script_bash() {
+  printf "Cloning framework from '%s'...\n" "$GO_SCRIPT_BASH_REPO_URL"
+  if ! git clone --depth 1 -c advice.detachedHead=false \
+      -b "$GO_SCRIPT_BASH_VERSION" "$GO_SCRIPT_BASH_REPO_URL" \
+      "$GO_SCRIPT_BASH_CORE_DIR"; then
+    printf "Failed to clone '%s'; aborting.\n" "$GO_SCRIPT_BASH_REPO_URL" >&2
+    return 1
+  fi
+  printf "Clone of '%s' successful.\n\n" "$GO_SCRIPT_BASH_REPO_URL"
+}
+
+if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
+  if ! download_go_script_bash_tarball; then
     printf "Using git clone as fallback\n"
-    printf "Cloning framework from '%s'...\n" "$GO_SCRIPT_BASH_REPO_URL"
-    if ! git clone --depth 1 -c advice.detachedHead=false \
-        -b "$GO_SCRIPT_BASH_VERSION" "$GO_SCRIPT_BASH_REPO_URL" \
-        "$GO_SCRIPT_BASH_CORE_DIR"; then
-      printf "Failed to clone '%s'; aborting.\n" "$GO_SCRIPT_BASH_REPO_URL" >&2
+    if ! git_clone_go_script_bash; then
       exit 1
     fi
-    printf "Clone of '%s' successful.\n\n" "$GO_SCRIPT_BASH_REPO_URL"
   fi
 fi
 
