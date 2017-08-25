@@ -34,6 +34,18 @@ teardown() {
   rm -rf "$_GO_ROOTDIR/$GO_SCRIPTS_DIR"
 }
 
+assert_go_core_unpacked() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local go_core="$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash"
+  local result='0'
+
+  if [[ ! -f "$go_core" ]]; then
+    printf "Download did not unpack go-core.bash to: $go_core" >&2
+    result='1'
+  fi
+  restore_bats_shell_options "$result"
+}
+
 @test "$SUITE: successfully run 'help' from its own directory" {
   GO_SCRIPT_BASH_CORE_DIR="$_GO_CORE_DIR" GO_SCRIPTS_DIR='scripts' \
     run "$_GO_CORE_DIR/go-template" 'help'
@@ -53,8 +65,7 @@ teardown() {
   # MSYS2 will output `C:/Users/<user>/AppData/Local/Temp/` in place of `/tmp`.
   assert_output_matches "Download of '${GO_SCRIPT_BASH_REPO_URL%.git}.*.tar.gz' successful."
   assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
-  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
-
+  assert_go_core_unpacked
 }
 
 @test "$SUITE: fail to download a nonexistent repo" {
@@ -101,7 +112,7 @@ teardown() {
   assert_output_matches "Cloning into '.*/$GO_SCRIPTS_DIR/go-script-bash'\.\.\."
   assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
   assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
-  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
+  assert_go_core_unpacked
 
   cd "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash"
   run git log --oneline -n 1
@@ -126,7 +137,7 @@ teardown() {
   assert_output_matches "Cloning into '.*/$GO_SCRIPTS_DIR/go-script-bash'\.\.\."
   assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
   assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
-  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
+  assert_go_core_unpacked
 
   cd "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash"
   run git log --oneline -n 1
@@ -152,7 +163,7 @@ teardown() {
   assert_output_matches "Cloning into '.*/$GO_SCRIPTS_DIR/go-script-bash'\.\.\."
   assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
   assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
-  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
+  assert_go_core_unpacked
 
   cd "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash"
   run git log --oneline -n 1
@@ -178,7 +189,7 @@ teardown() {
   assert_output_matches "Cloning into '.*/$GO_SCRIPTS_DIR/go-script-bash'\.\.\."
   assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
   assert_output_matches "Usage: $_GO_CORE_DIR/go-template <command>"
-  [[ -f "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash/go-core.bash" ]]
+  assert_go_core_unpacked
 
   cd "$_GO_ROOTDIR/$GO_SCRIPTS_DIR/go-script-bash"
   run git log --oneline -n 1
