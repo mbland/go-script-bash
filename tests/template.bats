@@ -21,12 +21,13 @@ load environment
 TEST_USE_REAL_URL="${TEST_USE_REAL_URL:-$TRAVIS}"
 GO_CORE_URL="${TEST_USE_REAL_URL:+$_GO_CORE_URL}"
 GO_CORE_URL="${GO_CORE_URL:-$_GO_CORE_DIR}"
+GO_SCRIPT_BASH_VERSION="$_GO_CORE_VERSION"
+GO_SCRIPT_BASH_REPO_URL="https://github.com/mbland/go-script-bash.git"
+GO_SCRIPT_BASH_DOWNLOAD_URL="${GO_SCRIPT_BASH_REPO_URL%.git}/archive"
 
 setup() {
   test_filter
-  export GO_SCRIPT_BASH_VERSION="$_GO_CORE_VERSION"
-  export GO_SCRIPT_BASH_REPO_URL="https://github.com/mbland/go-script-bash.git"
-  export GO_SCRIPT_BASH_DOWNLOAD_URL="${GO_SCRIPT_BASH_REPO_URL%.git}/archive"
+  export GO_SCRIPT_BASH_{VERSION,REPO_URL,DOWNLOAD_URL}
 
   # Set up the template to run from `TEST_GO_ROOTDIR`. Add a dummy script to
   # ensure it doesn't return nonzero due to no scripts being present. This will
