@@ -50,10 +50,6 @@ declare GO_SCRIPT_BASH_REPO_URL="${GO_SCRIPT_BASH_REPO_URL:-https://github.com/m
 declare GO_SCRIPT_BASH_DOWNLOAD_URL="${GO_SCRIPT_BASH_DOWNLOAD_URL:-${GO_SCRIPT_BASH_REPO_URL%.git}/archive}/$GO_SCRIPT_BASH_VERSION.tar.gz"
 
 if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
-  declare PIPEFAIL_BACKUP=($(shopt -op | grep pipefail))
-  set -o pipefail
-  
-  # Using a function to allow for multiple return points
   curl_download(){
     local unpacked_dir="go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
 
@@ -66,7 +62,8 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
       return 1
     fi
     printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
-    if ! curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL" | tar -xz 2>/dev/null ; then
+    if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") 2>/dev/null ||
+      [[ ! -d "$unpacked_dir" ]]; then
       printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" \
         >&2
       return 1
@@ -93,12 +90,10 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
         -b "$GO_SCRIPT_BASH_VERSION" "$GO_SCRIPT_BASH_REPO_URL" \
         "$GO_SCRIPT_BASH_CORE_DIR"; then
       printf "Failed to clone '%s'; aborting.\n" "$GO_SCRIPT_BASH_REPO_URL" >&2
-      "${PIPEFAIL_BACKUP[@]}"
       exit 1
     fi
     printf "Clone of '%s' successful.\n\n" "$GO_SCRIPT_BASH_REPO_URL"
   fi
-  "${PIPEFAIL_BACKUP[@]}"
 fi
 
 . "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "$GO_SCRIPTS_DIR"
