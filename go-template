@@ -55,6 +55,8 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
   
   # Using a function to allow for multiple return points
   curl_download(){
+    local unpacked_dir="go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
+
     if ! command curl -V >/dev/null; then
       printf "Failed to find cURL or tar\n"
       return 1
@@ -65,18 +67,19 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
     fi
     printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
     if ! curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL" | tar -xz 2>/dev/null ; then
-      printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" >&2
+      printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" \
+        >&2
       return 1
     fi
     if ! mkdir -p "$GO_SCRIPTS_DIR" ; then
       printf "Failed to create scripts dir '%s'\n" "$GO_SCRIPTS_DIR" >&2
-      rm -rf "go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
+      rm -rf "$unpacked_dir"
       return 1
     fi
-    if ! mv "go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER" "$GO_SCRIPT_BASH_CORE_DIR"; then
+    if ! mv "$unpacked_dir" "$GO_SCRIPT_BASH_CORE_DIR"; then
       printf "Failed to install downloaded directory in '%s'\n" \
         "$GO_SCRIPT_BASH_CORE_DIR" >&2
-      rm -rf "go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
+      rm -rf "$unpacked_dir"
       return 1
     fi
     printf "Download of '%s' successful.\n\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
