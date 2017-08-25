@@ -135,6 +135,7 @@ run_with_download_program() {
 
   create_forwarding_script 'bash'
   create_forwarding_script 'tar'
+  create_forwarding_script 'gzip'
   create_forwarding_script 'mkdir'
   create_forwarding_script 'mv'
 
