@@ -51,6 +51,27 @@ assert_go_core_unpacked() {
   restore_bats_shell_options "$result"
 }
 
+# Creates a script in `BATS_TEST_BINDIR` to stand in for a program on `PATH`
+#
+# This enables a test to use `PATH="$BATS_TEST_BINDIR" run ...` to hide programs
+# installed on the system to test cases when specific programs can't be found,
+# while others remain available.
+#
+# Creates `BATS_TEST_BINDIR` if it doesn't already exist.
+#
+# Arguments:
+#   program_name:  Name of the system program to forward
+create_forwarding_script() {
+  local real_program="$(command -v "$1")"
+  local forwarding_script="$BATS_TEST_BINDIR/$1"
+
+  if [[ ! -d "$BATS_TEST_BINDIR" ]]; then
+    mkdir "$BATS_TEST_BINDIR"
+  fi
+  printf '%s\n' "#! $BASH" "\"$real_program\" \"\$@\"" >"$forwarding_script"
+  chmod 700 "$forwarding_script"
+}
+
 @test "$SUITE: successfully run 'help' from its own directory" {
   # Use `_GO_CORE_DIR` to avoid the download attempt in this test.
   GO_SCRIPT_BASH_CORE_DIR="$_GO_CORE_DIR" \
@@ -99,9 +120,8 @@ assert_go_core_unpacked() {
 }
 
 @test "$SUITE: fail to find curl uses git clone" {
-  stub_program_in_path curl "exit 1"
-  run "$TEST_GO_ROOTDIR/go-template"
-  restore_program_in_path curl
+  create_forwarding_script 'git'
+  PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
@@ -120,9 +140,9 @@ assert_go_core_unpacked() {
 }
 
 @test "$SUITE: fail to find tar uses git clone" {
-  stub_program_in_path tar "exit 1"
-  run "$TEST_GO_ROOTDIR/go-template"
-  restore_program_in_path tar
+  create_forwarding_script 'curl'
+  create_forwarding_script 'git'
+  PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
