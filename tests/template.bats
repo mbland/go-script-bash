@@ -2,10 +2,25 @@
 
 load environment
 
+# By default, the test will try to clone its own repo to avoid flakiness due to
+# an external dependency. However, doing so causes a failure on Travis, since it
+# uses shallow clones to produce test runs, resulting in the error:
+#
+#   fatal: attempt to fetch/clone from a shallow repository
+#
 # However, since Travis already depends on having a good connection to GitHub,
 # we'll use the real URL. Alternatively, `git` could be stubbed out via
 # `stub_program_in_path` from `_GO_CORE_DIR/lib/bats/helpers`, but the potential
 # for neither flakiness nor complexity seems that great, and this approach
+# provides extra confidence that the mechanism works as advertised.
+#
+# A developer can also run the test locally against the real URL by setting
+# `TEST_USE_REAL_URL` on the command line. The value of `GO_CORE_URL` is
+# subsequently displayed in the name of the test case to validate which repo is
+# being used during the test run.
+TEST_USE_REAL_URL="${TEST_USE_REAL_URL:-$TRAVIS}"
+GO_CORE_URL="${TEST_USE_REAL_URL:+$_GO_CORE_URL}"
+GO_CORE_URL="${GO_CORE_URL:-$_GO_CORE_DIR}"
 
 setup() {
   test_filter
