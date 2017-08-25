@@ -99,7 +99,6 @@ assert_go_core_unpacked() {
 }
 
 @test "$SUITE: fail to find curl uses git clone" {
-  PATH="$BATS_TEST_BINDIR:$PATH" 
   stub_program_in_path curl "exit 1"
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path curl
@@ -121,7 +120,6 @@ assert_go_core_unpacked() {
 }
 
 @test "$SUITE: fail to find tar uses git clone" {
-  PATH="$BATS_TEST_BINDIR:$PATH" 
   stub_program_in_path tar "exit 1"
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path tar
