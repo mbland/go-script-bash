@@ -37,9 +37,6 @@ declare GO_SCRIPTS_DIR="${GO_SCRIPTS_DIR:-scripts}"
 # The `GO_SCRIPT_BASH_REPO_URL` tag or branch you wish to use
 declare GO_SCRIPT_BASH_VERSION="${GO_SCRIPT_BASH_VERSION:-v1.5.0}"
 
-# The target version string, removing the leading 'v'
-declare _GO_SCRIPT_BASH_VERSION_NUMBER="${GO_SCRIPT_BASH_VERSION:1}"
-
 # The go-script-bash installation directory within your project
 declare GO_SCRIPT_BASH_CORE_DIR="${GO_SCRIPT_BASH_CORE_DIR:-${0%/*}/$GO_SCRIPTS_DIR/go-script-bash}"
 
@@ -51,7 +48,9 @@ declare GO_SCRIPT_BASH_DOWNLOAD_URL="${GO_SCRIPT_BASH_DOWNLOAD_URL:-${GO_SCRIPT_
 
 # Downloads `GO_SCRIPT_BASH_VERSION` as a tar.gz file and unpacks it.
 download_go_script_bash_tarball() {
-  local unpacked_dir="go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
+  # GitHub removes the leading 'v' from the archive's output directory.
+  local unpacked_dir="go-script-bash-${GO_SCRIPT_BASH_VERSION#v}"
+  local core_dir_parent="${GO_SCRIPT_BASH_CORE_DIR%/*}"
 
   if ! command -v curl >/dev/null; then
     printf "Failed to find cURL\n" >&2
@@ -62,17 +61,16 @@ download_go_script_bash_tarball() {
     return 1
   fi
   printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
-  if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") 2>/dev/null ||
+
+  if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") ||
     [[ ! -f "$unpacked_dir/go-core.bash" ]]; then
     printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" >&2
     return 1
-  fi
-  if ! mkdir -p "$GO_SCRIPTS_DIR" ; then
-    printf "Failed to create scripts dir '%s'\n" "$GO_SCRIPTS_DIR" >&2
+  elif [[ ! -d "$core_dir_parent" ]] && ! mkdir -p "$core_dir_parent" ; then
+    printf "Failed to create scripts dir '%s'\n" "$core_dir_parent" >&2
     rm -rf "$unpacked_dir"
     return 1
-  fi
-  if ! mv "$unpacked_dir" "$GO_SCRIPT_BASH_CORE_DIR"; then
+  elif ! mv "$unpacked_dir" "$GO_SCRIPT_BASH_CORE_DIR"; then
     printf "Failed to install downloaded directory in '%s'\n" \
       "$GO_SCRIPT_BASH_CORE_DIR" >&2
     rm -rf "$unpacked_dir"

@@ -39,10 +39,7 @@ setup() {
   test_filter
   export GO_SCRIPT_BASH_{VERSION,REPO_URL,DOWNLOAD_URL}
 
-  # Set up the template to run from `TEST_GO_ROOTDIR`. Add a dummy script to
-  # ensure it doesn't return nonzero due to no scripts being present. This will
-  # also create `TEST_GO_ROOTDIR` and `TEST_GO_ROOTDIR/scripts`.
-  @go.create_test_command_script 'foo' 'printf "%s\n" "Hello, World!"'
+  mkdir -p "$TEST_GO_ROOTDIR"
   cp "$_GO_CORE_DIR/go-template" "$TEST_GO_ROOTDIR"
 }
 
@@ -52,7 +49,7 @@ teardown() {
 
 assert_go_core_unpacked() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
-  local go_core="$TEST_GO_SCRIPTS_DIR/go-script-bash/go-core.bash"
+  local go_core="${1:-$TEST_GO_SCRIPTS_DIR/go-script-bash}/go-core.bash"
   local result='0'
 
   if [[ ! -f "$go_core" ]]; then
@@ -114,6 +111,10 @@ create_forwarding_script() {
 }
 
 @test "$SUITE: successfully run 'help' from its own directory" {
+  # Set up the template to run from `TEST_GO_ROOTDIR`. Add a dummy script to
+  # ensure it doesn't return nonzero due to no scripts being present.
+  @go.create_test_command_script 'foo' 'printf "%s\n" "Hello, World!"'
+
   # Use `_GO_CORE_DIR` to avoid the download attempt in this test.
   GO_SCRIPT_BASH_CORE_DIR="$_GO_CORE_DIR" \
     run "$TEST_GO_ROOTDIR/go-template" 'help'
@@ -131,6 +132,33 @@ create_forwarding_script() {
   assert_output_matches "Downloading framework from '$FULL_DOWNLOAD_URL'\.\.\."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
+}
+
+@test "$SUITE: download into nonstandard GO_SCRIPTS_DIR" {
+  local core_dir="$TEST_GO_ROOTDIR/foobar"
+  create_fake_tarball_if_not_using_real_url
+
+  # Create a command script in the normal `TEST_GO_SCRIPTS_DIR`.
+  @go.create_test_command_script 'foo' 'printf "%s\n" "Hello, World!"'
+  GO_SCRIPT_BASH_CORE_DIR="$core_dir" run "$TEST_GO_ROOTDIR/go-template"
+
+  assert_failure
+  assert_output_matches "Download of '$FULL_DOWNLOAD_URL' successful."
+  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
+  assert_go_core_unpacked "$core_dir"
+}
+
+@test "$SUITE: download uses existing GO_SCRIPTS_DIR" {
+  create_fake_tarball_if_not_using_real_url
+  mkdir -p "$TEST_GO_SCRIPTS_DIR"
+  stub_program_in_path mkdir "exit 1"
+  run "$TEST_GO_ROOTDIR/go-template"
+  restore_program_in_path 'mkdir'
+
+  assert_failure
+  assert_output_matches "Download of '$FULL_DOWNLOAD_URL' successful."
+  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
+  assert_go_core_unpacked "$core_dir"
 }
 
 @test "$SUITE: fail to download a nonexistent repo" {
@@ -216,8 +244,7 @@ create_forwarding_script() {
   # Note that the go-template defines `GO_SCRIPTS_DIR`, but the framework's own
   # `go` script doesn't. Hence, we use `TEST_GO_SCRIPTS_RELATIVE_DIR` below,
   # which should always match the default `GO_SCRIPTS_DIR` in the template.
-  assert_output_matches \
-    "Failed to create scripts dir '$TEST_GO_SCRIPTS_RELATIVE_DIR'"
+  assert_output_matches "Failed to create scripts dir '$TEST_GO_SCRIPTS_DIR'"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'."
