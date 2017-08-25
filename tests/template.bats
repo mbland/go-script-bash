@@ -92,7 +92,6 @@ create_fake_tarball_if_not_using_real_url() {
       "$tarball" "$full_dir" >&2
     result='1'
   fi
-  printf 'MAKING TARBALL %s\n' "$tarball" >&2
   restore_bats_shell_options "$result"
 }
 
