@@ -34,6 +34,7 @@ GO_SCRIPT_BASH_DOWNLOAD_URL="$GO_ARCHIVE_URL"
 
 RELEASE_TARBALL="${GO_SCRIPT_BASH_VERSION}.tar.gz"
 FULL_DOWNLOAD_URL="$GO_SCRIPT_BASH_DOWNLOAD_URL/$RELEASE_TARBALL"
+LOCAL_DOWNLOAD_URL="$TEST_ARCHIVE_URL/$RELEASE_TARBALL"
 
 setup() {
   test_filter
@@ -63,30 +64,36 @@ assert_go_core_unpacked() {
 #
 # This could probably become a general-purpose utility one day.
 create_fake_tarball_if_not_using_real_url() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+
   # We have to trim the leading 'v' from the version string.
   local dirname="go-script-bash-${GO_SCRIPT_BASH_VERSION#v}"
   local full_dir="$TEST_GO_ROOTDIR/$dirname"
-  local tarball="${FULL_DOWNLOAD_URL#file://}"
+  local tarball="${LOCAL_DOWNLOAD_URL#file://}"
+  local result='0'
 
   if [[ -n "$TEST_USE_REAL_URL" ]]; then
+    restore_bats_shell_options
     return
   fi
 
   if ! mkdir -p "${tarball%/*}"; then
     printf 'Failed to create fake archive dir %s\n' "$full_dir" >&2
-    return 1
+    result='1'
   elif ! mkdir -p "$full_dir"; then
     printf 'Failed to create fake content dir %s\n' "$full_dir" >&2
-    return 1
+    result='1'
   elif ! tar xf <(tar cf - go-core.bash lib libexec) -C "$full_dir"; then
     printf 'Failed to mirror %s to fake tarball dir %s\n' \
       "$_GO_ROOTDIR" "$full_dir" >&2
-    return 1
+    result='1'
   elif ! tar cfz "$tarball" -C "$TEST_GO_ROOTDIR" "$dirname"; then
     printf 'Failed to create fake tarball %s\n  from dir %s\n' \
       "$tarball" "$full_dir" >&2
-    return 1
+    result='1'
   fi
+  printf 'MAKING TARBALL %s\n' "$tarball" >&2
+  restore_bats_shell_options "$result"
 }
 
 # Creates a script in `BATS_TEST_BINDIR` to stand in for a program on `PATH`
@@ -100,6 +107,7 @@ create_fake_tarball_if_not_using_real_url() {
 # Arguments:
 #   program_name:  Name of the system program to forward
 create_forwarding_script() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   local real_program="$(command -v "$1")"
   local forwarding_script="$BATS_TEST_BINDIR/$1"
 
@@ -108,6 +116,34 @@ create_forwarding_script() {
   fi
   printf '%s\n' "#! $BASH" "\"$real_program\" \"\$@\"" >"$forwarding_script"
   chmod 700 "$forwarding_script"
+  restore_bats_shell_options
+}
+
+# Used to mimic each of curl, wget, and fetch while testing downloads.
+#
+# This way we can test all of the download program selection logic regardless of
+# what's installed on the host.
+run_with_download_program() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local download_program="$1"
+
+  # This isn't a useless use of cat; it's the easiest way to stream raw bytes
+  # from the input file to standard output, as $(< $filename) doesn't handle
+  # them properly.
+  stub_program_in_path "$download_program" \
+    'filename="${@:$#}"' \
+    "\"$(command -v cat)\" \"\${filename#file://}\""
+
+  create_forwarding_script 'bash'
+  create_forwarding_script 'tar'
+  create_forwarding_script 'mkdir'
+  create_forwarding_script 'mv'
+
+  # We're forcing a local tarball "download" here.
+  TEST_USE_REAL_URL= create_fake_tarball_if_not_using_real_url
+  GO_SCRIPT_BASH_DOWNLOAD_URL="file://$TEST_GO_ROOTDIR/archive" \
+    PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
+  restore_bats_shell_options
 }
 
 @test "$SUITE: successfully run 'help' from its own directory" {
@@ -130,6 +166,27 @@ create_forwarding_script() {
   # return an error, but the core repo should exist as expected.
   assert_failure
   assert_output_matches "Downloading framework from '$FULL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
+  assert_go_core_unpacked
+}
+
+@test "$SUITE: download locally using curl" {
+  run_with_download_program 'curl'
+  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
+  assert_go_core_unpacked
+}
+
+@test "$SUITE: download locally using wget" {
+  run_with_download_program 'wget'
+  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
+  assert_go_core_unpacked
+}
+
+@test "$SUITE: download locally using fetch" {
+  run_with_download_program 'fetch'
+  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
@@ -158,7 +215,7 @@ create_forwarding_script() {
   assert_failure
   assert_output_matches "Download of '$FULL_DOWNLOAD_URL' successful."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked "$core_dir"
+  assert_go_core_unpacked
 }
 
 @test "$SUITE: fail to download a nonexistent repo" {
@@ -188,13 +245,13 @@ create_forwarding_script() {
   assert_output_matches "Failed to clone '$GO_SCRIPT_BASH_REPO_URL'; aborting."
 }
 
-@test "$SUITE: fail to find curl uses git clone" {
+@test "$SUITE: fail to find download program uses git clone" {
   create_forwarding_script 'git'
   PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
-  assert_output_matches "Failed to find cURL"
+  assert_output_matches "Failed to find cURL, wget, or fetch"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"

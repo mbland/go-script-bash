@@ -51,18 +51,26 @@ download_go_script_bash_tarball() {
   # GitHub removes the leading 'v' from the archive's output directory.
   local unpacked_dir="go-script-bash-${GO_SCRIPT_BASH_VERSION#v}"
   local core_dir_parent="${GO_SCRIPT_BASH_CORE_DIR%/*}"
+  local download_cmd=()
 
-  if ! command -v curl >/dev/null; then
-    printf "Failed to find cURL\n" >&2
+  if command -v curl >/dev/null; then
+    download_cmd=(curl -LfsS)
+  elif command -v wget >/dev/null; then
+    download_cmd=(wget -O -)
+  elif command -v fetch >/dev/null; then
+    download_cmd=(fetch -o -)
+  else
+    printf "Failed to find cURL, wget, or fetch\n" >&2
     return 1
   fi
+
   if ! command -v tar >/dev/null; then
     printf "Failed to find tar\n" >&2
     return 1
   fi
   printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
 
-  if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") ||
+  if ! tar -xzf <("${download_cmd[@]}" "$GO_SCRIPT_BASH_DOWNLOAD_URL") ||
     [[ ! -f "$unpacked_dir/go-core.bash" ]]; then
     printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" >&2
     return 1
