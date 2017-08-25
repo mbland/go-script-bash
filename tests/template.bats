@@ -125,7 +125,7 @@ create_forwarding_script() {
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
-  assert_output_matches "Failed to find cURL or tar"
+  assert_output_matches "Failed to find cURL"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"
@@ -146,7 +146,7 @@ create_forwarding_script() {
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
-  assert_output_matches "Failed to find cURL or tar"
+  assert_output_matches "Failed to find tar"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"

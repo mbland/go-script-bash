@@ -54,11 +54,11 @@ download_go_script_bash_tarball() {
   local unpacked_dir="go-script-bash-$_GO_SCRIPT_BASH_VERSION_NUMBER"
 
   if ! command -v curl >/dev/null; then
-    printf "Failed to find cURL or tar\n"
+    printf "Failed to find cURL\n" >&2
     return 1
   fi
   if ! command -v tar >/dev/null; then
-    printf "Failed to find cURL or tar\n"
+    printf "Failed to find tar\n" >&2
     return 1
   fi
   printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
