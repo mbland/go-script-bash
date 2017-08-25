@@ -63,7 +63,7 @@ download_go_script_bash_tarball() {
   fi
   printf "Downloading framework from '%s'...\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL"
   if ! tar -xzf <(curl -LfsS "$GO_SCRIPT_BASH_DOWNLOAD_URL") 2>/dev/null ||
-    [[ ! -d "$unpacked_dir" ]]; then
+    [[ ! -f "$unpacked_dir/go-core.bash" ]]; then
     printf "Failed to download from '%s'.\n" "$GO_SCRIPT_BASH_DOWNLOAD_URL" >&2
     return 1
   fi

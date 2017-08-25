@@ -21,9 +21,16 @@ load environment
 TEST_USE_REAL_URL="${TEST_USE_REAL_URL:-$TRAVIS}"
 GO_CORE_URL="${TEST_USE_REAL_URL:+$_GO_CORE_URL}"
 GO_CORE_URL="${GO_CORE_URL:-$_GO_CORE_DIR}"
+
+# Use the same mechanism for testing tarball downloads, since we'll have a
+# connection to GitHub in either case.
+TEST_ARCHIVE_URL="file://$TEST_GO_ROOTDIR/archive"
+GO_ARCHIVE_URL="${TEST_USE_REAL_URL:+$_GO_CORE_URL/archive}"
+GO_ARCHIVE_URL="${GO_ARCHIVE_URL:-$TEST_ARCHIVE_URL}"
+
 GO_SCRIPT_BASH_VERSION="$_GO_CORE_VERSION"
-GO_SCRIPT_BASH_REPO_URL="https://github.com/mbland/go-script-bash.git"
-GO_SCRIPT_BASH_DOWNLOAD_URL="${GO_SCRIPT_BASH_REPO_URL%.git}/archive"
+GO_SCRIPT_BASH_REPO_URL="$GO_CORE_URL"
+GO_SCRIPT_BASH_DOWNLOAD_URL="$GO_ARCHIVE_URL"
 
 RELEASE_TARBALL="${GO_SCRIPT_BASH_VERSION}.tar.gz"
 FULL_DOWNLOAD_URL="$GO_SCRIPT_BASH_DOWNLOAD_URL/$RELEASE_TARBALL"
@@ -53,6 +60,36 @@ assert_go_core_unpacked() {
     result='1'
   fi
   restore_bats_shell_options "$result"
+}
+
+# This mimics the tarball provided by GitHub.
+#
+# This could probably become a general-purpose utility one day.
+create_fake_tarball_if_not_using_real_url() {
+  # We have to trim the leading 'v' from the version string.
+  local dirname="go-script-bash-${GO_SCRIPT_BASH_VERSION#v}"
+  local full_dir="$TEST_GO_ROOTDIR/$dirname"
+  local tarball="${FULL_DOWNLOAD_URL#file://}"
+
+  if [[ -n "$TEST_USE_REAL_URL" ]]; then
+    return
+  fi
+
+  if ! mkdir -p "${tarball%/*}"; then
+    printf 'Failed to create fake archive dir %s\n' "$full_dir" >&2
+    return 1
+  elif ! mkdir -p "$full_dir"; then
+    printf 'Failed to create fake content dir %s\n' "$full_dir" >&2
+    return 1
+  elif ! tar xf <(tar cf - go-core.bash lib libexec) -C "$full_dir"; then
+    printf 'Failed to mirror %s to fake tarball dir %s\n' \
+      "$_GO_ROOTDIR" "$full_dir" >&2
+    return 1
+  elif ! tar cfz "$tarball" -C "$TEST_GO_ROOTDIR" "$dirname"; then
+    printf 'Failed to create fake tarball %s\n  from dir %s\n' \
+      "$tarball" "$full_dir" >&2
+    return 1
+  fi
 }
 
 # Creates a script in `BATS_TEST_BINDIR` to stand in for a program on `PATH`
@@ -85,6 +122,7 @@ create_forwarding_script() {
 }
 
 @test "$SUITE: download $GO_SCRIPT_BASH_VERSION from $GO_SCRIPT_BASH_REPO_URL" {
+  create_fake_tarball_if_not_using_real_url
   run "$TEST_GO_ROOTDIR/go-template"
 
   # Without a command argument, the script will print the top-level help and
@@ -111,16 +149,15 @@ create_forwarding_script() {
 
 @test "$SUITE: fail to download a nonexistent version" {
   local url="$GO_SCRIPT_BASH_DOWNLOAD_URL/vnonexistent.tar.gz"
-  GO_SCRIPT_BASH_VERSION='vnonexistent' run "$TEST_GO_ROOTDIR/go-template"
-  assert_failure "Downloading framework from '$url'..." \
-    "curl: (22) The requested URL returned error: 404 Not Found" \
-    "Failed to download from '$url'." \
-    'Using git clone as fallback' \
-    "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'..." \
-    "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'..." \
-    "warning: Could not find remote branch vnonexistent to clone." \
-    "fatal: Remote branch vnonexistent not found in upstream origin" \
-    "Failed to clone '$GO_SCRIPT_BASH_REPO_URL'; aborting."
+  local branch='vnonexistent'
+  GO_SCRIPT_BASH_VERSION="$branch" run "$TEST_GO_ROOTDIR/go-template"
+  assert_failure
+  assert_output_matches 'Using git clone as fallback'
+  assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
+  assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"
+  assert_output_matches "warning: Could not find remote branch $branch to clone"
+  assert_output_matches "fatal: Remote branch $branch not found in upstream"
+  assert_output_matches "Failed to clone '$GO_SCRIPT_BASH_REPO_URL'; aborting."
 }
 
 @test "$SUITE: fail to find curl uses git clone" {
@@ -167,6 +204,7 @@ create_forwarding_script() {
 }
 
 @test "$SUITE: fail to create directory uses git clone" {
+  create_fake_tarball_if_not_using_real_url
   stub_program_in_path mkdir "exit 1"
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path mkdir
@@ -197,6 +235,7 @@ create_forwarding_script() {
 @test "$SUITE: fail to move extracted directory uses git clone" {
   local target="$TEST_GO_SCRIPTS_DIR/go-script-bash"
 
+  create_fake_tarball_if_not_using_real_url
   stub_program_in_path mv "exit 1"
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path mv
