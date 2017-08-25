@@ -223,13 +223,13 @@ run_with_download_program() {
   local repo='bogus-repo-that-does-not-exist'
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" GO_SCRIPT_BASH_REPO_URL="$repo" \
     run "$TEST_GO_ROOTDIR/go-template"
-  assert_failure "Downloading framework from '$url/$RELEASE_TARBALL'..." \
-    "curl: (6) Could not resolve host: $url" \
-    "Failed to download from '$url/$RELEASE_TARBALL'." \
-    'Using git clone as fallback' \
-    "Cloning framework from '$repo'..." \
-    "fatal: repository '$repo' does not exist" \
-    "Failed to clone '$repo'; aborting."
+  assert_failure
+  assert_output_matches "Downloading framework from '$url/$RELEASE_TARBALL'"
+  assert_output_matches "Failed to download from '$url/$RELEASE_TARBALL'"
+  assert_output_matches 'Using git clone as fallback'
+  assert_output_matches "Cloning framework from '$repo'"
+  assert_output_matches "fatal: repository '$repo' does not exist"
+  assert_output_matches "Failed to clone '$repo'; aborting."
 }
 
 @test "$SUITE: fail to download a nonexistent version" {
