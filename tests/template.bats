@@ -108,13 +108,13 @@ create_fake_tarball_if_not_using_real_url() {
 create_forwarding_script() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
   local real_program="$(command -v "$1")"
-  local forwarding_script="$BATS_TEST_BINDIR/$1"
+  local script="$BATS_TEST_BINDIR/$1"
 
   if [[ ! -d "$BATS_TEST_BINDIR" ]]; then
     mkdir "$BATS_TEST_BINDIR"
   fi
-  printf '%s\n' "#! $BASH" "\"$real_program\" \"\$@\"" >"$forwarding_script"
-  chmod 700 "$forwarding_script"
+  printf '%s\n' "#! $BASH" "PATH='$PATH' \"$real_program\" \"\$@\"" >"$script"
+  chmod 700 "$script"
   restore_bats_shell_options
 }
 
