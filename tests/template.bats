@@ -35,10 +35,23 @@ GO_SCRIPT_BASH_DOWNLOAD_URL="$GO_ARCHIVE_URL"
 RELEASE_TARBALL="${GO_SCRIPT_BASH_VERSION}.tar.gz"
 FULL_DOWNLOAD_URL="$GO_SCRIPT_BASH_DOWNLOAD_URL/$RELEASE_TARBALL"
 LOCAL_DOWNLOAD_URL="$TEST_ARCHIVE_URL/$RELEASE_TARBALL"
+NATIVE_LOCAL_URL=
+EXPECTED_URL=
+CLONE_DIR=
 
 setup() {
   test_filter
   export GO_SCRIPT_BASH_{VERSION,REPO_URL,DOWNLOAD_URL}
+  NATIVE_LOCAL_URL="$(windows_native_path "$LOCAL_DOWNLOAD_URL")"
+  CLONE_DIR="$(windows_native_path "$TEST_GO_SCRIPTS_DIR")/go-script-bash"
+  EXPECTED_URL="$FULL_DOWNLOAD_URL"
+
+  if [[ -z "$TEST_USE_REAL_URL" ]]; then
+    EXPECTED_URL="$NATIVE_LOCAL_URL"
+  fi
+
+  # Ensure `cygpath` is always available if we need it.
+  create_forwarding_script 'cygpath'
 
   mkdir -p "$TEST_GO_ROOTDIR"
   cp "$_GO_CORE_DIR/go-template" "$TEST_GO_ROOTDIR"
@@ -58,6 +71,31 @@ assert_go_core_unpacked() {
     result='1'
   fi
   restore_bats_shell_options "$result"
+}
+
+# Converts a Unix path or 'file://' URL to a Windows native path.
+#
+# This is useful when passing file paths or URLs to native programs on MSYS2
+# or Cygwin, or validating the output of such programs, to ensure portability.
+# The resulting path will contain forward slashes.
+#
+# Prints both converted and unconverted paths and URLs to standard output.
+#
+# Arguments:
+#   path:  Path or 'file://' URL to convert
+windows_native_path() {
+  local path="$1"
+  local protocol="${path%%://*}"
+
+  if ! command -v cygpath >/dev/null ||
+    [[ "$protocol" != "$path" && "$protocol" != 'file' ]]; then
+    printf '%s' "$path"
+  elif [[ "$protocol" == 'file' ]]; then
+    printf 'file://'
+    cygpath -m "${path#file://}"
+  else
+    cygpath -m "$path"
+  fi
 }
 
 # This mimics the tarball provided by GitHub.
@@ -101,7 +139,8 @@ create_fake_tarball_if_not_using_real_url() {
 # installed on the system to test cases when specific programs can't be found,
 # while others remain available.
 #
-# Creates `BATS_TEST_BINDIR` if it doesn't already exist.
+# Creates `BATS_TEST_BINDIR` if it doesn't already exist. If the program
+# doesn't exist on the system, no forwarding script will be created.
 #
 # Arguments:
 #   program_name:  Name of the system program to forward
@@ -110,11 +149,13 @@ create_forwarding_script() {
   local real_program="$(command -v "$1")"
   local script="$BATS_TEST_BINDIR/$1"
 
-  if [[ ! -d "$BATS_TEST_BINDIR" ]]; then
-    mkdir "$BATS_TEST_BINDIR"
+  if [[ ! -d "$BATS_TEST_BINDIR" ]] && ! mkdir -p "$BATS_TEST_BINDIR"; then
+    restore_bats_shell_options '1'
+    return
+  elif [[ -n "$real_program" ]]; then
+    printf '%s\n' "#! $BASH" "PATH='$PATH' \"$real_program\" \"\$@\"" >"$script"
+    chmod 700 "$script"
   fi
-  printf '%s\n' "#! $BASH" "PATH='$PATH' \"$real_program\" \"\$@\"" >"$script"
-  chmod 700 "$script"
   restore_bats_shell_options
 }
 
@@ -158,28 +199,31 @@ run_with_download_program() {
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
 }
 
-@test "$SUITE: download $GO_SCRIPT_BASH_VERSION from $GO_SCRIPT_BASH_REPO_URL" {
+@test "$SUITE: download $GO_SCRIPT_BASH_VERSION from $FULL_DOWNLOAD_URL" {
   create_fake_tarball_if_not_using_real_url
   run "$TEST_GO_ROOTDIR/go-template"
 
   # Without a command argument, the script will print the top-level help and
   # return an error, but the core repo should exist as expected.
   assert_failure
-  assert_output_matches "Downloading framework from '$FULL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$EXPECTED_URL'\.\.\."
+  assert_output_matches "Download of '$EXPECTED_URL' successful."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
 
 @test "$SUITE: download locally using curl" {
   run_with_download_program 'curl'
-  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
 
 @test "$SUITE: download locally using fetch" {
   run_with_download_program 'fetch'
-  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
@@ -188,7 +232,8 @@ run_with_download_program() {
   # We'll actually use `cat` with `file://` URLs, since `wget` only supports
   # HTTP, HTTPS, and FTP.
   run_with_download_program 'cat'
-  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
@@ -197,7 +242,8 @@ run_with_download_program() {
   # As mentioned in the above test case, we'll actually use `cat` with `file://`
   # URLs, but we're simulating `wget` by pretending `cat` doesn't exist.
   run_with_download_program 'wget'
-  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
@@ -211,7 +257,7 @@ run_with_download_program() {
   GO_SCRIPT_BASH_CORE_DIR="$core_dir" run "$TEST_GO_ROOTDIR/go-template"
 
   assert_failure
-  assert_output_matches "Download of '$FULL_DOWNLOAD_URL' successful."
+  assert_output_matches "Download of '$EXPECTED_URL' successful."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked "$core_dir"
 }
@@ -224,13 +270,13 @@ run_with_download_program() {
   restore_program_in_path 'mkdir'
 
   assert_failure
-  assert_output_matches "Download of '$FULL_DOWNLOAD_URL' successful."
+  assert_output_matches "Download of '$EXPECTED_URL' successful."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
 
 @test "$SUITE: fail to download a nonexistent repo" {
-  local url='bogus-url-that-does-not-exist'
+  local url='https://bogus-url-that-does-not-exist'
   local repo='bogus-repo-that-does-not-exist'
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" GO_SCRIPT_BASH_REPO_URL="$repo" \
     run "$TEST_GO_ROOTDIR/go-template"
@@ -250,22 +296,21 @@ run_with_download_program() {
   assert_failure
   assert_output_matches 'Using git clone as fallback'
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
-  assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"
+  assert_output_matches "Cloning into '$CLONE_DIR'"
   assert_output_matches "warning: Could not find remote branch $branch to clone"
   assert_output_matches "fatal: Remote branch $branch not found in upstream"
   assert_output_matches "Failed to clone '$GO_SCRIPT_BASH_REPO_URL'; aborting."
 }
 
-@test "$SUITE: fail to find download program uses git clone" {
-  create_forwarding_script 'git'
-  PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
+@test "$SUITE: use git clone if GO_SCRIPT_BASH_DOWNLOAD_URL lacks a protocol" {
+  local url='bogus-url-with-no-protocol'
 
-  # Without a command argument, the script will print the top-level help and
-  # return an error, but the core repo should exist as expected.
-  assert_output_matches "Failed to find cURL, wget, or fetch"
+  GO_SCRIPT_BASH_DOWNLOAD_URL="$url" run "$TEST_GO_ROOTDIR/go-template"
+
+  assert_output_matches "GO_SCRIPT_BASH_DOWNLOAD_URL has no protocol: $url"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
-  assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"
+  assert_output_matches "Cloning into '$CLONE_DIR'"
   assert_output_matches \
     "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
@@ -275,6 +320,17 @@ run_with_download_program() {
   run git log --oneline -n 1
   assert_success
   assert_output_matches "go-script-bash $_GO_CORE_VERSION"
+}
+
+@test "$SUITE: fail to find download program uses git clone" {
+  create_forwarding_script 'git'
+  PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
+
+  assert_output_matches "Failed to find cURL, wget, or fetch"
+  assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
+  assert_output_matches "Cloning into '$CLONE_DIR'"
+  assert_output_matches \
+    "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
 }
 
 @test "$SUITE: fail to find tar uses git clone" {
@@ -282,21 +338,12 @@ run_with_download_program() {
   create_forwarding_script 'git'
   PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
-  # Without a command argument, the script will print the top-level help and
-  # return an error, but the core repo should exist as expected.
   assert_output_matches "Failed to find tar"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
-  assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"
+  assert_output_matches "Cloning into '$CLONE_DIR'"
   assert_output_matches \
     "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
-
-  cd "$TEST_GO_SCRIPTS_DIR/go-script-bash"
-  run git log --oneline -n 1
-  assert_success
-  assert_output_matches "go-script-bash $_GO_CORE_VERSION"
 }
 
 @test "$SUITE: fail to create directory uses git clone" {
@@ -305,9 +352,7 @@ run_with_download_program() {
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path mkdir
 
-  # Without a command argument, the script will print the top-level help and
-  # return an error, but the core repo should exist as expected.
-  assert_output_matches "Downloading framework from '$FULL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$EXPECTED_URL'\.\.\."
 
   # Note that the go-template defines `GO_SCRIPTS_DIR`, but the framework's own
   # `go` script doesn't. Hence, we use `TEST_GO_SCRIPTS_RELATIVE_DIR` below,
@@ -315,16 +360,9 @@ run_with_download_program() {
   assert_output_matches "Failed to create scripts dir '$TEST_GO_SCRIPTS_DIR'"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
-  assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'."
+  assert_output_matches "Cloning into '$CLONE_DIR'"
   assert_output_matches \
     "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
-
-  cd "$TEST_GO_SCRIPTS_DIR/go-script-bash"
-  run git log --oneline -n 1
-  assert_success
-  assert_output_matches "go-script-bash $_GO_CORE_VERSION"
 }
 
 @test "$SUITE: fail to move extracted directory uses git clone" {
@@ -335,20 +373,11 @@ run_with_download_program() {
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path mv
 
-  # Without a command argument, the script will print the top-level help and
-  # return an error, but the core repo should exist as expected.
-  assert_output_matches "Downloading framework from '$FULL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Downloading framework from '$EXPECTED_URL'\.\.\."
   assert_output_matches "Failed to install downloaded directory in '$target'"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
-  assert_output_matches "Cloning into '$TEST_GO_SCRIPTS_DIR/go-script-bash'"
+  assert_output_matches "Cloning into '$CLONE_DIR'"
   assert_output_matches \
     "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
-
-  cd "$TEST_GO_SCRIPTS_DIR/go-script-bash"
-  run git log --oneline -n 1
-  assert_success
-  assert_output_matches "go-script-bash $_GO_CORE_VERSION"
 }

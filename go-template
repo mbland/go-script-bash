@@ -53,13 +53,23 @@ download_go_script_bash_tarball() {
   local unpacked_core="$unpacked_dir/go-core.bash"
   local core_dir_parent="${GO_SCRIPT_BASH_CORE_DIR%/*}"
   local url="$GO_SCRIPT_BASH_DOWNLOAD_URL"
+  local protocol="${url%%://*}"
   local download_cmd=()
+
+  if [[ "$protocol" == "$url" ]]; then
+    printf 'GO_SCRIPT_BASH_DOWNLOAD_URL has no protocol: %s\n' "$url" >&2
+    return 1
+  elif command -v cygpath >/dev/null && [[ "$protocol" == 'file' ]]; then
+    url="file://$(cygpath -m "${url#file://}")"
+  fi
 
   if command -v curl >/dev/null; then
     download_cmd=(curl -LfsS "$url")
   elif command -v fetch >/dev/null; then
     download_cmd=(fetch -o - "$url")
-  elif [[ "$url" =~ file:// ]] && command -v cat; then
+  elif [[ "$protocol" == 'file' ]] && command -v cat; then
+    # `wget` can't handle 'file://' urls. Though input redirection would work
+    # below, this method is consistent with the process substitution logic.
     download_cmd=(cat "${url#file://}")
   elif command -v wget >/dev/null; then
     download_cmd=(wget -O - "$url")
