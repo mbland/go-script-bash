@@ -59,6 +59,8 @@ download_go_script_bash_tarball() {
     download_cmd=(curl -LfsS "$url")
   elif command -v fetch >/dev/null; then
     download_cmd=(fetch -o - "$url")
+  elif [[ "$url" =~ file:// ]] && command -v cat; then
+    download_cmd=(cat "${url#file://}")
   elif command -v wget >/dev/null; then
     download_cmd=(wget -O - "$url")
   else

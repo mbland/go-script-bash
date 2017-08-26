@@ -177,15 +177,26 @@ run_with_download_program() {
   assert_go_core_unpacked
 }
 
-@test "$SUITE: download locally using wget" {
-  run_with_download_program 'wget'
+@test "$SUITE: download locally using fetch" {
+  run_with_download_program 'fetch'
   assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
 }
 
-@test "$SUITE: download locally using fetch" {
-  run_with_download_program 'fetch'
+@test "$SUITE: download locally using cat" {
+  # We'll actually use `cat` with `file://` URLs, since `wget` only supports
+  # HTTP, HTTPS, and FTP.
+  run_with_download_program 'cat'
+  assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
+  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
+  assert_go_core_unpacked
+}
+
+@test "$SUITE: download locally using wget" {
+  # As mentioned in the above test case, we'll actually use `cat` with `file://`
+  # URLs, but we're simulating `wget` by pretending `cat` doesn't exist.
+  run_with_download_program 'wget'
   assert_output_matches "Downloading framework from '$LOCAL_DOWNLOAD_URL'\.\.\."
   assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
   assert_go_core_unpacked
