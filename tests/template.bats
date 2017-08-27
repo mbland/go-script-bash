@@ -88,8 +88,8 @@ git_for_windows_native_path() {
   local path="$1"
   local protocol="${path%%://*}"
 
-  if [[ ! "$EXEPATH" =~ \\Git$ && "$protocol" != "$path" &&
-    "$protocol" != 'file' ]]; then
+  if [[ ! "$EXEPATH" =~ \\Git$ ]] ||
+    [[ "$protocol" != "$path" && "$protocol" != 'file' ]]; then
     printf '%s' "$path"
   elif [[ "$protocol" == 'file' ]]; then
     printf 'file://'
