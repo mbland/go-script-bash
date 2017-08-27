@@ -75,6 +75,25 @@ assert_go_core_unpacked() {
   restore_bats_shell_options "$result"
 }
 
+# Skips the current test if zero of the listed system programs are present.
+#
+# Arguments:
+#   $@:  System programs of which at least one must be present to run the test
+skip_if_none_present_on_system() {
+  local missing
+
+  if ! command -v "$@" >/dev/null; then
+    if [[ "$#" -eq '1' ]]; then
+      skip "$1 isn't installed on the system"
+    elif [[ "$#" -eq '2' ]]; then
+      skip "Neither $1 nor $2 are installed on the system"
+    else
+      printf -v missing '%s, ' "${@:1:$(($# - 1))}"
+      skip "None of ${missing% } or ${@:$#} are installed on the system"
+    fi
+  fi
+}
+
 # Converts a Unix path or 'file://' URL to a Git for Windows native path.
 #
 # This is useful when passing file paths or URLs to native programs on Git for
@@ -202,6 +221,8 @@ run_with_download_program() {
 }
 
 @test "$SUITE: download $GO_SCRIPT_BASH_VERSION from $FULL_DOWNLOAD_URL" {
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'tar'
   create_fake_tarball_if_not_using_real_url
   run "$TEST_GO_ROOTDIR/go-template"
 
@@ -215,6 +236,7 @@ run_with_download_program() {
 }
 
 @test "$SUITE: download locally using curl" {
+  skip_if_system_missing 'tar'
   run_with_download_program 'curl'
   assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
   assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
@@ -223,6 +245,7 @@ run_with_download_program() {
 }
 
 @test "$SUITE: download locally using fetch" {
+  skip_if_system_missing 'tar'
   run_with_download_program 'fetch'
   assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
   assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
@@ -231,6 +254,7 @@ run_with_download_program() {
 }
 
 @test "$SUITE: download locally using cat" {
+  skip_if_system_missing 'tar'
   # We'll actually use `cat` with `file://` URLs, since `wget` only supports
   # HTTP, HTTPS, and FTP.
   run_with_download_program 'cat'
@@ -241,6 +265,7 @@ run_with_download_program() {
 }
 
 @test "$SUITE: download locally using wget" {
+  skip_if_system_missing 'tar'
   # As mentioned in the above test case, we'll actually use `cat` with `file://`
   # URLs, but we're simulating `wget` by pretending `cat` doesn't exist.
   run_with_download_program 'wget'
@@ -252,6 +277,8 @@ run_with_download_program() {
 
 @test "$SUITE: download into nonstandard GO_SCRIPTS_DIR" {
   local core_dir="$TEST_GO_ROOTDIR/foobar"
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'tar'
   create_fake_tarball_if_not_using_real_url
 
   # Create a command script in the normal `TEST_GO_SCRIPTS_DIR`.
@@ -265,6 +292,8 @@ run_with_download_program() {
 }
 
 @test "$SUITE: download uses existing GO_SCRIPTS_DIR" {
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'tar'
   create_fake_tarball_if_not_using_real_url
   mkdir -p "$TEST_GO_SCRIPTS_DIR"
   stub_program_in_path mkdir "exit 1"
@@ -280,6 +309,9 @@ run_with_download_program() {
 @test "$SUITE: fail to download a nonexistent repo" {
   local url='https://bogus-url-that-does-not-exist'
   local repo='bogus-repo-that-does-not-exist'
+
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'git'
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" GO_SCRIPT_BASH_REPO_URL="$repo" \
     run "$TEST_GO_ROOTDIR/go-template"
   assert_failure
@@ -294,6 +326,9 @@ run_with_download_program() {
 @test "$SUITE: fail to download a nonexistent version" {
   local url="$GO_SCRIPT_BASH_DOWNLOAD_URL/vnonexistent.tar.gz"
   local branch='vnonexistent'
+
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'git'
   GO_SCRIPT_BASH_VERSION="$branch" run "$TEST_GO_ROOTDIR/go-template"
   assert_failure
   assert_output_matches 'Using git clone as fallback'
@@ -307,6 +342,7 @@ run_with_download_program() {
 @test "$SUITE: use git clone if GO_SCRIPT_BASH_DOWNLOAD_URL lacks a protocol" {
   local url='bogus-url-with-no-protocol'
 
+  skip_if_system_missing 'git'
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" run "$TEST_GO_ROOTDIR/go-template"
 
   assert_output_matches "GO_SCRIPT_BASH_DOWNLOAD_URL has no protocol: $url"
@@ -325,6 +361,7 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to find download program uses git clone" {
+  skip_if_system_missing 'git'
   PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   assert_output_matches "Failed to find cURL, wget, or fetch"
@@ -335,7 +372,8 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to find tar uses git clone" {
-  # If none of these are installed on the system, the test will fail.
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'git'
   create_forwarding_script 'curl'
   create_forwarding_script 'wget'
   create_forwarding_script 'fetch'
@@ -350,6 +388,8 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to create directory uses git clone" {
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'git' 'tar'
   create_fake_tarball_if_not_using_real_url
   stub_program_in_path mkdir "exit 1"
   run "$TEST_GO_ROOTDIR/go-template"
@@ -371,6 +411,8 @@ run_with_download_program() {
 @test "$SUITE: fail to move extracted directory uses git clone" {
   local target="$TEST_GO_SCRIPTS_DIR/go-script-bash"
 
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'git' 'tar'
   create_fake_tarball_if_not_using_real_url
   stub_program_in_path mv "exit 1"
   run "$TEST_GO_ROOTDIR/go-template"
