@@ -1,8 +1,6 @@
-# go-script-bash v1.5.0
+# go-script-bash v1.6.0
 
-This is a minor update to add the `lib/prompt` and `lib/existence` modules that import functionality from the first draft of the [mbland/certbot-webroot-setup][cws] project.
-
-[cws]: https://github.com/mbland/certbot-webroot-setup
+This is a minor update to add the capability to `go-template` to download a release tarball from GitHub rather than using `git clone` to add the go-script-bash framework to a project working directory.
 
 ## The `./go` script: a unified development environment interface
 
@@ -27,34 +25,25 @@ This software is made available as [Open Source software][oss-def] under the [IS
 
 ## What's new in this release
 
-All of the issues and pull requests for this release are visible in the [v1.5.0 milestone][].
+All of the issues and pull requests for this release are visible in the [v1.6.0 milestone][].
 
-[v1.5.0 milestone]: https://github.com/mbland/go-script-bash/milestone/3?closed=1
+[v1.6.0 milestone]: https://github.com/mbland/go-script-bash/milestone/4?closed=1
 
-### `lib/prompt` module
+### Download a go-script-bash release tarball from GitHub in `go-template`
 
-The new `lib/prompt` module contains several new user input prompt functions. Also, `@go.select_option` has been moved from `go-core.bash` to the `lib/prompt` module. The new `./go demo-core prompt` command demonstrates most of the new user prompt behavior.
+Thanks to [Juan Saavedra][elpaquete], `go-template` now has the capability to download and unpack a release tarbal from GitHub in order to add the go-script-bash framework to a project's working directory, rather than relying on `git clone`. Now `git clone` will be used as a backup in case the system doesn't have the tools to download and unpack the tarball, or the operation fails for some reason.
 
-### `lib/existence` module
-
-The new `lib/existence` module contains convenience functions for checking whether a file or command exists and is accessible on the system, and provides standard error reporting if not.
-
-### `@go.trim` added to `lib/strings`
-
-`@go.trim` trims leading and trailing whitespace from strings, and supports the parsing of user input data in functions from the `lib/prompt` module.
+[elpaquete]: https://github.com/elpaquete
 
 ### Bug fixes
 
-Just one this time: `./go new --test` now outputs `load environment` correctly for top-level tests within `_GO_TEST_DIR` ([#171][], [#172][]).
+None in this release.
 
-[#171]: https://github.com/mbland/go-script-bash/pull/171
-[#172]: https://github.com/mbland/go-script-bash/issues/172
-
-## Changes since v1.4.0
+## Changes since v1.5.0
 
 You can see the details of every change by issuing one or more of the following commands after cloning: https://github.com/mbland/go-script-bash
 
 <pre>
-$ ./go changes v1.4.0 v1.5.0
-$ gitk v1.4.0..HEAD
+$ ./go changes v1.5.0 v1.6.0
+$ gitk v1.5.0..HEAD
 </pre>
