@@ -335,7 +335,10 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to find tar uses git clone" {
+  # If none of these are installed on the system, the test will fail.
   create_forwarding_script 'curl'
+  create_forwarding_script 'wget'
+  create_forwarding_script 'fetch'
   PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   assert_output_matches "Failed to find tar"
