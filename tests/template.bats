@@ -123,11 +123,11 @@ create_fake_tarball_if_not_using_real_url() {
   elif ! mkdir -p "$full_dir"; then
     printf 'Failed to create fake content dir %s\n' "$full_dir" >&2
     result='1'
-  elif ! tar xf <(tar cf - go-core.bash lib libexec) -C "$full_dir"; then
+  elif ! tar -xf - -C "$full_dir" < <(tar -cf - go-core.bash lib libexec); then
     printf 'Failed to mirror %s to fake tarball dir %s\n' \
       "$_GO_ROOTDIR" "$full_dir" >&2
     result='1'
-  elif ! tar cfz "$tarball" -C "$TEST_GO_ROOTDIR" "$dirname"; then
+  elif ! tar -czf "$tarball" -C "$TEST_GO_ROOTDIR" "$dirname"; then
     printf 'Failed to create fake tarball %s\n  from dir %s\n' \
       "$tarball" "$full_dir" >&2
     result='1'
