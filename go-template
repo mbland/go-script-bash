@@ -59,7 +59,7 @@ download_go_script_bash_tarball() {
   if [[ "$protocol" == "$url" ]]; then
     printf 'GO_SCRIPT_BASH_DOWNLOAD_URL has no protocol: %s\n' "$url" >&2
     return 1
-  elif [[ "$EXEPATH" =~ \\Git$ && "$protocol" == 'file' ]]; then
+  elif [[ "$(git --version)" =~ windows && "$protocol" == 'file' ]]; then
     url="file://$(cygpath -m "${url#file://}")"
   fi
 

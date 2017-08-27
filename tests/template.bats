@@ -51,8 +51,9 @@ setup() {
     EXPECTED_URL="$NATIVE_LOCAL_URL"
   fi
 
-  # Ensure `cygpath` is always available if we need it.
+  # Ensure `cygpath` and `git` are always available if we need them.
   create_forwarding_script 'cygpath'
+  create_forwarding_script 'git'
 
   mkdir -p "$TEST_GO_ROOTDIR"
   cp "$_GO_CORE_DIR/go-template" "$TEST_GO_ROOTDIR"
@@ -88,7 +89,7 @@ git_for_windows_native_path() {
   local path="$1"
   local protocol="${path%%://*}"
 
-  if [[ ! "$EXEPATH" =~ \\Git$ ]] ||
+  if [[ ! "$(git --version)" =~ windows ]] ||
     [[ "$protocol" != "$path" && "$protocol" != 'file' ]]; then
     printf '%s' "$path"
   elif [[ "$protocol" == 'file' ]]; then
@@ -324,7 +325,6 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to find download program uses git clone" {
-  create_forwarding_script 'git'
   PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   assert_output_matches "Failed to find cURL, wget, or fetch"
@@ -336,7 +336,6 @@ run_with_download_program() {
 
 @test "$SUITE: fail to find tar uses git clone" {
   create_forwarding_script 'curl'
-  create_forwarding_script 'git'
   PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
 
   assert_output_matches "Failed to find tar"
