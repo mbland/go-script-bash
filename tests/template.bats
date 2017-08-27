@@ -311,7 +311,7 @@ run_with_download_program() {
   local repo='bogus-repo-that-does-not-exist'
 
   skip_if_none_present_on_system 'curl' 'fetch' 'wget'
-  skip_if_system_missing 'git'
+  skip_if_system_missing 'git' 'tar'
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" GO_SCRIPT_BASH_REPO_URL="$repo" \
     run "$TEST_GO_ROOTDIR/go-template"
   assert_failure
@@ -328,7 +328,7 @@ run_with_download_program() {
   local branch='vnonexistent'
 
   skip_if_none_present_on_system 'curl' 'fetch' 'wget'
-  skip_if_system_missing 'git'
+  skip_if_system_missing 'git' 'tar'
   GO_SCRIPT_BASH_VERSION="$branch" run "$TEST_GO_ROOTDIR/go-template"
   assert_failure
   assert_output_matches 'Using git clone as fallback'
