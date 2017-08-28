@@ -1,0 +1,14 @@
+#! /usr/bin/env bash
+#
+# Returns a successful exit value if the framework is properly installed
+#
+# If it fails, it should generate output indicating what's wrong with the
+# framework installation and exit with an error value.
+#
+# Useful for tests that only need to verify that the framework is installed
+# correctly, or for `_GO_STANDALONE` scripts that run a separate `./go` script
+# to install the framework.
+#
+# For maximum performance, avoid spawning a process to set `COLUMNS` like so:
+#
+#   COLUMNS=80 {{go}} {{cmd}}
