@@ -10,12 +10,12 @@ teardown() {
   @go.remove_test_go_rootdir
 }
 
-@test "$SUITE: returns a successful value" {
+@test "$SUITE: a good installation emits nothing and exits successfully" {
   COLUMNS=80 run "$TEST_GO_SCRIPT" null
   assert_success ''
 }
 
-@test "$SUITE: a bad installation returns a successful value" {
+@test "$SUITE: a bad installation emits errors and exits unsuccessfully" {
   rmdir "$TEST_GO_SCRIPTS_DIR"
   COLUMNS=80 run "$TEST_GO_SCRIPT" null
   assert_failure \
