@@ -247,19 +247,33 @@ __check_dirs_exist() {
   assert_success 'ugo+rwx foo.txt'
 }
 
-@test "$SUITE: {stub,restore}_program_in_path for testing in-process function" {
+@test "$SUITE: {stub,restore}_program_in_path for testing functions" {
   local orig_path="$(command -v mkdir)"
 
-  stub_program_in_path --in-process 'mkdir' 'echo "$@"'
+  stub_program_in_path 'mkdir' 'echo "$@"'
   run command -v mkdir
   assert_success "$BATS_TEST_BINDIR/mkdir"
 
   restore_program_in_path 'mkdir'
   run command -v mkdir
   assert_success "$orig_path"
+  fail_if matches "$BATS_TEST_BINDIR" "$PATH"
 }
 
 @test "$SUITE: restore_program_in_path fails when stub doesn't exist" {
   run restore_program_in_path 'foobar'
   assert_failure "Bats test stub program doesn't exist: foobar"
+}
+
+@test "$SUITE: create_forwarding_script does nothing if program doesn't exist" {
+  create_forwarding_script 'some-noexistent-program-name'
+  fail_if matches "^${BATS_TEST_BINDIR}:" "$PATH"
+  run command -v 'some-noexistent-program-name'
+  assert_failure
+}
+
+@test "$SUITE: create_forwarding_script script with PATH=\$BATS_TEST_BINDIR" {
+  create_forwarding_script 'bash'
+  PATH="$BATS_TEST_BINDIR" run command -v 'bash'
+  assert_success "$BATS_TEST_BINDIR/bash"
 }

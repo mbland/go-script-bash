@@ -154,32 +154,6 @@ create_fake_tarball_if_not_using_real_url() {
   restore_bats_shell_options "$result"
 }
 
-# Creates a script in `BATS_TEST_BINDIR` to stand in for a program on `PATH`
-#
-# This enables a test to use `PATH="$BATS_TEST_BINDIR" run ...` to hide programs
-# installed on the system to test cases when specific programs can't be found,
-# while others remain available.
-#
-# Creates `BATS_TEST_BINDIR` if it doesn't already exist. If the program
-# doesn't exist on the system, no forwarding script will be created.
-#
-# Arguments:
-#   program_name:  Name of the system program to forward
-create_forwarding_script() {
-  set "$DISABLE_BATS_SHELL_OPTIONS"
-  local real_program="$(command -v "$1")"
-  local script="$BATS_TEST_BINDIR/$1"
-
-  if [[ ! -d "$BATS_TEST_BINDIR" ]] && ! mkdir -p "$BATS_TEST_BINDIR"; then
-    restore_bats_shell_options '1'
-    return
-  elif [[ -n "$real_program" ]]; then
-    printf '%s\n' "#! $BASH" "PATH='$PATH' \"$real_program\" \"\$@\"" >"$script"
-    chmod 700 "$script"
-  fi
-  restore_bats_shell_options
-}
-
 # Used to mimic each of curl, wget, and fetch while testing downloads.
 #
 # This way we can test all of the download program selection logic regardless of
