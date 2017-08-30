@@ -296,39 +296,56 @@ split_bats_output_into_lines() {
 # added to `PATH` and exported if it isn't already present.
 #
 # You may need to call `restore_program_in_path` immediately after `run` to
-# avoid side-effects in the rest of your test program, especially when using the
-# `--in-process` option.
-#
-# Options:
-#   --in-process  Set this when calling `run` on an in-process function
+# avoid side-effects in the rest of your test program.
 #
 # Arguments:
 #   cmd_name:  Name of the command from PATH to stub
 #   ...:       Lines comprising the stub script
 stub_program_in_path() {
+  local cmd_name="$1"
   local bindir_pattern="^${BATS_TEST_BINDIR}:"
-  local in_process
 
-  if [[ "$1" == '--in-process' ]]; then
-    in_process='true'
-    shift
-  fi
-  create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$1" "${@:2}"
+  create_bats_test_script "${BATS_TEST_BINDIR#$BATS_TEST_ROOTDIR/}/$cmd_name" \
+    "${@:2}"
 
   if [[ ! "$PATH" =~ $bindir_pattern ]]; then
     export PATH="$BATS_TEST_BINDIR:$PATH"
   fi
+}
 
-  if [[ -n "$in_process" ]]; then
-    hash "$1"
+# Creates a forwarding wrapper in `BATS_TEST_BINDIR` for an existing command
+#
+# If the command doesn't exist on the system, no forwarding script will be
+# created. The current value of `PATH` will be available to the wrapped command,
+# in case it requires `PATH` to invoke its own helpers, like `git` does.
+#
+# This enables a test to use `PATH="$BATS_TEST_BINDIR" run ...` to make a few
+# system commands available while hiding the rest. This is useful for test cases
+# in which specific commands can't be found. E.g. `tests/template.bats` contains
+# several such cases.
+#
+# Call `restore_program_in_path` after `run` to remove the forwarding script
+# from `PATH` and avoid test failures due to side effects.
+#
+# Arguments:
+#   cmd_name:  Name of the system command to wrap with a forwarding script
+create_forwarding_script() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local cmd_name="$1"
+
+  if command -v "$cmd_name"; then
+    stub_program_in_path "$@" \
+      "#! $BASH" \
+      "PATH='$PATH' \"$(command -v "$cmd_name")\" \"\$@\""
   fi
+  restore_bats_shell_options
 }
 
 # Removes a stub program from `PATH`
 #
 # This will return an error if the stub doesn't exist, to help avoid errors
-# when the `cmd_name` arguments to `stub_program_in_path` and this function
-# don't match.
+# when the `cmd_name` arguments to `stub_program_in_path` or
+# `create_forwarding_script` and this function  don't match.
 #
 # Arguments:
 #   cmd_name:  Name of the command from PATH to stub
@@ -336,11 +353,13 @@ stub_program_in_path() {
 # Returns:
 #   Zero if the stub program exists and is removed, nonzero otherwise
 restore_program_in_path() {
-  if [[ -e "$BATS_TEST_BINDIR/$1" ]]; then
-    rm -f "$BATS_TEST_BINDIR/$1"
-    hash "$1"
+  local cmd_name="$1"
+  export PATH="${PATH#$BATS_TEST_BINDIR:}"
+
+  if [[ -e "$BATS_TEST_BINDIR/$cmd_name" ]]; then
+    rm -f "$BATS_TEST_BINDIR/$cmd_name"
   else
-    printf "Bats test stub program doesn't exist: %s\n" "$1"
+    printf "Bats test stub program doesn't exist: %s\n" "$cmd_name"
     return 1
   fi
 }
