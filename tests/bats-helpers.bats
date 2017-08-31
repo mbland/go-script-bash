@@ -317,5 +317,77 @@ __check_dirs_exist() {
 @test "$SUITE: find forwarding script with PATH=\$BATS_TEST_BINDIR" {
   create_forwarding_script 'bash'
   PATH="$BATS_TEST_BINDIR" run command -v 'bash'
+  restore_program_in_path 'bash'
   assert_success "$BATS_TEST_BINDIR/bash"
+}
+
+@test "$SUITE: forwarding script has access to PATH with BATS_TEST_BINDIR" {
+  create_forwarding_script 'bash'
+  PATH="$BATS_TEST_BINDIR" run 'bash' '-c' 'echo $PATH'
+  restore_program_in_path 'bash'
+  assert_success "$BATS_TEST_BINDIR:$PATH"
+}
+
+@test "$SUITE: forwarding script has PATH defined by a parameter" {
+  local path='/bin:/usr/bin'
+
+  create_forwarding_script --path "$path" 'bash'
+  PATH="$BATS_TEST_BINDIR" run 'bash' '-c' 'echo $PATH'
+  restore_program_in_path 'bash'
+  assert_success "$BATS_TEST_BINDIR:$path"
+}
+
+@test "$SUITE: forwarding script sets PATH to BATS_TEST_BINDIR when arg empty" {
+  create_forwarding_script --path '' 'bash'
+  PATH="$BATS_TEST_BINDIR" run 'bash' '-c' 'echo $PATH'
+  restore_program_in_path 'bash'
+  assert_success "$BATS_TEST_BINDIR"
+}
+
+# See the implementation comment for an explanation of why this is important.
+@test "$SUITE: forwarding script calls exec on the forwarded program" {
+  create_bats_test_script 'dollar-and-ppid-should-match' \
+    'if [[ "$1" == "print PPID" ]]; then' \
+    "  printf '%d\n' \"\$PPID\"" \
+    '  exit' \
+    'fi' \
+    'ppid="$("$0" "print PPID")"' \
+    'if [[ "$$" -ne "$ppid" ]]; then' \
+    "  printf 'parent \$\$:    %s\n' \"\$\$\" >&2" \
+    "  printf 'child  \$PPID: %s\n' \"\$ppid\" >&2" \
+    '  exit 1' \
+    'fi'
+  create_forwarding_script 'bash'
+  run "$BATS_TEST_ROOTDIR/dollar-and-ppid-should-match"
+  restore_program_in_path 'bash'
+  assert_success
+}
+
+@test "$SUITE: create multiple forwarding scripts at once" {
+  skip_if_system_missing 'cp' 'rm'
+  local orig_paths=("$(command -v 'bash' 'cp' 'rm')")
+
+  create_forwarding_scripts 'bash' 'cp' 'rm'
+  run command -v 'bash' 'cp' 'rm'
+  restore_program_in_path 'bash'
+  restore_program_in_path 'cp'
+  restore_program_in_path 'rm'
+  assert_success "$BATS_TEST_BINDIR"/{bash,cp,rm}
+
+  run command -v 'bash' 'cp' 'rm'
+  assert_success "${orig_paths[@]}"
+}
+
+@test "$SUITE: create multiple forwarding scripts that share the same --path" {
+  skip_if_system_missing 'printenv'
+  local path='/bin:/usr/bin'
+
+  create_forwarding_scripts --path "$path" 'bash' 'printenv'
+  PATH="$BATS_TEST_BINDIR" run 'bash' '-c' 'echo $PATH'
+  restore_program_in_path 'bash'
+  assert_success "$BATS_TEST_BINDIR:$path"
+
+  PATH="$BATS_TEST_BINDIR" run 'printenv' 'PATH'
+  restore_program_in_path 'printenv'
+  assert_success "$BATS_TEST_BINDIR:$path"
 }

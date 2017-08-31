@@ -316,29 +316,83 @@ stub_program_in_path() {
 
 # Creates a forwarding wrapper in `BATS_TEST_BINDIR` for an existing command
 #
-# If the command doesn't exist on the system, no forwarding script will be
-# created. The current value of `PATH` will be available to the wrapped command,
-# in case it requires `PATH` to invoke its own helpers, like `git` does.
-#
 # This enables a test to use `PATH="$BATS_TEST_BINDIR" run ...` to make a few
 # system commands available while hiding the rest. This is useful for test cases
 # in which specific commands can't be found. E.g. `tests/template.bats` contains
 # several such cases.
 #
+# If the command doesn't exist on the system, no forwarding script will be
+# created.
+#
+# The wrapped command will have `BATS_TEST_BINDIR` at the beginning of its
+# `PATH`. If the `path` option isn't provided, the current value of `PATH`
+# will be available to the wrapped command, in case it requires `PATH` to invoke
+# its own helpers (e.g. `git`).
+#
 # Call `restore_program_in_path` after `run` to remove the forwarding script
 # from `PATH` and avoid test failures due to side effects.
+#
+# Options:
+#   --path <path>:  `PATH` for the wrapped command; defaults to current `PATH`
 #
 # Arguments:
 #   cmd_name:  Name of the system command to wrap with a forwarding script
 create_forwarding_script() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
-  local cmd_name="$1"
+  local cmd_name
+  local path="$BATS_TEST_BINDIR:$PATH"
 
-  if command -v "$cmd_name"; then
-    stub_program_in_path "$@" \
-      "#! $BASH" \
-      "PATH='$PATH' \"$(command -v "$cmd_name")\" \"\$@\""
+  if [[ "$1" == '--path' ]]; then
+    path="$BATS_TEST_BINDIR:$2"
+    path="${path%:}"
+    shift 2
   fi
+  cmd_name="$1"
+
+  if command -v "$cmd_name" >/dev/null; then
+    # The `exec` feature of the forwarding script is crucial, otherwise the
+    # parent process ID within the executed program will be set to the process
+    # ID of the wrapper, not the process that invoked the wrapper.
+    #
+    # For example, not calling `exec` confuses `bats-exec-test`, which invokes
+    # itself via `bats_perform_tests`. As a result, in the parent process,
+    # `bats_preprocess_source` creates BATS_TEST_SOURCE based on BATS_TMPNAME,
+    # which is based on $$; then `bats_evaluate_preprocessed_source` in the
+    # child process tries to execute BATS_TEST_SOURCE based on
+    # BATS_PARENT_TMPNAME, which is based on $PPID. Since they're different,
+    # Bats raises a 'No such file or directory' error.
+    #
+    # The correct thing for Bats to do is prefix its self-execution with
+    # `BATS_TEST_SOURCE="$BATS_TEST_SOURCE"`, but it's still good practice to
+    # use `exec` here, and to understand why it's important.
+    stub_program_in_path "$cmd_name" \
+      "#! $BASH" \
+      "PATH='$path' exec '$(command -v "$cmd_name")' \"\$@\""
+  fi
+  restore_bats_shell_options
+}
+
+# Creates multiple forwarding scripts at once
+#
+# Options:
+#   --path <path>:  `PATH` for the wrapped commands; defaults to current `PATH`
+#
+# Arguments:
+#   $@:  Names of programs for which to create forwarding scripts
+create_forwarding_scripts() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local path=()
+  local scripts=("$@")
+  local script
+
+  if [[ "$1" == '--path' ]]; then
+    path=("${@:1:2}")
+    scripts=("${@:3}")
+  fi
+
+  for script in "${scripts[@]}"; do
+    create_forwarding_script "${path[@]}" "$script"
+  done
   restore_bats_shell_options
 }
 
