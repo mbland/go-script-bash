@@ -78,7 +78,7 @@ __check_dirs_exist() {
 
 @test "$SUITE: create_bats_test_script errors if no args" {
   run create_bats_test_script
-  assert_failure 'No test script specified'
+  assert_failure 'No test script name or path specified'
 }
 
 @test "$SUITE: create_bats_test_script creates Bash script" {
@@ -151,7 +151,7 @@ __check_dirs_exist() {
 @test "$SUITE: skip if system missing" {
   create_bats_test_script 'test.bats' \
     '#! /usr/bin/env bats' \
-    "load '$_GO_CORE_DIR/lib/bats/helpers'" \
+    ". '$_GO_CORE_DIR/lib/bats/helpers'" \
     '@test "skip if missing" { skip_if_system_missing foo bar baz; }'
 
   stub_program_in_path 'foo'
@@ -164,7 +164,7 @@ __check_dirs_exist() {
     'ok 1 skip if missing'
 
   rm "$BATS_TEST_BINDIR"/*
-  run bats "$BATS_TEST_ROOTDIR/test.bats"
+  run "$BATS_TEST_ROOTDIR/test.bats"
   assert_success
   assert_lines_equal '1..1' \
     'ok 1 # skip (foo, bar, baz not installed on the system) skip if missing'
@@ -265,6 +265,11 @@ __check_dirs_exist() {
   assert_failure "Bats test stub program doesn't exist: foobar"
 }
 
+@test "$SUITE: restore_program_in_path fails when not provided an argument" {
+  run restore_program_in_path
+  assert_failure 'No command name provided.'
+}
+
 @test "$SUITE: create_forwarding_script does nothing if program doesn't exist" {
   create_forwarding_script 'some-noexistent-program-name'
   fail_if matches "^${BATS_TEST_BINDIR}:" "$PATH"
@@ -272,7 +277,7 @@ __check_dirs_exist() {
   assert_failure
 }
 
-@test "$SUITE: create_forwarding_script script with PATH=\$BATS_TEST_BINDIR" {
+@test "$SUITE: find forwarding script with PATH=\$BATS_TEST_BINDIR" {
   create_forwarding_script 'bash'
   PATH="$BATS_TEST_BINDIR" run command -v 'bash'
   assert_success "$BATS_TEST_BINDIR/bash"

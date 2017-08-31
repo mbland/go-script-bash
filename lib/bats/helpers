@@ -91,8 +91,8 @@ create_bats_test_dirs() {
 # teardown().
 #
 # Arguments:
-#   $1:   Path of the script relative to BATS_TEST_ROOTDIR
-#   ...:  Lines comprising the script
+#   script_path:  Path of the script relative to BATS_TEST_ROOTDIR
+#   ...:          Lines comprising the script
 create_bats_test_script() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
   __create_bats_test_script "$@"
@@ -353,15 +353,22 @@ create_forwarding_script() {
 # Returns:
 #   Zero if the stub program exists and is removed, nonzero otherwise
 restore_program_in_path() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+
   local cmd_name="$1"
+  local result='0'
   export PATH="${PATH#$BATS_TEST_BINDIR:}"
 
-  if [[ -e "$BATS_TEST_BINDIR/$cmd_name" ]]; then
-    rm -f "$BATS_TEST_BINDIR/$cmd_name"
-  else
+  if [[ -z "$cmd_name" ]]; then
+    printf 'No command name provided.' >&2
+    result='1'
+  elif [[ ! -e "$BATS_TEST_BINDIR/$cmd_name" ]]; then
     printf "Bats test stub program doesn't exist: %s\n" "$cmd_name"
-    return 1
+    result='1'
+  else
+    rm -f "$BATS_TEST_BINDIR/$cmd_name"
   fi
+  restore_bats_shell_options "$result"
 }
 
 # --------------------------------
@@ -392,29 +399,29 @@ __create_bats_test_dirs() {
 # Implementation for `create_bats_test_script`
 #
 # Arguments:
-#   $1:   Path of the script relative to BATS_TEST_ROOTDIR
-#   ...:  Lines comprising the script
+#   script_path:  Path of the script relative to BATS_TEST_ROOTDIR
+#   ...:          Lines comprising the script
 __create_bats_test_script() {
-  local script="$1"
+  local script_path="$1"
   shift
-  local script_dir="${script%/*}"
+  local script_dir="${script_path%/*}"
 
-  if [[ -z "$script" ]]; then
-    echo "No test script specified" >&2
+  if [[ -z "$script_path" ]]; then
+    echo "No test script name or path specified" >&2
     exit 1
-  elif [[ "$script_dir" == "$script" ]]; then
+  elif [[ "$script_dir" == "$script_path" ]]; then
     script_dir=''
   fi
 
   create_bats_test_dirs "$script_dir"
-  script="$BATS_TEST_ROOTDIR/$script"
-  rm -f "$script"
+  script_path="$BATS_TEST_ROOTDIR/$script_path"
+  rm -f "$script_path"
 
   if [[ "${1:0:2}" != '#!' ]]; then
-    echo "#! /usr/bin/env bash" >"$script"
+    printf '%s\n' '#! /usr/bin/env bash' >"$script_path"
   fi
-  printf '%s\n' "$@" >>"$script"
-  chmod 700 "$script"
+  printf '%s\n' "$@" >>"$script_path"
+  chmod 700 "$script_path"
 }
 
 # Enumerates programs not installed on the system for `skip_if_system_missing`
