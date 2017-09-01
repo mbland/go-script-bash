@@ -24,9 +24,10 @@ setup() {
   # http://mywiki.wooledge.org/SignalTrap#When_is_the_signal_handled.3F
   BACKGROUND_SCRIPT=('bg-run'
     'printf "%s\n" "Ready..." "Set..." "$BACKGROUND_MESSAGE"'
-    "trap 'kill \"\$!\"' TERM HUP"
+    "trap 'kill \"\$sleep_pid\"' TERM HUP"
     'sleep 10 &'
-    'wait "$!"')
+    'sleep_pid="$!"'
+    'wait "$sleep_pid"')
 }
 
 teardown() {
@@ -40,7 +41,7 @@ teardown() {
 
 kill_background_test_script() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
-  pkill -P "$BATS_BACKGROUND_RUN_PID" sleep
+  kill "$BATS_BACKGROUND_RUN_PID"
   unset 'BATS_BACKGROUND_RUN_PID'
   wait
   restore_bats_shell_options
@@ -76,6 +77,7 @@ kill_background_test_script() {
   run_test_script_in_background "${BACKGROUND_SCRIPT[@]}"
 
   assert_equal "$!" "$BATS_BACKGROUND_RUN_PID"
+  sleep 0.25
   kill_background_test_script
 
   assert_equal "$BATS_TEST_ROOTDIR/background-run-output.txt" \
