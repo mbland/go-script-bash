@@ -236,28 +236,65 @@ __check_dirs_exist() {
   assert_lines_equal '' '' 'foo' '' 'bar' '' 'baz'
 }
 
-@test "$SUITE: stub_program_in_path for testing external program" {
+@test "$SUITE: {stub,restore}_program_in_path for stubbing external programs" {
+  skip_if_system_missing 'cp'
+
   local bats_bindir_pattern="^${BATS_TEST_BINDIR}:"
+  local cp_orig_path="$(command -v cp)"
+  local modified_search_path
+  local cp_stub_path
+
   fail_if matches "$bats_bindir_pattern" "$PATH"
+  stub_program_in_path 'cp' 'echo "$@"'
+  modified_search_path="$PATH"
+  cp_stub_path="$(command -v 'cp')"
 
-  stub_program_in_path 'chmod' 'echo "$@"'
-  assert_matches "$bats_bindir_pattern" "$PATH"
+  run cp foo.txt bar.txt baz.txt
+  restore_program_in_path 'cp'
+  assert_success 'foo.txt bar.txt baz.txt'
 
-  run chmod ugo+rwx foo.txt
-  assert_success 'ugo+rwx foo.txt'
+  assert_matches "$bats_bindir_pattern" "$modified_search_path"
+  fail_if matches "$bats_bindir_pattern" "$PATH"
+  assert_equal "$cp_orig_path" "$(command -v 'cp')"
 }
 
-@test "$SUITE: {stub,restore}_program_in_path for testing functions" {
-  local orig_path="$(command -v mkdir)"
+@test "$SUITE: {stub,restore}_program_in_path trigger Bash command rehash" {
+  # `restore_program_in_path` unconditionally updates `PATH`, which resets
+  # Bash's executable path hash table. I didn't realize this until calling
+  # `stub_program_in_path` on `rm` and finding that the `rm` stub was only found
+  # when it was the first in a series of programs to be stubbed. After some
+  # trial and error, I realized this was because the `create_bats_test_script`
+  # call invokes `rm` and `stub_program_in_path` only modifies `PATH` on the
+  # first call.
+  #
+  # This isn't documented in the Bash man page, but once I figured out what was
+  # happening, my hypothesis was confirmed by: https://superuser.com/a/1000317
+  #
+  # Hence, this test case is more for `stub_program_in_path` than `restore`.
+  skip_if_system_missing 'cp'
 
-  stub_program_in_path 'mkdir' 'echo "$@"'
-  run command -v mkdir
-  assert_success "$BATS_TEST_BINDIR/mkdir"
+  local cp_orig_path="$(command -v cp)"
+  local cp_stub_path
 
-  restore_program_in_path 'mkdir'
-  run command -v mkdir
-  assert_success "$orig_path"
-  fail_if matches "$BATS_TEST_BINDIR" "$PATH"
+  # This `PATH` update prevents `stub_program_in_path` from assigning to `PATH`
+  # and resetting the executable hash table.
+  export PATH="$BATS_TEST_BINDIR:$PATH"
+
+  # This now primes the hash table to return the original path for `cp` when
+  # queried by `command -v cp`.
+  hash "cp"
+
+  stub_program_in_path 'cp'
+  cp_stub_path="$(command -v 'cp')"
+  restore_program_in_path 'cp'
+
+  # `stub_program_in_path` should've explicitly called `hash` on the stub so
+  # that the `command -v cp` invocation above returned its path.
+  assert_equal "$BATS_TEST_BINDIR/cp" "$cp_stub_path"
+
+  # `restore_program_in_path` should've updated `PATH` to clear the hash table
+  # so that `command -v cp` now returns the original path.
+  assert_equal "$cp_orig_path" "$(command -v 'cp')"
 }
 
 @test "$SUITE: restore_program_in_path fails when stub doesn't exist" {

@@ -311,6 +311,7 @@ stub_program_in_path() {
   if [[ ! "$PATH" =~ $bindir_pattern ]]; then
     export PATH="$BATS_TEST_BINDIR:$PATH"
   fi
+  hash "$cmd_name"
 }
 
 # Creates a forwarding wrapper in `BATS_TEST_BINDIR` for an existing command
@@ -357,6 +358,8 @@ restore_program_in_path() {
 
   local cmd_name="$1"
   local result='0'
+
+  # Updating `PATH` clears the executable hash table, so no need to call `hash`.
   export PATH="${PATH#$BATS_TEST_BINDIR:}"
 
   if [[ -z "$cmd_name" ]]; then
