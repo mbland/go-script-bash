@@ -307,6 +307,33 @@ __check_dirs_exist() {
   assert_failure 'No command name provided.'
 }
 
+@test "$SUITE: restore_programs_in_path restores multiple programs at once" {
+  local orig_paths=($(command -v cp mkdir ls))
+  stub_program_in_path 'cp'
+  stub_program_in_path 'mkdir'
+  stub_program_in_path 'ls'
+  run command -v 'cp' 'mkdir' 'ls'
+  assert_success "${BATS_TEST_BINDIR[@]}"/{cp,mkdir,ls}
+
+  restore_programs_in_path 'cp' 'mkdir' 'ls'
+  run command -v 'cp' 'mkdir' 'ls'
+  assert_success "${orig_paths[@]}"
+}
+
+@test "$SUITE: restore_programs_in_path reports an error if no stub exists" {
+  local orig_paths=($(command -v cp ls))
+  stub_program_in_path 'cp'
+  stub_program_in_path 'ls'
+  run restore_programs_in_path 'cp' 'mkdir' 'ls'
+  assert_failure "Bats test stub program doesn't exist: mkdir"
+
+  # Since we ran `restore_programs_in_path` in a subshell via `run`, the Bash
+  # executable path hash table in this process needs to be cleared manually.
+  hash -r
+  run command -v 'cp' 'ls'
+  assert_success "${orig_paths[@]}"
+}
+
 @test "$SUITE: create_forwarding_script does nothing if program doesn't exist" {
   create_forwarding_script 'some-noexistent-program-name'
   fail_if matches "^${BATS_TEST_BINDIR}:" "$PATH"
@@ -369,9 +396,7 @@ __check_dirs_exist() {
 
   create_forwarding_scripts 'bash' 'cp' 'rm'
   run command -v 'bash' 'cp' 'rm'
-  restore_program_in_path 'bash'
-  restore_program_in_path 'cp'
-  restore_program_in_path 'rm'
+  restore_programs_in_path 'bash' 'cp' 'rm'
   assert_success "$BATS_TEST_BINDIR"/{bash,cp,rm}
 
   run command -v 'bash' 'cp' 'rm'
@@ -390,4 +415,68 @@ __check_dirs_exist() {
   PATH="$BATS_TEST_BINDIR" run 'printenv' 'PATH'
   restore_program_in_path 'printenv'
   assert_success "$BATS_TEST_BINDIR:$path"
+}
+
+@test "$SUITE: run_test_script creates and runs a script in one step" {
+  run_test_script 'one-step' \
+    'printf "%s\n" "Hello, World!"'
+  assert_success 'Hello, World!'
+}
+
+# Note that we use `[[ ... ]] || return 1` because Bash 3.x otherwise won't
+# return properly when a `[[ ... ]]` condition fails. The `[ ... ]` construct
+# works for all versions of Bash, but since `[[ ... ]]` is a generally safer and
+# more versatile construct, this seemed a good opportunity to demonstrate the
+# use of `|| return 1`.
+#
+# Incidentally, it should be easy to inject `|| return 1` automatically via
+# `bats-preprocess`.
+@test "$SUITE: run_bats_test_suite creates and runs a passing test suite" {
+  run_bats_test_suite 'passing' \
+    '@test "should pass" {' \
+    '  [[ $((2 + 2)) -eq 4 ]] || return 1' \
+    '}'
+  assert_success '1..1' 'ok 1 should pass'
+}
+
+@test "$SUITE: run_bats_test_suite runs a test suite with skips" {
+  run_bats_test_suite 'skipping' \
+    '@test "should skip" {' \
+    '  skip "just because"' \
+    '  [[ $((2 + 2)) -eq 5 ]] || return 1' \
+    '}'
+  assert_success '1..1' 'ok 1 # skip (just because) should skip'
+}
+
+@test "$SUITE: run_bats_test_suite runs a test suite with failures" {
+  run_bats_test_suite 'failing' \
+    '@test "should fail" {' \
+    '  [[ $((2 + 2)) -eq 5 ]] || return 1' \
+    '}'
+  assert_failure '1..1' 'not ok 1 should fail' \
+    "# (in test file $BATS_TEST_ROOTDIR/failing, line 3)" \
+    "#   \`[[ \$((2 + 2)) -eq 5 ]] || return 1' failed"
+}
+
+@test "$SUITE: run_bats_test_suite_in_isolation only forwards bash and rm" {
+  skip_if_system_missing cp rm mkdir
+  run_bats_test_suite_in_isolation 'skipping' \
+    ". '$_GO_ROOTDIR/lib/bats/helpers'" \
+    '@test "should skip" {' \
+    '  skip_if_system_missing cp rm mkdir' \
+    '}'
+  assert_success '1..1' \
+    'ok 1 # skip (cp, mkdir not installed on the system) should skip'
+}
+
+@test "$SUITE: run_bats_test_suite_in_isolation can access forwarding scripts" {
+  skip_if_system_missing cp rm mkdir
+  create_forwarding_scripts 'cp' 'mkdir'
+  run_bats_test_suite_in_isolation 'not-skipping' \
+    ". '$_GO_ROOTDIR/lib/bats/helpers'" \
+    '@test "should not skip when commands forwarded" {' \
+    '  skip_if_system_missing cp rm mkdir' \
+    '}'
+  restore_programs_in_path 'cp' 'mkdir'
+  assert_success '1..1' 'ok 1 should not skip when commands forwarded'
 }

@@ -428,6 +428,69 @@ restore_program_in_path() {
   restore_bats_shell_options "$result"
 }
 
+# Removes multiple stub programs from `PATH` at once
+#
+# Arguments:
+#   $@:  Names of stub programs to restore
+restore_programs_in_path() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local stub
+  local result='0'
+
+  for stub in "$@"; do
+    if ! restore_program_in_path "$stub"; then
+      result='1'
+    fi
+  done
+  restore_bats_shell_options "$result"
+}
+
+# Creates and runs a test script in one step
+#
+# Arguments:
+#   $@:  Passed directly through to `create_bats_test_script`
+run_test_script() {
+  create_bats_test_script "$@"
+  run "$BATS_TEST_ROOTDIR/$1"
+}
+
+# Creates and runs a Bats test suite in one step
+#
+# If the first line of the script isn't an interpreter specification beginning
+# with '#!', it will be set to '#! /usr/bin/env bats'.
+#
+# Arguments:
+#   suite_name:  File name of the test suite
+#   ...:         Lines comprising the test suite
+run_bats_test_suite() {
+  local suite_name="$1"
+  local script=("${@:2}")
+
+  if [[ "${script[0]:0:2}" != '#!' ]]; then
+    script=('#! /usr/bin/env bats' "${script[@]}")
+  fi
+  run_test_script "$suite_name" "${script[@]}"
+}
+
+# Creates and runs a Bats test suite with a restricted `PATH` in one step
+#
+# The suite will run with `PATH` set to `BATS_TEST_BINDIR` plus the Bats
+# `libexec` directory. This is useful for testing functions that skip tests
+# based on available system programs, using `create_forwarding_script` to make
+# only selected programs available in `BATS_TEST_BINDIR`.
+#
+# `bash` and `rm` are forwarded by this function, so your test cases should not
+# call `create_forwarding_script` or `restore_program_in_path` for them.
+#
+# Arguments:
+#   $@:  Passed directly through to `run_bats_test_suite`
+run_bats_test_suite_in_isolation() {
+  create_forwarding_script --path "$_GO_ROOTDIR/${_GO_BATS_PATH%/*}" 'bash'
+  create_forwarding_script --path '' 'rm'
+  run_bats_test_suite "$@"
+  restore_programs_in_path 'bash' 'rm'
+}
+
 # --------------------------------
 # IMPLEMENTATION - HERE BE DRAGONS
 #
