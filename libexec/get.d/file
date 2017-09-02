@@ -206,10 +206,8 @@ _@go.get_file() {
     if [[ "${url:0:1}" != '/' ]]; then
       url="${PWD}/${url}"
     fi
-    if [[ "$url" =~ ^/[^/]+ && -d "$BASH_REMATCH/Windows" ]]; then
-      url="${BASH_REMATCH}:/${url#$BASH_REMATCH/}"
-    fi
-    url="file://${url}"
+    . "$_GO_USE_MODULES" 'portability'
+    @go.native_file_path_or_url 'url' "file://${url}"
   fi
   _@go.get_file_impl "$download_dir" "$filename" "$url"
 }

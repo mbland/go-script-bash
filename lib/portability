@@ -1,0 +1,35 @@
+#! /usr/bin/env bash
+#
+# Functions to manage platform differences
+#
+# Exports:
+#   @go.native_file_path_or_url
+#     Converts a file system path or 'file://' URL to a platform-native path
+
+. "$_GO_USE_MODULES" 'platform' 'validation'
+
+# Converts a file system path or 'file://' URL to a platform-native path
+#
+# This is useful when passing file paths or URLs to native programs on Git for
+# Windows, or validating the output of such programs, to ensure portability.
+# The resulting path will contain forward slashes.
+#
+# Prints both converted and unconverted paths and URLs to the specified result
+# variable.
+#
+# Arguments:
+#   result_var_name:  Name of caller's variable in which to store the result
+#   path:             File system path or 'file://' URL to convert
+@go.native_file_path_or_url() {
+  local _gnp_protocol="${2%%://*}"
+  @go.validate_identifier_or_die 'Result variable name' "$1"
+
+  if [[ "$_GO_PLATFORM_ID" != 'msys-git' ]] ||
+    [[ "$_gnp_protocol" != "$2" && "$_gnp_protocol" != 'file' ]]; then
+    printf -v "$1" '%s' "$2"
+  elif [[ "$_gnp_protocol" == 'file' ]]; then
+    printf -v "$1" 'file://%s' "$(cygpath -m "${2#file://}")"
+  else
+    printf -v "$1" '%s' "$(cygpath -m "$2")"
+  fi
+}
