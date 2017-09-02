@@ -1,0 +1,166 @@
+#! /usr/bin/env bash
+#
+# Functions for managing background processes
+#
+# These functions make it easier to write Bats test cases that validate the
+# behavior of long-running processes such as servers:
+#
+#   @test '$SUITE: my-server should start successfully' {
+#     skip_if_missing_background_utilities
+#     run_in_background 'my-server'
+#     wait_for_background_output 'my-server is now ready'
+#     stop_background_run
+#     assert_...
+#   }
+#
+# Call `skip_if_missing_background_utilities` at the beginning of each test case
+# to skip it if the host system lacks any of the process management utilities
+# required by the functions from this file.
+#
+# `run_in_background` is equivalent to the Bats `run` function, except that it
+# launches a background process without waiting for it to exit.
+# `run_test_script_in_background` creates and runs a test script in the
+# background in one step.
+#
+# `wait_for_background_output` will pause test execution until the output
+# from the process launched by `run_in_background` matches a specified
+# pattern. If the output isn't seen before the timeout expires, it prints
+# an error message and returns nonzero, which will fail the test case.
+#
+# `stop_background_run` terminates the background process launched by
+# `run_in_background` and sets `status`, `output`, and `lines`.
+
+. "${BASH_SOURCE%/*}/helpers"
+
+# Skips a test case if any background process management utilities are missing.
+#
+# These helpers require that the `pkill`, `sleep`, and `tail` system utilities
+# are available.
+#
+# Of these, `pkill` may be missing from Windows-based Bash environments by
+# default. For these platforms:
+#
+# - Cygwin: Install the procps-ng package
+# - MSYS2: Install procps via `pacman -Sy procps`
+# - Git for Windows: Install the Git for Windows SDK; run `pacman -Sy procps`
+skip_if_missing_background_utilities() {
+  skip_if_system_missing 'pkill' 'sleep' 'tail'
+}
+
+# Equivalent to the Bats `run` function for background processes.
+#
+# After calling this function, you can use `wait_for_background_output` to wait
+# for the process to enter an expected state, then call `stop_background_run` to
+# end the process and set the `output`, `lines`, and `status` variables.
+#
+# Arguments:
+#   $@:  Command to run as a background process
+#
+# Globals set by this function:
+#   BATS_BACKGROUND_RUN_OUTPUT:  File into which process output is collected
+#   BATS_BACKGROUND_RUN_PID:     Process ID of the background process
+run_in_background() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  export BATS_BACKGROUND_RUN_OUTPUT
+  BATS_BACKGROUND_RUN_OUTPUT="$BATS_TEST_ROOTDIR/background-run-output.txt"
+  printf '' >"$BATS_BACKGROUND_RUN_OUTPUT"
+  "$@" >"$BATS_BACKGROUND_RUN_OUTPUT" 2>&1 &
+  export BATS_BACKGROUND_RUN_PID="$!"
+  restore_bats_shell_options
+}
+
+# Creates and runs a test script in the background in one step
+#
+# Arguments:
+#   $@:  Passed directly through to `create_bats_test_script`
+run_test_script_in_background() {
+  create_bats_test_script "$@"
+  run_in_background "$BATS_TEST_ROOTDIR/$1"
+}
+
+# Pauses test execution until a background process produces expected output.
+#
+# Call this after `run_in_background` to ensure the process enters an expected
+# state before continuing with the test. If the expected output isn't seen
+# within the `timeout` interval, this function will print an error message and
+# return nonzero.
+#
+# To wait on output added to a different file from the one created by
+# `run_in_background`, prefix the call to this function with
+# `BATS_BACKGROUND_RUN_OUTPUT` set to the file you wish to wait on, e.g.:
+#
+#    BATS_BACKGROUND_RUN_OUTPUT="$BATS_TEST_ROOTDIR/foo.txt" \
+#      wait_for_background_output 'foo bar baz'
+#
+# Arguments:
+#   pattern:  Regular expression matching output signifying expected state
+#   timeout:  Timeout for the wait operation in seconds
+#
+# Globals set by `run_in_background`:
+#   BATS_BACKGROUND_RUN_OUTPUT:  File into which process output is collected
+wait_for_background_output() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local pattern="$1"
+  local timeout="${2:-3}"
+  local input_cmd=('tail' '-f' "$BATS_BACKGROUND_RUN_OUTPUT")
+  local kill_input_pid='0'
+  local line
+
+  if [[ -z "$BATS_BACKGROUND_RUN_OUTPUT" ]]; then
+    printf 'run_in_background not called\n' >&2
+    restore_bats_shell_options '1'
+    return
+  elif [[ -z "$pattern" ]]; then
+    printf 'pattern not specified\n' >&2
+    restore_bats_shell_options '1'
+    return
+  fi
+
+  # Since `tail -f` will block forever, even if the background process died, we
+  # kill it automatically after a timeout period.
+  (sleep "$timeout"; pkill -f "${input_cmd[*]}" >/dev/null 2>&1) &
+  kill_input_pid="$!"
+
+  while read -r line; do
+    if [[ "$line" =~ $pattern ]]; then
+      # Kill the sleep so `pkill -f 'tail -f'` will run sooner.
+      pkill -P "$kill_input_pid" sleep
+      restore_bats_shell_options
+      return
+    fi
+  done < <("${input_cmd[@]}")
+
+  printf "Output did not match regular expression:\n  '%s'\n\n" "$pattern" >&2
+  printf 'OUTPUT:\n------\n%s' "$(< "$BATS_BACKGROUND_RUN_OUTPUT")" >&2
+  restore_bats_shell_options '1'
+}
+
+# Terminates the background process launched by `run_in_background`.
+#
+# Also sets `output`, `lines`, and `status`, though `lines` preserves empty
+# lines from `output`.
+#
+# Note that the `QUIT` and `INT` are handled specially by Bash, and thus aren't
+# appropriate signals to send to background Bash processes.
+#
+# Arguments:
+#   signal (optional):  Signal to send to the process; defaults to TERM
+#
+# Globals set by `run_in_background`:
+#   BATS_BACKGROUND_RUN_OUTPUT:  File into which process output is collected
+#   BATS_BACKGROUND_RUN_PID:     Process ID of the background process
+stop_background_run() {
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  local signal="${1:-TERM}"
+
+  if [[ -n "$BATS_BACKGROUND_RUN_PID" ]]; then
+    kill "-${signal}" "$BATS_BACKGROUND_RUN_PID" >/dev/null 2>&1
+    wait "$BATS_BACKGROUND_RUN_PID"
+    status="$?"
+    output="$(<"$BATS_BACKGROUND_RUN_OUTPUT")"
+    rm "$BATS_BACKGROUND_RUN_OUTPUT"
+    unset 'BATS_BACKGROUND_RUN_PID' 'BATS_BACKGROUND_RUN_OUTPUT'
+    split_bats_output_into_lines
+  fi
+  restore_bats_shell_options
+}
