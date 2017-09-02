@@ -6,7 +6,8 @@
 # environment variables if `/etc/os-release` if present, or just
 # `_GO_PLATFORM_ID` otherwise, which is set to:
 #
-#   - 'macos' if the Bash variable `OSTYPE` matches 'darwin'
+#   - 'macos' if the Bash variable `$OSTYPE` matches 'darwin'
+#   - 'freebsd' if `$OSTYPE` matches 'freebsd'
 #   - 'msys-git' if `git --version` matches 'windows'
 #   - `$OSTYPE` in all other cases
 #
@@ -35,9 +36,15 @@ _@go.platform_os_release() {
 }
 
 _@go.platform_ostype() {
+  # We elide `$OSTYPE` values into more inclusive values such as 'macos' and
+  # 'freebsd' since we expect most scripts to treat different versions of a
+  # platform largely the same way.
   case "$OSTYPE" in
   darwin*)
-    _GO_PLATFORM_ID='macos' 
+    _GO_PLATFORM_ID='macos'
+    ;;
+  freebsd*)
+    _GO_PLATFORM_ID='freebsd'
     ;;
   msys)
     _GO_PLATFORM_ID='msys'
