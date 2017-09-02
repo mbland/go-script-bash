@@ -1,0 +1,63 @@
+#! /bin/bash
+#
+# Sets the `_GO_PLATFORM_*` family of environment variables
+#
+# This module doesn't export any functions, only the `_GO_PLATFORM_*`
+# environment variables if `/etc/os-release` if present, or just
+# `_GO_PLATFORM_ID` otherwise, which is set to:
+#
+#   - 'macos' if the Bash variable `OSTYPE` matches 'darwin'
+#   - 'msys-git' if `git --version` matches 'windows'
+#   - `$OSTYPE` in all other cases
+#
+# For information on `/etc/os-release`, see:
+#   https://www.freedesktop.org/software/systemd/man/os-release.html
+
+# This can be set for testing.
+export __GO_ETC_OS_RELEASE="${__GO_ETC_OS_RELEASE:-/etc/os-release}"
+
+_@go.platform_os_release() {
+  local line
+  local value
+
+  if [[ ! -f "$__GO_ETC_OS_RELEASE" ]]; then
+    return 1
+  fi
+
+  while read -r line; do
+    line="${line%$'\r'}"
+    if [[ "$line" =~ ^[^#]+= ]]; then
+      value="${line#*=}"
+      value="${value#\"}"
+      printf -v "_GO_PLATFORM_${line%%=*}" '%s' "${value%\"}"
+    fi
+  done <"$__GO_ETC_OS_RELEASE"
+}
+
+_@go.platform_ostype() {
+  case "$OSTYPE" in
+  darwin*)
+    _GO_PLATFORM_ID='macos' 
+    ;;
+  msys)
+    _GO_PLATFORM_ID='msys'
+    if command -v 'git' >/dev/null && [[ "$(git --version)" =~ windows ]]; then
+      _GO_PLATFORM_ID+='-git'
+    fi
+    ;;
+  *)
+    _GO_PLATFORM_ID="$OSTYPE"
+    ;;
+  esac
+}
+
+_@go.platform() {
+  if [[ -n "$_GO_PLATFORM_ID" ]]; then
+    return
+  elif ! _@go.platform_os_release; then
+    _@go.platform_ostype
+  fi
+  export "${!_GO_PLATFORM_@}"
+}
+
+_@go.platform
