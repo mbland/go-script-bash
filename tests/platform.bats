@@ -48,6 +48,11 @@ teardown() {
   assert_success '_GO_PLATFORM_ID="macos"'
 }
 
+@test "$SUITE: set _GO_PLATFORM_ID to freebsd from OSTYPE" {
+  OSTYPE='freebsd11.0' run "$TEST_GO_SCRIPT"
+  assert_success '_GO_PLATFORM_ID="freebsd"'
+}
+
 @test "$SUITE: set _GO_PLATFORM_ID to msys from OSTYPE" {
   stub_program_in_path 'git' 'printf "%s\n" "git version 2.13.0"'
   OSTYPE='msys' run "$TEST_GO_SCRIPT"
