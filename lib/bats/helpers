@@ -172,6 +172,29 @@ skip_if_system_missing() {
   fi
 }
 
+# Skips the current test if zero of the listed system programs are present.
+#
+# Useful for testing behavior that can use any one of a number of system
+# programs based on what's available, such as `./go get file` being able to use
+# `curl`, `fetch`, or `wget`.
+#
+# Arguments:
+#   $@:  System programs of which at least one must be present to run the test
+skip_if_none_present_on_system() {
+  local missing
+
+  if ! command -v "$@" >/dev/null; then
+    if [[ "$#" -eq '1' ]]; then
+      skip "$1 isn't installed on the system"
+    elif [[ "$#" -eq '2' ]]; then
+      skip "Neither $1 nor $2 is installed on the system"
+    else
+      printf -v missing '%s, ' "${@:1:$(($# - 1))}"
+      skip "None of ${missing% } or ${!#} are installed on the system"
+    fi
+   fi
+ }
+
 # Joins lines using a delimiter into a user-defined variable
 #
 # Just like `@go.join` from `lib/strings`, except that it doesn't depend on any

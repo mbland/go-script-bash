@@ -75,25 +75,6 @@ assert_go_core_unpacked() {
   restore_bats_shell_options "$result"
 }
 
-# Skips the current test if zero of the listed system programs are present.
-#
-# Arguments:
-#   $@:  System programs of which at least one must be present to run the test
-skip_if_none_present_on_system() {
-  local missing
-
-  if ! command -v "$@" >/dev/null; then
-    if [[ "$#" -eq '1' ]]; then
-      skip "$1 isn't installed on the system"
-    elif [[ "$#" -eq '2' ]]; then
-      skip "Neither $1 nor $2 are installed on the system"
-    else
-      printf -v missing '%s, ' "${@:1:$(($# - 1))}"
-      skip "None of ${missing% } or ${@:$#} are installed on the system"
-    fi
-  fi
-}
-
 # Converts a Unix path or 'file://' URL to a Git for Windows native path.
 #
 # This is useful when passing file paths or URLs to native programs on Git for
