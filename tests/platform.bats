@@ -11,6 +11,7 @@ setup() {
     'for var in "${!_GO_PLATFORM_@}"; do' \
     '  printf "%s=\"%s\"\n" "$var" "${!var}"' \
     'done'
+  export __GO_ETC_OS_RELEASE="$BATS_TEST_ROOTDIR/os-release"
 }
 
 teardown() {
@@ -23,15 +24,13 @@ teardown() {
 }
 
 @test "$SUITE: set _GO_PLATFORM_* variables from /etc/os-release" {
-  local os_release_path="$BATS_TEST_ROOTDIR/os-release"
-  local vars=('NAME="Foo Bar"'
-    'ID=foobar'
-    'VERSION_ID=666')
-
   mkdir -p "$BATS_TEST_ROOTDIR"
-  printf '%s\n' "${vars[@]}" >"$os_release_path"
+  printf '%s\n' \
+    'NAME="Foo Bar"' \
+    'ID=foobar' \
+    'VERSION_ID=666' >"$__GO_ETC_OS_RELEASE"
 
-  __GO_ETC_OS_RELEASE="$os_release_path" run "$TEST_GO_SCRIPT"
+  run "$TEST_GO_SCRIPT"
   assert_success
   assert_lines_equal \
     '_GO_PLATFORM_ID="foobar"' \
