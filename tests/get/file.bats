@@ -104,16 +104,26 @@ teardown() {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
   mkdir -p "$TEST_GO_ROOTDIR"
   printf '' >"$TEST_GO_ROOTDIR/foobar.txt"
+
+  local expected
+  . "$_GO_USE_MODULES" 'portability'
+  @go.native_file_path_or_url 'expected' "file://$TEST_GO_ROOTDIR/foobar.txt"
+
   run "$BASH" "$TEST_GO_SCRIPT" get file -f - foobar.txt
-  assert_success "-L file://$TEST_GO_ROOTDIR/foobar.txt"
+  assert_success "-L $expected"
 }
 
 @test "$SUITE: curl called with correct args for local absolute path" {
   stub_program_in_path 'curl' 'printf "%s\n" "$*"'
   mkdir -p "$TEST_GO_ROOTDIR"
   printf '' >"$TEST_GO_ROOTDIR/foobar.txt"
+
+  local expected
+  . "$_GO_USE_MODULES" 'portability'
+  @go.native_file_path_or_url 'expected' "file://$TEST_GO_ROOTDIR/foobar.txt"
+
   run "$BASH" "$TEST_GO_SCRIPT" get file -f - "$TEST_GO_ROOTDIR/foobar.txt"
-  assert_success "-L file://$TEST_GO_ROOTDIR/foobar.txt"
+  assert_success "-L $expected"
 }
 
 @test "$SUITE: wget called with correct args with URL only" {
@@ -196,17 +206,14 @@ teardown() {
 @test "$SUITE: use real curl to copy a local file" {
   skip_if_system_missing 'curl'
 
-  # Since curl on MSYS2 can't handle file:/// URLs that contain root paths
-  # that aren't literally on the C: filesystem, and `BATS_TMPDIR` falls into
-  # that category, we'll use the ./go script itself as input.
+
   local download_path="$TEST_GO_ROOTDIR/download.txt"
   mkdir -p "$TEST_GO_ROOTDIR"
   run "$TEST_GO_SCRIPT" get file -f "$download_path" "$_GO_SCRIPT"
 
-  local source_path="$_GO_SCRIPT"
-  if [[ "$source_path" =~ ^/[^/]+ && -d "$BASH_REMATCH/Windows" ]]; then
-    source_path="${BASH_REMATCH}:/${source_path#$BASH_REMATCH/}"
-  fi
+  local source_path
+  . "$_GO_USE_MODULES" 'portability'
+  @go.native_file_path_or_url 'source_path' "$_GO_SCRIPT"
 
   assert_success "Downloaded \"file://$source_path\" as: $download_path"
   set_bats_output_and_lines_from_file "$_GO_SCRIPT"

@@ -1,6 +1,7 @@
 #! /usr/bin/env bats
 
 load environment
+load "$_GO_CORE_DIR/lib/portability"
 
 # By default, the test will try to clone its own repo to avoid flakiness due to
 # an external dependency. However, doing so causes a failure on Travis, since it
@@ -42,9 +43,8 @@ CLONE_DIR=
 setup() {
   test_filter
   export GO_SCRIPT_BASH_{VERSION,REPO_URL,DOWNLOAD_URL}
-  NATIVE_LOCAL_URL="$(git_for_windows_native_path "$LOCAL_DOWNLOAD_URL")"
-  CLONE_DIR="$(git_for_windows_native_path "$TEST_GO_SCRIPTS_DIR")"
-  CLONE_DIR+='/go-script-bash'
+  @go.native_file_path_or_url 'NATIVE_LOCAL_URL' "$LOCAL_DOWNLOAD_URL"
+  @go.native_file_path_or_url 'CLONE_DIR' "$TEST_GO_SCRIPTS_DIR/go-script-bash"
   EXPECTED_URL="$FULL_DOWNLOAD_URL"
 
   if [[ -z "$TEST_USE_REAL_URL" ]]; then
@@ -73,31 +73,6 @@ assert_go_core_unpacked() {
     result='1'
   fi
   restore_bats_shell_options "$result"
-}
-
-# Converts a Unix path or 'file://' URL to a Git for Windows native path.
-#
-# This is useful when passing file paths or URLs to native programs on Git for
-# Windows, or validating the output of such programs, to ensure portability.
-# The resulting path will contain forward slashes.
-#
-# Prints both converted and unconverted paths and URLs to standard output.
-#
-# Arguments:
-#   path:  Path or 'file://' URL to convert
-git_for_windows_native_path() {
-  local path="$1"
-  local protocol="${path%%://*}"
-
-  if [[ ! "$(git --version)" =~ windows ]] ||
-    [[ "$protocol" != "$path" && "$protocol" != 'file' ]]; then
-    printf '%s' "$path"
-  elif [[ "$protocol" == 'file' ]]; then
-    printf 'file://'
-    cygpath -m "${path#file://}"
-  else
-    cygpath -m "$path"
-  fi
 }
 
 # This mimics the tarball provided by GitHub.

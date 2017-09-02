@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 #
 # Sets the `_GO_PLATFORM_*` family of environment variables
 #
