@@ -170,6 +170,34 @@ __check_dirs_exist() {
     'ok 1 # skip (foo, bar, baz not installed on the system) skip if missing'
 }
 
+@test "$SUITE: skip_if_none_present_on_system" {
+  stub_program_in_path 'quux'
+  run_bats_test_suite_in_isolation 'skip-if-none-present-on-system-test.bats' \
+    "load '$_GO_CORE_DIR/lib/bats/helpers'" \
+    '@test "should not skip if at least one present" {' \
+    '  skip_if_none_present_on_system foo bar baz quux' \
+    '}'\
+    '@test "single program missing" {' \
+    '  skip_if_none_present_on_system foo' \
+    '}' \
+    '@test "two programs missing" {' \
+    '  skip_if_none_present_on_system foo bar' \
+    '}' \
+    '@test "three programs missing" {' \
+    '  skip_if_none_present_on_system foo bar baz' \
+    '}'
+  assert_success
+
+  local expected_messages=("foo isn't installed on the system"
+    'Neither foo nor bar is installed on the system'
+    'None of foo, bar, or baz are installed on the system')
+  assert_lines_equal '1..4' \
+    'ok 1 should not skip if at least one present' \
+    "ok 2 # skip (${expected_messages[0]}) single program missing" \
+    "ok 3 # skip (${expected_messages[1]}) two programs missing" \
+    "ok 4 # skip (${expected_messages[2]}) three programs missing"
+}
+
 @test "$SUITE: test_join fails if result variable name is invalid" {
   create_bats_test_script test-script \
     ". '$_GO_CORE_DIR/lib/bats/helpers'" \
