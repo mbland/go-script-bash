@@ -1,0 +1,210 @@
+#! /usr/bin/env bash
+#
+# File system path processing and traversal
+#
+# Exports:
+#   @go.canonicalize_path
+#     Removes all extra slashes from a path and resolves all relative components
+#
+#   @go.walk_file_system
+#     Performs an operation on file system objects and recurses into directories
+#
+#   @go.walk_path_forward
+#     Processes a file path from the first component to the last
+#
+#   @go.realpath
+#     Translates a path into its canonical absolute path
+
+. "$_GO_USE_MODULES" 'validation'
+
+# Removes all extra slashes from a path and resolves all relative components
+#
+# This will reduce any consecutive string of slashes to a single slash, and trim
+# a trailing slash if one remains.
+#
+# Arguments:
+#   result_var_name:   Name of the variable into which the result will be stored
+#   path:              Path to canonicalize
+@go.canonicalize_path() {
+  @go.validate_identifier_or_die 'Result variable name' "$1"
+  printf -v "$1" '%s' "$2/"
+
+  while [[ "${!1}" =~ //+ ]]; do
+    printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
+  done
+
+  while [[ "${!1}" =~ /\./ ]]; do
+    printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
+  done
+
+  while [[ "${!1}" =~ [^/]+/\.\./ ]]; do
+    if [[ "${BASH_REMATCH[0]}" != '../../' ]]; then
+      printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"/}"
+    elif [[ "${!1}" =~ ^/[./]+ ]]; then
+      printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
+    else
+      break
+    fi
+  done
+
+  if [[ "${!1}" =~ ^/[./]+ ]]; then
+    printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
+  fi
+
+  if [[ "${!1}" != '/' ]]; then
+    printf -v "$1" '%s' "${!1%/}"
+  fi
+}
+
+# Performs an operation on file system objects and recurses into directories
+#
+# Each call to `operation` receives a path to an existing file system object.
+# Performs a depth-first search algorithm by default, recursing into each
+# directory as it is encountered. The `--bfs` option changes this behavior to
+# recurse into directories as the last step of the algorithm.
+#
+# The algorithm terminates when it finishes visiting all the file system objects
+# reachable from the path arguments or when `operation` returns a nonzero value.
+#
+# Options:
+#   --bfs:  Breadth-first search; recurse into directories at end of algorithm
+#
+# Arguments:
+#   operation:  Name of the function taking a file system path as an argument
+#   ...:        Paths from which to begin walking the file system
+#
+# Returns:
+#   Zero if `operation` always returned zero and the algorithm finished
+#   Nonzero if the algorithm was terminated by a nonzero return from `operation`
+@go.walk_file_system() {
+  local operation
+  local current 
+  local do_bfs
+  local bfs_queue=()
+
+  if [[ "$1" == '--bfs' ]]; then
+    do_bfs='true'
+    shift
+  fi
+  operation="$1"
+
+  for current in "${@:2}"; do
+    if [[ -e "$current" ]] && ! "$operation" "$current"; then
+      return 1
+    elif [[ -d "$current" ]]; then
+      if [[ -n "$do_bfs" ]]; then
+        bfs_queue+=("$current")
+      elif ! @go.walk_file_system "$operation" "$current"/*; then
+        return 1
+      fi
+    fi
+  done
+
+  for current in "${bfs_queue[@]}"; do
+    if ! @go.walk_file_system '--bfs' "$operation" "$current"/*; then
+      return 1
+    fi
+  done
+}
+
+# Processes a file path from the first component to the last
+#
+# The first call to `operation` receives the first component of the path as its
+# argument. Each successive call to `operation` receives the previous path plus
+# its child component.
+#
+# The algorithm terminates when the entire path has been processed or when
+# `operation` returns a nonzero value.
+#
+# Arguments:
+#   operation:  Name of the function taking a file system path as an argument
+#   path:       Path to walk forward from first parent to last child
+#
+# Returns:
+#   Zero if `operation` always returned zero and the algorithm finished
+#   Nonzero if the algorithm was terminated by a nonzero return from `operation`
+@go.walk_path_forward() {
+  local operation="$1"
+  local oldIFS="$IFS"
+  local IFS='/'
+  local components=($2)
+  local component
+  local current_path
+
+  IFS="$oldIFS"
+
+  for component in "${components[@]}"; do
+    current_path+="${component:-/}"
+    if ! "$operation" "$current_path"; then
+      return 1
+    elif [[ -n "$component" ]]; then
+      current_path+='/'
+    fi
+  done
+}
+
+# Translates a path into its canonical absolute path
+#
+# This will eliminate extra slashes and symbolic links. It will resolve relative
+# path components (i.e. '.' and '..') up to the point at which the path actually
+# exists in the file system.
+#
+# Arguments:
+#  result_var_name:  Name of the variable to which the real path will be stored
+#  path:             Path to resolve to a real path
+@go.realpath() {
+  @go.validate_identifier_or_die 'Result variable name' "$1"
+  local __grp_path="$2"
+  local __grpi_real_prefix
+  local __grpi_real_dir
+  local __grp_orig_pwd="$PWD"
+
+  cd -P "$PWD" >/dev/null
+  printf -v '__grpi_real_dir' '%s' "$PWD"
+
+  while :; do
+    @go.canonicalize_path '__grp_path' "$__grp_path"
+    @go.walk_path_forward _@go.realpath_impl "$__grp_path" || :
+
+    if [[ -z "$__grpi_real_prefix" ]]; then
+      __grp_path="/$__grp_path"
+    fi
+    printf -v "$1" '%s' "${__grpi_real_dir}${__grp_path#$__grpi_real_prefix}"
+
+    if [[ ! -L "${!1}" ]]; then
+      break
+    fi
+
+    # Use `ls` since it exists everywhere, `readlink` and `realpath` don't, and
+    # there's no way to get the target of a file symlink directly from Bash.
+    __grp_path="$(ls -l "${!1}")"
+    __grp_path="${__grp_path#* -> }"
+    if [[ "${__grp_path:0:1}" != '/' ]]; then
+      cd "$__grpi_real_dir" >/dev/null
+    fi
+  done
+  cd "$__grp_orig_pwd" >/dev/null
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# Implementation helper for @go.realpath
+#
+# Globals:
+#   __grpi_real_prefix:  Assigned last path value that exists in the file system
+#   __grpi_real_dir:     Assigned absolute path of __grpi_real_prefix
+#
+# Arguments:
+#   path:  Current path passed in by @go.walk_path_forward
+_@go.realpath_impl() {
+  if ! cd -P "$1" >/dev/null 2>&1; then
+    return 1
+  fi
+  printf -v '__grpi_real_prefix' '%s' "$1"
+  printf -v '__grpi_real_dir' '%s' "$PWD"
+  cd - >/dev/null 2>&1
+}
