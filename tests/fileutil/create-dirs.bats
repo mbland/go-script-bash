@@ -81,6 +81,7 @@ assert_dirs_created() {
 }
 
 @test "$SUITE: permissions don't change if directory already exists" {
+  skip_if_cannot_trigger_file_permission_failure
   mkdir -p "$TEST_GO_ROOTDIR/foo"
   chmod 700 "$TEST_GO_ROOTDIR/foo"
 
