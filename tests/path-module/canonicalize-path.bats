@@ -29,6 +29,16 @@ run_canonicalize_path() {
   assert_success '/'
 }
 
+@test "$SUITE: root path relative self" {
+  run_canonicalize_path '/.'
+  assert_success '/'
+}
+
+@test "$SUITE: root path dotfile" {
+  run_canonicalize_path '/.bashrc'
+  assert_success '/.bashrc'
+}
+
 @test "$SUITE: leaves relative current dir path unchanged" {
   run_canonicalize_path '.'
   assert_success '.'
