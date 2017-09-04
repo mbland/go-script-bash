@@ -6,6 +6,9 @@
 #   @go.canonicalize_path
 #     Removes all extra slashes from a path and resolves all relative components
 #
+#   @go.add_parent_dir_if_relative_path
+#     Adds a parent dir to a relative path
+#
 #   @go.walk_file_system
 #     Performs an operation on file system objects and recurses into directories
 #
@@ -27,10 +30,15 @@
 #   path:              Path to canonicalize
 @go.canonicalize_path() {
   @go.validate_identifier_or_die 'Canonicalized path result variable' "$1"
-  printf -v "$1" '%s' "$2/"
+
+  printf -v "$1" '%s' "${2}${2:+/}"
 
   while [[ "${!1}" =~ //+ ]]; do
     printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
+  done
+
+  while [[ "${!1}" =~ ^\./. ]]; do
+    printf -v "$1" '%s' "${!1#./}"
   done
 
   while [[ "${!1}" =~ /\./ ]]; do
@@ -56,6 +64,32 @@
   fi
 }
 
+# Adds a parent dir to a relative path
+#
+# If the path is absolute, the original path is assigned.
+#
+# Options:
+#   --parent:  Parent dir to add to `path` (default `PWD`)
+#
+# Arguments:
+#   result_var_name:   Name of the variable into which the result will be stored
+#   path:              Path to make absolute if it's relative
+@go.add_parent_dir_if_relative_path() {
+  local __gapdirp_parent="$PWD"
+
+  if [[ "$1" == '--parent' ]]; then
+    __gapdirp_parent="$2"
+    shift 2
+  fi
+  @go.validate_identifier_or_die 'Absolute path result variable' "$1"
+
+  if [[ "${2:0:1}" != '/' ]]; then
+    printf -v "$1" '%s/%s' "$__gapdirp_parent" "$2"
+  else
+    printf -v "$1" '%s' "$2"
+  fi
+}
+
 # Performs an operation on file system objects and recurses into directories
 #
 # Each call to `operation` receives a path to an existing file system object.
@@ -78,7 +112,7 @@
 #   Nonzero if the algorithm was terminated by a nonzero return from `operation`
 @go.walk_file_system() {
   local operation
-  local current 
+  local current
   local do_bfs
   local bfs_queue=()
 
