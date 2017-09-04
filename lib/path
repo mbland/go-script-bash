@@ -26,7 +26,7 @@
 #   result_var_name:   Name of the variable into which the result will be stored
 #   path:              Path to canonicalize
 @go.canonicalize_path() {
-  @go.validate_identifier_or_die 'Result variable name' "$1"
+  @go.validate_identifier_or_die 'Canonicalized path result variable' "$1"
   printf -v "$1" '%s' "$2/"
 
   while [[ "${!1}" =~ //+ ]]; do
@@ -40,14 +40,14 @@
   while [[ "${!1}" =~ [^/]+/\.\./ ]]; do
     if [[ "${BASH_REMATCH[0]}" != '../../' ]]; then
       printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"/}"
-    elif [[ "${!1}" =~ ^/[./]+ ]]; then
+    elif [[ "${!1}" =~ ^/[./]+/ ]]; then
       printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
     else
       break
     fi
   done
 
-  if [[ "${!1}" =~ ^/[./]+ ]]; then
+  if [[ "${!1}" =~ ^/[./]+/ ]]; then
     printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
   fi
 

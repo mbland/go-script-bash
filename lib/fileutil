@@ -1,0 +1,95 @@
+#! /usr/bin/env bash
+#
+# File and directory management
+#
+# Exports:
+#   @go.create_dirs
+#     Creates a set of directories and any missing parents
+#
+#   @go.collect_file_paths
+#     Collects all the paths to regular files within a directory structure
+
+. "$_GO_USE_MODULES" 'log' 'path'
+
+# Creates a set of directories and any missing parents
+#
+# If the directory already exists, this will not update its permissions.
+#
+# Provides a bit more thorough error-checking and feedback than just using
+# `mkdir -p` and `chmod -R`. Errors are reported via `@go.log FATAL`, which will
+# show a stack trace and crash the program.
+#
+# Options:
+#   --mode:  Permissions for created directories
+#
+# Arguments:
+#   $@:  Paths of directories to create
+@go.create_dirs() {
+  local dir
+  local mode
+  local __go_missing_parent
+
+  if [[ "$1" == '--mode' ]]; then
+    mode="$2"
+    shift 2
+  fi
+
+  for dir in "$@"; do
+    if [[ -z "$dir" ]]; then
+      @go.log FATAL 'The empty string is not a valid directory name'
+    elif [[ ! -d "$dir" ]]; then
+      @go.walk_path_forward '_@go.find_missing_parent_path' "$dir" || :
+
+      if [[ -e "$__go_missing_parent" ]]; then
+        @go.log FATAL "$__go_missing_parent exists and is not a directory"
+      elif ! mkdir -p "$dir"; then
+        @go.log FATAL "Could not create $dir in ${__go_missing_parent%/*}"
+      elif [[ -n "$mode" ]] && ! chmod -R "$mode" "$__go_missing_parent"; then
+        @go.log FATAL "Could not set permissions for $__go_missing_parent"
+      fi
+    fi
+  done
+}
+
+# Collects all the paths to regular files within a directory structure
+#
+# Globals:
+#   __go_collected_file_paths:  Caller-defined array in which paths are stored
+#
+# Arguments:
+#   $@:  Paths from which to collect paths for regular files
+@go.collect_file_paths() {
+  __go_collected_file_paths=()
+  @go.walk_file_system _@go.collect_file_paths_impl "$@"
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+
+# @go.walk_path_forwared helper to finds the first missing parent directory
+#
+# Arguments:
+#   path:  Path to examine whether 
+_@go.find_missing_parent_path() {
+  __go_missing_parent="$1"
+
+  if [[ ! -d "$1" ]]; then
+    return 1
+  fi
+}
+
+# Helper function for @go.collect_file_paths
+#
+# Globals:
+#   __go_collected_file_paths:  Caller-defined results array
+#
+# Arguments:
+#   path:  File system path passed in by @go.walk_file_system
+_@go.collect_file_paths_impl() {
+  if [[ -f "$1" ]]; then
+    __go_collected_file_paths+=("$1")
+  fi
+}
