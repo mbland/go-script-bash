@@ -112,9 +112,7 @@ teardown() {
 
   run ls -ld "$DEST_DIR/"{,foo}
   assert_success
-  assert_lines_match \
-    "^drwx-w--wx .* $DEST_DIR/*$" \
-    "^--w------- .* $DEST_DIR/foo\$"
+  assert_lines_match '^drwx-w--wx' '^--w-------'
 }
 
 @test "$SUITE: logs FATAL if copy fails" {
