@@ -1,0 +1,120 @@
+#! /usr/bin/env bash
+#
+# Tools for examining file differences
+#
+# Exports:
+#   @go.diff_check_editor
+#     Checks that `_GO_DIFF_EDITOR` is set
+#
+#   @go.diff_files
+#     Log differences between two files
+#
+#   @go.diff_directories
+#     Log differences between two directory structures
+
+export _GO_DIFF_EDITOR="${_GO_DIFF_EDITOR:-vimdiff}"
+
+. "$_GO_USE_MODULES" 'log' 'path'
+
+# Checks that `_GO_DIFF_EDITOR` is set
+#
+# Used by the functions in this module when the `--edit` flag is specified.
+# Fails with a stack trace if it isn't set.
+@go.diff_check_editor() {
+  if [[ -z "$_GO_DIFF_EDITOR" ]]; then
+    @go.log FATAL "_GO_DIFF_EDITOR not defined"
+  elif ! command -v "$_GO_DIFF_EDITOR" >/dev/null; then
+    @go.log FATAL "_GO_DIFF_EDITOR not installed: $_GO_DIFF_EDITOR"
+  fi
+}
+
+# Log differences between two files
+#
+# Options:
+#   --edit:  Open `_GO_DIFF_EDITOR` on the files if they differ
+#
+# Arguments:
+#   lhs:  The "left-hand side" file
+#   rhs:  The "right-hand side" file
+@go.diff_files() {
+  local lhs
+  local rhs
+  local edit
+
+  if [[ "$1" == '--edit' ]]; then
+    @go.diff_check_editor
+    edit='true'
+    shift
+  fi
+
+  lhs="$1"
+  rhs="$2"
+
+  if [[ ! -f "$lhs" ]]; then
+    @go.log WARN "Left-hand side file $1 doesn't exist or isn't a regular file"
+  elif [[ ! -f "$rhs" ]]; then
+    @go.log WARN "Right-hand side file $2 doesn't exist or isn't a regular file"
+  elif ! diff "$lhs" "$rhs" >/dev/null; then
+    @go.log WARN "$lhs" differs from "$rhs"
+    if [[ -n "$edit" ]]; then
+      @go.log INFO "Editing $lhs and $rhs"
+      "$_GO_DIFF_EDITOR" "$lhs" "$rhs"
+    fi
+  else
+    return '0'
+  fi
+  return '1'
+}
+
+# Log differences between two directory structures
+#
+# Note that files and directories from `lhs_dir` that are missing in `rhs_dir`
+# are reported, but not the other way around.
+#
+# Options:
+#   --edit:  Open `_GO_DIFF_EDITOR` on any files that differ between the dirs
+#
+# Arguments:
+#   lhs_dir:  The "left-hand side" directory
+#   rhs_dir:  The "right-hand side" directory
+@go.diff_directories() {
+  local __go_lhs_dir
+  local __go_rhs_dir
+  local __go_diff_files_args=()
+  local __go_diff_directories_result='0'
+
+  if [[ "$1" == '--edit' ]]; then
+    __go_diff_files_args=('--edit')
+    shift
+  fi
+
+  __go_lhs_dir="$1"
+  __go_rhs_dir="$2"
+
+  if [[ ! -d "$__go_lhs_dir" ]]; then
+    @go.log WARN \
+      "Left-hand side directory $1 doesn't exist or isn't a directory"
+  elif [[ ! -d "$__go_rhs_dir" ]]; then
+    @go.log WARN \
+      "Right-hand side directory $2 doesn't exist or isn't a directory"
+  else
+    @go.walk_file_system _@go.diff_directories_impl "$__go_lhs_dir" || :
+    return "$__go_diff_directories_result"
+  fi
+  return '1'
+}
+
+# --------------------------------
+# IMPLEMENTATION - HERE BE DRAGONS
+#
+# None of the functions below this line are part of the public interface.
+# --------------------------------
+_@go.diff_directories_impl() {
+  local lhs="$1"
+  local rhs="${__go_rhs_dir}${lhs#$__go_lhs_dir}"
+
+  if [[ -f "$lhs" ]] &&
+    ! @go.diff_files "${__go_diff_files_args[@]}" "$lhs" "$rhs"; then
+    __go_diff_directories_result='1'
+  fi
+}
