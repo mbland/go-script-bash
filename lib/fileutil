@@ -8,8 +8,11 @@
 #
 #   @go.collect_file_paths
 #     Collects all the paths to regular files within a directory structure
+#
+#   @go.copy_files_safely
+#     Safely copy files into a target directory, preserving relative directories
 
-. "$_GO_USE_MODULES" 'log' 'path'
+. "$_GO_USE_MODULES" 'diff' 'log' 'path'
 
 # Creates a set of directories and any missing parents
 #
@@ -63,6 +66,94 @@
   @go.walk_file_system _@go.collect_file_paths_impl "$@"
 }
 
+# Safely copy files into a target directory, preserving relative directories
+#
+# Enables copying of selected files from one directory structure into another
+# with safety and feedback mechanisms. Useful for ensuring a target directory
+# stays in-sync with a source directory, while being alerted to differences.
+#
+# If `--src-dir` is specified and no source file paths are given, then the
+# contents of `--src-dir` will be copied, preserving the relative directory
+# structure of `--src-dir`.
+#
+# If source file paths are given, relative file paths will be preserved for all
+# files residing within `--src-dir`. Any absolute file paths and relative file
+# paths resolving to a directory outside `--src-dir` will be copied directly to
+# the top-level of `dest_dir` (i.e. no directory structure will be preserved).
+#
+# Options:
+#   --src-dir:    Parent directory of src files (default: `PWD`)
+#   --dir-mode:   Permissions to set for created directories
+#   --file-mode:  Permissions to set for copied files
+#   --edit:       Open _GO_DIFF_EDITOR to edit existing files that differ
+#   --verbose:    Emit source and destination file logs
+#
+# Arguments:
+#   src [src...]:  Paths to the files to copy
+#   dest_dir:      Destination directory for the copied file
+#
+# Returns:
+#   Zero if all files were copied, or if existing files had no differences
+#   Nonzero if any existing files had any differences
+#
+# Raises:
+#   `@go.log FATAL` on invalid or inaccessible file paths or failing file system
+#     operations
+@go.copy_files_safely() {
+  local __go_src_dir
+  local __go_dir_mode=()
+  local __go_file_mode
+  local __go_diff_files_args=()
+  local __go_verbose
+  local __go_src_files=()
+  local __go_dest_dir
+  local __go_source_file_errors=()
+  local src
+  local dest
+  local result='0'
+
+  _@go.parse_copy_files_safely_args "$@"
+
+  if ! _@go.set_source_files_for_copy_files_safely "${__go_src_files[@]}"; then
+    printf -v '__go_source_file_errors' '\n  %s' "${__go_source_file_errors[@]}"
+    @go.log FATAL "Source file list contains errors:$__go_source_file_errors"
+  elif [[ "${#__go_src_files[@]}" -eq '0' && -n "$__go_dest_dir" ]]; then
+    @go.log FATAL "No source files specified"
+  elif [[ "${#__go_src_files[@]}" -ne '0' && -z "$__go_dest_dir" ]]; then
+    @go.log FATAL "No destination directory specified"
+  fi
+
+  for src in "${__go_src_files[@]}"; do
+    if [[ "${src:0:1}" == '/' ]]; then
+      dest="$__go_dest_dir/${src##*/}"
+    else
+      dest="$__go_dest_dir/$src"
+      src="$__go_src_dir/$src"
+    fi
+
+    if [[ -n "$__go_verbose" ]]; then
+      @go.log INFO "Copying $src => $dest"
+    fi
+
+    if [[ -f "$dest" ]]; then
+      if ! @go.diff_files "${__go_diff_files_args[@]}" "$src" "$dest"; then
+        result='1'
+      fi
+    elif [[ -e "$dest" ]]; then
+      @go.log FATAL "$dest exists but isn't a regular file"
+    else
+      @go.create_dirs "${__go_dir_mode[@]}" "${dest%/*}"
+
+      if ! cp "$src" "$dest"; then
+        @go.log FATAL "Failed to copy $src to $dest"
+      elif [[ -n "$__go_file_mode" ]] && ! chmod "$__go_file_mode" "$dest"; then
+        @go.log FATAL "Failed to set permissions on $dest"
+      fi
+    fi
+  done
+  return "$result"
+}
+
 # --------------------------------
 # IMPLEMENTATION - HERE BE DRAGONS
 #
@@ -72,7 +163,7 @@
 # @go.walk_path_forwared helper to finds the first missing parent directory
 #
 # Arguments:
-#   path:  Path to examine whether 
+#   path:  Path to examine
 _@go.find_missing_parent_path() {
   __go_missing_parent="$1"
 
@@ -92,4 +183,108 @@ _@go.collect_file_paths_impl() {
   if [[ -f "$1" ]]; then
     __go_collected_file_paths+=("$1")
   fi
+}
+
+# Helper function to parse @go.copy_files_safely arguments
+#
+# Globals from @go.copy_files_safely set by this function:
+#   __go_src_dir:          Value of --src-dir
+#   __go_dir_mode:         Value of --dir-mode
+#   __go_file_mode:        Value of --file_mode
+#   __go_diff_files_args:  Value of --edit
+#   __go_verbose:          Value of --verbose
+#   __go_src_files:        Source files
+#   __go_dest_dir:         Destination directory
+#
+# Arguments:
+#   $@:  All arguments to @go.copy_files_safely
+_@go.parse_copy_files_safely_args() {
+  while [[ "$#" -ne '0' ]]; do
+    case "$1" in
+    --src-dir)
+      @go.add_parent_dir_if_relative_path '__go_src_dir' "$2"
+      @go.canonicalize_path '__go_src_dir' "$__go_src_dir"
+      shift 2
+      ;;
+    --dir-mode)
+      __go_dir_mode=('--mode' "$2")
+      shift 2
+      ;;
+    --file-mode)
+      __go_file_mode="$2"
+      shift 2
+      ;;
+    --edit)
+      __go_diff_files_args=('--edit')
+      shift
+      ;;
+    --verbose)
+      __go_verbose='true'
+      shift
+      ;;
+    *)
+      __go_src_files=("${@:1:$(($# - 1))}")
+      __go_dest_dir="${!#}"
+      @go.add_parent_dir_if_relative_path '__go_dest_dir' "$__go_dest_dir"
+      @go.canonicalize_path '__go_dest_dir' "$__go_dest_dir"
+      break
+      ;;
+    esac
+  done
+}
+
+# Helper for @go.copy_files_safely that ensures the source files are valid
+#
+# If `__go_src_dir` is set, it's assumed that it is a canonicalized absolute
+# path, thanks to `_@go.parse_copy_files_safely_args`.
+#
+# If no args are provided and `__go_src_dir` is set, `__go_src_files` will
+# contain the relative paths of all regular files from that directory.
+#
+# Otherwise, all args are validated as either valid absolute file paths or paths
+# relative to `__go_src_dir`. If `__go_src_dir` isn't set, it will be assigned
+# `PWD`.
+#
+# Globals from @go.copy_files_safely referenced or set by this function:
+#   __go_src_dir:          Common parent dir for relative source file paths
+#   __go_src_files:        Array in which valid source files will be stored
+#   __go_src_file_errors:  Array in which any file errors will be stored
+#
+# Arguments:
+#  $@:  Original list of file paths to validate
+_@go.set_source_files_for_copy_files_safely() {
+  local orig_src
+  local canonical_src
+  local absolute_src
+  local __go_collected_file_paths
+
+  if [[ -n "$__go_src_dir" && "$#" -eq '0' ]]; then
+    @go.collect_file_paths "$__go_src_dir"
+    __go_src_files=("${__go_collected_file_paths[@]#$__go_src_dir/}")
+    return
+  fi
+  __go_src_dir="${__go_src_dir:-$PWD}"
+  __go_src_files=()
+
+  for orig_src in "$@"; do
+    @go.add_parent_dir_if_relative_path --parent "$__go_src_dir" \
+      'absolute_src' "$orig_src"
+    @go.canonicalize_path 'absolute_src' "$absolute_src"
+    canonical_src="${absolute_src#$__go_src_dir/}"
+
+    if [[ -z "$orig_src" ]]; then
+      __go_source_file_errors+=("The empty string isn't a valid file name")
+    elif [[ "$canonical_src" == "$__go_src_dir" ]]; then
+      __go_source_file_errors+=("The --src-dir can't be a file path argument")
+    elif [[ ! -e "$absolute_src" ]]; then
+      __go_source_file_errors+=("File does not exist: $absolute_src")
+    elif [[ ! -f "$absolute_src" ]]; then
+      __go_source_file_errors+=("Path is not a regular file: $absolute_src")
+    elif [[ "${orig_src:0:1}" == '/' ]]; then
+      __go_src_files+=("$absolute_src")
+    else
+      __go_src_files+=("$canonical_src")
+    fi
+  done
+  return "${#__go_source_file_errors[@]}"
 }
