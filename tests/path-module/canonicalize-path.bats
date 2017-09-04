@@ -89,6 +89,16 @@ run_canonicalize_path() {
   assert_success 'foo/bar/baz'
 }
 
+@test "$SUITE: resolves a leading relative self" {
+  run_canonicalize_path './foo/bar/baz'
+  assert_success 'foo/bar/baz'
+}
+
+@test "$SUITE: resolves a leading relative self before '..'" {
+  run_canonicalize_path './..'
+  assert_success '..'
+}
+
 @test "$SUITE: resolves a trailing relative self" {
   run_canonicalize_path 'foo/bar/baz/.'
   assert_success 'foo/bar/baz'

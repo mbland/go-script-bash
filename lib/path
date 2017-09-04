@@ -34,6 +34,10 @@
     printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
   done
 
+  while [[ "${!1}" =~ ^\./. ]]; do
+    printf -v "$1" '%s' "${!1#./}"
+  done
+
   while [[ "${!1}" =~ /\./ ]]; do
     printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
   done
