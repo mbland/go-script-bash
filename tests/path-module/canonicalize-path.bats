@@ -24,6 +24,11 @@ run_canonicalize_path() {
   assert_success '/foo/bar/baz'
 }
 
+@test "$SUITE: leaves the empty path unchanged" {
+  run_canonicalize_path ''
+  assert_success ''
+}
+
 @test "$SUITE: leaves root path unchanged" {
   run_canonicalize_path '/'
   assert_success '/'
@@ -84,8 +89,13 @@ run_canonicalize_path() {
   assert_success 'foo/bar/baz'
 }
 
+@test "$SUITE: resolves a trailing relative self" {
+  run_canonicalize_path 'foo/bar/baz/.'
+  assert_success 'foo/bar/baz'
+}
+
 @test "$SUITE: resolves multiple relative selves" {
-  run_canonicalize_path 'foo/./bar/././baz/./././'
+  run_canonicalize_path 'foo/./bar/././baz/././.'
   assert_success 'foo/bar/baz'
 }
 

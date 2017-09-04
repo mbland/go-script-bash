@@ -27,7 +27,8 @@
 #   path:              Path to canonicalize
 @go.canonicalize_path() {
   @go.validate_identifier_or_die 'Canonicalized path result variable' "$1"
-  printf -v "$1" '%s' "$2/"
+
+  printf -v "$1" '%s' "${2}${2:+/}"
 
   while [[ "${!1}" =~ //+ ]]; do
     printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"
