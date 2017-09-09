@@ -11,6 +11,9 @@
 #
 #   @go.copy_files_safely
 #     Safely copy files into a target directory, preserving relative directories
+#
+#   @go.mirror_directory
+#     Mirror one local directory to another using `tar`
 
 . "$_GO_USE_MODULES" 'diff' 'log' 'path'
 
@@ -152,6 +155,46 @@
     fi
   done
   return "$result"
+}
+
+# Mirror one local directory to another using `tar`
+#
+# Useful for creating a directory from which to create an archive, or for
+# overwriting files unconditionally. Performs safety checks to ensure the
+# source and destination directories aren't the same and that the source
+# directory exists. Automatically creates the destination directory if it
+# doesn't exist.
+#
+# Uses only `tar` features that are portable across platform variants. More
+# portable than `rsync`, which isn't installed by default on some systems; and
+# can be faster than `cp -a`.
+#
+# Arguments:
+#   src_dir:   Original directory path
+#   dest_dir:  Mirrored directory path
+#   ...:       Paths relative to `src_dir` to include in the mirror
+@go.mirror_directory() {
+  local src_dir="$1"
+  local dest_dir="$2"
+  local real_src
+  local real_dest
+
+  @go.realpath 'real_src' "$src_dir"
+  @go.realpath 'real_dest' "$dest_dir"
+
+  if [[ "$real_src" == "$real_dest" ]]; then
+    @go.log FATAL "Real source and destination dirs are the same:"$'\n'\
+      "  source: $src_dir"$'\n'\
+      "  dest:   $dest_dir"$'\n'\
+      "  real:   $real_src"
+  elif [[ ! -d "$src_dir" ]]; then
+    @go.log FATAL "Source directory $src_dir doesn't exist"
+  elif [[ ! -d "$dest_dir" ]] && ! mkdir -p "$dest_dir"; then
+    @go.log FATAL "Failed to create destination directory $dest_dir"
+  elif ! tar -cf - -C "$src_dir" "${@:3}" | tar -xf - -C "$dest_dir" ||
+    [[ "${PIPESTATUS[0]}" != '0' ]]; then
+    @go.log FATAL "Failed to mirror files from $src_dir to $dest_dir"
+  fi
 }
 
 # --------------------------------
