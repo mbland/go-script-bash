@@ -245,8 +245,7 @@ _@go.parse_copy_files_safely_args() {
   while [[ "$#" -ne '0' ]]; do
     case "$1" in
     --src-dir)
-      @go.add_parent_dir_if_relative_path '__go_src_dir' "$2"
-      @go.canonicalize_path '__go_src_dir' "$__go_src_dir"
+      @go.canonicalize_path --pwd '__go_src_dir' "$2"
       shift 2
       ;;
     --dir-mode)
@@ -268,8 +267,7 @@ _@go.parse_copy_files_safely_args() {
     *)
       __go_src_files=("${@:1:$(($# - 1))}")
       __go_dest_dir="${!#}"
-      @go.add_parent_dir_if_relative_path '__go_dest_dir' "$__go_dest_dir"
-      @go.canonicalize_path '__go_dest_dir' "$__go_dest_dir"
+      @go.canonicalize_path --pwd '__go_dest_dir' "$__go_dest_dir"
       break
       ;;
     esac
@@ -310,9 +308,7 @@ _@go.set_source_files_for_copy_files_safely() {
   __go_src_files=()
 
   for orig_src in "$@"; do
-    @go.add_parent_dir_if_relative_path --parent "$__go_src_dir" \
-      'absolute_src' "$orig_src"
-    @go.canonicalize_path 'absolute_src' "$absolute_src"
+    @go.canonicalize_path  --parent "$__go_src_dir" 'absolute_src' "$orig_src"
     canonical_src="${absolute_src#$__go_src_dir/}"
 
     if [[ -z "$orig_src" ]]; then
