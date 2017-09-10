@@ -56,24 +56,11 @@ setup() {
   create_forwarding_script 'cygpath'
   create_forwarding_script 'git'
 
-  mkdir -p "$TEST_GO_ROOTDIR"
   cp "$_GO_CORE_DIR/go-template" "$TEST_GO_ROOTDIR"
 }
 
 teardown() {
   @go.remove_test_go_rootdir
-}
-
-assert_go_core_unpacked() {
-  set "$DISABLE_BATS_SHELL_OPTIONS"
-  local go_core="${1:-$TEST_GO_SCRIPTS_DIR/go-script-bash}/go-core.bash"
-  local result='0'
-
-  if [[ ! -f "$go_core" ]]; then
-    printf "Download did not unpack go-core.bash to: $go_core" >&2
-    result='1'
-  fi
-  restore_bats_shell_options "$result"
 }
 
 # This mimics the tarball provided by GitHub.
@@ -151,33 +138,24 @@ run_with_download_program() {
   skip_if_none_present_on_system 'curl' 'fetch' 'wget'
   skip_if_system_missing 'tar'
   create_fake_tarball_if_not_using_real_url
-  run "$TEST_GO_ROOTDIR/go-template"
 
-  # Without a command argument, the script will print the top-level help and
-  # return an error, but the core repo should exist as expected.
-  assert_failure
+  run "$TEST_GO_ROOTDIR/go-template"
   assert_output_matches "Downloading framework from '$EXPECTED_URL'\.\.\."
-  assert_output_matches "Download of '$EXPECTED_URL' successful."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
+  assert_output_matches "Download of '$EXPECTED_URL' successful."
 }
 
 @test "$SUITE: download locally using curl" {
   skip_if_system_missing 'tar'
   run_with_download_program 'curl'
   assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
-  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."
 }
 
 @test "$SUITE: download locally using fetch" {
   skip_if_system_missing 'tar'
   run_with_download_program 'fetch'
   assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
-  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."
 }
 
 @test "$SUITE: download locally using cat" {
@@ -186,9 +164,7 @@ run_with_download_program() {
   # HTTP, HTTPS, and FTP.
   run_with_download_program 'cat'
   assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
-  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."
 }
 
 @test "$SUITE: download locally using wget" {
@@ -197,9 +173,7 @@ run_with_download_program() {
   # URLs, but we're simulating `wget` by pretending `cat` doesn't exist.
   run_with_download_program 'wget'
   assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
-  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
+  assert_output_matches "Download of '$NATIVE_LOCAL_URL' successful."
 }
 
 @test "$SUITE: download into nonstandard GO_SCRIPTS_DIR" {
@@ -211,11 +185,7 @@ run_with_download_program() {
   # Create a command script in the normal `TEST_GO_SCRIPTS_DIR`.
   @go.create_test_command_script 'foo' 'printf "%s\n" "Hello, World!"'
   GO_SCRIPT_BASH_CORE_DIR="$core_dir" run "$TEST_GO_ROOTDIR/go-template"
-
-  assert_failure
   assert_output_matches "Download of '$EXPECTED_URL' successful."
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked "$core_dir"
 }
 
 @test "$SUITE: download uses existing GO_SCRIPTS_DIR" {
@@ -227,10 +197,7 @@ run_with_download_program() {
   run "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path 'mkdir'
 
-  assert_failure
   assert_output_matches "Download of '$EXPECTED_URL' successful."
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
 }
 
 @test "$SUITE: fail to download a nonexistent repo" {
@@ -241,7 +208,7 @@ run_with_download_program() {
   skip_if_system_missing 'git' 'tar'
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" GO_SCRIPT_BASH_REPO_URL="$repo" \
     run "$TEST_GO_ROOTDIR/go-template"
-  assert_failure
+
   assert_output_matches "Downloading framework from '$url/$RELEASE_TARBALL'"
   assert_output_matches "Failed to download from '$url/$RELEASE_TARBALL'"
   assert_output_matches 'Using git clone as fallback'
@@ -278,10 +245,7 @@ run_with_download_program() {
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
-  assert_output_matches \
-    "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
-  assert_output_matches "Usage: $TEST_GO_ROOTDIR/go-template <command>"
-  assert_go_core_unpacked
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."
 
   cd "$TEST_GO_SCRIPTS_DIR/go-script-bash"
   run git log --oneline -n 1
@@ -296,8 +260,7 @@ run_with_download_program() {
   assert_output_matches "Failed to find cURL, wget, or fetch"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
-  assert_output_matches \
-    "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."
 }
 
 @test "$SUITE: fail to find tar uses git clone" {
@@ -312,8 +275,7 @@ run_with_download_program() {
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
-  assert_output_matches \
-    "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."
 }
 
 @test "$SUITE: tar failure uses git clone" {
@@ -354,8 +316,7 @@ run_with_download_program() {
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
-  assert_output_matches \
-    "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."
 }
 
 @test "$SUITE: fail to move extracted directory uses git clone" {
@@ -373,6 +334,5 @@ run_with_download_program() {
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
-  assert_output_matches \
-    "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."
 }
