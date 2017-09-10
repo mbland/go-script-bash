@@ -291,8 +291,8 @@ run_with_download_program() {
     run "$BASH" "$TEST_GO_ROOTDIR/go-template"
   restore_program_in_path 'tar'
 
-  assert_output_matches "Downloading framework from '$EXPECTED_URL'\.\.\."
-  assert_output_matches "Failed to download from '$LOCAL_DOWNLOAD_URL'"
+  assert_output_matches "Downloading framework from '$NATIVE_LOCAL_URL'\.\.\."
+  assert_output_matches "Failed to download from '$NATIVE_LOCAL_URL'"
   assert_output_matches "Using git clone as fallback"
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
