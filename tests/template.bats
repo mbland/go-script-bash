@@ -25,7 +25,8 @@ GO_CORE_URL="${GO_CORE_URL:-$_GO_CORE_DIR}"
 
 # Use the same mechanism for testing tarball downloads, since we'll have a
 # connection to GitHub in either case.
-TEST_ARCHIVE_URL="file://$TEST_GO_ROOTDIR/archive"
+TEST_ARCHIVE_DIR="$TEST_GO_ROOTDIR/archive"
+TEST_ARCHIVE_URL="file://$TEST_ARCHIVE_DIR"
 GO_ARCHIVE_URL="${TEST_USE_REAL_URL:+$_GO_CORE_URL/archive}"
 GO_ARCHIVE_URL="${GO_ARCHIVE_URL:-$TEST_ARCHIVE_URL}"
 
@@ -80,34 +81,30 @@ assert_go_core_unpacked() {
 # This could probably become a general-purpose utility one day.
 create_fake_tarball_if_not_using_real_url() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
+  _create_fake_tarball_if_not_using_real_url
+  restore_bats_shell_options "$?"
+}
 
+_create_fake_tarball_if_not_using_real_url() {
   # We have to trim the leading 'v' from the version string.
   local dirname="go-script-bash-${GO_SCRIPT_BASH_VERSION#v}"
-  local full_dir="$TEST_GO_ROOTDIR/$dirname"
   local tarball="${LOCAL_DOWNLOAD_URL#file://}"
+  local full_dir="${TEST_ARCHIVE_DIR}/${dirname}"
   local result='0'
 
   if [[ -n "$TEST_USE_REAL_URL" ]]; then
     restore_bats_shell_options
-    return
   fi
 
-  if ! mkdir -p "${tarball%/*}"; then
-    printf 'Failed to create fake archive dir %s\n' "$full_dir" >&2
-    result='1'
-  elif ! mkdir -p "$full_dir"; then
-    printf 'Failed to create fake content dir %s\n' "$full_dir" >&2
-    result='1'
-  elif ! tar -xf - -C "$full_dir" < <(tar -cf - go-core.bash lib libexec); then
-    printf 'Failed to mirror %s to fake tarball dir %s\n' \
-      "$_GO_ROOTDIR" "$full_dir" >&2
-    result='1'
-  elif ! tar -czf "$tarball" -C "$TEST_GO_ROOTDIR" "$dirname"; then
+  . "$_GO_USE_MODULES" 'fileutil'
+  @go.mirror_directory "$_GO_CORE_DIR" "$full_dir" \
+    'go-core.bash' 'lib' 'libexec'
+
+  if ! tar -czf "$tarball" -C "$TEST_ARCHIVE_DIR" "$dirname"; then
     printf 'Failed to create fake tarball %s\n  from dir %s\n' \
       "$tarball" "$full_dir" >&2
-    result='1'
+    return '1'
   fi
-  restore_bats_shell_options "$result"
 }
 
 # Used to mimic each of curl, wget, and fetch while testing downloads.
