@@ -130,7 +130,7 @@ run_with_download_program() {
 
   # We're forcing a local tarball "download" here.
   TEST_USE_REAL_URL= create_fake_tarball_if_not_using_real_url
-  GO_SCRIPT_BASH_DOWNLOAD_URL="file://$TEST_GO_ROOTDIR/archive" \
+  GO_SCRIPT_BASH_DOWNLOAD_URL="$TEST_ARCHIVE_URL" \
     PATH="$BATS_TEST_BINDIR" run "$BASH" "$TEST_GO_ROOTDIR/go-template"
   restore_bats_shell_options
 }
@@ -234,7 +234,7 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to download a nonexistent repo" {
-  local url='https://bogus-url-that-does-not-exist'
+  local url="$GO_SCRIPT_BASH_DOWNLOAD_URL/bogus-url-that-does-not-exist"
   local repo='bogus-repo-that-does-not-exist'
 
   skip_if_none_present_on_system 'curl' 'fetch' 'wget'
@@ -251,13 +251,15 @@ run_with_download_program() {
 }
 
 @test "$SUITE: fail to download a nonexistent version" {
-  local url="$GO_SCRIPT_BASH_DOWNLOAD_URL/vnonexistent.tar.gz"
+  local url="$GO_SCRIPT_BASH_DOWNLOAD_URL"
   local branch='vnonexistent'
 
   skip_if_none_present_on_system 'curl' 'fetch' 'wget'
   skip_if_system_missing 'git' 'tar'
   GO_SCRIPT_BASH_VERSION="$branch" run "$TEST_GO_ROOTDIR/go-template"
-  assert_failure
+
+  assert_output_matches "Downloading framework from '$url/${branch}.tar.gz'"
+  assert_output_matches "Failed to download from '$url/${branch}.tar.gz'"
   assert_output_matches 'Using git clone as fallback'
   assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
   assert_output_matches "Cloning into '$CLONE_DIR'"
@@ -312,6 +314,27 @@ run_with_download_program() {
   assert_output_matches "Cloning into '$CLONE_DIR'"
   assert_output_matches \
     "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."$'\n\n'
+}
+
+@test "$SUITE: tar failure uses git clone" {
+  skip_if_none_present_on_system 'curl' 'fetch' 'wget'
+  skip_if_system_missing 'git' 'tar'
+
+  TEST_USE_REAL_URL= create_fake_tarball_if_not_using_real_url
+  stub_program_in_path 'tar' \
+    "$(command -v 'tar') \"\$@\"" \
+    'exit 1'
+
+  GO_SCRIPT_BASH_DOWNLOAD_URL="$TEST_ARCHIVE_URL" \
+    run "$BASH" "$TEST_GO_ROOTDIR/go-template"
+  restore_program_in_path 'tar'
+
+  assert_output_matches "Downloading framework from '$EXPECTED_URL'\.\.\."
+  assert_output_matches "Failed to download from '$LOCAL_DOWNLOAD_URL'"
+  assert_output_matches "Using git clone as fallback"
+  assert_output_matches "Cloning framework from '$GO_SCRIPT_BASH_REPO_URL'"
+  assert_output_matches "Cloning into '$CLONE_DIR'"
+  assert_output_matches "Clone of '$GO_SCRIPT_BASH_REPO_URL' successful\."
 }
 
 @test "$SUITE: fail to create directory uses git clone" {
