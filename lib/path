@@ -25,13 +25,34 @@
 # This will reduce any consecutive string of slashes to a single slash, and trim
 # a trailing slash if one remains.
 #
+# Options:
+#   --pwd:           Prepend `$PWD` to path before canonicalization if relative
+#   --parent <dir>:  Specifies parent dir prepended before canonicalization
+#
 # Arguments:
 #   result_var_name:   Name of the variable into which the result will be stored
 #   path:              Path to canonicalize
 @go.canonicalize_path() {
+  local add_pwd
+  local add_parent=()
+
+  case "$1" in
+  --pwd)
+    add_pwd='true'
+    shift
+    ;;
+  --parent)
+    add_parent=('--parent' "$2")
+    shift 2
+    ;;
+  esac
   @go.validate_identifier_or_die 'Canonicalized path result variable' "$1"
 
   printf -v "$1" '%s' "${2}${2:+/}"
+
+  if [[ -n "${!1}" && (-n "$add_pwd" || "${#add_parent[@]}" -ne '0') ]]; then
+    @go.add_parent_dir_if_relative_path "${add_parent[@]}" "$1" "${!1}"
+  fi
 
   while [[ "${!1}" =~ //+ ]]; do
     printf -v "$1" '%s' "${!1/"${BASH_REMATCH[0]}"//}"

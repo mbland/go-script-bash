@@ -20,7 +20,7 @@ teardown() {
 }
 
 create_test_source_files() {
-  set "$BATS_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
   printf '%s\n' 'foo' >"$SRC_DIR/foo"
   printf '%s\n' 'bar' >"$SRC_DIR/bar"
   printf '%s\n' 'baz' >"$SRC_DIR/baz"
@@ -28,7 +28,12 @@ create_test_source_files() {
 }
 
 validate_test_dest_dir() {
-  set "$BATS_DISABLE_SHELL_OPTIONS"
+  set "$DISABLE_BATS_SHELL_OPTIONS"
+  _validate_test_dest_dir
+  restore_bats_shell_options "$?"
+}
+
+_validate_test_dest_dir() {
   local f
   local result='0'
 
@@ -38,7 +43,12 @@ validate_test_dest_dir() {
       result='1'
     fi
   done
-  restore_bats_shell_options "$result"
+
+  if [[ "$result" != '0' ]]; then
+    printf '\nCONTENTS OF %s:\n' "$TEST_GO_ROOTDIR" >&2
+    ls -lR "$TEST_GO_ROOTDIR" >&2
+  fi
+  return "$result"
 }
 
 @test "$SUITE: mirrors specific files from one directory to another" {
@@ -46,7 +56,7 @@ validate_test_dest_dir() {
   create_test_source_files
   mkdir -p "$DEST_DIR"
 
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   assert_success
   validate_test_dest_dir
 }
@@ -55,7 +65,7 @@ validate_test_dest_dir() {
   skip_if_system_missing 'tar'
   create_test_source_files
 
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   assert_success
   validate_test_dest_dir
 }
@@ -78,7 +88,7 @@ validate_test_dest_dir() {
 
 @test "$SUITE: logs FATAL if the source directory doesn't exist" {
   rmdir "$SRC_DIR"
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   assert_failure
   assert_output_matches "FATAL.* Source directory $SRC_DIR doesn't exist"
 }
@@ -88,7 +98,7 @@ validate_test_dest_dir() {
   stub_program_in_path 'mkdir' \
     'exit 1'
 
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   restore_program_in_path 'mkdir'
   assert_failure
   assert_output_matches \
@@ -102,7 +112,7 @@ validate_test_dest_dir() {
     '  exit 1' \
     'fi' \
 
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   restore_program_in_path 'tar'
   assert_failure
   assert_line_matches '0' 'CREATE FAILED'
@@ -117,7 +127,7 @@ validate_test_dest_dir() {
     '  exit 1' \
     'fi'
 
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   restore_program_in_path 'tar'
   assert_failure
   assert_line_matches '0' 'EXTRACT FAILED'
@@ -141,9 +151,8 @@ validate_test_dest_dir() {
   rmdir "$SRC_DIR"
   ln -s "$same_dir" "$SRC_DIR"
   ln -s "$same_dir" "$DEST_DIR"
-  ls -lR "$TEST_GO_ROOTDIR" >&2
 
-  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR" "${TEST_FILES[@]}"
+  run "$TEST_GO_SCRIPT" "$SRC_DIR" "$DEST_DIR"
   assert_failure
   assert_line_matches '0' \
     'FATAL.* Real source and destination dirs are the same:' \

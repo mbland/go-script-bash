@@ -12,11 +12,22 @@ teardown() {
 }
 
 run_canonicalize_path() {
+  local argv=('result' "$1")
+
+  case "$1" in
+  --pwd)
+    argv=('--pwd' 'result' "$2")
+    ;;
+  --parent)
+    argv=('--parent' "$2" 'result' "$3")
+    ;;
+  esac
+
   @go.create_test_go_script \
     '. "$_GO_USE_MODULES" "path"' \
-    '@go.canonicalize_path "result" "$1"' \
+    '@go.canonicalize_path "$@"' \
     'printf "%s\n" "$result"'
-  run "$TEST_GO_SCRIPT" "$1"      
+  run "$TEST_GO_SCRIPT" "${argv[@]}"
 }
 
 @test "$SUITE: leaves a path unchanged" {
@@ -52,6 +63,46 @@ run_canonicalize_path() {
 @test "$SUITE: leaves relative parent dir path unchanged" {
   run_canonicalize_path '..'
   assert_success '..'
+}
+
+@test "$SUITE: leaves empty path unchanged even with --pwd" {
+  run_canonicalize_path '--pwd' ''
+  assert_success ''
+}
+
+@test "$SUITE: leaves absolute path unchanged even with --pwd" {
+  run_canonicalize_path '--pwd' '/foo/bar'
+  assert_success '/foo/bar'
+}
+
+@test "$SUITE: sets relative current dir to PWD" {
+  run_canonicalize_path '--pwd' '.'
+  assert_success "$TEST_GO_ROOTDIR"
+}
+
+@test "$SUITE: sets relative parent dir to parent of PWD" {
+  run_canonicalize_path '--pwd' '..'
+  assert_success "${TEST_GO_ROOTDIR%/*}"
+}
+
+@test "$SUITE: leaves absolute path unchanged even with --parent" {
+  run_canonicalize_path '--parent' '/foo/bar' '/foo/bar'
+  assert_success '/foo/bar'
+}
+
+@test "$SUITE: leaves empty path unchanged even with --parent" {
+  run_canonicalize_path '--parent' '/foo/bar' ''
+  assert_success ''
+}
+
+@test "$SUITE: sets relative current dir to --parent" {
+  run_canonicalize_path '--parent' '/foo/bar' '.'
+  assert_success '/foo/bar'
+}
+
+@test "$SUITE: sets relative parent dir to parent of --parent" {
+  run_canonicalize_path '--parent' '/foo/bar' '..'
+  assert_success '/foo'
 }
 
 @test "$SUITE: removes extra root slashes, parents" {

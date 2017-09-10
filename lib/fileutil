@@ -165,6 +165,10 @@
 # directory exists. Automatically creates the destination directory if it
 # doesn't exist.
 #
+# If specific path arguments aren't given after the `src_dir` and `dest_dir`
+# arguments, all of the items in `src_dir` will be included by default. If they
+# are given, only those items will be mirrored.
+#
 # Uses only `tar` features that are portable across platform variants. More
 # portable than `rsync`, which isn't installed by default on some systems; and
 # can be faster than `cp -a`.
@@ -172,15 +176,23 @@
 # Arguments:
 #   src_dir:   Original directory path
 #   dest_dir:  Mirrored directory path
-#   ...:       Paths relative to `src_dir` to include in the mirror
+#   ...:       Specific paths relative to `src_dir` to include in the mirror
 @go.mirror_directory() {
   local src_dir="$1"
   local dest_dir="$2"
+  local items=("${@:3}")
   local real_src
   local real_dest
 
+  @go.canonicalize_path --pwd 'src_dir' "$1"
+  @go.canonicalize_path --pwd 'dest_dir' "$2"
+
   @go.realpath 'real_src' "$src_dir"
   @go.realpath 'real_dest' "$dest_dir"
+
+  if [[ "${#items[@]}" -eq '0' ]]; then
+    items=('.')
+  fi
 
   if [[ "$real_src" == "$real_dest" ]]; then
     @go.log FATAL "Real source and destination dirs are the same:"$'\n'\
@@ -191,7 +203,7 @@
     @go.log FATAL "Source directory $src_dir doesn't exist"
   elif [[ ! -d "$dest_dir" ]] && ! mkdir -p "$dest_dir"; then
     @go.log FATAL "Failed to create destination directory $dest_dir"
-  elif ! tar -cf - -C "$src_dir" "${@:3}" | tar -xf - -C "$dest_dir" ||
+  elif ! tar -cf - -C "$src_dir" "${items[@]}" | tar -xf - -C "$dest_dir" ||
     [[ "${PIPESTATUS[0]}" != '0' ]]; then
     @go.log FATAL "Failed to mirror files from $src_dir to $dest_dir"
   fi
@@ -245,8 +257,7 @@ _@go.parse_copy_files_safely_args() {
   while [[ "$#" -ne '0' ]]; do
     case "$1" in
     --src-dir)
-      @go.add_parent_dir_if_relative_path '__go_src_dir' "$2"
-      @go.canonicalize_path '__go_src_dir' "$__go_src_dir"
+      @go.canonicalize_path --pwd '__go_src_dir' "$2"
       shift 2
       ;;
     --dir-mode)
@@ -268,8 +279,7 @@ _@go.parse_copy_files_safely_args() {
     *)
       __go_src_files=("${@:1:$(($# - 1))}")
       __go_dest_dir="${!#}"
-      @go.add_parent_dir_if_relative_path '__go_dest_dir' "$__go_dest_dir"
-      @go.canonicalize_path '__go_dest_dir' "$__go_dest_dir"
+      @go.canonicalize_path --pwd '__go_dest_dir' "$__go_dest_dir"
       break
       ;;
     esac
@@ -310,9 +320,7 @@ _@go.set_source_files_for_copy_files_safely() {
   __go_src_files=()
 
   for orig_src in "$@"; do
-    @go.add_parent_dir_if_relative_path --parent "$__go_src_dir" \
-      'absolute_src' "$orig_src"
-    @go.canonicalize_path 'absolute_src' "$absolute_src"
+    @go.canonicalize_path  --parent "$__go_src_dir" 'absolute_src' "$orig_src"
     canonical_src="${absolute_src#$__go_src_dir/}"
 
     if [[ -z "$orig_src" ]]; then
