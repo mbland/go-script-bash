@@ -1,0 +1,104 @@
+#! /usr/bin/env bash
+#
+# Archive file utilities
+#
+# Exports:
+#   @go.create_gzipped_tarball
+#     Creates a Gzipped Tar archive file (.tar.gz)
+
+. "$_GO_USE_MODULES" 'fileutil' 'log' 'path'
+
+# Creates a Gzipped Tar archive file (.tar.gz)
+#
+# By default, will create a tarball with the same basename as that of the source
+# directory plus '.tar.gz', e.g. a source directory of 'foo' will create
+# 'foo.tar.gz'. The resulting tarball will extract to a directory with that
+# basename.
+#
+# If `--name` is specified, a new directory of that name will be created as a
+# sibling of the source directory (if the directory or symlink doesn't yet
+# exist), the selected contents from the source directory will be mirrored into
+# it, and the tarball will be created from that sibling.This means the resulting
+# tarball's name will be based on `--name`, and will extract to the directory
+# specified by `--name`. This sibling directory will be deleted automatically
+# unless `--keep-mirror` is specified.
+#
+# Using a mirror instead of a symlink is portable on platforms without symlink
+# capability. However, this function correctly handles `source_dir` and tarball
+# `--name` symlinks.
+#
+# If no specific items are listed after the source directory, the entire
+# directory will be archived. These items should be relative paths within the
+# source directory.
+#
+# Options:
+#   --name:           Specifies an alternative name for the tarball
+#   --keep-mirror:    Keep the new directory created when `--name` is specified
+#   --remove-source:  Remove the source directory after the tarball is created
+#
+# Arguments:
+#   source_dir:  Directory containing files to archive
+#   ...:         If specified, selected items from `source_dir` to archive
+@go.create_gzipped_tarball() {
+  local source_dir
+  local tarball_dir
+  local real_source_dir
+  local real_tarball_dir
+  local tarball
+  local items
+  local keep_mirror
+  local remove_source
+  local varname
+
+  while [[ "$#" -ne '0' ]]; do
+    case "$1" in
+    --name)
+      tarball_dir="$2"
+      shift 2
+      ;;
+    --keep-mirror|--remove-source)
+      varname="${1#--}"
+      printf -v "${varname//-/_}" 'true'
+      shift
+      ;;
+    *)
+      break
+      ;;
+    esac
+  done
+
+  @go.canonicalize_path --pwd 'source_dir' "$1"
+  shift
+
+  if [[ -n "$tarball_dir" ]]; then
+    tarball_dir="${source_dir%/*}/${tarball_dir}"
+  else
+    tarball_dir="$source_dir"
+  fi
+  tarball="${tarball_dir}.tar.gz"
+
+  @go.realpath 'real_source_dir' "$source_dir"
+  @go.realpath 'real_tarball_dir' "$tarball_dir"
+
+  if [[ ! -d "$source_dir" ]]; then
+    @go.log FATAL "Source directory $source_dir doesn't exist"
+  elif [[ "$real_source_dir" != "$real_tarball_dir" ]]; then
+    @go.mirror_directory "$source_dir" "$tarball_dir" "$@"
+  else
+    keep_mirror='true'
+  fi
+
+  if [[ "$#" -eq '0' ]]; then
+    items=("${tarball_dir##*/}/.")
+  else
+    items=("${@/#/${tarball_dir##*/}/}")
+  fi
+
+  if ! tar -czf "$tarball" -C "${real_tarball_dir%/*}" "${items[@]}"; then
+    @go.log FATAL "Failed to create $tarball from $source_dir"
+  elif [[ -z "$keep_mirror" ]] && ! rm -rf "$tarball_dir"; then
+    @go.log FATAL "Failed to remove $tarball_dir after creating $tarball"
+  elif [[ -n "$remove_source" ]] && ! rm -rf "$source_dir"; then
+    @go.log FATAL "Failed to remove $source_dir after creating $tarball"
+  fi
+}
