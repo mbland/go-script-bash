@@ -206,9 +206,11 @@ run_with_download_program() {
 
   skip_if_none_present_on_system 'curl' 'fetch' 'wget'
   skip_if_system_missing 'git' 'tar'
+
   GO_SCRIPT_BASH_DOWNLOAD_URL="$url" GO_SCRIPT_BASH_REPO_URL="$repo" \
     run "$TEST_GO_ROOTDIR/go-template"
 
+  @go.native_file_path_or_url 'url' "$url"
   assert_output_matches "Downloading framework from '$url/$RELEASE_TARBALL'"
   assert_output_matches "Failed to download from '$url/$RELEASE_TARBALL'"
   assert_output_matches 'Using git clone as fallback'
@@ -225,6 +227,7 @@ run_with_download_program() {
   skip_if_system_missing 'git' 'tar'
   GO_SCRIPT_BASH_VERSION="$branch" run "$TEST_GO_ROOTDIR/go-template"
 
+  @go.native_file_path_or_url 'url' "$url"
   assert_output_matches "Downloading framework from '$url/${branch}.tar.gz'"
   assert_output_matches "Failed to download from '$url/${branch}.tar.gz'"
   assert_output_matches 'Using git clone as fallback'
