@@ -1,4 +1,4 @@
-## Welcome!
+# Welcome!
 
 I'm so glad you've found this project interesting and useful enough that you'd
 like to contribute to its development.
@@ -6,10 +6,12 @@ like to contribute to its development.
 Please take time to review the policies and procedures in this document prior
 to making and submitting any changes.
 
-This guide was drafted with tips from [Wrangling Web Contributions: How to
-Build a CONTRIBUTING.md](https://mozillascience.github.io/working-open-workshop/contributing/)
-and with some inspiration from [the Atom project's CONTRIBUTING.md
-file](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
+This guide was drafted with tips from [Wrangling Web Contributions: How to Build
+a CONTRIBUTING.md][moz] and with some inspiration from [the Atom project's
+CONTRIBUTING.md file][atom].
+
+[moz]:  https://mozillascience.github.io/working-open-workshop/contributing/
+[atom]: https://github.com/atom/atom/blob/master/CONTRIBUTING.md
 
 ## Table of contents
 
@@ -32,14 +34,24 @@ file](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
 - [Original repository](https://github.com/mbland/go-script-bash/)
 - [Issues](https://github.com/mbland/go-script-bash/issues)
 - [Pull requests](https://github.com/mbland/go-script-bash/pulls)
-- [Issues](https://github.com/mbland/go-script-bash/issues)
+- [Milestones](https://github.com/mbland/go-script-bash/milestones)
+- [Projects](https://github.com/mbland/go-script-bash/projects)
 
 ## Contributor License Agreement
 
-Please sign the [Contributor License Agreement][cla] by submitting the form
-linked from the top of the agreement prior to filing any pull requests.
+Per the [GitHub Terms of Service][gh-tos], be aware that by making a
+contribution to this project, you agree:
 
-[cla]: https://github.com/mbland/cla
+* to license your contribution under the same terms as [this project's
+  license][lic], and
+* that you have the right to license your contribution under those terms.
+
+See also: ["Does my project need an additional contributor agreement? Probably
+  not."][cla-needed]
+
+[gh-tos]:     https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license
+[lic]:        #open-source-license
+[cla-needed]: https://opensource.guide/legal/#does-my-project-need-an-additional-contributor-agreement
 
 ## Code of conduct
 
@@ -49,10 +61,12 @@ specifics, see the [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) file.
 ## Reporting issues
 
 Before reporting an issue, please use the search feature on the [issues
-page](https://github.com/mbland/go-script-bash/issues) to see if an issue
-matching the one you've observed has already been filed.
+page][issues] to see if an issue matching the one you've observed has already
+been filed.
 
 If you do find one...
+
+[issues]: https://github.com/mbland/custom-links/issues
 
 ### Do not add a +1 comment!
 
@@ -95,18 +109,23 @@ preferred, but even one nit is one nit too many.
 ## Environment setup
 
 Make sure you have Bash installed per the [Environment setup in the
-README](README.md#environment-setup).
+README][env-setup].
 
-You will also need [Git](https://git-scm.com/downloads) installed on your
-system. If you are not familiar with Git, you may wish to reference the [Git
-documentation](https://git-scm.com/doc).
+[env-setup]: README.md#environment-setup
+
+You will also need [Git][] installed on your system. If you are not familiar
+with Git, you may wish to reference the [Git documentation][git-doc].
+
+[Git]:     https://git-scm.com/downloads
+[git-doc]: https://git-scm.com/doc
 
 ## Workflow
 
 The basic workflow for submitting changes resembles that of the [GitHub Git
-Flow](https://guides.github.com/introduction/flow/), except that you will be
-working with your own fork of the repository and issuing pull requests to the
-original.
+Flow][git-flow], except that you will be working with your own fork of the
+repository and issuing pull requests to the original.
+
+[git-flow]: https://guides.github.com/introduction/flow/
 
 1. Fork the repo on GitHub (look for the "Fork" button)
 2. Clone your forked repo to your local machine
@@ -114,15 +133,16 @@ original.
 4. Develop _and [test](#testing)_ your changes as necessary.
 4. Commit your changes (`git commit -am 'Add some feature'`)
 5. Push to the branch (`git push origin my-new-feature`)
-6. Create a new [GitHub pull
-   request](https://help.github.com/articles/using-pull-requests/) for your
-   feature branch based against the original repository's `master` branch
-7. If your request is accepted, you can [delete your feature
-   branch](https://help.github.com/articles/deleting-unused-branches/) and
-   pull the updated `master` branch from the original repository into your
-   fork. You may even [delete your
-   fork](https://help.github.com/articles/deleting-a-repository/) if you don't
-   anticipate making further changes.
+6. Create a new [GitHub pull request][gh-pr] for your feature branch based
+   against the original repository's `master` branch
+7. If your request is accepted, you can [delete your feature branch][rm-branch]
+   and pull the updated `master` branch from the original repository into your
+   fork. You may even [delete your fork][rm-fork] if you don't anticipate making
+   further changes.
+
+[gh-pr]:     https://help.github.com/articles/using-pull-requests/
+[rm-branch]: https://help.github.com/articles/deleting-unused-branches/
+[rm-fork]:   https://help.github.com/articles/deleting-a-repository/
 
 ## Testing
 
@@ -135,20 +155,23 @@ Period.
 Any changes that break the continuous integration build must be fixed or rolled
 back immediately.
 
-This project uses the [Bash Automated Testing System
-(Bats)](https://github.com/sstephenson/bats) to write and run tests. All tests
-and helper scripts are in the `tests/` directory and are run using the `./go
-test` command. This command has a very flexible syntax for running a subset of
-test suites (i.e. a set of test cases within individual `.bats` files or
-directories). Enabling tab completion via `./go env` is highly encouraged.
+This project uses the [Bash Automated Testing System (Bats)][bats] to write and
+run tests. All tests and helper scripts are in the `tests/` directory and are
+run using the `./go test` command. This command has a very flexible syntax for
+running a subset of test suites (i.e. a set of test cases within individual
+`.bats` files or directories). Enabling tab completion via `./go env` is highly
+encouraged.
+
+[bats]: https://github.com/sstephenson/bats
 
 Before sending your code for review, make sure to run the entire test suite via
 `./go test`. If you're on a Linux system that uses the `apt-get` package manager
 (e.g. Ubuntu, Debian), run `./go test --coverage` to make sure your changes are
 adequately covered by new and existing tests. This will install (within the
-project working directory) and run the
-[kcov](https://github.com/SimonKagstrom/kcov) tool, which is only available on
+project working directory) and run the [kcov][] tool, which is only available on
 Linux for now.
+
+[kcov]: https://github.com/SimonKagstrom/kcov
 
 ## Coding conventions
 
@@ -321,7 +344,13 @@ it easier to find, count, and possibly transform things.
 
 ### Process substitution
 
-- Avoid it, since it is not available on Windows platforms (yet).
+- Use wherever possible, such as when piping input into a `while` loop (which
+  avoids having the loop body execute in a subshell) or running a command taking
+  multiple filename arguments based on output from a function or pipeline (e.g.
+  `diff`).
+- *Warning*: It is impossible to directly determine the exit status of a process
+  substitution; emitting an exit status as the last line of output is a possible
+  workaround.
 
 ### Conditionals and loops
 
@@ -354,7 +383,8 @@ it easier to find, count, and possibly transform things.
 
 ## Open Source License
 
-This software is made available as [Open Source
-software](https://opensource.org/osd-annotated) under the [ISC
-License](https://www.isc.org/downloads/software-support-policy/isc-license/).
-For the text of the license, see the [LICENSE](LICENSE.md) file.
+This software is made available as [Open Source software][oss] under the [ISC
+License][isc]. For the text of the license, see the [LICENSE](LICENSE.md) file.
+
+[oss]: https://opensource.org/osd-annotated
+[isc]: https://www.isc.org/downloads/software-support-policy/isc-license/
