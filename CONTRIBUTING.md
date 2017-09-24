@@ -36,8 +36,8 @@ file](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
 
 ## Contributor License Agreement
 
-Please sign the [Contributor License Agreement][cla] by submitting the form at
-the end of the agreement prior to filing any pull requests.
+Please sign the [Contributor License Agreement][cla] by submitting the form
+linked from the top of the agreement prior to filing any pull requests.
 
 [cla]: https://github.com/mbland/cla
 
