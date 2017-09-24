@@ -14,6 +14,7 @@ file](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
 ## Table of contents
 
 - [Quick links](#quick-links)
+- [Contributor License Agreement](#contributor-license-agreement)
 - [Code of conduct](#code-of-conduct)
 - [Reporting issues](#reporting-issues)
 - [Updating documentation](#updating-documentation)
@@ -32,6 +33,13 @@ file](https://github.com/atom/atom/blob/master/CONTRIBUTING.md).
 - [Issues](https://github.com/mbland/go-script-bash/issues)
 - [Pull requests](https://github.com/mbland/go-script-bash/pulls)
 - [Issues](https://github.com/mbland/go-script-bash/issues)
+
+## Contributor License Agreement
+
+Please sign the [Contributor License Agreement][cla] by submitting the form
+linked from the top of the agreement prior to filing any pull requests.
+
+[cla]: https://github.com/mbland/cla
 
 ## Code of conduct
 
