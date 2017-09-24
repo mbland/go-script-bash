@@ -1,13 +1,12 @@
-- [ ] I have reviewed the [contributor guidelines][contrib]
-- [ ] I have reviewed the [code of conduct][conduct]
-- [ ] I have reviewed and signed the [Contributor License Agreement][cla]
+- [ ] I have reviewed the [contributor guidelines][contrib].
+- [ ] I have reviewed the [code of conduct][conduct].
+- [ ] Per [GitHub's Terms of Service][gh-tos], I am aware that I license my
+  contribution under the same terms as [this project's license][license], and
+  that I have the right to license my contribution under those terms.
 
-[contrib]: CONTRIBUTING.md
-[conduct]: CODE_OF_CONDUCT.md
-[cla]:     https://github.com/mbland/cla
-
-Closes #.
-
-Replace this paragraph with a description of the change.
+[contrib]: https://github.com/mbland/go-script-bash/blob/master/CONTRIBUTING.md
+[conduct]: https://github.com/mbland/go-script-bash/blob/master/CODE_OF_CONDUCT.md
+[gh-tos]:  https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license
+[license]: https://github.com/mbland/go-script-bash/blob/master/LICENSE.md
 
 cc: @mbland
