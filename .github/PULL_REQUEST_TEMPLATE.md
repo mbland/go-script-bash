@@ -9,8 +9,4 @@
 [gh-tos]:  https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license
 [license]: https://github.com/mbland/go-script-bash/LICENSE.md
 
-Closes #.
-
-Replace this paragraph with a description of the change.
-
 cc: @mbland
