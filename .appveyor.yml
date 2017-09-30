@@ -11,4 +11,5 @@ build: off
 test_script:
   - where bash
   - bash --version
-  - bash -c './go test'
+  - bash -c 'echo PATH="$PATH"'
+  - bash -c 'PATH="/usr/bin:$PATH" ./go test'
