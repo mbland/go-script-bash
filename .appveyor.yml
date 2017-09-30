@@ -11,4 +11,4 @@ build: off
 test_script:
   - where bash
   - bash --version
-  - bash ./go test
+  - bash -c './go test'
