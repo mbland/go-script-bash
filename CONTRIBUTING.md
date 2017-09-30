@@ -146,7 +146,8 @@ repository and issuing pull requests to the original.
 
 ## Testing
 
-- Continuous integration status: [![Continuous integration status](https://travis-ci.org/mbland/go-script-bash.png?branch=master)](https://travis-ci.org/mbland/go-script-bash)
+- Continuous integration status for Linux and macOS: [![Continuous integration status for Linux and macOS](https://img.shields.io/travis/mbland/go-script-bash/master.svg)](https://travis-ci.org/mbland/go-script-bash)
+- Continuous integration status for Windows: [![Continuous integration status for Windows](https://img.shields.io/appveyor/ci/mbland/go-script-bash/master.svg)](https://ci.appveyor.com/project/mbland/go-script-bash)
 - Coverage status: [![Coverage Status](https://coveralls.io/repos/github/mbland/go-script-bash/badge.svg?branch=master)](https://coveralls.io/github/mbland/go-script-bash?branch=master)
 
 No bug fixes or new features will be accepted without accompanying tests.
