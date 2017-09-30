@@ -1,0 +1,14 @@
+version: 'v1.6.0.{build}'
+
+build: off
+
+# This presumes that Git bash is installed at `C:\Program Files\Git` and the
+# bash we're using is from that installation.
+#
+# If instead it finds the Windows Subsystem for Linux bash at
+# `C:\Windows\System32\bash.exe`, it will fail with a errors containing:
+#   syntax error near unexpected token `$'{\r''
+test_script:
+  - where bash
+  - bash --version
+  - bash ./go test
