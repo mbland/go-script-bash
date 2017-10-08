@@ -9,7 +9,7 @@
 
 . "$_GO_USE_MODULES" 'format' 'platform'
 
-_@go.gocore() {
+_@go.goinfo() {
   local varnames=('_GO_CORE_VERSION'
     'BASH_VERSION'
     'OSTYPE'
@@ -28,4 +28,4 @@ _@go.gocore() {
   printf '%s\n' "${result[@]}"
 }
 
-_@go.gocore "$@"
+_@go.goinfo "$@"
