@@ -1,6 +1,6 @@
-# go-script-bash v1.6.0
+# go-script-bash v1.7.0
 
-This is a minor update to add the capability to `go-template` to download a release tarball from GitHub rather than using `git clone` to add the go-script-bash framework to a project working directory.
+This is a minor update to add a few test helpers, `_GO_PLATFORM` variables and the `./go goinfo` command, several file system processing modules, and a handful of project improvements.
 
 ## The `./go` script: a unified development environment interface
 
@@ -25,25 +25,75 @@ This software is made available as [Open Source software][oss-def] under the [IS
 
 ## What's new in this release
 
-All of the issues and pull requests for this release are visible in the [v1.6.0 milestone][].
+All of the issues and pull requests for this release are visible in the [v1.7.0 milestone][].
 
-[v1.6.0 milestone]: https://github.com/mbland/go-script-bash/milestone/4?closed=1
+[v1.7.0 milestone]: https://github.com/mbland/go-script-bash/milestone/5?closed=1
 
-### Download a go-script-bash release tarball from GitHub in `go-template`
+### `./go null`
 
-Thanks to [Juan Saavedra][elpaquete], `go-template` now has the capability to download and unpack a release tarbal from GitHub in order to add the go-script-bash framework to a project's working directory, rather than relying on `git clone`. Now `git clone` will be used as a backup in case the system doesn't have the tools to download and unpack the tarball, or the operation fails for some reason.
+The `./go null` command verifies that the framework is installed and functioning properly (#190).
 
-[elpaquete]: https://github.com/elpaquete
+### New test helpers
+
+There are a few powerful new test helper functions:
+
+* `create_forwarding_script` (#192, #195): Used to create a wrapper in `BATS_TEST_BINDIR` to make a system program accessible while restricting `PATH` via `PATH="$BATS_TEST_BINDIR"`.
+* `restore_programs_in_path` (#196): Allows a single call to remove multiple command stub scripts.
+* `run_test_script` (#196): Creates and runs a test script in one step, so that create_bats_test_script and run need not be called separately.
+* `run_bats_test_suite` (#196): A specialized version of `run_test_script` specifically for generating and running Bats test cases.
+* `run_bats_test_suite_in_isolation` (#196): An even more specialized version of `run_bats_test_suite` to ensure that `PATH` is restricted to `BATS_TEST_BINDIR` and the Bats `libexec/` directory within the suite.
+* `lib/bats/background-process` (#197): Helpers for managing and validating background processes.
+* `skip_if_none_present_on_system` (#198): Skips a test if none of the specified system programs are available.
+
+### `_GO_PLATFORM` vars and `./go goinfo` command
+
+The `lib/platform` module introduced in #200 provides an interface to detect on which system the script is running. Is parses [/etc/os-release][os-release] if it's available; otherwise uses `OSTYPE`, `uname -r`, and `sw_vers -productVersion` (on macOS).
+
+[os-release]: https://www.freedesktop.org/software/systemd/man/os-release.html
+
+The `./go goinfo` command introduced in #216 uses the `lib/platform` module to print version information about the go-script-bash framework, Bash, and the host operating system:
+
+```bash
+$ ./go goinfo
+
+_GO_CORE_VERSION:         v1.7.0
+BASH_VERSION:             4.4.12(1)-release
+OSTYPE:                   darwin16.3.0
+_GO_PLATFORM_ID:          macos
+_GO_PLATFORM_VERSION_ID:  10.13
+```
+
+### File system processing modules
+
+Introduced in #201, `@go.native_file_path_or_url` from `lib/portability` converts a file system path or `file://` URL to a platform-native path. This is necessitated by MSYS2, especially Git for Windows, which has system programs which expect Windows-native paths as input, or whose output will reflect Windows-native paths. It's used in several tests, as well as the `./go get` command.
+
+The `lib/path` module introduced in #203 and #206 includes functions to canonicalize file system paths, resolve symlinks, and walk directories.
+
+`lib/fileutil` from #204 and updated in #207 and #210 contains functions to safely create directories (with extensive error reporting), to collect all the regular files within a directory structure, to safely copy all files into a new directory structure, and to safely mirror directories using `tar`.
+
+`lib/diff` from #205 contains functions to log or edit differences between files and directory trees.
+
+`lib/archive` from #211 contains the `@go.create_gzipped_tarball` convenience function to easily and safely create `.tar.gz` archive files.
+
+### Project improvements
+
+The project now contains a GitHub issue and pull request templates, a GitHub `CODEOWNERS` file, and an Appveyor build to ensure Windows compatibility. See:
+
+* https://github.com/blog/2111-issue-and-pull-request-templates
+* https://help.github.com/articles/helping-people-contribute-to-your-project/
+* https://github.com/blog/2392-introducing-code-owners
+* https://help.github.com/articles/about-codeowners/
+* https://ci.appveyor.com/project/mbland/go-script-bash
 
 ### Bug fixes
 
-None in this release.
+* `stub_program_in_path` (#194): Now ensures that new stubs are passed to `hash`. Previously, if a command had already been invoked, Bash would remember its path, and ignore the new stub.
 
-## Changes since v1.5.0
+## Changes since v1.6.0
 
 You can see the details of every change by issuing one or more of the following commands after cloning: https://github.com/mbland/go-script-bash
 
 <pre>
-$ ./go changes v1.5.0 v1.6.0
-$ gitk v1.5.0..HEAD
+$ ./go changes v1.6.0 v1.7.0
+$ gitk v1.6.0..v1.7.0
 </pre>
