@@ -56,6 +56,10 @@ _@go.platform_ostype() {
     _GO_PLATFORM_ID="$OSTYPE"
     ;;
   esac
+
+  if command -v 'uname' >/dev/null; then
+    _GO_PLATFORM_VERSION_ID="$(uname -r)"
+  fi
 }
 
 _@go.platform() {
