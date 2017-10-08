@@ -66,7 +66,7 @@ been filed.
 
 If you do find one...
 
-[issues]: https://github.com/mbland/custom-links/issues
+[issues]: https://github.com/mbland/go-script-bash/issues
 
 ### Do not add a +1 comment!
 
@@ -84,10 +84,11 @@ matching issue...
 Try to be as specific as possible about your environment and the problem you're
 observing. At a minimum, include:
 
-- The version of bash you're using, from either `bash --version` or `echo
-  $BASH_VERSION`
-- The version of the go-script-bash library you're using
+- The output from `./go goinfo`
 - Command line steps or code snippets that reproduce the issue
+- Any apparently relevant information from the [Bash changelog][bash-changes]
+
+[bash-changes]: https://tiswww.case.edu/php/chet/bash/CHANGES
 
 Also consider using:
 
