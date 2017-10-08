@@ -215,7 +215,7 @@
 # None of the functions below this line are part of the public interface.
 # --------------------------------
 
-# @go.walk_path_forwared helper to finds the first missing parent directory
+# @go.walk_path_forward helper to find the first missing parent directory
 #
 # Arguments:
 #   path:  Path to examine
