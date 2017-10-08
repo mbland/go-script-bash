@@ -42,6 +42,7 @@ _@go.platform_ostype() {
   case "$OSTYPE" in
   darwin*)
     _GO_PLATFORM_ID='macos'
+    _GO_PLATFORM_VERSION_ID="$(sw_vers -productVersion)"
     ;;
   freebsd*)
     _GO_PLATFORM_ID='freebsd'
@@ -57,7 +58,7 @@ _@go.platform_ostype() {
     ;;
   esac
 
-  if command -v 'uname' >/dev/null; then
+  if [[ -z "$_GO_PLATFORM_VERSION_ID" ]] && command -v 'uname' >/dev/null; then
     _GO_PLATFORM_VERSION_ID="$(uname -r)"
   fi
 }

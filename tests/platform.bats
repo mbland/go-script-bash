@@ -13,6 +13,11 @@ setup() {
     'done'
   export __GO_ETC_OS_RELEASE="$BATS_TEST_ROOTDIR/os-release"
 
+  stub_program_in_path 'sw_vers' \
+    'if [[ "$*" == "-productVersion" ]]; then' \
+    '  printf "$TEST_MACOS_VERSION\n"' \
+    'fi'
+
   stub_program_in_path 'uname' \
     'if [[ "$*" == "-r" ]]; then' \
     '  printf "$TEST_UNAME_VERSION\n"' \
@@ -25,7 +30,7 @@ setup() {
 }
 
 teardown() {
-  restore_programs_in_path 'git' 'uname'
+  restore_programs_in_path 'git' 'uname' 'sw_vers'
   @go.remove_test_go_rootdir
 }
 
@@ -57,12 +62,13 @@ teardown() {
     '_GO_PLATFORM_VERSION_ID="3.27"'
 }
 
-@test "$SUITE: macos _GO_PLATFORM_{ID,VERSION_ID} from OSTYPE, uname -r" {
-  OSTYPE='darwin16.3.0' TEST_UNAME_VERSION='17.0.0' run "$TEST_GO_SCRIPT"
+@test "$SUITE: macos _GO_PLATFORM_{ID,VERSION_ID} from OSTYPE, sw_vers" {
+  OSTYPE='darwin16.3.0' TEST_UNAME_VERSION='17.0.0' \
+    TEST_MACOS_VERSION='10.13' run "$TEST_GO_SCRIPT"
   assert_success
   assert_lines_equal \
     '_GO_PLATFORM_ID="macos"' \
-    '_GO_PLATFORM_VERSION_ID="17.0.0"'
+    '_GO_PLATFORM_VERSION_ID="10.13"'
 }
 
 @test "$SUITE: freebsd _GO_PLATFORM_{ID,VERSION_ID} from OSTYPE, uname -r" {
