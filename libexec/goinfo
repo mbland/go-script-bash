@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+#
+# Prints go-script-bash, Bash, and operating system version information
+#
+# Useful for diagnosing problems and filing bug reports.
+#
+# More information may be gleaned from `uname`, as well as `sw_vers` on macOS,
+# but this includes the most often relevant information.
+
+. "$_GO_USE_MODULES" 'format' 'platform'
+
+_@go.goinfo() {
+  local varnames=('_GO_CORE_VERSION'
+    'BASH_VERSION'
+    'OSTYPE'
+    '_GO_PLATFORM_ID'
+    '_GO_PLATFORM_VERSION_ID')
+  local values=()
+  local varname
+  local result=()
+
+  for varname in "${varnames[@]}"; do
+    values+=("${!varname}")
+  done
+
+  @go.pad_items 'varnames' "${varnames[@]/%/:}"
+  @go.zip_items 'varnames' 'values' '  ' result
+  printf '%s\n' "${result[@]}"
+}
+
+_@go.goinfo "$@"
