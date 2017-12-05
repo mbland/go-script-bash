@@ -163,3 +163,27 @@ kill_background_test_script() {
   stop_background_run 'HUP'
   assert_status "$((128 + $(kill -l HUP)))"
 }
+
+@test "$SUITE: bash -c command passes under run_in_background" {
+  skip_if_missing_background_utilities
+  mkdir "$BATS_TEST_ROOTDIR"
+
+  run_in_background bash -c 'echo "Oh hai, Mark."; sleep 60'
+  run wait_for_background_output 'Oh hai, Mark.' '0.25'
+  assert_success
+}
+
+@test "$SUITE: bash -c command fails under run_in_background without hanging" {
+  skip_if_missing_background_utilities
+  mkdir "$BATS_TEST_ROOTDIR"
+
+  run_in_background bash -c 'echo "Oh hai, Mark."; sleep 60'
+  run wait_for_background_output 'I did not do it! I did not!' '0.25'
+  assert_failure \
+    'Output did not match regular expression:' \
+    "  'I did not do it! I did not!'" \
+    '' \
+    'OUTPUT:' \
+    '------' \
+    'Oh hai, Mark.'
+}
