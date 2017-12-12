@@ -70,7 +70,7 @@ _@go.commands_parse_search_paths() {
 }
 
 _@go.commands_parse_argv() {
-  case "$1" in
+  case "${1-}" in
   --paths|--summaries)
     __go_commands_action="${1#--}"
     shift
@@ -132,7 +132,7 @@ _@go.commands_tab_completions() {
 
 _@go.commands() {
   # Tab completions
-  if [[ "$1" == '--complete' ]]; then
+  if [[ "${1-}" == '--complete' ]]; then
     shift
     _@go.commands_tab_completions "$@"
     return
