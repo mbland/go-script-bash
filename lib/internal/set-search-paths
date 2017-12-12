@@ -26,7 +26,7 @@ _@go.set_search_paths() {
   # A plugin's own local plugin paths will appear before inherited ones. If
   # there is a version incompatibility issue with other installed plugins, this
   # allows a plugin's preferred version to take precedence.
-  @go.search_plugins '_@go.set_search_paths_add_plugin_paths'
+  @go.search_plugins '_@go.set_search_paths_add_plugin_paths' || : 
   _GO_SEARCH_PATHS+=("${_GO_PLUGINS_PATHS[@]}")
 }
 

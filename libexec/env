@@ -87,7 +87,13 @@ END_OF_HELP
     return 1
   fi
 
-  read -r -d '' env_script < "$shell_impl"
+  read -r -d '' env_script < "$shell_impl" && exit_code=0 || exit_code=$?
+  if [[ "$exit_code" -gt 1 ]]; then
+    # Due to encountering EOL, 'read' will return with '1'. To support 'set -e'
+    # we only return the exit code if an actual error has occured ($? -gt 1).
+    return $exit_code
+  fi
+
   env_script="${env_script//_go_func/$go_func}"
   env_script="${env_script//\$_GO_ROOTDIR/$_GO_ROOTDIR}"
   echo "${env_script//\$_GO_SCRIPT/$_GO_SCRIPT}"
