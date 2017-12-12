@@ -33,6 +33,7 @@
   fi
   unset "compreply[$compgen_exit_index]"
 
+  add_slashes='false'
   if [[ "$1" =~ ^-[df]$ ]]; then
     add_slashes='true'
   fi
@@ -40,7 +41,7 @@
   for reply_item in "${compreply[@]}"; do
     # Since we're not using -o filenames, we must add slashes to dir names.
     # Since we're using -o nospace, we must add a space to a single match.
-    if [[ -n "$add_slashes" && -d "$reply_item" ]]; then
+    if [[ "$add_slashes" == 'true' && -d "$reply_item" ]]; then
       printf -- '%s/\n' "$reply_item"
     elif [[ "${#compreply[@]}" -eq '1' && ! $reply_item =~ [\ /]$ ]]; then
       printf -- '%s \n' "$reply_item"

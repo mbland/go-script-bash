@@ -65,9 +65,10 @@ fi
 declare -r -x _GO_CORE_DIR="$PWD"
 
 # Set _GO_STANDALONE if your script is a standalone program.
-#
+declare -x _GO_STANDALONE="${_GO_STANDALONE-}"
+
 # See the "Standalone mode" section of README.md for more information.
-if [[ "${_GO_STANDALONE:-null}" == "null" ]]; then
+if [[ -n "$_GO_STANDALONE" ]]; then
   cd "$_GO_ROOTDIR" || exit 1
 else
   cd "$__go_orig_dir" || exit 1
