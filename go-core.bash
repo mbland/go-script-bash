@@ -67,7 +67,7 @@ declare -r -x _GO_CORE_DIR="$PWD"
 # Set _GO_STANDALONE if your script is a standalone program.
 #
 # See the "Standalone mode" section of README.md for more information.
-if [[ -z "$_GO_STANDALONE" ]]; then
+if [[ "${_GO_STANDALONE:-null}" == "null" ]]; then
   cd "$_GO_ROOTDIR" || exit 1
 else
   cd "$__go_orig_dir" || exit 1
@@ -120,7 +120,7 @@ declare -r -x _GO_TEST_DIR="${_GO_TEST_DIR:-tests}"
 declare -r -x _GO_SCRIPT="$_GO_ROOTDIR/${0##*/}"
 
 # The name of either the ./go script itself or the shell function invoking it.
-declare -r -x _GO_CMD="${_GO_CMD:=$0}"
+declare -r -x _GO_CMD="${_GO_CMD:-$0}"
 
 # The array of command line arguments comprising the ./go command name after
 # _GO_CMD.
@@ -151,11 +151,14 @@ declare _GO_SEARCH_PATHS=()
 # Should be an absolute path. Use this for stubbing out scripts during testing
 # or debugging, or for experimenting with new implementations of existing
 # scripts.
-declare _GO_INJECT_SEARCH_PATH="$_GO_INJECT_SEARCH_PATH"
+declare _GO_INJECT_SEARCH_PATH="${_GO_INJECT_SEARCH_PATH-}"
 
 # Directory to search for module scripts first.
 # Similar to _GO_INJECT_SEARCH_PATHS above, but for `. "$_GO_USE_MODULES"`.
-declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
+declare _GO_INJECT_MODULE_PATH="${_GO_INJECT_MODULE_PATH-}"
+
+# Read from the environment and used in output formatting
+COLUMNS="${COLUMNS-}"
 
 # Invokes printf builtin, then folds output to $COLUMNS width
 #
