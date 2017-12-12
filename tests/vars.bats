@@ -56,6 +56,7 @@ quotify_expected() {
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
     "declare -- _GO_SCRIPTS_DIR=\"$TEST_GO_SCRIPTS_DIR\""
     "declare -a _GO_SEARCH_PATHS=(${search_paths[*]})"
+    "declare -x _GO_STANDALONE=\"\""
     "declare -rx _GO_TEST_DIR=\"$_GO_TEST_DIR\""
     "declare -rx _GO_USE_MODULES=\"$_GO_CORE_DIR/lib/internal/use\"")
 
@@ -130,6 +131,7 @@ quotify_expected() {
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
     "declare -- _GO_SCRIPTS_DIR=\"$TEST_GO_SCRIPTS_DIR\""
     "declare -a _GO_SEARCH_PATHS=(${search_paths[*]})"
+    "declare -x _GO_STANDALONE=\"$_GO_STANDALONE\""
     "declare -rx _GO_TEST_DIR=\"$_GO_TEST_DIR\""
     "declare -rx _GO_USE_MODULES=\"$_GO_CORE_DIR/lib/internal/use\"")
 
@@ -171,6 +173,7 @@ quotify_expected() {
     "_GO_KCOV_DIR: $_GO_KCOV_DIR" \
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR" \
     "_GO_SCRIPT: $TEST_GO_SCRIPT" \
+    "_GO_STANDALONE: $_GO_STANDALONE" \
     "_GO_TEST_DIR: $_GO_TEST_DIR" \
     "_GO_USE_MODULES: $_GO_USE_MODULES"
 }
