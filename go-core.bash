@@ -287,8 +287,7 @@ COLUMNS="${COLUMNS-}"
 #   $1: name of the command to invoke
 #   $2..$#: arguments to the specified command
 @go() {
-  local cmd="$1"
-  shift
+  local cmd="${1-}"
 
   case "$cmd" in
   '')
