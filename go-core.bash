@@ -289,6 +289,10 @@ COLUMNS="${COLUMNS-}"
 @go() {
   local cmd="${1-}"
 
+  if [[ $# > 0 ]]; then
+    shift
+  fi
+
   case "$cmd" in
   '')
     _@go.source_builtin 'help' 1>&2
