@@ -70,12 +70,19 @@ _@go.env() {
       return 1
     fi
 
-    read -r -d '' help_msg <<END_OF_HELP
+    read -r -d '' help_msg <<END_OF_HELP && exit_code=0 || exit_code=$?
 # Define the "$default_name" function by running the following command.
 # Replace '-' to use a different name instead of "$default_name".
 
 ${eval_cmd//%s/$0}
 END_OF_HELP
+
+    if [[ "$exit_code" -gt 1 ]]; then
+      # Due to encountering EOL, 'read' will return with '1'. To support 'set -e'
+      # we only return the exit code if an actual error has occured ($? -gt 1).
+      return $exit_code
+    fi
+
     @go.printf "$help_msg\n"
     return
   elif [[ "$go_func" == '-' ]]; then
@@ -89,8 +96,6 @@ END_OF_HELP
 
   read -r -d '' env_script < "$shell_impl" && exit_code=0 || exit_code=$?
   if [[ "$exit_code" -gt 1 ]]; then
-    # Due to encountering EOL, 'read' will return with '1'. To support 'set -e'
-    # we only return the exit code if an actual error has occured ($? -gt 1).
     return $exit_code
   fi
 
