@@ -21,7 +21,7 @@ _@go.has_spaces() {
 
 _@go.env() {
   # Tab completions
-  if [[ "$1" == '--complete' ]]; then
+  if [[ "${1-}" == '--complete' ]]; then
     local word_index="$2"
     if [[ "$word_index" -eq '0' ]]; then
       echo '-'
@@ -29,7 +29,7 @@ _@go.env() {
     return
   fi
 
-  local go_func="$1"
+  local go_func="${1-}"
   local default_name="${_GO_SCRIPT##*/}"
   local shell="${SHELL##*/}"
   local shell_impl="$_GO_CORE_DIR/lib/internal/env/$shell"
