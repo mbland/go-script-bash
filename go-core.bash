@@ -367,7 +367,11 @@ _@go.run_command_script() {
   shift
 
   local interpreter
-  read -r interpreter < "$cmd_path"
+  interpreter=''
+
+  if [[ -s "$cmd_path" ]]; then
+    read -r interpreter < "$cmd_path"
+  fi
 
   if [[ "${interpreter:0:2}" != '#!' ]]; then
     @go.printf \
