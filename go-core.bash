@@ -208,7 +208,7 @@ COLUMNS="${COLUMNS-}"
 # Arguments:
 #   skip_callers:  The number of callers to skip over when printing the stack
 @go.print_stack_trace() {
-  local skip_callers="$1"
+  local skip_callers="${1-}"
   local result=0
   local i
 
