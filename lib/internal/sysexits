@@ -1,0 +1,18 @@
+#! /bin/bash
+
+declare -r -x _GO_EC_OK=0
+declare -r -x _GO_EC_USAGE=64
+declare -r -x _GO_EC_DATAERR=65
+declare -r -x _GO_EC_NOINPUT=66
+declare -r -x _GO_EC_BADFRMT=67
+declare -r -x _GO_EC_NOHOST=68
+declare -r -x _GO_EC_UNAVAILABLE=69
+declare -r -x _GO_EC_GENERR=70
+declare -r -x _GO_EC_SYSERR=71
+declare -r -x _GO_EC_DEPMISS=72
+declare -r -x _GO_EC_CANTCREAT=73
+declare -r -x _GO_EC_IOERR=74
+declare -r -x _GO_EC_
+declare -r -x _GO_EC_
+declare -r -x _GO_EC_NOPERM=77
+declare -r -x _GO_EC_CONFIG=78
