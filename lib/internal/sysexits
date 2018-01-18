@@ -1,18 +1,21 @@
 #! /bin/bash
 
-declare -r -x _GO_EC_OK=0
-declare -r -x _GO_EC_USAGE=64
-declare -r -x _GO_EC_DATAERR=65
-declare -r -x _GO_EC_NOINPUT=66
-declare -r -x _GO_EC_BADFRMT=67
-declare -r -x _GO_EC_NOHOST=68
-declare -r -x _GO_EC_UNAVAILABLE=69
-declare -r -x _GO_EC_GENERR=70
-declare -r -x _GO_EC_SYSERR=71
-declare -r -x _GO_EC_DEPMISS=72
-declare -r -x _GO_EC_CANTCREAT=73
-declare -r -x _GO_EC_IOERR=74
-declare -r -x _GO_EC_
-declare -r -x _GO_EC_
-declare -r -x _GO_EC_NOPERM=77
-declare -r -x _GO_EC_CONFIG=78
+declare -r -x -i _GO_EC_OFFSET=0
+declare -r -x -i _GO_EC_OK=0
+declare -r -x -i _GO_EC_BASE=_GO_EC_OFFSET+64
+declare -r -x -i _GO_EC_USAGE=_GO_EC_OFFSET+64
+declare -r -x -i _GO_EC_DATAERR=_GO_EC_OFFSET+65
+declare -r -x -i _GO_EC_NOINPUT=_GO_EC_OFFSET+66
+declare -r -x -i _GO_EC_BADFRMT=_GO_EC_OFFSET+67
+declare -r -x -i _GO_EC_NOHOST=_GO_EC_OFFSET+68
+declare -r -x -i _GO_EC_UNAVAILABLE=_GO_EC_OFFSET+69
+declare -r -x -i _GO_EC_GENERR=_GO_EC_OFFSET+70
+declare -r -x -i _GO_EC_SYSERR=_GO_EC_OFFSET+71
+declare -r -x -i _GO_EC_DEPMISS=_GO_EC_OFFSET+72
+declare -r -x -i _GO_EC_CANTCREAT=_GO_EC_OFFSET+73
+declare -r -x -i _GO_EC_IOERR=_GO_EC_OFFSET+74
+declare -r -x -i _GO_EC_
+declare -r -x -i _GO_EC_
+declare -r -x -i _GO_EC_NOPERM=_GO_EC_OFFSET+77
+declare -r -x -i _GO_EC_CONFIG=_GO_EC_OFFSET+78
+declare -r -x -i _GO_EC_MAX=_GO_EC_OFFSET+78
