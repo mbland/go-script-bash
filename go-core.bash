@@ -344,8 +344,6 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   else
     _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
   fi
-
-  return "$_GO_EC_OK"
 }
 
 _@go.source_builtin() {
@@ -427,8 +425,12 @@ _@go.set_scripts_dir() {
 }
 
 _@go.set_scripts_dir "$@" && rc=0 || rc="$?"
+<<<<<<< Updated upstream
 
 if [[ "$rc" -ne 0 ]]; then
+=======
+if [[ "$rc" -ne "$_GO_EC_OK" ]]; then
+>>>>>>> Stashed changes
   exit "$rc"
 elif [[ -z "$COLUMNS" ]]; then
   # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
