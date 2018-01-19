@@ -110,7 +110,7 @@
 #   Zero on 'y' or 'yes' (case- and space- insensitive), nonzero otherwise
 @go.prompt_for_yes_or_no() {
   local prompt="$1"
-  local default="$2"
+  local default="${2-}"
   local response
 
   case "$default" in
