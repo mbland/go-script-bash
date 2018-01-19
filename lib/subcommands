@@ -19,14 +19,14 @@
 # Returns:
 #   zero on success, nonzero on error (when `_GO_CMD_ARGV` is not empty)
 @go.show_subcommands() {
-  local result='0'
+  local result="$_GO_EC_OK"
   local out_fd='1'
   local cmd_name="${_GO_CMD_NAME[*]}"
 
   if [[ "${#_GO_CMD_ARGV[@]}" -ne 0 ]]; then
     @go.printf '"%s" is not an available subcommand of "%s".\n\n' \
       "${_GO_CMD_ARGV[0]}" "$cmd_name" >&2
-    result='1'
+    result="$_GO_EC_USAGE"
     out_fd='2'
   fi
 
