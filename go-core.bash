@@ -198,6 +198,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     done
     printf '%s' "$line"
   done <<<"${result//$'\n'/$'\n\x1f'}"$'\x1f'
+
+  return "$_GO_EC_OK"
 }
 
 # Prints the stack trace at the point of the call.
@@ -268,7 +270,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #   search_func:  Helper function implementing the search operation
 #
 # Returns:
-#   Zero if `search_func` ever returns zero, nonzero otherwise
+#   _GO_EC_OK if `search_func` ever returns zero, _GO_EC_GENERR otherwise
 @go.search_plugins() {
   local __gsp_plugins_dir="$_GO_SCRIPTS_DIR/plugins"
 
@@ -307,7 +309,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   edit)
     if [[ -z "$EDITOR" ]]; then
       echo "Cannot edit $@: \$EDITOR not defined."
-      return "$_GO_EC_SYSERR"
+      return "$_GO_EC_CONFIG"
     fi
     "$EDITOR" "$@"
     return "$_GO_EC_OK"
@@ -342,12 +344,16 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   else
     _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
   fi
+
+  return "$_GO_EC_OK"
 }
 
 _@go.source_builtin() {
   local c="$1"
   shift
   . "$_GO_CORE_DIR/libexec/$c"
+
+  return "$_GO_EC_OK"
 }
 
 _@go.run_plugin_command_script() {
@@ -358,6 +364,8 @@ _@go.run_plugin_command_script() {
 
   _@go.set_search_paths
   _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
+
+  return "$_GO_EC_OK"
 }
 
 _@go.run_command_script() {
@@ -399,6 +407,8 @@ _@go.run_command_script() {
     fi
     "$interpreter" "$cmd_path" "$@"
   fi
+
+  return "$_GO_EC_OK"
 }
 
 _@go.set_scripts_dir() {
@@ -419,6 +429,7 @@ _@go.set_scripts_dir() {
     return "$_GO_EC_NOPERM"
   fi
   _GO_SCRIPTS_DIR="$scripts_dir"
+  return "$_GO_EC_OK"
 }
 
 _@go.set_scripts_dir "$@" && rc=0 || rc="$?"
