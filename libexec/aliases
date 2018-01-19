@@ -31,14 +31,14 @@ _@go.aliases() {
     for c in "${_GO_ALIAS_CMDS[@]}"; do
       echo "$c"
     done
-    return
+    return "$_GO_EC_OK"
   elif [[ "$1" == '--complete' ]]; then
     # Tab completions
     local word_index="$2"
     if [[ "$word_index" -eq 0 ]]; then
       echo "--exists"
     fi
-    return
+    return "$_GO_EC_OK"
   fi
 
   . "$_GO_CORE_DIR/lib/internal/argv"
@@ -49,17 +49,17 @@ _@go.aliases() {
     flag="${1#--}"
     shift
     if ! _@go.check_flag_has_one_argument "--$flag" "$@"; then
-      return 1
+      return "$_GO_EC_USAGE"
     fi
     ;;
   -*)
     @go.printf "ERROR: unknown flag: $1\n" >&2
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   esac
 
   if [[ -z "$flag" ]] && ! _@go.check_argv_empty_if_no_flags "$@"; then
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   # Help filter
@@ -67,7 +67,7 @@ _@go.aliases() {
     local pattern='{{_GO_ALIAS_CMDS}}'
     local replacement="${_GO_ALIAS_CMDS[@]}"
     echo "${1//$pattern/$replacement}"
-    return
+    return "$_GO_EC_OK"
   fi
 
   for c in "${_GO_ALIAS_CMDS[@]}"; do
@@ -84,10 +84,10 @@ _@go.aliases() {
           "\"$_GO_CMD env\" to set up your shell environment."
       fi
     fi
-    return
+    return "$_GO_EC_OK"
   done
 
-  return 1
+  return "$_GO_EC_NOTFND"
 }
 
 _@go.aliases "$@"

@@ -352,8 +352,6 @@ _@go.source_builtin() {
   local c="$1"
   shift
   . "$_GO_CORE_DIR/libexec/$c"
-
-  return "$_GO_EC_OK"
 }
 
 _@go.run_plugin_command_script() {
@@ -364,8 +362,6 @@ _@go.run_plugin_command_script() {
 
   _@go.set_search_paths
   _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
-
-  return "$_GO_EC_OK"
 }
 
 _@go.run_command_script() {
@@ -407,8 +403,6 @@ _@go.run_command_script() {
     fi
     "$interpreter" "$cmd_path" "$@"
   fi
-
-  return "$_GO_EC_OK"
 }
 
 _@go.set_scripts_dir() {

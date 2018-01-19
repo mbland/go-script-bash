@@ -87,29 +87,29 @@ _@go.complete_args() {
       @go.compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name"
       ;;
     esac
-    return
+    return "$_GO_EC_OK"
   fi
 
   case "$cmd_name" in
   cd|pushd)
     @go.compgen -d -- "$word"
-    return
+    return "$_GO_EC_OK"
     ;;
   edit|run)
     @go.compgen -f -- "$word"
-    return
+    return "$_GO_EC_OK"
     ;;
   -h|-help|--help)
     cmd_name='help'
     ;;
   -*|unenv)
-    return 1
+    return "$_GO_EC_GENERR"
     ;;
   esac
 
   if _@go.source_builtin 'aliases' --exists "$cmd_name"; then
     @go.compgen -f -- "$word"
-    return
+    return "$_GO_EC_OK"
   fi
 
   unset 'args[0]'
