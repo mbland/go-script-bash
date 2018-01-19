@@ -24,7 +24,7 @@
 
   while IFS= read -r reply_item; do
     compreply+=("$reply_item")
-  done < <(trap 'echo "$?"' EXIT; compgen "$@"; exit "$?")
+  done < <(trap "" ERR; trap 'echo "$?"' EXIT; compgen "$@"; exit "$?")
 
   compgen_exit_index="$((${#compreply[@]} - 1))"
 
