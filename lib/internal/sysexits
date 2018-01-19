@@ -14,8 +14,8 @@ declare -r -x -i _GO_EC_SYSERR=_GO_EC_OFFSET+71
 declare -r -x -i _GO_EC_DEPMISS=_GO_EC_OFFSET+72
 declare -r -x -i _GO_EC_CANTCREAT=_GO_EC_OFFSET+73
 declare -r -x -i _GO_EC_IOERR=_GO_EC_OFFSET+74
-declare -r -x -i _GO_EC_
-declare -r -x -i _GO_EC_
+#declare -r -x -i _GO_EC_
+#declare -r -x -i _GO_EC_
 declare -r -x -i _GO_EC_NOPERM=_GO_EC_OFFSET+77
 declare -r -x -i _GO_EC_CONFIG=_GO_EC_OFFSET+78
 declare -r -x -i _GO_EC_MAX=_GO_EC_OFFSET+78
