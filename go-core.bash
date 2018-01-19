@@ -425,12 +425,8 @@ _@go.set_scripts_dir() {
 }
 
 _@go.set_scripts_dir "$@" && rc=0 || rc="$?"
-<<<<<<< Updated upstream
 
-if [[ "$rc" -ne 0 ]]; then
-=======
 if [[ "$rc" -ne "$_GO_EC_OK" ]]; then
->>>>>>> Stashed changes
   exit "$rc"
 elif [[ -z "$COLUMNS" ]]; then
   # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
