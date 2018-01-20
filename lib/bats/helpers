@@ -208,7 +208,7 @@ skip_if_none_present_on_system() {
 test_join() {
   if [[ ! "$2" =~ ^[[:alpha:]_][[:alnum:]_]*$ ]]; then
     printf '"%s" is not a valid variable identifier.\n' "$2" >&2
-    return 1
+    return "$_GO_EC_GENERR"
   fi
 
   local IFS="$1"
@@ -268,7 +268,7 @@ test_break_after_num_iterations() {
     printf 'The argument to %s must be a positive integer at:\n' "$FUNCNAME" >&2
     __tbani_do_exit='true'
   elif [[ -z "$TEST_DEBUG" ]]; then
-    return
+    return "$_GO_EC_OK"
   else
     printf -v "$__tbani_var" -- '%d' "$((${!__tbani_var} + 1))"
     if [[ "${!__tbani_var}" -eq "$__tbani_num_iterations" ]]; then
@@ -287,7 +287,7 @@ test_break_after_num_iterations() {
     for __tbani_caller_var in "${@:2}"; do
       printf -- '%s: %s\n' "$__tbani_caller_var" "${!__tbani_caller_var}" >&2
     done
-    exit 1
+    exit "$_GO_EC_GENERR"
   fi
 }
 export -f test_break_after_num_iterations
@@ -551,7 +551,7 @@ __create_bats_test_script() {
 
   if [[ -z "$script_path" ]]; then
     echo "No test script name or path specified" >&2
-    exit 1
+    exit "$_GO_EC_USAGE"
   elif [[ "$script_dir" == "$script_path" ]]; then
     script_dir=''
   fi
