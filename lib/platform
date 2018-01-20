@@ -3,7 +3,7 @@
 # Sets the `_GO_PLATFORM_*` family of environment variables
 #
 # This module doesn't export any functions, only the `_GO_PLATFORM_*`
-# environment variables if `/etc/os-release` if present, or just
+# environment variables if `/etc/os-release` is present, or just
 # `_GO_PLATFORM_ID` otherwise, which is set to:
 #
 #   - 'macos' if the Bash variable `$OSTYPE` matches 'darwin'
@@ -64,7 +64,7 @@ _@go.platform_ostype() {
 }
 
 _@go.platform() {
-  if [[ -n "$_GO_PLATFORM_ID" ]]; then
+  if [[ -n "${_GO_PLATFORM_ID-}" ]]; then
     return
   elif ! _@go.platform_os_release; then
     _@go.platform_ostype
