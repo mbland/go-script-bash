@@ -8,9 +8,10 @@ setup() {
     'declare prompt="$1"' \
     'declare default="$2"' \
     'declare fail_msg="$3"' \
+    'declare required="$4"' \
     'declare response="initial value"' \
     'declare result' \
-    '@go.prompt_for_input "response" "$prompt" "$default" "$fail_msg"' \
+    '@go.prompt_for_input "response" "$prompt" "$default" "$fail_msg" "$required"' \
     'result="$?"' \
     'printf -- "%s\n" "$response"' \
     'exit "$result"'
@@ -61,4 +62,11 @@ teardown() {
   run "$TEST_GO_SCRIPT" $'What is your quest?\n' '' 'Auuuuuuuugh!' <<<''
   assert_failure 'What is your quest?' \
     'Auuuuuuuugh!'
+}
+
+@test "$SUITE: re-prompts if input is required" {
+  run "$TEST_GO_SCRIPT" $'What is your quest?\n' '' '' 'required' <<< $'\n''None'
+  assert_success 'What is your quest?' \
+    'What is your quest?' \
+    'None'
 }
