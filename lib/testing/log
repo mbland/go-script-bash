@@ -54,7 +54,7 @@ export _GO_LOG_TIMESTAMP_FORMAT=
   local __go_log_level_index=0
   if ! _@go.log_level_index "$label"; then
     printf 'Unknown log level label: %s\n' "$label" >&2
-    exit 1
+    exit "$_GO_EC_NOTFND"
   fi
   printf '%s' "${__GO_LOG_LEVELS_FORMATTED[$__go_log_level_index]}"
   restore_bats_shell_options "$?"
@@ -174,7 +174,7 @@ __@go.assert_log_equals() {
 
       if ! shift 2; then
         printf 'ERROR: Wrong number of arguments for log line %d.\n' "$i" >&2
-        return 1
+        return "$_GO_EC_ARGERR"
       fi
     else
       expected+=("$1")
@@ -205,7 +205,7 @@ __@go.parse_log_level_label() {
   fi
 
   if ! _@go.log_level_index "$try_level"; then
-    return 1
+    return "$_GO_EC_NOTFND"
   elif [[ "$level_label" != "$try_level" ]]; then
     __log_level_label="$level_label"
   else

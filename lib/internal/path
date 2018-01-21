@@ -10,7 +10,7 @@ _@go.list_available_commands() {
     echo "ERROR: No commands available in:" >&2
     local IFS=$'\n'
     echo "${@/#/  }" >&2
-    return 1
+    return "$_GO_EC_NOTFND"
   fi
 
   echo "Available commands are:"
@@ -20,7 +20,7 @@ _@go.list_available_commands() {
 
 _@go.set_command_path_and_argv() {
   if [[ "$#" -eq '0' || -z "$*" ]]; then
-    return 1
+    return "$_GO_EC_ARGERR"
   fi
 
   local cmd_args=("$@")
@@ -38,14 +38,14 @@ _@go.set_command_path_and_argv() {
       break
     elif [[ -e "$try_path" ]]; then
       @go.printf "$try_path is not an executable script\n" >&2
-      return 1
+      return "$_GO_EC_CONFIG"
     fi
   done
 
   if [[ -z "$cmd_path" ]]; then
     printf "Unknown command: ${cmd_name}\n\n" >&2
     _@go.list_available_commands "${_GO_SEARCH_PATHS[@]}" >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   local cmd_arg_index=1
@@ -63,7 +63,7 @@ _@go.set_command_path_and_argv() {
       break
     elif [[ ! (-f "$try_path" && -x "$try_path") ]]; then
       @go.printf "$try_path is not an executable script\n" >&2
-      return 1
+      return "$_GO_EC_CONFIG"
     fi
 
     __go_cmd_name+=("$arg")

@@ -90,14 +90,15 @@ _@go.usage() {
 
 _@go.help_message_for_command() {
   if _@go.source_builtin 'aliases' --help "$1"; then
-    return
+    return "$_GO_EC_OK"
   fi
 
   local __go_cmd_path
   local __go_argv
 
-  if ! _@go.set_command_path_and_argv "$@"; then
-    return 1
+  _@go.set_command_path_and_argv "$@" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
+    return "$ec"
   fi
 
   local cmd_name="${__go_cmd_path//.d\// }"
@@ -111,7 +112,7 @@ _@go.help_message_for_command() {
     # _shouldn't_ ever happen.
     @go.printf "ERROR: failed to parse description from %s\n" \
       "$__go_cmd_path" >&2
-    return 1
+    return "$_GO_EC_BADFRMT"
   fi
 
   local filter_pattern='# [Hh]elp [Ff]ilter['$'\n\r'']'
@@ -134,7 +135,7 @@ _@go.help() {
     shift
     . "$_GO_CORE_DIR/lib/internal/complete"
     _@go.complete_command_path "$@"
-    return
+    return "$_GO_EC_OK"
   fi
 
   if [[ "$#" -eq '0' ]]; then

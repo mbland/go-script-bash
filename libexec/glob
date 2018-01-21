@@ -52,7 +52,7 @@ _@go.glob_impl() {
   # directory (preferring the file if they share the same name).
   if [[ -f "$pattern$__go_glob_suffix" ]]; then
     __go_glob_matches+=("$pattern$__go_glob_suffix")
-    return
+    return "$_GO_EC_OK"
   elif [[ -d "$pattern" ]]; then
     pattern="${pattern%/}/*"
   fi
@@ -63,7 +63,7 @@ _@go.glob_impl() {
   _@go.glob_impl_helper "$pattern"
 
   if [[ "${#__go_glob_impl_matches[@]}" -eq '0' ]]; then
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
   __go_glob_matches+=("${__go_glob_impl_matches[@]}")
 }
@@ -119,7 +119,7 @@ _@go.glob_tab_completion_parse_argv() {
 
       if [[ "$word_index" -eq "$((i+1))" ]]; then
         # No completion for the GLOBIGNORE spec.
-        return 1
+        return "$_GO_EC_SIGN1"
       elif [[ "${__go_glob_ignore_spec:0:1}" =~ $shell_quote ]]; then
         # The shell won't expand arguments or remove quotes during completion.
         local spec_len="${#__go_glob_ignore_spec}"
@@ -130,17 +130,17 @@ _@go.glob_tab_completion_parse_argv() {
 
     if [[ "$word_index" -lt "$i" ]]; then
       __go_glob_complete_flags_only='true'
-      return
+      return "$_GO_EC_OK"
     elif [[ -d "$arg" ]]; then
       if [[ "$word_index" -eq "$((i+1))" ]]; then
         # No completion for the file suffix.
-        return 1
+        return "$_GO_EC_SIGN1"
       elif [[ "$word_index" -ne "$i" ]]; then
         # Don't set rootdir if rootdir is the completion target argument.
         __go_glob_rootdir="${arg%/}"
         __go_glob_suffix="${args[$((i+1))]}"
       fi
-      return
+      return "$_GO_EC_OK"
     fi
   done
 }
@@ -178,15 +178,15 @@ _@go.glob_tab_completion() {
   local __go_glob_complete_flags_only
 
   if ! _@go.glob_tab_completion_parse_argv "$@"; then
-    return 1
+    return "$_GO_EC_SIGN1"
   elif [[ "$__go_glob_complete_flags_only" == 'true' ]]; then
     echo "${__go_glob_flags[@]}"
-    return
+    return "$_GO_EC_OK"
   elif [[ -z "$__go_glob_rootdir" ]]; then
     echo "${__go_glob_flags[@]}"
     . "$_GO_USE_MODULES" 'complete'
     @go.compgen -d -- "$__go_glob_complete_word"
-    return
+    return "$_GO_EC_OK"
   fi
 
   local __go_glob_matches=()
@@ -195,7 +195,7 @@ _@go.glob_tab_completion() {
   _@go.glob_trim_matches
 
   if [[ "${#__go_glob_matches[@]}" -eq '0' ]]; then
-    return 1
+    return "$_GO_EC_SIGN1"
   elif [[ "${#__go_glob_matches[@]}" -eq '1' ]]; then
     echo "${__go_glob_matches[0]}"
   else
@@ -209,10 +209,10 @@ _@go.glob_set_globignore() {
 
   if [[ -z "$rootdir" ]]; then
     echo "ERROR: root dir not set before setting GLOBIGNORE" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   elif [[ ! -d "$rootdir" ]]; then
     echo "ERROR: root dir not valid when setting GLOBIGNORE: $rootdir " >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   fi
 
   if [[ -n "$globignore_spec" ]]; then
@@ -239,7 +239,7 @@ _@go.glob_parse_argv() {
       ;;
     *)
       @go.printf "Unknown flag: $1" >&2
-      return 1
+      return "$_GO_EC_USAGE"
       ;;
     esac
   done
@@ -249,11 +249,11 @@ _@go.glob_parse_argv() {
 
   if [[ -z "$__go_glob_rootdir" ]]; then
     @go.printf "Root directory argument not specified.\n" >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   elif [[ ! -d "$__go_glob_rootdir" ]]; then
     @go.printf "Root directory argument %s is not a directory.\n" \
       "$__go_glob_rootdir" >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   fi
 
   __go_glob_suffix="$1"
@@ -261,11 +261,11 @@ _@go.glob_parse_argv() {
 
   if [[ -z "$__go_glob_suffix" ]]; then
     @go.printf "File suffix argument not specified.\n" >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   fi
 
   if ! _@go.glob_set_globignore "$globignore" "$__go_glob_rootdir"; then
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
   __go_glob_patterns=("${@:-*}")
 }
@@ -275,7 +275,7 @@ _@go.glob() {
   if [[ "$1" == '--complete' ]]; then
     shift
     _@go.glob_tab_completion "$@"
-    return
+    return "$_GO_EC_OK"
   fi
 
   local __go_glob_trim
@@ -284,7 +284,7 @@ _@go.glob() {
   local __go_glob_patterns
 
   if ! _@go.glob_parse_argv "$@"; then
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
 
   local pattern
@@ -294,7 +294,7 @@ _@go.glob() {
     if ! _@go.glob_impl "$__go_glob_rootdir/$pattern"; then
       @go.printf "\"$pattern\" does not match any %s files in %s.\n" \
         "$__go_glob_suffix" "$__go_glob_rootdir" >&2
-      return 1
+      return "$_GO_EC_NOTFND"
     fi
   done
 

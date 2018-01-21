@@ -60,7 +60,7 @@
 
   if [[ -z "${!1}" && -n "$4" ]]; then
     @go.printf '%s\n' "$4" >&2
-    return 1
+    return "$_GO_EC_NOINPUT"
   fi
 }
 
@@ -89,14 +89,15 @@
   fi
   @go.validate_identifier_or_die 'Input prompt response variable name' "$1"
 
-  if ! @go.prompt_for_input "$@"; then
-    return 1
+  @go.prompt_for_input "$@" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]]; then
+    return "$ec"
   elif [[ "$or_die" == 'true' ]]; then
     @go.validate_input_or_die "$description" "${!1}"
   elif ! @go.validate_input "${!1}"; then
     @go.printf '"%s" is an invalid response, as it contains %s.\n' \
       "${!1}" 'unescaped shell metacharacters or control operators' >&2
-    return 1
+    return "$_GO_EC_BADFRMT"
   fi
 }
 
@@ -127,7 +128,7 @@
     @go.printf 'Invalid `default` parameter "%s" for %s at:\n' \
       "$default" "$FUNCNAME" >&2
     @go.print_stack_trace '1' >&2
-    exit 1
+    exit "$_GO_EC_BADFRMT"
     ;;
   esac
 
@@ -135,9 +136,9 @@
     @go.read_prompt_response 'response' "$default"
 
     if [[ "$response" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-      return 0
+      return "$_GO_EC_OK"
     elif [[ "$response" =~ ^[Nn]([Oo])?$ ]]; then
-      return 1
+      return "$_GO_EC_SIGN1"
     else
       if [[ -n "$response" ]]; then
         @go.printf '\n"%s" is an invalid response.\n' "$response" >&2

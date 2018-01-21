@@ -26,7 +26,7 @@ _@go.env() {
     if [[ "$word_index" -eq '0' ]]; then
       echo '-'
     fi
-    return
+    return "$_GO_EC_OK"
   fi
 
   local go_func="$1"
@@ -39,7 +39,7 @@ _@go.env() {
     @go.printf "%s%s\n" \
       "Check $_GO_CORE_URL/tree/master/lib/env to see if an implementation " \
       "has been added, or feel free to send a pull request to add it." >&2
-    return 1
+    return "$_GO_EC_GENERR"
   fi
 
   local spaces_error=('ERROR: %s must not contain spaces in order'
@@ -47,7 +47,7 @@ _@go.env() {
 
   if _@go.has_spaces "$default_name"; then
     @go.printf "${spaces_error[*]}" "the \"$default_name\" script" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   fi
 
   if [[ -z "$go_func" ]]; then
@@ -67,7 +67,7 @@ _@go.env() {
       @go.printf 'ERROR: %s must contain a line of the form "%s" %s%s\n' \
         "$shell_impl" "$eval_pattern" "illustrating the command used to " \
         "evaluate the generated shell commands." >&2
-      return 1
+      return "$_GO_EC_BADFRMT"
     fi
 
     read -r -d '' help_msg <<END_OF_HELP
@@ -77,14 +77,14 @@ _@go.env() {
 ${eval_cmd//%s/$0}
 END_OF_HELP
     @go.printf "$help_msg\n"
-    return
+    return "$_GO_EC_OK"
   elif [[ "$go_func" == '-' ]]; then
     go_func="$default_name"
   fi
 
   if _@go.has_spaces "$go_func"; then
     @go.printf "${spaces_error[*]}" "\"$go_func\"" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   fi
 
   read -r -d '' env_script < "$shell_impl"

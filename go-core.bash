@@ -59,7 +59,7 @@ cd "${0%/*}" || exit "$_GO_EC_GENERR"
 declare -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
-  cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit 1
+  cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit "$_GO_EC_GENERR"
 else
   cd "${BASH_SOURCE[0]%/*}" || exit "$_GO_EC_GENERR"
 fi

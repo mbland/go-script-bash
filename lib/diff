@@ -61,9 +61,9 @@ export _GO_DIFF_EDITOR="${_GO_DIFF_EDITOR:-vimdiff}"
       "$_GO_DIFF_EDITOR" "$lhs" "$rhs"
     fi
   else
-    return '0'
+    return "$_GO_EC_OK"
   fi
-  return '1'
+  return "$_GO_EC_SIGN1"
 }
 
 # Log differences between two directory structures
