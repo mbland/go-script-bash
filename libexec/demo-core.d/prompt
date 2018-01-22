@@ -18,7 +18,7 @@ _@go.prompt_demo() {
   # No default value; returns error on no input.
   if ! @go.prompt_for_input 'name' $'What is your name?\n' '' \
     'Run away, Sir or Madam Not Appearing in this Film! Run away!'; then
-    return 1
+    return "$_GO_EC_NOINPUT"
   fi
   @go.printf 'Nice to meet you, %s!\n' "$name"
 
@@ -28,7 +28,7 @@ _@go.prompt_demo() {
     @go.prompt_for_input 'quest' $'What is your quest?\n' "$quest"
   elif ! @go.prompt_for_yes_or_no "Might I suggest: $quest" 'yes'; then
     @go.printf 'OK, no quest. Suit yourself!\n'
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
   @go.printf 'Your quest is: %s\n' "$quest"
 }

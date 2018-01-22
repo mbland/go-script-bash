@@ -26,7 +26,7 @@ _@go.fullpath() {
   if [[ "$1" == '--complete' ]]; then
     shift
     _@go.fullpath_tab_completion "$@"
-    return
+    return "$_GO_EC_OK"
   fi
 
   local existing_only
