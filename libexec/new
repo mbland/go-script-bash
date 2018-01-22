@@ -60,7 +60,7 @@ _@go.new_tab_completions() {
       . "$_GO_CORE_DIR/lib/internal/complete"
       _@go.complete_command_path "$word_index" "$@"
     fi
-    return "$_GO_EC_OK"
+    return
     ;;
   --internal)
     if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_SCRIPTS_DIR/lib"; then
@@ -271,7 +271,7 @@ _@go.new() {
   --complete)
     # Tab completions
     _@go.new_tab_completions "$@"
-    return "$_GO_EC_OK"
+    return
     ;;
   --command)
     _@go.new_command_scripts "$@"

@@ -340,7 +340,6 @@ _@go.set_source_files_for_copy_files_safely() {
 
   if [[ "${#__go_source_file_errors[@]}" -gt 0 ]]; then
     return "$_GO_EC_GENERR"
-  else
-    return "$_GO_EC_OK"
   fi
+  return "$_GO_EC_OK"
 }

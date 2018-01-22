@@ -85,42 +85,33 @@ _@go.complete_args() {
       printf -- '--help \n'
       ;;
     *)
-      @go.compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name" && ec=0 || ec="$?"
+      @go.compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name"
       ;;
     esac
-    if [[ "${ec-0}" -ne 0 ]]; then
-      return "$ec"
-    fi
-    return "$_GO_EC_OK"
+    return
   fi
 
   ec="unset"
   case "$cmd_name" in
   cd|pushd)
-    @go.compgen -d -- "$word" && ec=0 || ec="$?"
+    @go.compgen -d -- "$word"
+    return
     ;;
   edit|run)
-    @go.compgen -f -- "$word" && ec=0 || ec="$?"
+    @go.compgen -f -- "$word"
+    return
     ;;
   -h|-help|--help)
     cmd_name='help'
     ;;
   -*|unenv)
-    ec=1
+    return "$_GO_EC_GENERR"
     ;;
   esac
-  if [[ "$ec" == '0' ]]; then
-    return "$_GO_EC_OK"
-  elif [[ "$ec" != "unset" ]]; then
-    return "$ec"
-  fi
 
   if _@go.source_builtin 'aliases' --exists "$cmd_name"; then
     @go.compgen -f -- "$word" && ec=0 || ec="$?"
-    if [[ "$ec" -ne 0 ]]; then
-      return "$ec"
-    fi
-    return "$_GO_EC_OK"
+    return
   fi
 
   unset 'args[0]'

@@ -312,11 +312,11 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
       return "$_GO_EC_CONFIG"
     fi
     "$EDITOR" "$@"
-    return "$_GO_EC_OK"
+    return
     ;;
   run)
     "$@"
-    return "$_GO_EC_OK"
+    return
     ;;
   cd|pushd|unenv)
     @go.printf "$cmd is only available after using \"$_GO_CMD env\" %s\n" \
@@ -327,7 +327,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 
   if _@go.source_builtin 'aliases' --exists "$cmd"; then
     "$cmd" "$@"
-    return "$_GO_EC_OK"
+    return
   fi
 
   . "$_GO_CORE_DIR/lib/internal/path"
@@ -424,10 +424,10 @@ _@go.set_scripts_dir() {
   return "$_GO_EC_OK"
 }
 
-_@go.set_scripts_dir "$@" && rc=0 || rc="$?"
+_@go.set_scripts_dir "$@" && ec=0 || ec="$?"
 
-if [[ "$rc" -ne "$_GO_EC_OK" ]]; then
-  exit "$rc"
+if [[ "$ec" -ne "$_GO_EC_OK" ]]; then
+  exit "$ec"
 elif [[ -z "$COLUMNS" ]]; then
   # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
   if command -v tput >/dev/null && tput cols >/dev/null 2>&1; then

@@ -57,7 +57,7 @@ _@go.get_git_repo() {
       . "$_GO_USE_MODULES" 'complete'
       @go.compgen -f -- "$3"
     fi
-    return "$_GO_EC_OK"
+    return
   fi
 
   if [[ "$#" -ne '3' ]]; then

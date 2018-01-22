@@ -270,7 +270,7 @@ _@go.modules_tab_completion_plugins() {
   if [[ "$glob" =~ / ]]; then
     plugin="${glob%/*}"
     _@go.modules_find_all_in_dir "$1/$plugin" "${glob#*/}*"
-    return "$_GO_EC_OK"
+    return
   fi
 
   # Otherwise collect all plugin modules and the names of the plugins to

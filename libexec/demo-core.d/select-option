@@ -35,7 +35,7 @@ select_option_demo() {
     if ! @go.prompt_for_yes_or_no 'Would you like to select another option?' \
       'yes'; then
       @go.printf 'Exiting...\n'
-      return "$_GO_EC_OK"
+      return
     fi
   done
 }

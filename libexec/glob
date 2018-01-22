@@ -186,7 +186,7 @@ _@go.glob_tab_completion() {
     echo "${__go_glob_flags[@]}"
     . "$_GO_USE_MODULES" 'complete'
     @go.compgen -d -- "$__go_glob_complete_word"
-    return "$_GO_EC_OK"
+    return
   fi
 
   local __go_glob_matches=()

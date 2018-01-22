@@ -163,7 +163,10 @@ __@go.stack_trace_item() {
 
   case "$state" in
   SUCCESS)
-    printf '  %s:%d %s\n' "$filepath" "$lineno" "$function_name"
+    printf '  %s:%d %s\n' "$filepath" "$lineno" "$function_name" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return $((_GO_EC_GENERR+ec))
+    fi
     return "$_GO_EC_OK"
     ;;
   MAIN|FOUND_FUNCTION)

@@ -177,7 +177,7 @@ _@go.get_file() {
   --complete)
     # Tab completions
     _@go.get_file_tab_completions "${@:2}"
-    return "$_GO_EC_OK"
+    return
     ;;
   -f)
     filename="$2"

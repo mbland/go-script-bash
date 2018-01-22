@@ -15,7 +15,7 @@ _@go.path() {
     shift
     . "$_GO_CORE_DIR/lib/internal/complete"
     _@go.complete_command_path "$@"
-    return "$_GO_EC_OK"
+    return
   fi
 
   if [[ "$#" -ne '0' ]]; then

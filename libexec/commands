@@ -136,7 +136,7 @@ _@go.commands() {
   if [[ "$1" == '--complete' ]]; then
     shift
     _@go.commands_tab_completions "$@"
-    return "$_GO_EC_OK"
+    return
   fi
 
   local __go_commands_action="list"

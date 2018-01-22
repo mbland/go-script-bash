@@ -19,7 +19,10 @@ _@go.format_summary() {
   printf -v summary "  %-${longest_name_len}s  %s\n" "$cmd_name" "$summary"
 
   if [[ "${#summary}" -le "$COLUMNS" ]]; then
-    printf "$summary"
+    printf "$summary" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return $((_GO_EC_GENERR+ec))
+    fi
     return "$_GO_EC_OK"
   fi
 

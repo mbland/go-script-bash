@@ -45,24 +45,24 @@ quotify_expected() {
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     'declare -irx _GO_EC_ARGERR="71"'
-    'declare -irx _GO_EC_BADFRMT="67"'
+    'declare -irx _GO_EC_BADFRMT="69"'
     'declare -irx _GO_EC_BASE="64"'
     'declare -irx _GO_EC_CANTCREAT="73"'
     'declare -irx _GO_EC_CONFIG="78"'
-    'declare -irx _GO_EC_DATAERR="65"'
     'declare -irx _GO_EC_DEPMISS="72"'
-    'declare -irx _GO_EC_GENERR="70"'
+    'declare -irx _GO_EC_EXT1="65"'
+    'declare -irx _GO_EC_EXT2="66"'
+    'declare -irx _GO_EC_GENERR="64"'
     'declare -irx _GO_EC_IOERR="74"'
     'declare -irx _GO_EC_MAX="78"'
-    'declare -irx _GO_EC_NOINPUT="66"'
+    'declare -irx _GO_EC_NOINPUT="68"'
     'declare -irx _GO_EC_NOPERM="77"'
-    'declare -irx _GO_EC_NOTFND="68"'
+    'declare -irx _GO_EC_NOTFND="70"'
     'declare -irx _GO_EC_OFFSET="0"'
     'declare -irx _GO_EC_OK="0"'
     'declare -irx _GO_EC_SIGN1="75"'
     'declare -irx _GO_EC_SIGN2="76"'
-    'declare -irx _GO_EC_UNAVAILABLE="69"'
-    'declare -irx _GO_EC_USAGE="64"'
+    'declare -irx _GO_EC_USAGE="67"'
     'declare -a _GO_IMPORTED_MODULES=()'
     'declare -a _GO_IMPORTED_MODULE_CALLERS=()'
     'declare -a _GO_IMPORTED_MODULE_FILES=()'
@@ -138,24 +138,24 @@ quotify_expected() {
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
     "declare -irx _GO_EC_ARGERR=\"71\""
-    "declare -irx _GO_EC_BADFRMT=\"67\""
+    "declare -irx _GO_EC_BADFRMT=\"69\""
     "declare -irx _GO_EC_BASE=\"64\""
     "declare -irx _GO_EC_CANTCREAT=\"73\""
     "declare -irx _GO_EC_CONFIG=\"78\""
-    "declare -irx _GO_EC_DATAERR=\"65\""
     "declare -irx _GO_EC_DEPMISS=\"72\""
-    "declare -irx _GO_EC_GENERR=\"70\""
+    "declare -irx _GO_EC_EXT1=\"65\""
+    "declare -irx _GO_EC_EXT2=\"66\""
+    "declare -irx _GO_EC_GENERR=\"64\""
     "declare -irx _GO_EC_IOERR=\"74\""
     "declare -irx _GO_EC_MAX=\"78\""
-    "declare -irx _GO_EC_NOINPUT=\"66\""
+    "declare -irx _GO_EC_NOINPUT=\"68\""
     "declare -irx _GO_EC_NOPERM=\"77\""
-    "declare -irx _GO_EC_NOTFND=\"68\""
+    "declare -irx _GO_EC_NOTFND=\"70\""
     "declare -irx _GO_EC_OFFSET=\"0\""
     "declare -irx _GO_EC_OK=\"0\""
     "declare -irx _GO_EC_SIGN1=\"75\""
     "declare -irx _GO_EC_SIGN2=\"76\""
-    "declare -irx _GO_EC_UNAVAILABLE=\"69\""
-    "declare -irx _GO_EC_USAGE=\"64\""
+    "declare -irx _GO_EC_USAGE=\"67\""
     "declare -a _GO_IMPORTED_MODULES=(${expected_modules[*]})"
     "declare -a _GO_IMPORTED_MODULE_CALLERS=(${expected_module_callers[*]})"
     "declare -a _GO_IMPORTED_MODULE_FILES=(${expected_module_files[*]})"
@@ -211,8 +211,9 @@ quotify_expected() {
     "_GO_EC_BASE: $_GO_EC_BASE" \
     "_GO_EC_CANTCREAT: $_GO_EC_CANTCREAT" \
     "_GO_EC_CONFIG: $_GO_EC_CONFIG" \
-    "_GO_EC_DATAERR: $_GO_EC_DATAERR" \
     "_GO_EC_DEPMISS: $_GO_EC_DEPMISS" \
+    "_GO_EC_EXT1: $_GO_EC_EXT1" \
+    "_GO_EC_EXT2: $_GO_EC_EXT2" \
     "_GO_EC_GENERR: $_GO_EC_GENERR" \
     "_GO_EC_IOERR: $_GO_EC_IOERR" \
     "_GO_EC_MAX: $_GO_EC_MAX" \
@@ -223,7 +224,6 @@ quotify_expected() {
     "_GO_EC_OK: $_GO_EC_OK" \
     "_GO_EC_SIGN1: $_GO_EC_SIGN1" \
     "_GO_EC_SIGN2: $_GO_EC_SIGN2" \
-    "_GO_EC_UNAVAILABLE: $_GO_EC_UNAVAILABLE" \
     "_GO_EC_USAGE: $_GO_EC_USAGE" \
     "_GO_KCOV_DIR: $_GO_KCOV_DIR" \
     "_GO_ROOTDIR: $TEST_GO_ROOTDIR" \

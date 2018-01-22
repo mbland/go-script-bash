@@ -120,7 +120,7 @@ fi
   if [[ "$1" == '--complete' ]]; then
     shift
     @go.bats_tab_completion "$@"
-    return "$_GO_EC_OK"
+    return
   fi
   @go.bats_clone
 

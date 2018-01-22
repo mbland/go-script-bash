@@ -19,7 +19,10 @@ _changes() {
     if [[ "$word_index" -gt 1 ]]; then
       return "$_GO_EC_GENERR"
     fi
-    git tag
+    git tag && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return "$ec"
+    fi
     return "$_GO_EC_OK"
   fi
 

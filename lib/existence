@@ -49,9 +49,8 @@
   if [[ ! -r "$2" ]]; then
     @go.printf "%s doesn't exist or isn't readable: %s\n" "$1" "$2" >&2
     return "$_GO_EC_GENERR"
-  else
-    return "$_GO_EC_OK"
   fi
+  return "$_GO_EC_OK"
 }
 
 # Selects the first installed command from a list of possible commands/names.
@@ -69,8 +68,12 @@
   local __go_pick_cmd
   for __go_pick_cmd in "${@:2}"; do
     if command -v "$__go_pick_cmd" >/dev/null; then
-      printf -v "$1" -- '%s' "$__go_pick_cmd"
-      return "$_GO_EC_OK"
+      printf -v "$1" -- '%s' "$__go_pick_cmd" && ec=0 || ec="$?"
+      if [[ "$ec" -ne 0 ]]; then
+        return $((_GO_EC_GENERR+ec))
+      else
+        return "$_GO_EC_OK"
+      fi
     fi
   done
   @go.printf 'None of the following commands were found on the system:\n' >&2

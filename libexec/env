@@ -77,7 +77,7 @@ _@go.env() {
 ${eval_cmd//%s/$0}
 END_OF_HELP
     @go.printf "$help_msg\n"
-    return "$_GO_EC_OK"
+    return
   elif [[ "$go_func" == '-' ]]; then
     go_func="$default_name"
   fi

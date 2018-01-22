@@ -93,7 +93,7 @@ _@go.builtins() {
       return "$_GO_EC_USAGE"
     fi
     _@go.builtin_summaries
-    return "$_GO_EC_OK"
+    return
     ;;
   --exists)
     flag="$1"
