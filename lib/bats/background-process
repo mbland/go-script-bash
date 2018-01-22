@@ -109,11 +109,11 @@ wait_for_background_output() {
   if [[ -z "$BATS_BACKGROUND_RUN_OUTPUT" ]]; then
     printf 'run_in_background not called\n' >&2
     restore_bats_shell_options '1'
-    return "$_GO_EC_OK"
+    return
   elif [[ -z "$pattern" ]]; then
     printf 'pattern not specified\n' >&2
     restore_bats_shell_options '1'
-    return "$_GO_EC_OK"
+    return
   fi
 
   # Since `tail -f` will block forever, even if the background process died, we
@@ -126,7 +126,7 @@ wait_for_background_output() {
       # Kill the sleep so `pkill -f 'tail -f'` will run sooner.
       pkill -P "$kill_input_pid" sleep
       restore_bats_shell_options
-      return "$_GO_EC_OK"
+      return
     fi
   done < <("${input_cmd[@]}")
 

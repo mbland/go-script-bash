@@ -61,7 +61,7 @@ do_setup() {
   for core_test_module in 'builtin-test' 'go-use-modules-test'; do
     if [[ -e "$_GO_CORE_DIR/lib/$core_test_module" ]]; then
       printf 'ERROR: "%s" exists, aborting.\n' "$core_test_module" >&2
-      return "$_GO_EC_GENERR"
+      return 1
     fi
   done
 

@@ -208,7 +208,7 @@ skip_if_none_present_on_system() {
 test_join() {
   if [[ ! "$2" =~ ^[[:alpha:]_][[:alnum:]_]*$ ]]; then
     printf '"%s" is not a valid variable identifier.\n' "$2" >&2
-    return "$_GO_EC_GENERR"
+    return 1
   fi
 
   local IFS="$1"
@@ -268,7 +268,7 @@ test_break_after_num_iterations() {
     printf 'The argument to %s must be a positive integer at:\n' "$FUNCNAME" >&2
     __tbani_do_exit='true'
   elif [[ -z "$TEST_DEBUG" ]]; then
-    return "$_GO_EC_OK"
+    return
   else
     printf -v "$__tbani_var" -- '%d' "$((${!__tbani_var} + 1))"
     if [[ "${!__tbani_var}" -eq "$__tbani_num_iterations" ]]; then
