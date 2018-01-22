@@ -69,6 +69,7 @@ _@go.complete_args() {
   local args=("$@")
   local cmd_name="${args[0]}"
   local word="${args[$word_index]}"
+  local ec=0
 
   . "$_GO_CORE_DIR/lib/internal/complete"
 
@@ -84,31 +85,41 @@ _@go.complete_args() {
       printf -- '--help \n'
       ;;
     *)
-      @go.compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name"
+      @go.compgen -W "$(_@go.complete_top_level_commands)" -- "$cmd_name" && ec=0 || ec="$?"
       ;;
     esac
+    if [[ "${ec-0}" -ne 0 ]]; then
+      return "$ec"
+    fi
     return "$_GO_EC_OK"
   fi
 
+  ec="unset"
   case "$cmd_name" in
   cd|pushd)
-    @go.compgen -d -- "$word"
-    return "$_GO_EC_OK"
+    @go.compgen -d -- "$word" && ec=0 || ec="$?"
     ;;
   edit|run)
-    @go.compgen -f -- "$word"
-    return "$_GO_EC_OK"
+    @go.compgen -f -- "$word" && ec=0 || ec="$?"
     ;;
   -h|-help|--help)
     cmd_name='help'
     ;;
   -*|unenv)
-    return "$_GO_EC_GENERR"
+    ec=1
     ;;
   esac
+  if [[ "$ec" == '0' ]]; then
+    return "$_GO_EC_OK"
+  elif [[ "$ec" != "unset" ]]; then
+    return "$ec"
+  fi
 
   if _@go.source_builtin 'aliases' --exists "$cmd_name"; then
-    @go.compgen -f -- "$word"
+    @go.compgen -f -- "$word" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return "$ec"
+    fi
     return "$_GO_EC_OK"
   fi
 

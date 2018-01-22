@@ -130,7 +130,7 @@ test-go() {
     printf -v 'err_args' ' "%s"' "${@:2}"
     printf 'compgen failed or results were empty:%s\n' "$err_args" >&2
     restore_bats_shell_options '1'
-    return "$_GO_EC_OK"
+    return
   fi
   @go.split $'\n' "$completions" "$1"
   restore_bats_shell_options "$?"

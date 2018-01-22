@@ -305,8 +305,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 @go.log_timestamp() {
   _@go.log_init
 
-  local ec
-  ec=0
+  local ec=0
 
   case "$__GO_LOG_TIMESTAMP_IMPL" in
   printf)
@@ -361,7 +360,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
     _GO_LOG_LEVELS+=("$log_level")
     __GO_LOG_LEVELS_FORMAT_CODES+=("$format_code")
     __GO_LOG_LEVELS_FILE_DESCRIPTORS+=("$level_fd")
-    return "$_GO_EC_OK"
+    return
   fi
 
   _GO_LOG_LEVELS[$__go_log_level_index]="$log_level"

@@ -257,7 +257,7 @@ _@go.modules_list() {
   local __go_modules_listing=()
 
   _@go.modules_produce_listing "$action" && ec=0 || ec="$?"
-  if [[ "$ec" -ne 0]] ; then
+  if [[ "$ec" -ne 0 ]] ; then
     return "$ec"
   fi
   printf '%s\n' "${__go_modules_listing[@]}"
