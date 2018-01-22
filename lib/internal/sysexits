@@ -11,10 +11,11 @@ declare -r -x -i _GO_EC_GENERR=_GO_EC_OFFSET+64
 # A general error that is not covered by the other exit codes.
 
 declare -r -x -i _GO_EC_EXT1=_GO_EC_OFFSET+65
-# ???
-
 declare -r -x -i _GO_EC_EXT2=_GO_EC_OFFSET+66
-# ???
+# These should be used to return error codes from external commands. Eg when
+# calling `compgen` or `printf`. Most of these commands exit with `1` on general
+# error and `2` on usage error. Their return code should be captured in a
+# a variable, eg `ec`, and returned as `return $((_GO_EC_GENERR+ec)).
 
 declare -r -x -i _GO_EC_USAGE=_GO_EC_OFFSET+67
 # The application was called with an invalid option, parameter, command, etc.
