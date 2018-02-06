@@ -70,10 +70,10 @@
   local completion_item_reference
   local i
 
-  for arg in "${!argv_array_reference}"; do
-    for ((i=0; i != num_completions; ++i)); do
+  for arg in "${!argv_array_reference-}"; do
+    for ((i=0; i < num_completions; ++i)); do
       completion_item_reference="$completions_reference[$i]"
-      if [[ "${!completion_item_reference}" == "$arg" ]]; then
+      if [[ "${!completion_item_reference-}" == "$arg" ]]; then
         unset "$completions_reference[$i]"
       fi
     done
