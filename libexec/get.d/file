@@ -173,7 +173,7 @@ _@go.get_file() {
   local filename
   local dl_cmd=()
 
-  case "$1" in
+  case "${1-}" in
   --complete)
     # Tab completions
     _@go.get_file_tab_completions "${@:2}"

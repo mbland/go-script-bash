@@ -64,11 +64,14 @@ _@go.complete_command() {
 }
 
 _@go.complete_args() {
-  local word_index="$1"
-  shift
+  local word_index="${1-0}"
+  if [[ "$#" -gt 0 ]]; then
+    shift
+  fi
   local args=("$@")
-  local cmd_name="${args[0]}"
-  local word="${args[$word_index]}"
+  local cmd_name="${args[0]-}"
+  local word="${args[$word_index]-}"
+  local ec=0
 
   . "$_GO_CORE_DIR/lib/internal/complete"
 

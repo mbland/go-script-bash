@@ -55,7 +55,7 @@ _@go.modules_import_use_modules_functions() {
 _@go.modules_import_use_modules_functions
 
 _@go.modules_help() {
-  local __go_module_name="$1"
+  local __go_module_name="${1-}"
   local __go_module_file
 
   if [[ "$#" -eq '0' ]]; then
