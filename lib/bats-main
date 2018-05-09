@@ -117,22 +117,22 @@ fi
 #   $1:   One of the flags defined above, or the first test glob pattern
 #   ...:  Remaining test glob patterns
 @go.bats_main() {
-  if [[ "$1" == '--complete' ]]; then
+  if [[ "${1:-}" == '--complete' ]]; then
     shift
     @go.bats_tab_completion "$@"
     return
   fi
   @go.bats_clone
 
-  if [[ "$1" == '--coverage' && -z "$__GO_COVERAGE_RUN" ]]; then
+  if [[ "${1:-}" == '--coverage' && -z "$__GO_COVERAGE_RUN" ]]; then
     shift
     export __GO_COVERAGE_RUN='true'
     @go.bats_coverage "$@"
-  elif [[ "$1" == '--edit' ]]; then
+  elif [[ "${1:-}" == '--edit' ]]; then
     shift
     local tests=($(@go 'glob' "${_GO_BATS_GLOB_ARGS[@]}" "$@"))
     @go 'edit' "${tests[@]}"
-  elif [[ "$1" == '--list' ]]; then
+  elif [[ "${1:-}" == '--list' ]]; then
     shift
     @go 'glob' '--trim' "${_GO_BATS_GLOB_ARGS[@]}" "$@"
   elif [[ -z "$__GO_COVERAGE_RUN" && -n "$_GO_COLLECT_BATS_COVERAGE" ]]; then
