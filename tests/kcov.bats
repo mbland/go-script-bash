@@ -16,6 +16,7 @@ RUN_KCOV_ARGV=(
 KCOV_PATH="$KCOV_DIR/src/kcov"
 KCOV_ARGV_START=(
   "$KCOV_PATH"
+  '--bash-dont-parse-binary-dir'
   "--include-pattern=$KCOV_INCLUDE_PATTERNS"
   "--exclude-pattern=$KCOV_EXCLUDE_PATTERNS"
 )

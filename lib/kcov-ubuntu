@@ -20,7 +20,7 @@ __KCOV_DEV_PACKAGES=(
 )
 readonly __KCOV_DEV_PACKAGES
 readonly __KCOV_URL='https://github.com/SimonKagstrom/kcov'
-readonly __KCOV_VERSION='master'
+readonly __KCOV_VERSION='v35'
 
 # Downloads and compiles kcov if necessary, then runs tests under kcov
 #
@@ -63,7 +63,8 @@ run_kcov() {
     return 1
   fi
 
-  local kcov_flags=("--include-pattern=$include_pattern"
+  local kcov_flags=('--bash-dont-parse-binary-dir'
+    "--include-pattern=$include_pattern"
     "--exclude-pattern=$exclude_pattern")
   local send_to_coveralls='false'
 
