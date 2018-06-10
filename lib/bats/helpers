@@ -508,7 +508,8 @@ run_bats_test_suite() {
 # Arguments:
 #   $@:  Passed directly through to `run_bats_test_suite`
 run_bats_test_suite_in_isolation() {
-  create_forwarding_script --path "$_GO_ROOTDIR/${_GO_BATS_PATH%/*}" 'bash'
+  local bats_bin="$(command -v bats)"
+  create_forwarding_script --path "${bats_bin%/*}" 'bash'
   create_forwarding_script --path '' 'rm'
   run_bats_test_suite "$@"
   restore_programs_in_path 'bash' 'rm'
