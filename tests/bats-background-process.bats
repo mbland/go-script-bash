@@ -63,9 +63,9 @@ kill_background_test_script() {
   assert_success
   fail_if output_matches 'Did not skip'
 
-  local skip_msg='ok 1 # skip (pkill, sleep, tail not installed on the system)'
   local test_case_name='skip_if_missing_background_utilities'
-  assert_lines_equal '1..1' "$skip_msg $test_case_name"
+  local skip_msg='skip pkill, sleep, tail not installed on the system'
+  assert_lines_equal '1..1' "ok 1 $test_case_name # $skip_msg"
 }
 
 @test "$SUITE: run{,_test_script}_in_background launches background process" {
