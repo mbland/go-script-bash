@@ -21,17 +21,18 @@ _@go.path() {
   if [[ "$#" -ne '0' ]]; then
     if _@go.source_builtin 'aliases' --exists "$1"; then
       echo '[alias]'
-      return
+      return "$_GO_EC_OK"
     elif _@go.source_builtin 'builtins' --exists "$1"; then
       echo -n '[builtin] '
     fi
 
     local __go_cmd_path
 
-    if _@go.set_command_path_and_argv "$@"; then
+    _@go.set_command_path_and_argv "$@" && ec=0 || ec="$?"
+    if [[ "$ec" -eq 0 ]]; then
       echo "${__go_cmd_path#$_GO_ROOTDIR/}"
     else
-      return 1
+      return "$ec"
     fi
   fi
 }

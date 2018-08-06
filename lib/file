@@ -27,7 +27,7 @@ if [[ ! "$_GO_MAX_FILE_DESCRIPTORS" =~ $__GO_FILE_DESCRIPTOR_PATTERN ||
   printf "_GO_MAX_FILE_DESCRIPTORS is %s, must be a number greater than %d.\n" \
     "\"$_GO_MAX_FILE_DESCRIPTORS\"" "$__GO_START_FD" >&2
   @go.print_stack_trace '2' >&2
-  exit 1
+  exit "$_GO_EC_CONFIG"
 fi
 
 . "$_GO_USE_MODULES" 'strings' 'validation'
@@ -80,7 +80,7 @@ fi
   *)
     echo "Unknown mode: $mode" >&2
     @go.print_stack_trace '1' >&2
-    exit 1
+    exit "$_GO_EC_GENERR"
     ;;
   esac
 
@@ -89,16 +89,20 @@ fi
       if ! eval "exec ${i}${bash_mode}${file_path_or_fd}"; then
         echo "Failed to open fd $i for $file_path_or_fd in mode '$mode' at:" >&2
         @go.print_stack_trace '1' >&2
-        exit 1
+        exit "$_GO_EC_ARGERR"
       fi
-      printf -v "$fd_var_reference" -- '%s' "$i"
-      return
+      printf -v "$fd_var_reference" -- '%s' "$i" && ec=0 || ec="$?"
+      if [[ "$ec" -ne 0 ]]; then
+        return $((_GO_EC_GENERR+ec))
+      else
+        return "$_GO_EC_OK"
+      fi
     fi
   done
   echo "No file descriptors < $_GO_MAX_FILE_DESCRIPTORS available; failed at:" \
     >&2
   @go.print_stack_trace '1' >&2
-  exit 1
+  exit "$_GO_EC_NOTFND"
 }
 
 # Calls `printf` on its arguments for each of a list of file descriptors.
@@ -117,7 +121,7 @@ fi
 #   ...:         Arguments to pass to the `printf` builtin
 @go.fds_printf() {
   local output_fds=()
-  local result=0
+  local result="$_GO_EC_OK"
 
   @go.split ',' "$1" 'output_fds'
   shift
@@ -126,7 +130,7 @@ fi
     if [[ ! "$output_fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
       echo "Invalid file descriptor value \"$output_fd\" for $FUNCNAME at:" >&2
       @go.print_stack_trace '1' >&2
-      exit 1
+      exit "$_GO_EC_NOTFND"
     fi
   done
 
@@ -134,7 +138,7 @@ fi
     if ! printf "$@" >&"$output_fd"; then
       echo "Failed to print to fd $output_fd at:" >&2
       @go.print_stack_trace '1' >&2
-      result=1
+      result="$_GO_EC_IOERR"
     fi
   done
   return "$result"
@@ -151,20 +155,20 @@ fi
   if [[ "$#" -eq 0 ]]; then
     echo "No file descriptors to close specified at:" >&2
     @go.print_stack_trace '1' >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   for fd in "$@"; do
     if [[ ! "$fd" =~ $__GO_FILE_DESCRIPTOR_PATTERN ]]; then
       echo "Bad file descriptor \"$fd\" at:" >&2
       @go.print_stack_trace '1' >&2
-      return 1
+      return "$_GO_EC_BADFRMT"
     elif ! eval "exec $fd>&-"; then
       # Believe it or not, this case seems impossible to trigger given the $fd
       # check above. Keeping it despite not being able to cover it with a test.
       echo "Failed to close file descriptor \"$fd\" at:" >&2
       @go.print_stack_trace '1' >&2
-      return 1
+      return "$_GO_EC_GENERR"
     fi
   done
 }

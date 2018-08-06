@@ -26,11 +26,14 @@
 #           https://mike-bland.com/
 #           https://github.com/mbland
 
+_GO_EC_GENERR="${_GO_EC_GENERR:-70}"
+_GO_EC_DEPMISS="${_GO_EC_DEPMISS:-72}"
+
 if [[ "${BASH_VERSINFO[0]}" -lt '3' ||
     ( "${BASH_VERSINFO[0]}" -eq '3' && "${BASH_VERSINFO[1]}" -lt '2' ) ]]; then
   printf "This module requires bash version 3.2 or greater:\n  %s %s\n" \
     "$BASH" "$BASH_VERSION"
-  exit 1
+  exit "$_GO_EXIT_DEPMISS"
 fi
 
 # The version of the framework
@@ -46,7 +49,7 @@ declare -r -x _GO_CORE_VERSION='v1.7.0'
 declare -r -x _GO_CORE_URL='https://github.com/mbland/go-script-bash'
 
 declare __go_orig_dir="$PWD"
-cd "${0%/*}" || exit 1
+cd "${0%/*}" || exit "$_GO_EC_GENERR"
 
 # Path to the project's root directory
 #
@@ -56,21 +59,23 @@ cd "${0%/*}" || exit 1
 declare -x _GO_ROOTDIR="$PWD"
 
 if [[ "${BASH_SOURCE[0]:0:1}" != '/' ]]; then
-  cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit 1
+  cd "$__go_orig_dir/${BASH_SOURCE[0]%/*}" || exit "$_GO_EC_GENERR"
 else
-  cd "${BASH_SOURCE[0]%/*}" || exit 1
+  cd "${BASH_SOURCE[0]%/*}" || exit "$_GO_EC_GENERR"
 fi
 
 # Path to the ./go script framework's directory
 declare -r -x _GO_CORE_DIR="$PWD"
 
+. "$_GO_CORE_DIR/lib/internal/sysexits"
+
 # Set _GO_STANDALONE if your script is a standalone program.
 #
 # See the "Standalone mode" section of README.md for more information.
 if [[ -z "$_GO_STANDALONE" ]]; then
-  cd "$_GO_ROOTDIR" || exit 1
+  cd "$_GO_ROOTDIR" || exit "$_GO_EC_GENERR"
 else
-  cd "$__go_orig_dir" || exit 1
+  cd "$__go_orig_dir" || exit "$_GO_EC_GENERR"
 fi
 unset __go_orig_dir
 
@@ -193,6 +198,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     done
     printf '%s' "$line"
   done <<<"${result//$'\n'/$'\n\x1f'}"$'\x1f'
+
+  return "$_GO_EC_OK"
 }
 
 # Prints the stack trace at the point of the call.
@@ -205,17 +212,17 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #   skip_callers:  The number of callers to skip over when printing the stack
 @go.print_stack_trace() {
   local skip_callers="$1"
-  local result=0
+  local result="$_GO_EC_OK"
   local i
 
   if [[ -n "$skip_callers" && ! "$skip_callers" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s argument %s not a positive integer; printing full stack\n' \
       "$FUNCNAME" "'$skip_callers'" >&2
-    result=1
+    result="$_GO_EC_GENERR"
   elif [[ "$skip_callers" -ge "${#FUNCNAME[@]}" ]]; then
     printf '%s argument %d exceeds stack size %d; printing full stack\n' \
       "$FUNCNAME" "$skip_callers" "$((${#FUNCNAME[@]} - 1))" >&2
-    result=1
+    result="$_GO_EC_GENERR"
   fi
 
   if [[ "$result" -ne '0' ]]; then
@@ -263,15 +270,15 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #   search_func:  Helper function implementing the search operation
 #
 # Returns:
-#   Zero if `search_func` ever returns zero, nonzero otherwise
+#   _GO_EC_OK if `search_func` ever returns zero, _GO_EC_GENERR otherwise
 @go.search_plugins() {
   local __gsp_plugins_dir="$_GO_SCRIPTS_DIR/plugins"
 
   while true; do
     if "$1" "$__gsp_plugins_dir"; then
-      return
+      return "$_GO_EC_OK"
     elif [[ "$__gsp_plugins_dir" == "$_GO_PLUGINS_DIR" ]]; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
     __gsp_plugins_dir="${__gsp_plugins_dir%/plugins/*}/plugins"
   done
@@ -289,7 +296,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   case "$cmd" in
   '')
     _@go.source_builtin 'help' 1>&2
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   -h|-help|--help)
     cmd='help'
@@ -297,12 +304,12 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   -*)
     @go.printf "Unknown flag: $cmd\n\n"
     _@go.source_builtin 'help' 1>&2
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   edit)
     if [[ -z "$EDITOR" ]]; then
       echo "Cannot edit $@: \$EDITOR not defined."
-      return 1
+      return "$_GO_EC_CONFIG"
     fi
     "$EDITOR" "$@"
     return
@@ -314,7 +321,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   cd|pushd|unenv)
     @go.printf "$cmd is only available after using \"$_GO_CMD env\" %s\n" \
       "to set up your shell environment." >&2
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   esac
 
@@ -329,7 +336,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   local __go_argv
 
   if ! _@go.set_command_path_and_argv "$cmd" "$@"; then
-    return 1
+    return "$_GO_EC_GENERR"
   fi
 
   if [[ "${__go_cmd_path#$_GO_SCRIPTS_DIR}" =~ /plugins/[^/]+/bin/ ]]; then
@@ -366,7 +373,7 @@ _@go.run_command_script() {
     @go.printf \
       "The first line of %s does not contain #!/path/to/interpreter.\n" \
       "$cmd_path" >&2
-    return 1
+    return "$_GO_EC_BADFRMT"
   fi
 
   interpreter="${interpreter%$'\r'}"
@@ -383,7 +390,7 @@ _@go.run_command_script() {
     . "$cmd_path" "$@"
   elif [[ -z "$interpreter" ]]; then
     @go.printf "Could not parse interpreter from first line of $cmd_path.\n" >&2
-    return 1
+    return "$_GO_EC_BADFRMT"
   else
     if [[ -z "$_GO_CMD_NAME" ]]; then
       local origIFS="$IFS"
@@ -401,23 +408,26 @@ _@go.set_scripts_dir() {
 
   if [[ "$#" -ne '1' ]]; then
     echo "ERROR: there should be exactly one command script dir specified" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   elif [[ ! -e "$scripts_dir" ]]; then
     echo "ERROR: command script directory $scripts_dir does not exist" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   elif [[ ! -d "$scripts_dir" ]]; then
     echo "ERROR: $scripts_dir is not a directory" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   elif [[ ! -r "$scripts_dir" || ! -x "$scripts_dir" ]]; then
     echo "ERROR: you do not have permission to access the $scripts_dir" \
       "directory" >&2
-    return 1
+    return "$_GO_EC_NOPERM"
   fi
   _GO_SCRIPTS_DIR="$scripts_dir"
+  return "$_GO_EC_OK"
 }
 
-if ! _@go.set_scripts_dir "$@"; then
-  exit 1
+_@go.set_scripts_dir "$@" && ec=0 || ec="$?"
+
+if [[ "$ec" -ne "$_GO_EC_OK" ]]; then
+  exit "$ec"
 elif [[ -z "$COLUMNS" ]]; then
   # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
   if command -v tput >/dev/null && tput cols >/dev/null 2>&1; then

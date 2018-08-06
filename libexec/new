@@ -48,7 +48,7 @@ _@go.new_tab_completions() {
 
   if [[ "$word_index" -eq '0' ]]; then
     printf -- '--command --internal --public --test --type'
-    return
+    return "$_GO_EC_OK"
   fi
   ((--word_index))
 
@@ -64,27 +64,27 @@ _@go.new_tab_completions() {
     ;;
   --internal)
     if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_SCRIPTS_DIR/lib"; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
     ;;
   --public)
     if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_ROOTDIR/lib"; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
     ;;
   --test)
     if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_ROOTDIR/$_GO_TEST_DIR"; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
     ;;
   --type)
     if [[ "$word_index" -ne '1' ]]; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
     shift
     ;;
   *)
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   esac
   @go.compgen -f -- "$1"
@@ -114,25 +114,25 @@ _@go.new_file() {
 
   if [[ -z "$file_path" ]]; then
     @go.printf 'No %sfile path specified.\n' "$file_type" >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   elif [[ ! "$permissions" =~ $permissions_pattern ]]; then
     @go.printf 'Invalid permissions specification "%s" for %sfile: %s\n' \
       "$permissions" "$file_type" "$relpath" >&2
-      return 1
+      return "$_GO_EC_ARGERR"
   elif [[ ! -d "$parent_dir" ]] && ! mkdir -p "$parent_dir"; then
     @go.printf "Couldn't create parent directory for new %sfile: %s\n" \
       "$file_type" "$relpath" >&2
-    return 1
+    return "$_GO_EC_CANTCREAT"
   elif [[ -f "$file_path" ]]; then
     @go.printf '%sfile already exists: %s\n' "$file_type" "$relpath" >&2
-    return 1
+    return "$_GO_EC_GENERR"
   elif ! printf -- '%s\n' "$@" >"$file_path"; then
     @go.printf 'Failed to create new %sfile: %s\n' "$file_type" "$relpath" >&2
-    return 1
+    return "$_GO_EC_CANTCREAT"
   elif ! chmod "$permissions" "$file_path"; then
     @go.printf 'Failed to set permissions for new %sfile to "%s": %s\n' \
       "$file_type" "$permissions" "$relpath" >&2
-    return 1
+    return "$_GO_EC_NOPERM"
   fi
 }
 
@@ -168,7 +168,7 @@ _@go.new_command_scripts() {
 
   if [[ "$#" -eq '0' ]]; then
     printf 'No command script name specified.\n' >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   fi
 
   for cmd in "$@"; do
@@ -182,8 +182,9 @@ _@go.new_command_scripts() {
     fi
     new_scripts+=("$cmd_path")
 
-    if ! _@go.new_command_script "$cmd" "$cmd_path" "$is_last_cmd"; then
-      return 1
+    _@go.new_command_script "$cmd" "$cmd_path" "$is_last_cmd" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]] ; then
+      return "$ec"
     fi
   done
 
@@ -213,8 +214,9 @@ _@go.new_module() {
     ;;
   esac
 
-  if ! _@go.new_file "$module_type" "$module_path" '644' "${impl[@]}"; then
-    return 1
+  _@go.new_file "$module_type" "$module_path" '644' "${impl[@]}" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
+    return "$ec"
   elif command -v "$EDITOR" >/dev/null; then
     "$EDITOR" "$module_path"
   fi
@@ -248,8 +250,9 @@ _@go.new_test() {
     '@test "$SUITE: short description of your first test case" {'
     '}')
 
-  if ! _@go.new_file "Bats test" "$test_path" '644' "${impl[@]}"; then
-    return 1
+  _@go.new_file "Bats test" "$test_path" '644' "${impl[@]}" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
+    return "$ec"
   elif command -v "$EDITOR" >/dev/null; then
     "$EDITOR" "$test_path"
   fi
@@ -260,7 +263,7 @@ _@go.new() {
 
   if [[ "$#" -eq '0' ]]; then
     @go 'help' "${_GO_CMD_NAME[@]}" >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
   shift
 
@@ -283,8 +286,9 @@ _@go.new() {
     _@go.new_test "$_GO_ROOTDIR/$_GO_TEST_DIR/$1"
     ;;
   --type)
-    if ! _@go.new_file "$1" "$2" "${@:3}"; then
-      return 1
+    _@go.new_file "$1" "$2" "${@:3}" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return "$ec"
     elif [[ "$#" -le '3' ]] && command -v "$EDITOR" >/dev/null; then
       "$EDITOR" "$2"
     fi
@@ -292,7 +296,7 @@ _@go.new() {
   *)
     printf 'The first argument is "%s", but must be one of:\n  %s\n' \
       "$mode" '--command --internal --public --test --type' >&2
-    return 1
+    return "$_GO_EC_USAGE"
   esac
 }
 

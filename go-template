@@ -57,7 +57,7 @@ download_go_script_bash_tarball() {
 
   if [[ "$protocol" == "$url" ]]; then
     printf 'GO_SCRIPT_BASH_DOWNLOAD_URL has no protocol: %s\n' "$url" >&2
-    return 1
+    return "$_GO_EC_CONFIG"
   elif [[ "$(git --version)" =~ windows && "$protocol" == 'file' ]]; then
     url="file://$(cygpath -m "${url#file://}")"
   fi
@@ -74,28 +74,28 @@ download_go_script_bash_tarball() {
     download_cmd=(wget -O - "$url")
   else
     printf "Failed to find cURL, wget, or fetch\n" >&2
-    return 1
+    return "$_GO_EC_DEPMISS"
   fi
 
   if ! command -v tar >/dev/null; then
     printf "Failed to find tar\n" >&2
-    return 1
+    return "$_GO_EC_DEPMISS"
   fi
   printf "Downloading framework from '%s'...\n" "$url"
 
   if ! "${download_cmd[@]}" | tar -xzf - ||
     [[ "${PIPESTATUS[0]}" -ne '0' ]]; then
     printf "Failed to download from '%s'.\n" "$url" >&2
-    return 1
+    return "$_GO_EC_NOTFND"
   elif [[ ! -d "$core_dir_parent" ]] && ! mkdir -p "$core_dir_parent" ; then
     printf "Failed to create scripts dir '%s'\n" "$core_dir_parent" >&2
     rm -rf "$unpacked_dir"
-    return 1
+    return "$_GO_EC_CANTCREAT"
   elif ! mv "$unpacked_dir" "$GO_SCRIPT_BASH_CORE_DIR"; then
     printf "Failed to install downloaded directory in '%s'\n" \
       "$GO_SCRIPT_BASH_CORE_DIR" >&2
     rm -rf "$unpacked_dir"
-    return 1
+    return "$_GO_EC_CANTCREAT"
   fi
   printf "Download of '%s' successful.\n\n" "$url"
 }
@@ -106,7 +106,7 @@ git_clone_go_script_bash() {
       -b "$GO_SCRIPT_BASH_VERSION" "$GO_SCRIPT_BASH_REPO_URL" \
       "$GO_SCRIPT_BASH_CORE_DIR"; then
     printf "Failed to clone '%s'; aborting.\n" "$GO_SCRIPT_BASH_REPO_URL" >&2
-    return 1
+    return "$_GO_EC_GENERR"
   fi
   printf "Clone of '%s' successful.\n\n" "$GO_SCRIPT_BASH_REPO_URL"
 }
@@ -115,7 +115,7 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
   if ! download_go_script_bash_tarball; then
     printf "Using git clone as fallback\n"
     if ! git_clone_go_script_bash; then
-      exit 1
+      exit "$_GO_EC_GENERR"
     fi
   fi
 fi

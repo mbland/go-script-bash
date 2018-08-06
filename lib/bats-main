@@ -180,7 +180,7 @@ fi
   if [[ "$word_index" -eq '0' ]]; then
     echo '--coverage' '--edit' '--list'
     if [[ "${1:0:1}" == '-' ]]; then
-      return
+      return "$_GO_EC_OK"
     fi
   fi
   @go 'glob' '--complete' "$test_word_index" "${_GO_BATS_GLOB_ARGS[@]}" "$@"

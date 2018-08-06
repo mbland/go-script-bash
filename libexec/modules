@@ -63,10 +63,10 @@ _@go.modules_help() {
     __go_module_file="$_GO_USE_MODULES"
   elif [[ "$#" -ne '1' ]]; then
     @go.printf "Please specify only one module name.\n" >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   elif ! _@go.find_module; then
     @go.printf "Unknown module: $1\n" >&2
-    return 1
+    return "$_GO_EC_NOTFND"
   fi
 
   local __go_cmd_desc
@@ -76,7 +76,7 @@ _@go.modules_help() {
   if ! _@go.command_description "$__go_module_file"; then
     @go.printf "ERROR: failed to parse description from %s\n" \
       "$__go_module_file" >&2
-    return 1
+    return "$_GO_EC_BADFRMT"
   fi
   @go.printf "$__go_module_name - $__go_cmd_desc\n"
 }
@@ -102,7 +102,7 @@ _@go.modules_summaries() {
   for module_path in "${__go_modules[@]}"; do
     if ! _@go.command_summary "$module_path"; then
       @go.printf "ERROR: failed to parse summary from %s\n" "$module_path" >&2
-      return 1
+      return "$_GO_EC_BADFRMT"
     fi
     __go_modules_summaries+=("$__go_cmd_desc")
   done
@@ -134,7 +134,7 @@ _@go.modules_produce_listing() {
 
   if [[ -z "$action" ]]; then
     __go_modules_listing=("${modules[@]}")
-    return
+    return "$_GO_EC_OK"
   fi
 
   . "$_GO_USE_MODULES" 'format'
@@ -148,7 +148,7 @@ _@go.modules_produce_listing() {
   summaries)
     local __go_modules_summaries=()
     if ! _@go.modules_summaries; then
-      return 1
+      return "$_GO_EC_BADFRMT"
     fi
     @go.zip_items modules __go_modules_summaries '  ' modules
     ;;
@@ -156,7 +156,7 @@ _@go.modules_produce_listing() {
     # Should only happen if _@go.modules is updated and this case statement
     # isn't.
     @go.printf 'ERROR: Unknown action: %s\n' "$action" >&2
-    return 1
+    return "$_GO_EC_USAGE"
   esac
   __go_modules_listing=("${modules[@]}")
 }
@@ -241,22 +241,24 @@ _@go.modules_list() {
     if [[ "$__go_module_name" == '*' ]]; then
       if [[ "${#module_specs[@]}" -ne 1 ]]; then
         @go.printf "Do not specify other patterns when '*' is present.\n" >&2
-        return 1
+        return "$_GO_EC_USAGE"
       fi
       _@go.modules_search
     elif [[ "$__go_module_name" =~ \*|/$ ]]; then
       _@go.modules_search "$__go_module_name"
     elif ! _@go.find_module; then
       @go.printf "Unknown module: $__go_module_name\n" >&2
-      return 1
+      return "$_GO_EC_NOTFND"
     else
       __go_modules+=("$__go_module_file")
     fi
   done
 
   local __go_modules_listing=()
-  if ! _@go.modules_produce_listing "$action"; then
-    return 1
+
+  _@go.modules_produce_listing "$action" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
+    return "$ec"
   fi
   printf '%s\n' "${__go_modules_listing[@]}"
 }
@@ -310,9 +312,9 @@ _@go.modules_tab_completion() {
 
   if [[ ( "$word_index" -ne '0' && "${first:0:1}" == '-' ) &&
         ( ! "$first" =~ $flags_pattern || "$first" == '--imported' ) ]]; then
-    return 1
+    return "$_GO_EC_SIGN1"
   elif [[ "$first" =~ ^(-h|-help|--help)$ && "$word_index" -gt '1' ]]; then
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
 
   if [[ "$#" -eq '0' || "$word_index" -eq '0' ]]; then
@@ -343,9 +345,11 @@ _@go.modules_tab_completion() {
   fi
 
   local __go_modules_listing=()
-  if ! _@go.modules_produce_listing; then
+
+  _@go.modules_produce_listing && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
     # Shouldn't happen, since modules_produce_listing isn't parsing summaries.
-    return 1
+    return "$ec"
   fi
   completions+=("${__go_modules_listing[@]}")
   @go.complete_remove_completions_already_present \
@@ -356,7 +360,7 @@ _@go.modules_tab_completion() {
 _@go.modules_list_imported() {
   if [[ "$#" -ne 0 ]]; then
     @go.printf 'The --imported option takes no other arguments.\n' >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   # Collect imported module info before _GO_USE_MODULES imports possibly more.
@@ -399,7 +403,7 @@ _@go.modules() {
     ;;
   -*)
     @go.printf "Unknown option: $action\n" >&2
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   *)
     # Here we treat $action as a potential glob pattern.

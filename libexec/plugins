@@ -55,7 +55,7 @@ _@go.plugins() {
     # Tab completions
     _@go.source_builtin 'commands' "$@" "$__go_plugins_pathspec"
   else
-    return 1
+    return "$_GO_EC_NOTFND"
   fi
 }
 

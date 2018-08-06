@@ -69,6 +69,7 @@ _@go.complete_args() {
   local args=("$@")
   local cmd_name="${args[0]}"
   local word="${args[$word_index]}"
+  local ec=0
 
   . "$_GO_CORE_DIR/lib/internal/complete"
 
@@ -90,6 +91,7 @@ _@go.complete_args() {
     return
   fi
 
+  ec="unset"
   case "$cmd_name" in
   cd|pushd)
     @go.compgen -d -- "$word"
@@ -103,12 +105,12 @@ _@go.complete_args() {
     cmd_name='help'
     ;;
   -*|unenv)
-    return 1
+    return "$_GO_EC_GENERR"
     ;;
   esac
 
   if _@go.source_builtin 'aliases' --exists "$cmd_name"; then
-    @go.compgen -f -- "$word"
+    @go.compgen -f -- "$word" && ec=0 || ec="$?"
     return
   fi
 

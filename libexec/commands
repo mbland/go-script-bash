@@ -64,7 +64,7 @@ _@go.commands_parse_search_paths() {
   for search_path in "${__go_commands_search_paths[@]}"; do
     if [[ ! -d "$search_path" ]]; then
       @go.printf "Command search path %s does not exist.\n" "$search_path" >&2
-      return 1
+      return "$_GO_EC_NOTFND"
     fi
   done
 }
@@ -77,7 +77,7 @@ _@go.commands_parse_argv() {
     ;;
   -*)
     echo "Unknown option: $1"
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   esac
 
@@ -86,19 +86,20 @@ _@go.commands_parse_argv() {
   elif [[ "$1" =~ : || -d "$1" ]]; then
     if [[ "$#" -ne 1 ]]; then
       @go.printf 'Cannot specify any arguments after search paths.\n' >&2
-      return 1
+      return "$_GO_EC_USAGE"
     elif ! _@go.commands_parse_search_paths "$1"; then
-      return 1
+      return "$_GO_EC_NOTFND"
     fi
   else
     if _@go.source_builtin 'aliases' --exists "$1"; then
       @go.printf '%s is a shell alias.\n' "$1" >&2
-      return 1
+      return "$_GO_EC_GENERR"
     fi
 
     local __go_cmd_path
-    if ! _@go.set_command_path_and_argv "$@"; then
-      return 1
+    _@go.set_command_path_and_argv "$@" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return "$?"
     fi
     __go_commands_search_paths=("${__go_cmd_path}.d")
   fi
@@ -111,7 +112,7 @@ _@go.commands_tab_completions() {
   if [[ "$word_index" -eq '0' ]]; then
     echo '--paths' '--summaries'
     if [[ "${1:0:1}" == '-' || "$#" -gt 1 ]]; then
-      return
+      return "$_GO_EC_OK"
     fi
   fi
 
@@ -119,13 +120,13 @@ _@go.commands_tab_completions() {
     shift
     ((--word_index))
   elif [[ "$1" =~ : || -d "$1" ]]; then
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
 
   local args=("$@")
   local last_arg_index="$((${#args[@]} - 1))"
   if [[ "$word_index" -lt "$last_arg_index" ]]; then
-    return 1
+    return "$_GO_EC_SIGN1"
   fi
   _@go.commands "${args[@]:0:$word_index}"
 }
@@ -141,8 +142,9 @@ _@go.commands() {
   local __go_commands_action="list"
   local __go_commands_search_paths=()
 
-  if ! _@go.commands_parse_argv "$@"; then
-    return 1
+  _@go.commands_parse_argv "$@" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
+    return "$ec"
   fi
 
   . "$_GO_CORE_DIR/lib/internal/commands"
@@ -152,7 +154,7 @@ _@go.commands() {
   local __go_longest_name_len
 
   if ! _@go.find_commands "${__go_commands_search_paths[@]}"; then
-    return 1
+    return "$_GO_EC_NOTFND"
   fi
 
   case "$__go_commands_action" in

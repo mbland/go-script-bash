@@ -68,7 +68,7 @@ log_demo() {
     if [[ "$2" -eq 0 ]]; then
       echo "-v --verbose"
     fi
-    return
+    return "$_GO_EC_OK"
   fi
 
   . "$_GO_USE_MODULES" 'log'

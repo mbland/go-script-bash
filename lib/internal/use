@@ -87,7 +87,7 @@ _@go.find_module() {
   if [[ -n "$_GO_INJECT_MODULE_PATH" ]]; then
     __go_module_file="$_GO_INJECT_MODULE_PATH/$__go_module_name"
     if [[ -f "$__go_module_file" ]]; then
-      return
+      return "$_GO_EC_OK"
     fi
   fi
   __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
@@ -135,7 +135,7 @@ _@go.use_modules() {
     if ! _@go.find_module; then
       @go.printf 'ERROR: Module %s not found at:\n' "$__go_module_name" >&2
       @go.print_stack_trace 1 >&2
-      exit 1
+      exit "$_GO_EC_NOTFND"
     fi
 
     # If we found the module in our project, but we're installed as a plugin,
@@ -176,7 +176,7 @@ _@go.use_modules() {
       @go.printf 'ERROR: Failed to import %s module from %s at:\n' \
         "$__go_module_name" "$__go_module_file" >&2
       @go.print_stack_trace 1 >&2
-      exit 1
+      exit "$_GO_EC_IOERR"
     fi
   done
 }

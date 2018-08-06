@@ -17,10 +17,13 @@ _changes() {
     # Tab completions
     local word_index="$2"
     if [[ "$word_index" -gt 1 ]]; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
-    git tag
-    return
+    git tag && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return "$ec"
+    fi
+    return "$_GO_EC_OK"
   fi
 
   local start_ref="$1"
@@ -28,10 +31,10 @@ _changes() {
 
   if [[ -z "$start_ref" ]]; then
     echo "Start ref not specified." >&2
-    return 1
+    return "$_GO_EC_USAGE"
   elif [[ -z "$end_ref" ]]; then
     echo "End ref not specified." >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   git log '--pretty=format:%h %an <%ae>%n        %s%n' \

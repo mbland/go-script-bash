@@ -32,13 +32,13 @@ _@go.get_git_repo_impl() {
   if ! command -v git >/dev/null; then
     @go.printf 'Please install git before running "%s".\n' \
       "${_GO_CMD_NAME[*]}" >&2
-    return 1
+    return "$_GO_EC_DEPMISS"
   elif [[ -e "$clone_dir" ]]; then
     @go.printf '"%s" already exists; not updating.\n' "$clone_dir"
-    return 1
+    return "$_GO_EC_GENERR"
   elif ! "${git_clone[@]}" -b "$git_ref" "$repo_url" "$clone_dir"; then
     @go.printf 'Failed to clone %s.\n' "$repo_msg" >&2
-    return 1
+    return "$_GO_EC_IOERR"
   fi
   @go.printf 'Successfully cloned %s.\n' "$repo_msg"
 }
@@ -62,7 +62,7 @@ _@go.get_git_repo() {
 
   if [[ "$#" -ne '3' ]]; then
     @go help "${_GO_CMD_NAME[@]}" >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   if [[ -e "$repo_url" ]]; then

@@ -36,7 +36,11 @@ readonly __GO_VALID_IDENTIFIER_PATTERN='^[[:alpha:]_][[:alnum:]_]*$'
 # Returns:
 #   0 on success; nonzero on failure
 @go.validate_input() {
-  [[ ! "$1" =~ $__GO_VALIDATE_INPUT_PATTERN ]]
+  if [[ "$1" =~ $__GO_VALIDATE_INPUT_PATTERN ]]; then
+    return "$_GO_EC_BADFRMT"
+  else
+    return "$_GO_EC_OK"
+  fi
 }
 
 # Wraps `@go.validate_input` to print an error and exit on failure
@@ -56,7 +60,7 @@ readonly __GO_VALID_IDENTIFIER_PATTERN='^[[:alpha:]_][[:alnum:]_]*$'
       "$description" "$value" "${FUNCNAME[$((skip_callers - 1))]}" \
       'unescaped shell metacharacters or control operators' >&2
     @go.print_stack_trace "$skip_callers" >&2
-    exit 1
+    exit "$_GO_EC_BADFRMT"
   fi
 }
 
@@ -70,7 +74,11 @@ readonly __GO_VALID_IDENTIFIER_PATTERN='^[[:alpha:]_][[:alnum:]_]*$'
 # Returns:
 #   0 on success; nonzero on failure
 @go.validate_identifier() {
-  [[ "$1" =~ $__GO_VALID_IDENTIFIER_PATTERN ]]
+  if [[ "$1" =~ $__GO_VALID_IDENTIFIER_PATTERN ]]; then
+    return "$_GO_EC_OK"
+  else
+    return "$_GO_EC_BADFRMT"
+  fi
 }
 
 # Wraps `@go.validate_identifier` to print an error and exit on failure
@@ -98,6 +106,6 @@ readonly __GO_VALID_IDENTIFIER_PATTERN='^[[:alpha:]_][[:alnum:]_]*$'
     printf '%s "%s" for %s %s at:\n' \
       "$description" "$value" "$called_func" "$err_msg" >&2
     @go.print_stack_trace "$skip_callers" >&2
-    exit 1
+    exit "$_GO_EC_BADFRMT"
   fi
 }

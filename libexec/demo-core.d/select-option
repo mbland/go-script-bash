@@ -27,7 +27,7 @@ select_option_demo() {
 
     if ! @go.select_option 'selected' "${options[@]}"; then
       @go.printf 'You declined to select an option. Exiting...\n\n'
-      return 1
+      return "$_GO_EC_NOINPUT"
     else
       @go.printf 'You selected: "%s"\n\n' "$selected"
     fi
@@ -35,7 +35,7 @@ select_option_demo() {
     if ! @go.prompt_for_yes_or_no 'Would you like to select another option?' \
       'yes'; then
       @go.printf 'Exiting...\n'
-      return 0
+      return
     fi
   done
 }

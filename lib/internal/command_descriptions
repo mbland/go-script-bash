@@ -19,8 +19,11 @@ _@go.format_summary() {
   printf -v summary "  %-${longest_name_len}s  %s\n" "$cmd_name" "$summary"
 
   if [[ "${#summary}" -le "$COLUMNS" ]]; then
-    printf "$summary"
-    return
+    printf "$summary" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return $((_GO_EC_GENERR+ec))
+    fi
+    return "$_GO_EC_OK"
   fi
 
   # Pad 4 spaces from first format string, plus 2 more to indent wrapped lines.
@@ -30,7 +33,7 @@ _@go.format_summary() {
 
   if [[ "$padding_size" -ge "$((COLUMNS/2))" ]]; then
     printf "$summary"
-    return
+    return "$_GO_EC_OK"
   fi
   printf -v padding "%-${padding_size}s" ''
 
@@ -71,8 +74,9 @@ _@go.command_summary() {
   local __go_cmd_name
   __go_cmd_desc=''
 
-  if ! _@go.check_command_path_and_parse_command_name "$cmd_path"; then
-    return 1
+  _@go.check_command_path_and_parse_command_name "$cmd_path" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]]; then
+    return "$ec"
   fi
 
   local line
@@ -92,7 +96,7 @@ _@go.command_summary() {
 
   if [[ "$?" -ne '0' ]]; then
     echo "ERROR: problem reading $cmd_path" >&2
-    return 1
+    return "$_GO_EC_GENERR"
   elif [[ -z "$__go_cmd_desc" ]]; then
     __go_cmd_desc='No description available'
   fi
@@ -105,8 +109,9 @@ _@go.command_description() {
   local __go_cmd_name
   __go_cmd_desc=''
 
-  if ! _@go.check_command_path_and_parse_command_name "$cmd_path"; then
-    return 1
+  _@go.check_command_path_and_parse_command_name "$cmd_path" && ec=0 || ec="$?"
+  if [[ "$ec" -ne 0 ]] ; then
+    return "$ec"
   fi
 
   local line
@@ -156,7 +161,7 @@ _@go.command_description() {
 
   if [[ "$?" -ne '0' ]]; then
     echo "ERROR: problem reading $cmd_path" >&2
-    return 1
+    return "$_GO_EC_GENERR"
   elif [[ -z "$__go_cmd_desc" ]]; then
     __go_cmd_desc='No description available'
   else
@@ -176,10 +181,10 @@ _@go.check_command_path_and_parse_command_name() {
 
   if [[ -z "$cmd_path" ]]; then
     echo "ERROR: no command script specified" >&2
-    return 1
+    return "$_GO_EC_ARGERR"
   elif [[ ! -e "$cmd_path" ]]; then
     echo "ERROR: command script \"$cmd_path\" does not exist" >&2
-    return 1
+    return "$_GO_EC_NOTFND"
   elif [[ "$cmd_path" =~ $subcommand_pattern ]]; then
     __go_cmd_name="${BASH_REMATCH[1]//.d\// }"
   else

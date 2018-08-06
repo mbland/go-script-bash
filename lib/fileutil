@@ -113,7 +113,7 @@
   local __go_source_file_errors=()
   local src
   local dest
-  local result='0'
+  local result="$_GO_EC_OK"
 
   _@go.parse_copy_files_safely_args "$@"
 
@@ -223,7 +223,7 @@ _@go.find_missing_parent_path() {
   __go_missing_parent="$1"
 
   if [[ ! -d "$1" ]]; then
-    return 1
+    return "$_GO_EC_NOTFND"
   fi
 }
 
@@ -314,7 +314,7 @@ _@go.set_source_files_for_copy_files_safely() {
   if [[ -n "$__go_src_dir" && "$#" -eq '0' ]]; then
     @go.collect_file_paths "$__go_src_dir"
     __go_src_files=("${__go_collected_file_paths[@]#$__go_src_dir/}")
-    return
+    return "$_GO_EC_OK"
   fi
   __go_src_dir="${__go_src_dir:-$PWD}"
   __go_src_files=()
@@ -337,5 +337,9 @@ _@go.set_source_files_for_copy_files_safely() {
       __go_src_files+=("$canonical_src")
     fi
   done
-  return "${#__go_source_file_errors[@]}"
+
+  if [[ "${#__go_source_file_errors[@]}" -gt 0 ]]; then
+    return "$_GO_EC_GENERR"
+  fi
+  return "$_GO_EC_OK"
 }

@@ -145,19 +145,19 @@
 
   for current in "${@:2}"; do
     if [[ -e "$current" ]] && ! "$operation" "$current"; then
-      return 1
+      return "$_GO_EC_GENERR"
     elif [[ -d "$current" ]]; then
       if [[ -n "$do_bfs" ]]; then
         bfs_queue+=("$current")
       elif ! @go.walk_file_system "$operation" "$current"/*; then
-        return 1
+        return "$_GO_EC_GENERR"
       fi
     fi
   done
 
   for current in "${bfs_queue[@]}"; do
     if ! @go.walk_file_system '--bfs' "$operation" "$current"/*; then
-      return 1
+      return "$_GO_EC_GENERR"
     fi
   done
 }
@@ -191,7 +191,7 @@
   for component in "${components[@]}"; do
     current_path+="${component:-/}"
     if ! "$operation" "$current_path"; then
-      return 1
+      return "$_GO_EC_GENERR"
     elif [[ -n "$component" ]]; then
       current_path+='/'
     fi
@@ -257,7 +257,7 @@
 #   path:  Current path passed in by @go.walk_path_forward
 _@go.realpath_impl() {
   if ! cd -P "$1" >/dev/null 2>&1; then
-    return 1
+    return "$_GO_EC_GENERR"
   fi
   printf -v '__grpi_real_prefix' '%s' "$1"
   printf -v '__grpi_real_dir' '%s' "$PWD"

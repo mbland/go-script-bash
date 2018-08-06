@@ -28,7 +28,12 @@
 
   compgen_exit_index="$((${#compreply[@]} - 1))"
 
-  if [[ "${compreply[$compgen_exit_index]}" -ne '0' ]]; then
+  if [[ "${compreply[$compgen_exit_index]}" -eq '1' ]]; then
+    return "$_GO_EC_NOTFND"
+  elif [[ "${compreply[$compgen_exit_index]}" -eq '2' ]]; then
+    return "$_GO_EC_USAGE"
+  elif [[ "${compreply[$compgen_exit_index]}" -ne '0' ]]; then
+    # probably never occurs
     return "${compreply[$compgen_exit_index]}"
   fi
   unset "compreply[$compgen_exit_index]"
@@ -77,4 +82,6 @@
       fi
     done
   done
+
+  return "$_GO_EC_OK"
 }

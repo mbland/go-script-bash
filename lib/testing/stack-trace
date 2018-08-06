@@ -104,11 +104,11 @@ __@go.stack_trace_item() {
 
   if [[ -z "$function_name" ]]; then
     printf 'No function name specified for `%s`.\n' "${FUNCNAME[1]}" >&2
-    exit 1
+    exit "$_GO_EC_ARGERR"
   elif [[ "$function_name" =~ ^(main|source)$ && -z "$target_line" ]]; then
     printf 'No target line from `%s` specified for `%s`.\n'  \
       "$function_name" "${FUNCNAME[1]}" >&2
-    exit 1
+    exit "$_GO_EC_ARGERR"
   fi
 
   if [[ "$function_name" == 'main' || "$function_name" == 'source' ]]; then
@@ -163,8 +163,11 @@ __@go.stack_trace_item() {
 
   case "$state" in
   SUCCESS)
-    printf '  %s:%d %s\n' "$filepath" "$lineno" "$function_name"
-    return
+    printf '  %s:%d %s\n' "$filepath" "$lineno" "$function_name" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]]; then
+      return $((_GO_EC_GENERR+ec))
+    fi
+    return "$_GO_EC_OK"
     ;;
   MAIN|FOUND_FUNCTION)
     printf 'Line not found in `%s` from "%s": "%s"\n' \
@@ -174,7 +177,7 @@ __@go.stack_trace_item() {
     printf 'Function `%s` not found in "%s".\n' "$function_name" "$filepath" >&2
     ;;
   esac
-  return '1'
+  return "$_GO_EC_NOTFND"
 }
 
 # Implementation for `@go.set_go_core_stack_trace_components`
@@ -199,7 +202,7 @@ __@go.set_go_core_stack_trace_components() {
       if [[ "$stack_item" =~ $go_core_file ]]; then
         GO_CORE_STACK_TRACE_COMPONENTS+=("$stack_item")
       elif [[ "${#_GO_CORE_STACK_TRACE_COMPONENTS[@]}" -ne '0' ]]; then
-        return
+        return "$_GO_EC_OK"
       fi
     done
     rm "$script" "$TEST_GO_SCRIPTS_DIR/print-stack-trace"
@@ -220,7 +223,7 @@ __@go.count_lines() {
 
   if [[ -z "$result_name" ]]; then
     printf 'No result variable specified for `%s`.\n' "${FUNCNAME[1]}" >&2
-    exit 1
+    exit "$_GO_EC_ARGERR"
   fi
 
   while read line; do
@@ -238,9 +241,9 @@ __@go.count_lines() {
 __@go.check_file_path_specified_and_present() {
   if [[ -z "$1" ]]; then
     printf 'No file specified for `%s`.\n' "${FUNCNAME[1]}" >&2
-    exit 1
+    exit "$_GO_EC_ARGERR"
   elif [[ ! -e "$1" ]]; then
     printf 'Create "%s" before calling `%s`.\n' "$1" "${FUNCNAME[1]}" >&2
-    exit 1
+    exit "$_GO_EC_GENERR"
   fi
 }

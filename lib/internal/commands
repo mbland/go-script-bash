@@ -60,7 +60,7 @@ _@go.find_commands() {
   done
 
   if [[ "${#__go_command_scripts[@]}" -eq '0' ]]; then
-    return 1
+    return "$_GO_EC_NOTFND"
   elif [[ -z "$_GO_STANDALONE" ]]; then
     __go_command_scripts=("${__go_command_scripts[@]#$_GO_ROOTDIR/}")
   else

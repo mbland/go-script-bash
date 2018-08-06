@@ -98,7 +98,7 @@ _@go.get_file_download_command() {
     fi
     @go.printf 'Please install curl or wget before running "%s".\n' \
       "${_GO_CMD_NAME[*]}" >&2
-    return 1
+    return "$_GO_EC_DEPMISS"
     ;;
   esac
 }
@@ -116,27 +116,27 @@ _@go.get_file_impl() {
   local download_dir="$1"
   local filename="$2"
   local url="$3"
-  local result='0'
+  local result="$_GO_EC_OK"
   local errfile="${url##*/}.get-error"
   local errmsg
 
   local __go_get_file_download_cmd=()
   if ! _@go.get_file_download_command "$filename"; then
-    return 1
+    return "$_GO_EC_DEPMISS"
   fi
 
   if [[ -n "$filename" ]]; then
     if [[ -f "$filename" ]]; then
       @go.printf 'File already exists; not overwriting: %s\n' "$filename" >&2
-      return 1
+      return "$_GO_EC_CANTCREAT"
     elif [[ ! -d "$download_dir" ]] && ! mkdir -p "$download_dir"; then
       @go.printf "Download dir doesn't exist and can't be created: %s\n" \
         "$download_dir" >&2
-      return 1
+      return "$_GO_EC_CANTCREAT"
     elif [[ ! -w "$download_dir" ]]; then
       @go.printf "You don't have permission to write to download dir: %s\n" \
         "$download_dir" >&2
-      return 1
+      return "$_GO_EC_NOPERM"
     fi
     errfile="${filename}.get-error"
   fi
@@ -154,7 +154,7 @@ _@go.get_file_impl() {
     if [[ -f "$filename" ]]; then
       rm "$filename"
     fi
-    result='1'
+    result="$_GO_EC_GENERR"
 
   elif [[ -n "$filename" ]]; then
     @go.printf 'Downloaded "%s" as: %s\n' "$url" "$filename"
@@ -186,7 +186,7 @@ _@go.get_file() {
 
   if [[ "$#" -ne '1' ]]; then
     @go help "${_GO_CMD_NAME[@]}" >&2
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 
   url="$1"

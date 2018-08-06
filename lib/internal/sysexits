@@ -1,0 +1,75 @@
+#! /bin/bash
+
+declare -r -x -i _GO_EC_OFFSET=0
+# This is useful in case go-script-bash is used together with other frameworks
+# or commands that overlap in their exit codes and the user wants to
+# distinguish among them.
+
+declare -r -x -i _GO_EC_OK=0
+
+declare -r -x -i _GO_EC_GENERR=_GO_EC_OFFSET+64
+# A general error that is not covered by the other exit codes.
+
+declare -r -x -i _GO_EC_EXT1=_GO_EC_OFFSET+65
+declare -r -x -i _GO_EC_EXT2=_GO_EC_OFFSET+66
+# These should be used to return error codes from external commands. Eg when
+# calling `compgen` or `printf`. Most of these commands exit with `1` on general
+# error and `2` on usage error. Their return code should be captured in a
+# a variable, eg `ec`, and returned as `return $((_GO_EC_GENERR+ec)).
+
+declare -r -x -i _GO_EC_USAGE=_GO_EC_OFFSET+67
+# The application was called with an invalid option, parameter, command, etc.
+# This error refers to end-user supplied input to the application, not wrong
+# function arguments, etc.
+
+declare -r -x -i _GO_EC_NOINPUT=_GO_EC_OFFSET+68
+# Some input was expected but none was given. This refers to either expected
+# input from the user (eg via a prompt) or command/function input that is
+# empty (eg an empty file).
+
+declare -r -x -i _GO_EC_BADFRMT=_GO_EC_OFFSET+69
+# An argument or a file is not in the format expected. This is used in
+# validation errors or wrongly formatted files (eg scipts missing the shebang).
+# For bad arguments to functions, _GO_EC_ARGERR should be used.
+
+declare -r -x -i _GO_EC_NOTFND=_GO_EC_OFFSET+70
+# A resource was not found. "Resource" might refer to some file/folder on the
+# filesystem. This return code should also be used by functions that perform a
+# search for the case that no result was found.
+
+declare -r -x -i _GO_EC_ARGERR=_GO_EC_OFFSET+71
+# A function was passed an argument that is invalid. See also _GO_EC_BADFRMT.
+
+declare -r -x -i _GO_EC_DEPMISS=_GO_EC_OFFSET+72
+# A required program is missing.
+
+declare -r -x -i _GO_EC_CANTCREAT=_GO_EC_OFFSET+73
+# An operation failed to create a target. It can be used in filesystem
+# operations like `mv` and `tar x` or in network requests.
+
+declare -r -x -i _GO_EC_IOERR=_GO_EC_OFFSET+74
+# An input/output operation failed. Here, IO is defined loosely. Eg writing to
+# the console failed.
+
+declare -r -x -i _GO_EC_SIGN1=_GO_EC_OFFSET+75
+declare -r -x -i _GO_EC_SIGN2=_GO_EC_OFFSET+76
+# These should not be used as error codes. If a function should return two or
+# three different return values to signal two or three different cases, these
+# _GO_EC_OK should be used to signal the first, most common or expected one and
+# these two signals the rest. Eg, `@go.file_diff` returns _GO_EC_OK if the
+# supplied files are the same or _GO_EC_SIGN1 if not (in both cases, there is no
+# actual error).
+
+declare -r -x -i _GO_EC_NOPERM=_GO_EC_OFFSET+77
+# The user  running the script does not have permission to perform an operation,
+# either locally or over the network.
+
+declare -r -x -i _GO_EC_CONFIG=_GO_EC_OFFSET+78
+# There is an issue with the configuration of either the system, go-script or a
+# network resource. Eg, an environment variable is missing, a set parameter
+# exceeds a maximum value, etc.
+
+declare -r -x -i _GO_EC_BASE=_GO_EC_OFFSET+64
+declare -r -x -i _GO_EC_MAX=_GO_EC_OFFSET+78
+# These are useful in checking whether an exit code belongs to go-script's
+# exit codes.

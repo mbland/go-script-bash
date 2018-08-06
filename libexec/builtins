@@ -59,8 +59,10 @@ _@go.builtin_summaries() {
   local __go_cmd_desc
 
   for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
-    if ! _@go.command_summary "$_GO_CORE_DIR/libexec/$cmd_name"; then
-      return 1
+
+    _@go.command_summary "$_GO_CORE_DIR/libexec/$cmd_name" && ec=0 || ec="$?"
+    if [[ "$ec" -ne 0 ]] ; then
+      return "$ec"
     fi
     _@go.format_summary "$cmd_name" "$__go_cmd_desc" $longest_name_len
   done
@@ -70,14 +72,14 @@ _@go.builtins() {
   if [[ "$#" -eq '0' ]]; then
     local IFS=$'\n'
     echo "${_GO_BUILTIN_CMDS[*]}"
-    return
+    return "$_GO_EC_OK"
   elif [[ "$1" == '--complete' ]]; then
     # Tab completions
     local word_index="$2"
     if [[ "$word_index" -eq '0' ]]; then
       echo '--exists' '--summaries'
     fi
-    return
+    return "$_GO_EC_OK"
   fi
 
   . "$_GO_CORE_DIR/lib/internal/argv"
@@ -88,7 +90,7 @@ _@go.builtins() {
     flag="$1"
     shift
     if ! _@go.check_flag_has_no_arguments "$flag" "$@"; then
-      return 1
+      return "$_GO_EC_USAGE"
     fi
     _@go.builtin_summaries
     return
@@ -97,35 +99,35 @@ _@go.builtins() {
     flag="$1"
     shift
     if ! _@go.check_flag_has_one_argument "$flag" "$@"; then
-      return 1
+      return "$_GO_EC_USAGE"
     fi
     for cmd_name in "${_GO_BUILTIN_CMDS[@]}"; do
       if [[ "$cmd_name" == "$1" ]]; then
-        return
+        return "$_GO_EC_OK"
       fi
     done
-    return 1
+    return "$_GO_EC_NOTFND"
     ;;
   --help-filter)
     flag="$1"
     shift
     # Help filter
     if ! _@go.check_flag_has_one_argument "$flag" "$@"; then
-      return 1
+      return "$_GO_EC_USAGE"
     fi
     local pattern='{{_GO_BUILTIN_SUMMARIES}}'
     local replacement="$(_@go.builtin_summaries)"
     echo "${1//$pattern/$replacement}"
-    return
+    return "$_GO_EC_OK"
     ;;
   -*)
     echo "ERROR: unknown flag: $1"
-    return 1
+    return "$_GO_EC_USAGE"
     ;;
   esac
 
   if ! _@go.check_argv_empty_if_no_flags "$@"; then
-    return 1
+    return "$_GO_EC_USAGE"
   fi
 }
 
