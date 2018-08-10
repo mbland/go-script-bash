@@ -120,6 +120,13 @@ available from the [MSYS2][] and [Cygwin][] environments.
 [msys2]:   https://msys2.github.io/
 [cygwin]:  https://www.cygwin.com/
 
+There are also wrapper templates for [powershell][go-template-ps1] and
+[batch][go-template-cmd] so that the `./go` command can be run directly from
+those shells.
+
+[go-template-ps1]: https://github.com/mbland/go-script-bash/blob/master/go-template.ps1
+[go-template-cmd]: https://github.com/mbland/go-script-bash/blob/master/go-template.cmd
+
 #### Why not use tool X instead?
 
 Of course there are many common tools that may be used for managing project
@@ -255,6 +262,10 @@ $ chmod ugo+rx ./go
 You may rename this file whatever you wish (i.e. it doesn't have to be named
 `./go`), update its documentation and variables to fit your project, and check
 it into your project repository. See the `go-template` comments for details.
+
+If windows shell compatibility is desired, then you can also download the
+`go-template.ps1` and `go-template.cmd` files. Place them next to your `go` file
+with names to match (e.g. `go.ps1` and `go.cmd`).
 
 If you'd prefer to download a copy of the framework and check it into your
 sources, versioned archives are available from the [go-script-bash Releases
