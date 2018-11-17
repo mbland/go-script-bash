@@ -2,11 +2,25 @@
 
 load environment
 
+create_aliases_test_command_script() {
+  @go.create_test_go_script \
+    'declare -a GO_ALIAS_CMDS_EXTRA=("nvim")' \
+    "@go $@"
+}
+
 @test "$SUITE: with no arguments, list all aliases" {
   run ./go aliases
   assert_success
   assert_line_equals 0 'awk'  # first alias
   assert_line_equals -1 'sed'  # last alias
+}
+
+@test "$SUITE: list custom aliases if defined" {
+  create_aliases_test_command_script 'aliases'
+  run "$TEST_GO_SCRIPT" aliases
+  assert_success
+  assert_line_equals 0 'awk'  # first alias
+  assert_line_equals -1 'nvim'  # last alias
 }
 
 @test "$SUITE: tab completions" {
