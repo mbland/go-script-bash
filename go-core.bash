@@ -319,7 +319,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   esac
 
   if _@go.source_builtin 'aliases' --exists "$cmd"; then
-    "$cmd" "$@"
+    eval "$cmd" "$@"
     return
   fi
 
