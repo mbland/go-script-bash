@@ -28,6 +28,10 @@ if [[ "${GO_ALIAS_CMDS_EXTRA[*]}" != '' ]]; then
   _GO_ALIAS_CMDS+=( "${GO_ALIAS_CMDS_EXTRA[@]}" )
 fi
 
+if [[ "${GO_ALIAS_EXPAND_CMDS[*]}" != '' ]]; then
+  _GO_ALIAS_CMDS+=( "${GO_ALIAS_EXPAND_CMDS[@]}" )
+fi
+
 readonly _GO_ALIAS_CMDS
 
 _@go.aliases() {

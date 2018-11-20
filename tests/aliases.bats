@@ -5,10 +5,13 @@ load environment
 create_aliases_test_command_script() {
   @go.create_test_go_script \
     'declare -a GO_ALIAS_CMDS_EXTRA=("nvim")' \
-    "@go $@"
+    'declare -a GO_ALIAS_EXPAND_CMDS=("test_echo")' \
+    'shopt -s expand_aliases' \
+    'alias test_echo="echo -n test_string_19098e09818fad"' \
+    "@go \$@"
 }
 
-@test "$SUITE: with no arguments, list all aliases" {
+@test "$SUITE: with no arguments, list all predefined aliases" {
   run ./go aliases
   assert_success
   assert_line_equals 0 'awk'  # first alias
@@ -16,11 +19,19 @@ create_aliases_test_command_script() {
 }
 
 @test "$SUITE: list custom aliases if defined" {
-  create_aliases_test_command_script 'aliases'
-  run "$TEST_GO_SCRIPT" aliases
+  create_aliases_test_command_script
+  run "$TEST_GO_SCRIPT" 'aliases'
   assert_success
   assert_line_equals 0 'awk'  # first alias
-  assert_line_equals -1 'nvim'  # last alias
+  assert_line_equals -2 'nvim'  # second to last alias
+  assert_line_equals -1 'test_echo'  # last alias
+}
+
+@test "$SUITE: run expanded aliases if defined" {
+  create_aliases_test_command_script 'aliases'
+  run "$TEST_GO_SCRIPT" 'test_echo'
+  assert_success
+  assert_line_equals 0 'test_string_19098e09818fad'
 }
 
 @test "$SUITE: tab completions" {
@@ -112,7 +123,7 @@ create_aliases_test_command_script() {
 @test "$SUITE: leave help generic for cd, pushd when using env function" {
   # Setting _GO_CMD will trick the script into thinking the shell function is
   # running it.
-  
+
   _GO_CMD='test-go' run ./go aliases --help cd
   [ "$status" -eq '0' ]
 
