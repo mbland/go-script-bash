@@ -295,7 +295,8 @@ where:
   file within your project's copy of the framework (adjusted to reflect where
   your copy of `go-script-bash` actually resides)
 - `scripts` is the path to the directory holding your project's command scripts
-  relative to the project root (it can be any name you like)
+  relative to the project root (it can be any name you like). You can specify
+  multiple paths, separated by a space, according to your project's structure.
 
 #### Directory structure
 
@@ -338,9 +339,10 @@ The following variables are set by the framework based on the above example
 * `_GO_SCRIPTS_DIR`: `$_GO_ROOTDIR/scripts`
 * `_GO_PLUGINS_DIR`: `/absolute/path/to/project-root/plugins`
 
-For plugins, `_GO_ROOTDIR` and `_GO_SCRIPTS_DIR` will be scoped to the root
-directory of the plugin installation; the other variables will remain the same.
-See `./go help plugins` for more details.
+`_GO_SCRIPTS_DIR` and `_GO_PLUGINS_DIR` are arrays of file paths to support
+flexible project structures. For plugins, `_GO_ROOTDIR` and `_GO_SCRIPTS_DIR`
+will be scoped to the root directory of the plugin installation; the other
+variables will remain the same.  See `./go help plugins` for more details.
 
 #### Command scripts
 
