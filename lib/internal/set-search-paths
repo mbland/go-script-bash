@@ -3,13 +3,16 @@
 _@go.set_search_paths_add_plugin_paths() {
   local plugin_paths=("$1"/*/bin)
   local plugin_path
+  local script_dir
 
   if [[ "${plugin_paths[0]}" != "$1/*/bin" ]]; then
     # Ensure a plugin's _GO_SCRIPTS_DIR isn't duplicated in _GO_PLUGINS_PATHS.
     for plugin_path in "${plugin_paths[@]}"; do
-      if [[ "$plugin_path" != "$_GO_SCRIPTS_DIR" ]]; then
-        _GO_PLUGINS_PATHS+=("$plugin_path")
-      fi
+      for script_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+        if [[ "$plugin_path" != "$script_dir" ]]; then
+          _GO_PLUGINS_PATHS+=("$plugin_path")
+        fi
+      done
     done
   fi
   return 1
@@ -21,7 +24,7 @@ _@go.set_search_paths() {
   if [[ -n "$_GO_INJECT_SEARCH_PATH" ]]; then
     _GO_SEARCH_PATHS+=("$_GO_INJECT_SEARCH_PATH")
   fi
-  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec" "$_GO_SCRIPTS_DIR")
+  _GO_SEARCH_PATHS+=("$_GO_CORE_DIR/libexec" "${_GO_SCRIPTS_DIR[@]}")
 
   # A plugin's own local plugin paths will appear before inherited ones. If
   # there is a version incompatibility issue with other installed plugins, this
