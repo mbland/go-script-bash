@@ -90,19 +90,33 @@ _@go.find_module() {
       return
     fi
   fi
+
   __go_module_file="$_GO_CORE_DIR/lib/$__go_module_name"
 
   if [[ ! -f "$__go_module_file" ]]; then
-    __go_module_file="$_GO_SCRIPTS_DIR/lib/$__go_module_name"
+    local scripts_dir
+    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+      __go_module_file="$scripts_dir/lib/$__go_module_name"
+
+      if [[ -f "$__go_module_file" ]]; then
+        return
+      fi
+    done
+
+    __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
 
     if [[ ! -f "$__go_module_file" ]]; then
-      __go_module_file="$_GO_ROOTDIR/lib/$__go_module_name"
 
-      if [[ ! -f "$__go_module_file" ]]; then
-        # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
-        __go_module_file="${__go_module_name/\///lib/}"
-        @go.search_plugins '_@go.find_plugin_module'
-      fi
+      local plugins_dir
+      for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+        __go_module_file="$plugins_dir/lib/$__go_module_name"
+
+        if [[ ! -f "$__go_module_file" ]]; then
+          # Convert <plugin>/<module> to plugins/<plugin>/lib/<module>
+          __go_module_file="${__go_module_name/\///lib/}"
+          @go.search_plugins '_@go.find_plugin_module'
+        fi
+      done
     fi
   fi
 }
