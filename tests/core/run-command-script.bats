@@ -26,8 +26,8 @@ teardown() {
 @test "$SUITE: run bash script by sourcing with multiple script dirs" {
   echo '#!/bin/bash' >"$TEST_GO_SCRIPT"
   printf ". '$_GO_CORE_DIR/go-core.bash' " >>"$TEST_GO_SCRIPT"
-  printf "'$TEST_GO_SCRIPTS_RELATIVE_DIR' " >>"$TEST_GO_SCRIPT"
-  echo "'$TEST_GO_SCRIPTS_RELATIVE_DIR/../scripts-2'" >>"$TEST_GO_SCRIPT"
+  printf "scripts-2 " >>"$TEST_GO_SCRIPT"
+  echo "'$TEST_GO_SCRIPTS_RELATIVE_DIR'" >>"$TEST_GO_SCRIPT"
   echo '@go "$@"' >>"$TEST_GO_SCRIPT"
 
   mkdir -p "$TEST_GO_SCRIPTS_DIR/../scripts-2"
