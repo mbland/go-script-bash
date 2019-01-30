@@ -124,11 +124,18 @@ _@go.modules_summaries() {
 _@go.modules_produce_listing() {
   local action="$1"
   local modules=("${__go_modules[@]#$_GO_CORE_DIR/lib/}")
-  modules=("${modules[@]#$_GO_SCRIPTS_DIR/lib/}")
+
+  local scripts_dir
+  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    modules=("${modules[@]#$scripts_dir/lib/}")
+  done
   modules=("${modules[@]#$_GO_ROOTDIR/lib/}")
 
   if [[ -n "$_GO_PLUGINS_DIR" ]]; then
-    modules=("${modules[@]#$_GO_PLUGINS_DIR/}")
+    local plugins_dir
+    for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+      modules=("${modules[@]#$plugins_dir/}")
+    done
     modules=("${modules[@]/lib\//}")
   fi
 
@@ -162,9 +169,13 @@ _@go.modules_produce_listing() {
 }
 
 _@go.modules_search_plugins() {
+  local old_count="${#__go_modules[@]}"
   for plugin in "$1/"${plugin_glob[0]:-*}; do
     _@go.modules_find_all_in_dir "$plugin" "${plugin_glob[1]:-*}"
   done
+  if [[ "${#__go_modules[@]}" -eq "$old_count" ]]; then
+    return 1
+  fi
 }
 
 _@go.modules_search() {
@@ -183,7 +194,10 @@ _@go.modules_search() {
   _@go.modules_find_all_in_dir "$_GO_CORE_DIR" "$glob"
   __go_core_modules_end="${#__go_modules[@]}"
 
-  _@go.modules_find_all_in_dir "$_GO_SCRIPTS_DIR" "$glob"
+  local script_dir
+  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    _@go.modules_find_all_in_dir "$scripts_dir" "$glob"
+  done
   __go_internal_modules_end="${#__go_modules[@]}"
 
   _@go.modules_find_all_in_dir "$_GO_ROOTDIR" "$glob"
@@ -266,18 +280,24 @@ _@go.modules_tab_completion_plugins() {
 
   # `glob` indicates specific plugin module.
   if [[ "$glob" =~ / ]]; then
+    local old_count="${#__go_modules[@]}"
     plugin="${glob%/*}"
     _@go.modules_find_all_in_dir "$1/$plugin" "${glob#*/}*"
+    if [[ "${#__go_modules[@]}" -eq "$old_count" ]]; then
+      return 1
+    fi
     return
   fi
 
   # Otherwise collect all plugin modules and the names of the plugins to
   # which they belong. Which set gets returned will be decided at the end.
+  local has_results='false'
   for plugin in "$1"/$glob; do
     _@go.modules_find_all_in_dir "$plugin"
     if [[ "${#__go_modules[@]}" -eq '0' ]]; then
       continue
     fi
+    has_results='true'
 
     __go_modules=("${__go_modules[@]#$1/}")
     __go_modules=("${__go_modules[@]/\/lib\///}")
@@ -290,6 +310,10 @@ _@go.modules_tab_completion_plugins() {
       __go_modules=()
     fi
   done
+
+  if [[ "$has_results" == 'false' ]]; then
+    return 1
+  fi
 }
 
 _@go.modules_tab_completion() {
@@ -329,7 +353,11 @@ _@go.modules_tab_completion() {
   # Don't search other dirs if completing a plugin (word contains a '/').
   if [[ ! "$glob" =~ / ]]; then
     _@go.modules_find_all_in_dir "$_GO_CORE_DIR" "$glob"
-    _@go.modules_find_all_in_dir "$_GO_SCRIPTS_DIR" "$glob"
+    local scripts_dir
+    local plugins_dir
+    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+      _@go.modules_find_all_in_dir "$scripts_dir" "$glob"
+    done
     _@go.modules_find_all_in_dir "$_GO_ROOTDIR" "$glob"
   fi
 

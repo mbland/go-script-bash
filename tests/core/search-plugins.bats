@@ -17,7 +17,7 @@ setup() {
     '  return "$result"' \
     '}' \
     'if [[ -z "$COLLECT_DIRS_SUCCESS_AFTER_NUM_ITERATIONS" ]]; then' \
-    '  COLLECT_DIRS_SUCCESS_AFTER_NUM_ITERATIONS=1' \
+    '  COLLECT_DIRS_SUCCESS_AFTER_NUM_ITERATIONS=2' \
     'fi' \
     '@go "$@"'
 }
@@ -123,8 +123,9 @@ teardown() {
   local test_scripts_dir="$test_rootdir/plugins"
   local test_plugins_dir="$test_scripts_dir/plugins"
   mkdir -p "$test_plugins_dir/foo/bin/plugins/bar/bin/plugins"
+  mkdir -p "$test_rootdir/plugins-2"
 
-  printf '%s\n' "${test_go_script_impl/$TEST_GO_SCRIPTS_RELATIVE_DIR/plugins}" \
+  printf '%s\n' "${test_go_script_impl//$TEST_GO_SCRIPTS_RELATIVE_DIR/plugins}" \
     >"$test_go_script"
   chmod 700 "$test_go_script"
 

@@ -10,7 +10,8 @@ setup() {
 
   local print_scope_implementation=(
     'printf -- "_GO_ROOTDIR:\n%s\n" "$_GO_ROOTDIR"'
-    'printf -- "_GO_SCRIPTS_DIR:\n%s\n" "$_GO_SCRIPTS_DIR"'
+    'printf -- "_GO_SCRIPTS_DIR:\n"'
+    'printf -- "%s\n" "${_GO_SCRIPTS_DIR[@]}"'
     'printf -- "_GO_PLUGINS_PATHS:\n"'
     'printf -- "%s\n" "${_GO_PLUGINS_PATHS[@]}"'
     'printf -- "_GO_SEARCH_PATHS:\n"'
@@ -43,11 +44,13 @@ setup() {
   EXPECTED_ROOT_SCOPE_VALUES=('_GO_ROOTDIR:'
     "$TEST_GO_ROOTDIR"
     '_GO_SCRIPTS_DIR:'
+    "$TEST_GO_SCRIPTS_DIR_2"
     "$TEST_GO_SCRIPTS_DIR"
     '_GO_PLUGINS_PATHS:'
     "${EXPECTED_ROOT_SCOPE_PLUGINS_PATHS[@]}"
     '_GO_SEARCH_PATHS:'
     "$_GO_CORE_DIR/libexec"
+    "$TEST_GO_SCRIPTS_DIR_2"
     "$TEST_GO_SCRIPTS_DIR"
     "${EXPECTED_ROOT_SCOPE_PLUGINS_PATHS[@]}")
 }

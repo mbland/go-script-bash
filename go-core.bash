@@ -266,20 +266,23 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #   Zero if `search_func` ever returns zero, nonzero otherwise
 @go.search_plugins() {
   local __gsp_plugins_dir
-  local plugin_dir
-  local -i i=0
+  local scripts_dir
+  local plugins_dir
 
-  for plugin_dir in "${_GO_SCRIPTS_DIR[@]/%//plugins}"; do
-    __gsp_plugins_dir="$plugin_dir"
+  for scripts_dir in "${_GO_SCRIPTS_DIR[@]/%//plugins}"; do
+    __gsp_plugins_dir="$scripts_dir"
     while true; do
       if "$1" "$__gsp_plugins_dir"; then
         return
-      elif [[ "$__gsp_plugins_dir" == "${_GO_PLUGINS_DIR[i]}" ]]; then
-        break
+      else
+        for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+          if [[ "$__gsp_plugins_dir" == "$plugins_dir" ]]; then
+            break 2
+          fi
+        done
       fi
       __gsp_plugins_dir="${__gsp_plugins_dir%/plugins/*}/plugins"
     done
-    i=i+1
   done
   return 1
 }
@@ -340,8 +343,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
   fi
 
   local script_dir
-  for script_dir in "${_GO_SCRIPTS_DIR}"; do
-    if [[ "${__go_cmd_path#$_GO_SCRIPTS_DIR}" =~ /plugins/[^/]+/bin/ ]]; then
+  for script_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    if [[ "${__go_cmd_path#$script_dir}" =~ /plugins/[^/]+/bin/ ]]; then
       _@go.run_plugin_command_script "$__go_cmd_path" "${__go_argv[@]}"
       return
     fi

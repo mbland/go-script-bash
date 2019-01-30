@@ -7,10 +7,10 @@
 #   {{go}} {{cmd}} --type <file_type> <file_path> <permissions> [lines...]
 #
 #   To generate a new command script in `_GO_SCRIPTS_DIR`:
-#   {{go}} {{cmd}} --command <command_name> [<subcommand_name>...]
+#   {{go}} {{cmd}} --command <command_name> [--parent <parent_path>] [<subcommand_name>...]
 #
 #   To generate a new internal module in `_GO_SCRIPTS_DIR/lib`:
-#   {{go}} {{cmd}} --internal <module_path>
+#   {{go}} {{cmd}} --internal <module_path> [--parent <parent_path>]
 #
 #   To generate a new public module in `_GO_ROOTDIR/lib`:
 #   {{go}} {{cmd}} --public <module_path>
@@ -25,6 +25,7 @@
 #   [lines...]         Optional list of lines to add to the file
 #   <permissions>      Permissions to set for the new file
 #   <command_name>     Command script name
+#   <parent_path>      Path to command file (one of `_GO_SCRIPTS_DIRS`)
 #   <subcommand_name>  Subcommand script name
 #   <module_path>      Path to module file relative to `_GO_*DIR/lib`
 #   <test_path>        Path to module file relative to `_GO_TEST_DIR`
@@ -46,6 +47,8 @@ _@go.new_tab_completions() {
   local mode="$2"
   shift 2
 
+  local paths=()
+
   if [[ "$word_index" -eq '0' ]]; then
     printf -- '--command --internal --public --test --type'
     return
@@ -55,7 +58,10 @@ _@go.new_tab_completions() {
   case "$mode" in
   --command)
     if [[ "$word_index" -eq '0' ]]; then
-      _@go.source_builtin 'commands' "$_GO_SCRIPTS_DIR"
+      local scripts_dir
+      for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+        _@go.source_builtin 'commands' "$scripts_dir"
+      done
     else
       . "$_GO_CORE_DIR/lib/internal/complete"
       _@go.complete_command_path "$word_index" "$@"
@@ -63,18 +69,18 @@ _@go.new_tab_completions() {
     return
     ;;
   --internal)
-    if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_SCRIPTS_DIR/lib"; then
-      return 1
+    if [[ "$word_index" -eq '0' ]]; then
+      paths+=("${_GO_SCRIPTS_DIR[@]/%//lib}")
     fi
     ;;
   --public)
-    if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_ROOTDIR/lib"; then
-      return 1
+    if [[ "$word_index" -eq '0' ]]; then
+      paths+=("$_GO_ROOTDIR/lib")
     fi
     ;;
   --test)
-    if [[ "$word_index" -ne '0' ]] || ! cd "$_GO_ROOTDIR/$_GO_TEST_DIR"; then
-      return 1
+    if [[ "$word_index" -eq '0' ]]; then
+      paths+=("$_GO_ROOTDIR/$_GO_TEST_DIR")
     fi
     ;;
   --type)
@@ -82,12 +88,26 @@ _@go.new_tab_completions() {
       return 1
     fi
     shift
+    @go.compgen -f -- "$1"
     ;;
   *)
     return 1
     ;;
   esac
-  @go.compgen -f -- "$1"
+
+  if [[ "${#paths[@]}" -eq 0 ]]; then
+    return 1
+  fi
+
+  local path_exists='false'
+  for path in "${paths[@]}"; do
+    cd "$path" && path_exists='true' || continue
+    @go.compgen -f -- "$1"
+  done
+
+  if [[ "$path_exists" == 'false' ]]; then
+    return 1
+  fi
 }
 
 _@go.new_file() {
@@ -161,21 +181,43 @@ _@go.new_command_script() {
 _@go.new_command_scripts() {
   local cmd
   local cmd_path
-  local parent_dir="$_GO_SCRIPTS_DIR"
+  local paths=("$@")
   local new_scripts=()
+  local parent_dir="${_GO_SCRIPTS_DIR[0]}"
   local is_last_cmd
   local i=0
 
-  if [[ "$#" -eq '0' ]]; then
+  if [[ "$#" -ge 3 && "$2" == '--parent' ]]; then
+    parent_dir="$3"
+    cmd_path="$1"
+    unset paths[1]
+    unset paths[2]
+  elif [[ "$#" -eq 2 && "$2" == '--parent' ]]; then
+    printf "'--parent' expects an argument.\n" >&2
+    return 1
+  elif [[ "$#" -eq '0' || -z "${paths[0]}" ]]; then
     printf 'No command script name specified.\n' >&2
     return 1
   fi
 
-  for cmd in "$@"; do
+  local found='false'
+  local scripts_dir
+  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    if [[ "$parent_dir" == "$scripts_dir" ]]; then
+      found='true'
+    fi
+  done
+
+  if [[ "$found" == 'false' ]]; then
+    printf "'$parent_dir' is not valid (not included in '_GO_SCRIPTS_DIR').\n"
+    return 1
+  fi
+
+  for cmd in "${paths[@]}"; do
     cmd_path="$parent_dir/$cmd"
     parent_dir="$cmd_path.d"
 
-    if [[ "$((++i))" -eq "$#" ]]; then
+    if [[ "$((++i))" -eq "${#paths[@]}" ]]; then
       is_last_cmd='true'
     elif [[ -f "$cmd_path" ]]; then
       continue
@@ -193,7 +235,39 @@ _@go.new_command_scripts() {
 }
 
 _@go.new_module() {
-  local module_path="$1"
+  local args=("$@")
+  local parent_dir="${_GO_SCRIPTS_DIR[0]}"
+
+  if [[ "$#" -ge 3 && "$2" == '--parent' ]]; then
+    parent_dir="$3"
+    unset args[1]
+    unset args[2]
+  elif [[ "$#" -eq 2 && "$2" == '--parent' ]]; then
+    printf "'--parent' expects an argument.\n" >&2
+    return 1
+  elif [[ "$#" -ne 1 ]]; then
+    printf 'Command expects exactly one path.\n'
+    return 1
+  elif [[ "$#" -eq '0' || -z "$1" ]]; then
+    printf 'No module name specified.\n' >&2
+    return 1
+  fi
+
+  local found='false'
+  local scripts_dir
+  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    if [[ "$parent_dir" == "$scripts_dir" || "$parent_dir" == "$_GO_ROOTDIR" ]];
+    then
+      found='true'
+    fi
+  done
+
+  if [[ "$found" == 'false' ]]; then
+    printf "'$parent_dir' is not valid (not included in '_GO_SCRIPTS_DIR').\n"
+    return 1
+  fi
+
+  local module_path="$parent_dir/lib/${args[0]}"
   local module_relpath="${module_path#*/lib/}"
   local module_type
   local impl=('#! /usr/bin/env bash'
@@ -204,14 +278,16 @@ _@go.new_module() {
     '#   func_name'
     '#     Short description of the func_name function')
 
-  case "${module_path%%/lib/*}" in
-  $_GO_SCRIPTS_DIR)
-    module_type='internal module'
-    ;;
-  $_GO_ROOTDIR)
+  if [[ "${module_path%%/lib/*}" == "$_GO_ROOTDIR" ]]; then
     module_type='public module'
-    ;;
-  esac
+  else
+    local scripts_dir
+    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+      if [[ "${module_path%%/lib/*}" == "$scripts_dir" ]]; then
+        module_type='internal module'
+      fi
+    done
+  fi
 
   if ! _@go.new_file "$module_type" "$module_path" '644' "${impl[@]}"; then
     return 1
@@ -274,10 +350,10 @@ _@go.new() {
     _@go.new_command_scripts "$@"
     ;;
   --internal)
-    _@go.new_module "$_GO_SCRIPTS_DIR/lib/$1"
+    _@go.new_module "$@"
     ;;
   --public)
-    _@go.new_module "$_GO_ROOTDIR/lib/$1"
+    _@go.new_module "${1-}" --parent "$_GO_ROOTDIR" "${@: 2}"
     ;;
   --test)
     _@go.new_test "$_GO_ROOTDIR/$_GO_TEST_DIR/$1"

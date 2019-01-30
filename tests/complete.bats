@@ -61,9 +61,9 @@ teardown() {
   touch "${files[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
   run "$TEST_GO_SCRIPT" complete 1 cd
-  assert_success 'scripts/'
+  assert_success 'scripts-2/' 'scripts/'
   run "$TEST_GO_SCRIPT" complete 1 pushd ''
-  assert_success 'scripts/'
+  assert_success 'scripts-2/' 'scripts/'
 
   local expected=()
   @go.test_compgen expected -d "$TEST_GO_SCRIPTS_DIR/"

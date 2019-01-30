@@ -3,16 +3,20 @@
 _@go.set_search_paths_add_plugin_paths() {
   local plugin_paths=("$1"/*/bin)
   local plugin_path
-  local script_dir
 
   if [[ "${plugin_paths[0]}" != "$1/*/bin" ]]; then
     # Ensure a plugin's _GO_SCRIPTS_DIR isn't duplicated in _GO_PLUGINS_PATHS.
     for plugin_path in "${plugin_paths[@]}"; do
-      for script_dir in "${_GO_SCRIPTS_DIR[@]}"; do
-        if [[ "$plugin_path" != "$script_dir" ]]; then
-          _GO_PLUGINS_PATHS+=("$plugin_path")
+      local included_path
+      local found='false'
+      for included_path in "${_GO_SCRIPTS_DIR[@]}"; do
+        if [[ "$plugin_path" == "$included_path" ]]; then
+          found='true'
         fi
       done
+      if [[ "$found" == 'false' ]]; then
+        _GO_PLUGINS_PATHS+=("$plugin_path")
+      fi
     done
   fi
   return 1

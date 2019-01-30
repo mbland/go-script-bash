@@ -161,11 +161,15 @@ _@go.use_modules() {
     # functions and variables get redefined. Keeping a flat module name
     # namespace allows us to detect such potential collisions and issue a
     # warning below.
-    if [[ "$__go_module_file" =~ ^$_GO_PLUGINS_DIR/ ]]; then
-      __go_module_name="${__go_module_file##*/plugins/}"
-      __go_module_name="${__go_module_name/\/bin\///}"
-      __go_module_name="${__go_module_name/\/lib\///}"
-    fi
+    local plugins_dir
+    for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+      if [[ "$__go_module_file" =~ ^$plugins_dir/ ]]; then
+        __go_module_name="${__go_module_file##*/plugins/}"
+        __go_module_name="${__go_module_name/\/bin\///}"
+        __go_module_name="${__go_module_name/\/lib\///}"
+        break
+      fi
+    done
 
     module_index=0
     for loaded_module in "${_GO_IMPORTED_MODULES[@]}"; do
