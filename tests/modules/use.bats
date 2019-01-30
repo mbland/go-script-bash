@@ -6,10 +6,10 @@ load "$_GO_CORE_DIR/lib/testing/stubbing"
 
 BUILTIN_MODULE_FILE="$_GO_CORE_DIR/lib/builtin-test"
 PLUGIN_MODULE_FILE="$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
-PLUGIN_MODULE_FILE_2="$TEST_GO_SCRIPTS_DIR/../scripts-2/plugins/test-plugin-2/lib/plugin-test-2"
+PLUGIN_MODULE_FILE_2="$TEST_GO_ROOTDIR/scripts-2/plugins/test-plugin-2/lib/plugin-test-2"
 EXPORT_MODULE_FILE="$TEST_GO_ROOTDIR/lib/export-test"
 INTERNAL_MODULE_FILE="$TEST_GO_SCRIPTS_DIR/lib/internal-test"
-INTERNAL_MODULE_FILE_2="$TEST_GO_SCRIPTS_DIR/../scripts-2/lib/internal-test-2"
+INTERNAL_MODULE_FILE_2="$TEST_GO_ROOTDIR/scripts-2/lib/internal-test-2"
 
 TEST_MODULES=(
   "$BUILTIN_MODULE_FILE"
@@ -79,13 +79,7 @@ do_setup() {
     fi
   done
 
-  # Repeating the body of '@go.create_test_go_script' to include two script
-  # directories
-  set "$DISABLE_BATS_SHELL_OPTIONS"
-  create_bats_test_script 'go' \
-    ". '$_GO_CORE_DIR/go-core.bash' \
-      '$TEST_GO_SCRIPTS_RELATIVE_DIR' \
-      '$TEST_GO_SCRIPTS_RELATIVE_DIR/../scripts-2'" \
+  @go.create_test_go_script \
     ". \"\$_GO_USE_MODULES\" $*" \
     'for ((i=0; i != ${#_GO_IMPORTED_MODULES[@]}; ++i)); do' \
     "  printf -- 'module: %s\nsource: %s\ncaller: %s\n' \\" \
@@ -93,11 +87,6 @@ do_setup() {
     "    \"\${_GO_IMPORTED_MODULE_FILES[\$i]}\" \\" \
     "    \"\${_GO_IMPORTED_MODULE_CALLERS[\$i]}\""  \
     'done'
-
-  if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then
-    mkdir "$TEST_GO_SCRIPTS_DIR"
-  fi
-  restore_bats_shell_options "$?"
 
   local module
   for module in "${TEST_MODULES[@]}"; do

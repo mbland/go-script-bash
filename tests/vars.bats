@@ -51,7 +51,7 @@ quotify_expected() {
     'declare -- _GO_INJECT_MODULE_PATH=""'
     'declare -- _GO_INJECT_SEARCH_PATH=""'
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
-    "declare -a _GO_PLUGINS_DIR=([0]=\"$TEST_GO_PLUGINS_DIR_2\" [1]=\"$TEST_GO_PLUGINS_DIR\")"
+    "declare -a _GO_PLUGINS_DIRS=([0]=\"$TEST_GO_PLUGINS_DIR_2\" [1]=\"$TEST_GO_PLUGINS_DIR\")"
     'declare -a _GO_PLUGINS_PATHS=()'
     "declare -x _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""
@@ -126,7 +126,7 @@ quotify_expected() {
     "declare -x _GO_INJECT_MODULE_PATH=\"$TEST_GO_ROOTDIR/lib\""
     "declare -x _GO_INJECT_SEARCH_PATH=\"$TEST_GO_ROOTDIR/bin\""
     "declare -x _GO_KCOV_DIR=\"$_GO_KCOV_DIR\""
-    "declare -a _GO_PLUGINS_DIR=([0]=\"$TEST_GO_PLUGINS_DIR_2\" [1]=\"$TEST_GO_PLUGINS_DIR\""\)
+    "declare -a _GO_PLUGINS_DIRS=([0]=\"$TEST_GO_PLUGINS_DIR_2\" [1]=\"$TEST_GO_PLUGINS_DIR\""\)
     "declare -a _GO_PLUGINS_PATHS=(${plugins_paths[*]})"
     "declare -x _GO_ROOTDIR=\"$TEST_GO_ROOTDIR\""
     "declare -rx _GO_SCRIPT=\"$TEST_GO_SCRIPT\""

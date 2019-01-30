@@ -48,7 +48,7 @@
 #   - `_GO_SCRIPTS_DIRS/lib` for project-internal modules
 #   - `_GO_ROOTDIR/lib` for publicly-exported modules (`./go` script plugins)
 #   - `_GO_SCRIPTS_DIRS/plugins/*/lib` for installed plugin modules
-#   - Parent plugin dirs up to `_GO_PLUGINS_DIR/*/lib` for plugin modules
+#   - Parent plugin dirs up to `_GO_PLUGINS_DIRS/*/lib` for plugin modules
 #     installed in parent directories
 #
 # To import a module exported from an installed plugin, you must specify the
@@ -108,7 +108,7 @@ _@go.find_module() {
     if [[ ! -f "$__go_module_file" ]]; then
 
       local plugins_dir
-      for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+      for plugins_dir in "${_GO_PLUGINS_DIRS[@]}"; do
         __go_module_file="$plugins_dir/lib/$__go_module_name"
 
         if [[ ! -f "$__go_module_file" ]]; then
@@ -162,7 +162,7 @@ _@go.use_modules() {
     # namespace allows us to detect such potential collisions and issue a
     # warning below.
     local plugins_dir
-    for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+    for plugins_dir in "${_GO_PLUGINS_DIRS[@]}"; do
       if [[ "$__go_module_file" =~ ^$plugins_dir/ ]]; then
         __go_module_name="${__go_module_file##*/plugins/}"
         __go_module_name="${__go_module_name/\/bin\///}"

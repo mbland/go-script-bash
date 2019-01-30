@@ -10,25 +10,12 @@ teardown() {
   @go.remove_test_go_rootdir
 }
 
-@test "$SUITE: scripts dir successfully set" {
-  run "$TEST_GO_SCRIPT"
-  assert_success
-}
-
-@test "$SUITE: multiple scripts dir successfully set" {
-  echo "#! /usr/bin/env bash" >"$TEST_GO_SCRIPT"
-  printf ". '$_GO_ROOTDIR/go-core.bash' " >>"$TEST_GO_SCRIPT"
-  printf "'$TEST_GO_SCRIPTS_RELATIVE_DIR' " >>"$TEST_GO_SCRIPT"
-  printf "'scripts-2' " >>"$TEST_GO_SCRIPT"
-
-  mkdir -p "$TEST_GO_SCRIPTS_DIR/../scripts-2"
-
+@test "$SUITE: scripts dirs successfully set" {
   run "$TEST_GO_SCRIPT"
   assert_success
 }
 
 @test "$SUITE: produce an error if no dir specified when sourced" {
-  # Overwrite the entire script to force the multiple dir error.
   echo "#! /usr/bin/env bash" >"$TEST_GO_SCRIPT"
   echo ". '$_GO_ROOTDIR/go-core.bash' " >>"$TEST_GO_SCRIPT"
 

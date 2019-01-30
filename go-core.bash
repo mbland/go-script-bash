@@ -135,11 +135,11 @@ declare -x _GO_CMD_NAME=
 # string with the arguments delimited by the ASCII Unit Separator ($'\x1f').
 declare -x _GO_CMD_ARGV=
 
-# The top-level directory in which plugins are installed.
+# The top-level directories in which plugins are installed.
 #
 # If a command script is running as a plugin, this value will be the plugins
 # directory of the top-level `./go` script.
-declare _GO_PLUGINS_DIR=()
+declare _GO_PLUGINS_DIRS=()
 
 # Directories containing executable plugin scripts.
 declare _GO_PLUGINS_PATHS=()
@@ -233,7 +233,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #
 # The search will begin in `_GO_SCRIPTS_DIRS/plugins`. As long as `search_func`
 # returns nonzero, every parent `/plugins/` directory will be searched, up to
-# and including the top-level `_GO_PLUGINS_DIR`. The search will end either when
+# and including the top-level `_GO_PLUGINS_DIRS`. The search will end either when
 # `search_func` returns zero, or when all of the plugin paths are exhausted.
 #
 # The helper function, `search_func`, will receive the current plugin directory
@@ -275,7 +275,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
       if "$1" "$__gsp_plugins_dir"; then
         return
       else
-        for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+        for plugins_dir in "${_GO_PLUGINS_DIRS[@]}"; do
           if [[ "$__gsp_plugins_dir" == "$plugins_dir" ]]; then
             break 2
           fi
@@ -447,4 +447,4 @@ elif [[ -z "$COLUMNS" ]]; then
   fi
   export COLUMNS="${COLUMNS:-80}"
 fi
-_GO_PLUGINS_DIR=("${_GO_SCRIPTS_DIRS[@]/%//plugins}")
+_GO_PLUGINS_DIRS=("${_GO_SCRIPTS_DIRS[@]/%//plugins}")

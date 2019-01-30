@@ -23,25 +23,6 @@ teardown() {
   assert_success 'Can use @go.printf'
 }
 
-@test "$SUITE: run bash script by sourcing with multiple script dirs" {
-  echo '#!/bin/bash' >"$TEST_GO_SCRIPT"
-  printf ". '$_GO_CORE_DIR/go-core.bash' " >>"$TEST_GO_SCRIPT"
-  printf "scripts-2 " >>"$TEST_GO_SCRIPT"
-  echo "'$TEST_GO_SCRIPTS_RELATIVE_DIR'" >>"$TEST_GO_SCRIPT"
-  echo '@go "$@"' >>"$TEST_GO_SCRIPT"
-
-  mkdir -p "$TEST_GO_SCRIPTS_DIR/../scripts-2"
-  TEST_COMMAND_SCRIPT_PATH="$TEST_GO_SCRIPTS_DIR/../scripts-2/test-command"
-
-  @go.create_test_command_script "../scripts-2/test-command"
-
-  echo '#!/bin/bash' >"$TEST_COMMAND_SCRIPT_PATH"
-  echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT_PATH"
-
-  run "$TEST_GO_SCRIPT" test-command Can use '@go.printf'
-  assert_success 'Can use @go.printf'
-}
-
 @test "$SUITE: run sh script by sourcing" {
   echo '#!/bin/sh' >"$TEST_COMMAND_SCRIPT_PATH"
   echo '@go.printf "%s" "$*"' >>"$TEST_COMMAND_SCRIPT_PATH"

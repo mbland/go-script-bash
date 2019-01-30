@@ -131,9 +131,9 @@ _@go.modules_produce_listing() {
   done
   modules=("${modules[@]#$_GO_ROOTDIR/lib/}")
 
-  if [[ -n "$_GO_PLUGINS_DIR" ]]; then
+  if [[ "${#_GO_PLUGINS_DIRS[@]}" -gt 0 ]]; then
     local plugins_dir
-    for plugins_dir in "${_GO_PLUGINS_DIR[@]}"; do
+    for plugins_dir in "${_GO_PLUGINS_DIRS[@]}"; do
       modules=("${modules[@]#$plugins_dir/}")
     done
     modules=("${modules[@]/lib\//}")
