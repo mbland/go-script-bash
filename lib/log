@@ -549,7 +549,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 #     @go "$@"
 #   fi
 #
-# And your `$_GO_SCRIPTS_DIR/setup` script may include (assuming your own `test`
+# And your `$_GO_SCRIPTS_DIRS/setup` script may include (assuming your own `test`
 # script as well):
 #
 #   @go.critical_section_begin QUIT
@@ -568,7 +568,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 
   ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
   local scripts_dir
-  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
     setup_script="$scripts_dir/$1"
     if [[ -f "$setup_script" ]]; then
       break
@@ -578,7 +578,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 
   if [[ -z "$setup_script" ]]; then
     local scripts_dirs
-    IFS=* eval 'scripts_dirs="${_GO_SCRIPTS_DIR[*]}"'
+    IFS=* eval 'scripts_dirs="${_GO_SCRIPTS_DIRS[*]}"'
     scripts_dirs="${scripts_dirs//\*/ or }"
 
     @go.log FATAL "Before invoking $FUNCNAME, create '$1' in $scripts_dirs."

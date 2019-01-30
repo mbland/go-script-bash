@@ -17,7 +17,7 @@
 # scripts, a top-level `lib/` directory for its exported library modules, or
 # both.
 #
-# `_GO_ROOTDIR` and `_GO_SCRIPTS_DIR` are scoped to each installed plugin's
+# `_GO_ROOTDIR` and `_GO_SCRIPTS_DIRS` are scoped to each installed plugin's
 # top-level directory during both command script execution and library module
 # importation. This enables a plugin's code to refer to its own relative paths
 # and to give its own command scripts and library modules priority in these

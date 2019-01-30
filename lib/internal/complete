@@ -8,7 +8,7 @@ _@go.complete_top_level_commands() {
     printf 'help\n'
 
     local scripts_dir
-    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
       _@go.source_builtin 'commands' "$scripts_dir"
     done
   fi

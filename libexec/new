@@ -6,10 +6,10 @@
 #   To generate an arbitrary text file:
 #   {{go}} {{cmd}} --type <file_type> <file_path> <permissions> [lines...]
 #
-#   To generate a new command script in `_GO_SCRIPTS_DIR`:
+#   To generate a new command script in `_GO_SCRIPTS_DIRS`:
 #   {{go}} {{cmd}} --command <command_name> [--parent <parent_path>] [<subcommand_name>...]
 #
-#   To generate a new internal module in `_GO_SCRIPTS_DIR/lib`:
+#   To generate a new internal module in `_GO_SCRIPTS_DIRS/lib`:
 #   {{go}} {{cmd}} --internal <module_path> [--parent <parent_path>]
 #
 #   To generate a new public module in `_GO_ROOTDIR/lib`:
@@ -59,7 +59,7 @@ _@go.new_tab_completions() {
   --command)
     if [[ "$word_index" -eq '0' ]]; then
       local scripts_dir
-      for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+      for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
         _@go.source_builtin 'commands' "$scripts_dir"
       done
     else
@@ -70,7 +70,7 @@ _@go.new_tab_completions() {
     ;;
   --internal)
     if [[ "$word_index" -eq '0' ]]; then
-      paths+=("${_GO_SCRIPTS_DIR[@]/%//lib}")
+      paths+=("${_GO_SCRIPTS_DIRS[@]/%//lib}")
     fi
     ;;
   --public)
@@ -183,7 +183,7 @@ _@go.new_command_scripts() {
   local cmd_path
   local paths=("$@")
   local new_scripts=()
-  local parent_dir="${_GO_SCRIPTS_DIR[0]}"
+  local parent_dir="${_GO_SCRIPTS_DIRS[0]}"
   local is_last_cmd
   local i=0
 
@@ -202,14 +202,14 @@ _@go.new_command_scripts() {
 
   local found='false'
   local scripts_dir
-  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
     if [[ "$parent_dir" == "$scripts_dir" ]]; then
       found='true'
     fi
   done
 
   if [[ "$found" == 'false' ]]; then
-    printf "'$parent_dir' is not valid (not included in '_GO_SCRIPTS_DIR').\n"
+    printf "'$parent_dir' is not valid (not included in '_GO_SCRIPTS_DIRS').\n"
     return 1
   fi
 
@@ -236,7 +236,7 @@ _@go.new_command_scripts() {
 
 _@go.new_module() {
   local args=("$@")
-  local parent_dir="${_GO_SCRIPTS_DIR[0]}"
+  local parent_dir="${_GO_SCRIPTS_DIRS[0]}"
 
   if [[ "$#" -ge 3 && "$2" == '--parent' ]]; then
     parent_dir="$3"
@@ -255,7 +255,7 @@ _@go.new_module() {
 
   local found='false'
   local scripts_dir
-  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
     if [[ "$parent_dir" == "$scripts_dir" || "$parent_dir" == "$_GO_ROOTDIR" ]];
     then
       found='true'
@@ -263,7 +263,7 @@ _@go.new_module() {
   done
 
   if [[ "$found" == 'false' ]]; then
-    printf "'$parent_dir' is not valid (not included in '_GO_SCRIPTS_DIR').\n"
+    printf "'$parent_dir' is not valid (not included in '_GO_SCRIPTS_DIRS').\n"
     return 1
   fi
 
@@ -282,7 +282,7 @@ _@go.new_module() {
     module_type='public module'
   else
     local scripts_dir
-    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
       if [[ "${module_path%%/lib/*}" == "$scripts_dir" ]]; then
         module_type='internal module'
       fi

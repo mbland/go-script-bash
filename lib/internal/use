@@ -45,9 +45,9 @@
 #   - `_GO_INJECT_MODULE_PATH` for module stubs injected during testing;
 #     see `lib/testing/stubbing`
 #   - `_GO_CORE_DIR/lib/` for core library modules
-#   - `_GO_SCRIPTS_DIR/lib` for project-internal modules
+#   - `_GO_SCRIPTS_DIRS/lib` for project-internal modules
 #   - `_GO_ROOTDIR/lib` for publicly-exported modules (`./go` script plugins)
-#   - `_GO_SCRIPTS_DIR/plugins/*/lib` for installed plugin modules
+#   - `_GO_SCRIPTS_DIRS/plugins/*/lib` for installed plugin modules
 #   - Parent plugin dirs up to `_GO_PLUGINS_DIR/*/lib` for plugin modules
 #     installed in parent directories
 #
@@ -95,7 +95,7 @@ _@go.find_module() {
 
   if [[ ! -f "$__go_module_file" ]]; then
     local scripts_dir
-    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
       __go_module_file="$scripts_dir/lib/$__go_module_name"
 
       if [[ -f "$__go_module_file" ]]; then
@@ -122,9 +122,9 @@ _@go.find_module() {
 }
 
 _@go.import_module() {
-  if [[ "${__go_module_file#$_GO_SCRIPTS_DIR}" =~ /plugins/[^/]+/lib/ ]]; then
-    local _GO_SCRIPTS_DIR="${__go_module_file%/lib/*}/bin"
-    local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/bin}"
+  if [[ "${__go_module_file#$_GO_SCRIPTS_DIRS}" =~ /plugins/[^/]+/lib/ ]]; then
+    local _GO_SCRIPTS_DIRS="${__go_module_file%/lib/*}/bin"
+    local _GO_ROOTDIR="${_GO_SCRIPTS_DIRS%/bin}"
     local _GO_PLUGINS_PATHS=()
     local _GO_SEARCH_PATHS=()
   fi

@@ -410,7 +410,7 @@ assert_command_script_is_executable() {
 @test "$SUITE: --command fails if invalid dir specified with '--parent'" {
   path='does-not-exist'
   run "$TEST_GO_SCRIPT" new --command foo --parent "$path"
-  assert_failure "'$path' is not valid (not included in '_GO_SCRIPTS_DIR')."
+  assert_failure "'$path' is not valid (not included in '_GO_SCRIPTS_DIRS')."
 }
 
 @test "$SUITE: --command fails if script already exists" {
@@ -451,7 +451,7 @@ assert_command_script_is_executable() {
 @test "$SUITE: --internal fails if invalid dir specified with '--parent'" {
   path='does-not-exist'
   run "$TEST_GO_SCRIPT" new --internal foo --parent "$path"
-  assert_failure "'$path' is not valid (not included in '_GO_SCRIPTS_DIR')."
+  assert_failure "'$path' is not valid (not included in '_GO_SCRIPTS_DIRS')."
 }
 
 @test "$SUITE: --internal fails if extraneous arguments are given" {

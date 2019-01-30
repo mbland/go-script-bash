@@ -126,7 +126,7 @@ _@go.modules_produce_listing() {
   local modules=("${__go_modules[@]#$_GO_CORE_DIR/lib/}")
 
   local scripts_dir
-  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
     modules=("${modules[@]#$scripts_dir/lib/}")
   done
   modules=("${modules[@]#$_GO_ROOTDIR/lib/}")
@@ -195,7 +195,7 @@ _@go.modules_search() {
   __go_core_modules_end="${#__go_modules[@]}"
 
   local script_dir
-  for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
     _@go.modules_find_all_in_dir "$scripts_dir" "$glob"
   done
   __go_internal_modules_end="${#__go_modules[@]}"
@@ -355,7 +355,7 @@ _@go.modules_tab_completion() {
     _@go.modules_find_all_in_dir "$_GO_CORE_DIR" "$glob"
     local scripts_dir
     local plugins_dir
-    for scripts_dir in "${_GO_SCRIPTS_DIR[@]}"; do
+    for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
       _@go.modules_find_all_in_dir "$scripts_dir" "$glob"
     done
     _@go.modules_find_all_in_dir "$_GO_ROOTDIR" "$glob"

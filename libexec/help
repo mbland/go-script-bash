@@ -55,7 +55,7 @@
 # enforced.
 
 _@go.usage() {
-  local cmd_paths=("${_GO_SCRIPTS_DIR[@]}")
+  local cmd_paths=("${_GO_SCRIPTS_DIRS[@]}")
   local summaries
   local summaries_status=0
 
