@@ -51,8 +51,13 @@ _@go.find_commands() {
   for scripts_dir in "$@"; do
     scripts=()
 
+    # Together with the existence of a potential script, we are also excluding
+    # the './go' itself. This is relevant for the case a user has set
+    # '_GO_SCRIPTS_DIR' to '_GO_ROOTDIR'. In that case, the './go' script would
+    # end up being considered a command script.
     for script in "$scripts_dir"/*; do
-      if [[ -f "$script" && -x "$script" ]]; then
+      if [[ -f "$script" && -x "$script" &&
+        "$script" != "$_GO_ROOTDIR/$_GO_CMD" ]]; then
         scripts+=("$script")
       fi
     done
