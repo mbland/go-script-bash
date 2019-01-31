@@ -413,6 +413,15 @@ _@go.set_scripts_dir() {
       "directory" >&2
     return 1
   fi
+
+  # If '_GO_SCRIPTS_DIR' was set to '_GO_ROOTDIR', 'scripts_dir' would end up
+  # with a trailing space. This would cause issues later in the code where path
+  # comparison would fail as paths would result in double slashes before
+  # command script paths.
+  if [[ "${scripts_dir: -1}" == '/' ]]; then
+    scripts_dir="${scripts_dir%/}"
+  fi
+
   _GO_SCRIPTS_DIR="$scripts_dir"
 }
 
