@@ -6,7 +6,6 @@ create_aliases_test_command_script() {
   @go.create_test_go_script \
     'declare -a GO_ALIAS_CMDS_EXTRA=("nvim")' \
     'declare -a GO_ALIAS_EXPAND_CMDS=("test_echo")' \
-    'shopt -s expand_aliases' \
     'alias test_echo="echo -n test_string_19098e09818fad"' \
     "@go \$@"
 }

@@ -320,9 +320,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 
   if _@go.source_builtin 'aliases' --exists "$cmd"; then
     if [[ " ${GO_ALIAS_EXPAND_CMDS[*]} " == *" $cmd "* ]]; then
+      shopt -s expand_aliases
       local -a args
-      args="${@/#/\"}"
-      args="${@/%/\"}"
       eval "$cmd" "$@"
     else
       "$cmd" "$@"
