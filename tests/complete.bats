@@ -45,13 +45,13 @@ teardown() {
   assert_failure ''
 }
 
-@test "$SUITE: _GO_STANDALONE only completes 'help' and project scripts" {
+@test "$SUITE: _GO_STANDALONE only completes 'help' and custom scripts/plugins" {
   @go.create_test_command_script 'foo'
   @go.create_test_command_script 'bar'
   @go.create_test_command_script 'plugins/baz/bin/baz'
 
   _GO_STANDALONE='true' run "$TEST_GO_SCRIPT" complete 0
-  assert_success 'help' 'bar' 'foo'
+  assert_success 'help' 'bar' 'baz' 'foo'
 }
 
 @test "$SUITE: cd and pushd complete directories" {

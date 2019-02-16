@@ -6,7 +6,11 @@ _@go.complete_top_level_commands() {
     _@go.source_builtin 'commands'
   else
     printf 'help\n'
-    _@go.source_builtin 'commands' "$_GO_SCRIPTS_DIR"
+
+    local plugins_paths
+    printf -v plugins_paths '%s:' "${_GO_PLUGINS_PATHS[@]}"
+    plugins_paths="${plugins_paths%:}"
+    _@go.source_builtin 'commands' "$_GO_SCRIPTS_DIR:$plugins_paths"
   fi
 }
 
