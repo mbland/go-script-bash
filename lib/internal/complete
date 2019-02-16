@@ -7,10 +7,10 @@ _@go.complete_top_level_commands() {
   else
     printf 'help\n'
 
-    local scripts_dir
-    for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
-      _@go.source_builtin 'commands' "$scripts_dir"
-    done
+    local scripts_paths
+    printf -v scripts_paths '%s:' "${_GO_SCRIPTS_DIRS[@]}"
+    scripts_paths="${scripts_paths%:}"
+    _@go.source_builtin 'commands' "$scripts_paths"
   fi
 }
 
