@@ -187,7 +187,7 @@ __expect_assertion_success() {
     "#   \`failing_assertion' failed")
 
   if ! __check_expected_output "$output" "${expected_output[@]}"; then
-    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
+    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE\n" "${assertion%% *}" >&2
     return '1'
   fi
 }
@@ -230,7 +230,7 @@ __expect_assertion_failure() {
     "${@/#/# }")
 
   if ! __check_expected_output "$output" "${expected_output[@]}"; then
-    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE" "${assertion%% *}" >&2
+    printf "$ASSERTION_TEST_SCRIPT_FAILURE_MESSAGE\n" "${assertion%% *}" >&2
     return '1'
   fi
 }
@@ -271,7 +271,8 @@ __run_command_and_assertion_in_subshell() {
   __assertion_output="${__assertion_output%$'\n'}"
 
   if [[ "$__assertion_output" =~ write\ error:\ Bad\ file\ descriptor$ ]]; then
-    printf "'%s' tried to write to standard output instead of standard error" \
+    printf \
+      "'%s' tried to write to standard output instead of standard error\n" \
       "${assertion%% *}" >&2
     return 1
   elif [[ -z "$__assertion_status" ]]; then

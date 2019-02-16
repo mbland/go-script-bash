@@ -5,10 +5,21 @@
 # These functions make it easier to write Bats test cases that validate the
 # behavior of long-running processes such as servers:
 #
-#   @test '$SUITE: my-server should start successfully' {
+#   @test "$SUITE: my-server should start successfully" {
 #     skip_if_missing_background_utilities
 #     run_in_background 'my-server'
 #     wait_for_background_output 'my-server is now ready'
+#     stop_background_run
+#     assert_...
+#   }
+#
+#   @test "$SUITE: my-test-script should start successfully" {
+#     skip_if_missing_background_utilities
+#     run_in_test_script_in_background 'my-test-script' \
+#       'sleep 1' \
+#       'echo "Hello, World!"' \
+#       'sleep 10'
+#     wait_for_background_output 'Hello, World!'
 #     stop_background_run
 #     assert_...
 #   }
@@ -64,7 +75,18 @@ run_in_background() {
   export BATS_BACKGROUND_RUN_OUTPUT
   BATS_BACKGROUND_RUN_OUTPUT="$BATS_TEST_ROOTDIR/background-run-output.txt"
   printf '' >"$BATS_BACKGROUND_RUN_OUTPUT"
-  "$@" >"$BATS_BACKGROUND_RUN_OUTPUT" 2>&1 &
+
+  # Bats duplicates standard output as file descriptor 3 so that output from its
+  # framework functions isn't captured along with any output from the code under
+  # test. If the code under test contains a `sleep` or other blocking operation,
+  # this file descriptor will be held open until the process becomes unblocked,
+  # preventing Bats from exiting. Hence, we explicitly close file descriptor 3.
+  #
+  # Any other code running under Bats that opens a background process should
+  # close this file descriptor as well. See:
+  #   - https://github.com/sstephenson/bats/issues/80
+  #   - https://github.com/mbland/go-script-bash/issues/226
+  "$@" >"$BATS_BACKGROUND_RUN_OUTPUT" 2>&1 3>&- &
   export BATS_BACKGROUND_RUN_PID="$!"
   restore_bats_shell_options
 }

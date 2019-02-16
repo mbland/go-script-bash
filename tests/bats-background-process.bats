@@ -63,9 +63,9 @@ kill_background_test_script() {
   assert_success
   fail_if output_matches 'Did not skip'
 
-  local skip_msg='ok 1 # skip (pkill, sleep, tail not installed on the system)'
   local test_case_name='skip_if_missing_background_utilities'
-  assert_lines_equal '1..1' "$skip_msg $test_case_name"
+  local skip_msg='skip pkill, sleep, tail not installed on the system'
+  assert_lines_equal '1..1' "ok 1 $test_case_name # $skip_msg"
 }
 
 @test "$SUITE: run{,_test_script}_in_background launches background process" {
@@ -162,4 +162,28 @@ kill_background_test_script() {
   wait_for_background_output "$BACKGROUND_MESSAGE"
   stop_background_run 'HUP'
   assert_status "$((128 + $(kill -l HUP)))"
+}
+
+@test "$SUITE: bash -c command passes under run_in_background" {
+  skip_if_missing_background_utilities
+  mkdir "$BATS_TEST_ROOTDIR"
+
+  run_in_background bash -c 'echo "Oh hai, Mark."; sleep 60'
+  run wait_for_background_output 'Oh hai, Mark.' '0.25'
+  assert_success
+}
+
+@test "$SUITE: bash -c command fails under run_in_background without hanging" {
+  skip_if_missing_background_utilities
+  mkdir "$BATS_TEST_ROOTDIR"
+
+  run_in_background bash -c 'echo "Oh hai, Mark."; sleep 60'
+  run wait_for_background_output 'I did not do it! I did not!' '0.25'
+  assert_failure \
+    'Output did not match regular expression:' \
+    "  'I did not do it! I did not!'" \
+    '' \
+    'OUTPUT:' \
+    '------' \
+    'Oh hai, Mark.'
 }

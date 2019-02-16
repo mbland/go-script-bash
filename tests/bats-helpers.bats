@@ -167,7 +167,7 @@ __check_dirs_exist() {
   run "$BATS_TEST_ROOTDIR/test.bats"
   assert_success
   assert_lines_equal '1..1' \
-    'ok 1 # skip (foo, bar, baz not installed on the system) skip if missing'
+    'ok 1 skip if missing # skip foo, bar, baz not installed on the system'
 }
 
 @test "$SUITE: skip_if_none_present_on_system" {
@@ -193,9 +193,9 @@ __check_dirs_exist() {
     'None of foo, bar, or baz are installed on the system')
   assert_lines_equal '1..4' \
     'ok 1 should not skip if at least one present' \
-    "ok 2 # skip (${expected_messages[0]}) single program missing" \
-    "ok 3 # skip (${expected_messages[1]}) two programs missing" \
-    "ok 4 # skip (${expected_messages[2]}) three programs missing"
+    "ok 2 single program missing # skip ${expected_messages[0]}" \
+    "ok 3 two programs missing # skip ${expected_messages[1]}" \
+    "ok 4 three programs missing # skip ${expected_messages[2]}"
 }
 
 @test "$SUITE: test_join fails if result variable name is invalid" {
@@ -249,9 +249,9 @@ __check_dirs_exist() {
   TEST_FILTER='b[a-z]r' run bats "$test_file"
   assert_success
   assert_lines_equal '1..3' \
-    'ok 1 # skip foo' \
+    'ok 1 foo # skip' \
     'ok 2 bar' \
-    'ok 3 # skip baz'
+    'ok 3 baz # skip'
 }
 
 @test "$SUITE: split_bats_output_into_lines" {
@@ -473,7 +473,7 @@ __check_dirs_exist() {
     '  skip "just because"' \
     '  [[ $((2 + 2)) -eq 5 ]] || return 1' \
     '}'
-  assert_success '1..1' 'ok 1 # skip (just because) should skip'
+  assert_success '1..1' 'ok 1 should skip # skip just because'
 }
 
 @test "$SUITE: run_bats_test_suite runs a test suite with failures" {
@@ -494,7 +494,7 @@ __check_dirs_exist() {
     '  skip_if_system_missing cp rm mkdir' \
     '}'
   assert_success '1..1' \
-    'ok 1 # skip (cp, mkdir not installed on the system) should skip'
+    'ok 1 should skip # skip cp, mkdir not installed on the system'
 }
 
 @test "$SUITE: run_bats_test_suite_in_isolation can access forwarding scripts" {
