@@ -22,7 +22,17 @@
 # Note that "cd" and "pushd" are only available after you've used "{{go}} env"
 # to set up your shell environment.
 
-declare -r _GO_ALIAS_CMDS=('awk' 'cat' 'cd' 'find' 'grep' 'ls' 'pushd' 'sed')
+declare _GO_ALIAS_CMDS=('awk' 'cat' 'cd' 'find' 'grep' 'ls' 'pushd' 'sed')
+
+if [[ "${GO_ALIAS_CMDS_EXTRA[*]}" != '' ]]; then
+  _GO_ALIAS_CMDS+=( "${GO_ALIAS_CMDS_EXTRA[@]}" )
+fi
+
+if [[ "${GO_ALIAS_EXPAND_CMDS[*]}" != '' ]]; then
+  _GO_ALIAS_CMDS+=( "${GO_ALIAS_EXPAND_CMDS[@]}" )
+fi
+
+readonly _GO_ALIAS_CMDS
 
 _@go.aliases() {
   local c
