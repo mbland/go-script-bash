@@ -322,7 +322,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     if [[ " ${GO_ALIAS_EXPAND_CMDS[*]} " == *" $cmd "* ]]; then
       shopt -s expand_aliases
       local -a args
-      eval "$cmd ${@/ /\\\ }"
+      eval "$cmd ${@// /\\\ }"
     else
       "$cmd" "$@"
     fi
