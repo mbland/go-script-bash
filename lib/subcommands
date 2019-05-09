@@ -31,6 +31,6 @@
   fi
 
   @go.printf 'Available subcommands of "%s" are:\n\n' "$cmd_name" >&"$out_fd"
-  @go 'commands' '--summaries' "$_GO_CMD_NAME" >&"$out_fd"
+  @go 'commands' '--summaries' $cmd_name >&"$out_fd"
   return "$result"
 }
