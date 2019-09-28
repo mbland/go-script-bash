@@ -53,6 +53,17 @@
 # values, to keep the text in sync automatically. It's good practice to parse
 # tokens within `{{` and `}}` as is common with templating engines, but it's not
 # enforced.
+#
+# An alternative way to perform token replacement (for Bash version >= 4) is to
+# use the _GO_HELP_TOKENS associative array. The index of an item is the token
+# to be searched and replaced and the value of the item is the replacement
+# value. For instance:
+#
+#   declare -A _GO_HELP_TOKENS=([project_dir]=~/Projects/my-project)
+#
+# will replace 'project_dir' in the help text with '~/Projects/my-project'. By
+# default, this array is empty and you will have to declare it and add tokens to
+# it.
 
 _@go.usage() {
   local cmd_paths=("$_GO_SCRIPTS_DIR")
@@ -116,14 +127,22 @@ _@go.help_message_for_command() {
 
   local filter_pattern='# [Hh]elp [Ff]ilter['$'\n\r'']'
 
-  if [[ "$(< "$__go_cmd_path")" =~ $filter_pattern ]]; then
+  if [[ "$(<"$__go_cmd_path")" =~ $filter_pattern ]]; then
     __go_cmd_desc="$(_@go.run_command_script "$__go_cmd_path" --help-filter \
       "$__go_cmd_desc")"
   fi
 
+  if [[ "$(declare -p _GO_HELP_TOKENS 2>/dev/null || :)" =~ declare\ -A ]]; then
+    for token in "${!_GO_HELP_TOKENS[@]}"; do
+      __go_cmd_desc="${__go_cmd_desc//{{$token\}\}/${_GO_HELP_TOKENS[$token]}}"
+    done
+  fi
+
   if [[ -d "${__go_cmd_path}.d" ]]; then
-    __go_cmd_desc+="$(printf '\nSubcommands:\n\n'; \
-      _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d")"
+    __go_cmd_desc+="$(
+      printf '\nSubcommands:\n\n'
+      _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d"
+    )"
   fi
   @go.printf "$_GO_CMD $cmd_name - $__go_cmd_desc\n"
 }
