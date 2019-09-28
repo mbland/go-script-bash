@@ -11,6 +11,29 @@ teardown() {
   @go.remove_test_go_rootdir
 }
 
+@test "$SUITE: do not hijack -h/--help by default" {
+  @go.create_test_command_script 'foo' '# Does foo stuff' 'echo foo'
+  run "$TEST_GO_SCRIPT" foo -h
+
+  assert_success
+  assert_output_matches 'foo'
+}
+
+@test "$SUITE: hijack -h/--help when _GO_HELP_HIJACK is enabled" {
+  @go.create_test_command_script 'foo' '# Does foo stuff' 'echo foo'
+
+  export _GO_HELP_HIJACK=true
+  run "$TEST_GO_SCRIPT" foo -h
+
+  assert_success
+  assert_output_matches 'Does foo stuff'
+
+  run "$TEST_GO_SCRIPT" foo --help
+
+  assert_success
+  assert_output_matches 'Does foo stuff'
+}
+
 @test "$SUITE: tab completion" {
   local subcommands=('plugh' 'quux' 'xyzzy')
   @go.create_parent_and_subcommands foo "${subcommands[@]}"

@@ -44,6 +44,7 @@ quotify_expected() {
     "declare -rx _GO_CORE_URL=\"$_GO_CORE_URL\""
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
+    'declare -- _GO_HELP_HIJACK="false"'
     'declare -a _GO_IMPORTED_MODULES=()'
     'declare -a _GO_IMPORTED_MODULE_CALLERS=()'
     'declare -a _GO_IMPORTED_MODULE_FILES=()'
@@ -118,6 +119,7 @@ quotify_expected() {
     "declare -rx _GO_CORE_URL=\"$_GO_CORE_URL\""
     "declare -rx _GO_CORE_VERSION=\"$_GO_CORE_VERSION\""
     "declare -x _GO_COVERALLS_URL=\"$_GO_COVERALLS_URL\""
+    'declare -- _GO_HELP_HIJACK="false"'
     "declare -a _GO_IMPORTED_MODULES=(${expected_modules[*]})"
     "declare -a _GO_IMPORTED_MODULE_CALLERS=(${expected_module_callers[*]})"
     "declare -a _GO_IMPORTED_MODULE_FILES=(${expected_module_files[*]})"
