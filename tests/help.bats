@@ -168,6 +168,36 @@ teardown() {
   assert_success "${expected[@]}"
 }
 
+@test "$SUITE: replace help tokens using _GO_HELP_TOKENS" {
+  if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+    skip
+  fi
+
+  local cmd_script=(
+    '#'
+    '# Does foo stuff'
+    '#'
+    '# Usage: {{go}} {{cmd}} <{{FOO_VALID_ARGS}}>'
+    ''
+    'declare -r FOO_VALID_ARGS=("bar" "baz" "quux")'
+    ''
+  )
+  @go.create_test_command_script 'foo' "${cmd_script[@]}"
+
+  @go.create_test_go_script \
+    "declare -gA _GO_HELP_TOKENS=(['FOO_VALID_ARGS']='bar|baz|quux')" \
+    '@go "$@"'
+
+
+  run "$TEST_GO_SCRIPT" help foo
+
+  local expected=(
+    "$TEST_GO_SCRIPT foo - Does foo stuff"
+    ''
+    "Usage: $TEST_GO_SCRIPT foo <bar|baz|quux>")
+  assert_success "${expected[@]}"
+}
+
 @test "$SUITE: add subcommand summaries" {
   local cmd_template=$'# Does {{CMD}} stuff\n'
   cmd_template+=$'#\n'
