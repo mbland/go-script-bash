@@ -26,8 +26,7 @@
 #           https://mike-bland.com/
 #           https://github.com/mbland
 
-if [[ "${BASH_VERSINFO[0]}" -lt '3' ||
-    ( "${BASH_VERSINFO[0]}" -eq '3' && "${BASH_VERSINFO[1]}" -lt '2' ) ]]; then
+if [[ "${BASH_VERSINFO[0]}" -lt '3' || ("${BASH_VERSINFO[0]}" -eq '3' && "${BASH_VERSINFO[1]}" -lt '2') ]]; then
   printf "This module requires bash version 3.2 or greater:\n  %s %s\n" \
     "$BASH" "$BASH_VERSION"
   exit 1
@@ -222,8 +221,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     skip_callers=0
   fi
 
-  for ((i=$skip_callers + 1; i != ${#FUNCNAME[@]}; ++i)); do
-    printf '  %s:%s %s\n' "${BASH_SOURCE[$i]}" "${BASH_LINENO[$((i-1))]}" \
+  for ((i = $skip_callers + 1; i != ${#FUNCNAME[@]}; ++i)); do
+    printf '  %s:%s %s\n' "${BASH_SOURCE[$i]}" "${BASH_LINENO[$((i - 1))]}" \
       "${FUNCNAME[$i]}"
   done
   return "$result"
@@ -283,39 +282,53 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 #   $1: name of the command to invoke
 #   $2..$#: arguments to the specified command
 @go() {
-  local cmd="$1"
-  shift
+  # Flag to enable/disable hijacking of the '-h' or '--help' options and print
+  # the help for the command given.
+  declare _GO_HELP_HIJACK="${_GO_HELP_HIJACK:-false}"
+
+  if [[ "$_GO_HELP_HIJACK" == 'true' ]] \
+    && [[ " $* " == *' -h '* || " $* " == *' --help '* || " $* " == *' -help '* ]]; then
+    cmd='help'
+    if [[ "${1-}" == @(-h|-help|--help) && "$#" -gt 0 ]]; then
+      shift
+    fi
+  else
+    local cmd="${1-}"
+    if [[ "$#" -gt 0 ]]; then
+      shift
+    fi
+  fi
 
   case "$cmd" in
-  '')
-    _@go.source_builtin 'help' 1>&2
-    return 1
-    ;;
-  -h|-help|--help)
-    cmd='help'
-    ;;
-  -*)
-    @go.printf "Unknown flag: $cmd\n\n"
-    _@go.source_builtin 'help' 1>&2
-    return 1
-    ;;
-  edit)
-    if [[ -z "$EDITOR" ]]; then
-      echo "Cannot edit $@: \$EDITOR not defined."
+    '')
+      _@go.source_builtin 'help' 1>&2
       return 1
-    fi
-    "$EDITOR" "$@"
-    return
-    ;;
-  run)
-    "$@"
-    return
-    ;;
-  cd|pushd|unenv)
-    @go.printf "$cmd is only available after using \"$_GO_CMD env\" %s\n" \
-      "to set up your shell environment." >&2
-    return 1
-    ;;
+      ;;
+    -h | -help | --help)
+      cmd='help'
+      ;;
+    -*)
+      @go.printf "Unknown flag: $cmd\n\n"
+      _@go.source_builtin 'help' 1>&2
+      return 1
+      ;;
+    edit)
+      if [[ -z "$EDITOR" ]]; then
+        echo "Cannot edit $@: \$EDITOR not defined."
+        return 1
+      fi
+      "$EDITOR" "$@"
+      return
+      ;;
+    run)
+      "$@"
+      return
+      ;;
+    cd | pushd | unenv)
+      @go.printf "$cmd is only available after using \"$_GO_CMD env\" %s\n" \
+        "to set up your shell environment." >&2
+      return 1
+      ;;
   esac
 
   if _@go.source_builtin 'aliases' --exists "$cmd"; then
@@ -360,7 +373,7 @@ _@go.run_command_script() {
   shift
 
   local interpreter
-  read -r interpreter < "$cmd_path"
+  read -r interpreter <"$cmd_path"
 
   if [[ "${interpreter:0:2}" != '#!' ]]; then
     @go.printf \
@@ -422,8 +435,8 @@ elif [[ -z "$COLUMNS" ]]; then
   # On Travis, $TERM is set to 'dumb', but `tput cols` still fails.
   if command -v tput >/dev/null && tput cols >/dev/null 2>&1; then
     COLUMNS="$(tput cols)"
-  elif command -v mode.com >/dev/null &&
-    [[ "$(mode.com 'con')" =~ Columns:\ +([0-9]+) ]]; then
+  elif command -v mode.com >/dev/null \
+    && [[ "$(mode.com 'con')" =~ Columns:\ +([0-9]+) ]]; then
     COLUMNS="${BASH_REMATCH[1]}"
   fi
   export COLUMNS="${COLUMNS:-80}"
