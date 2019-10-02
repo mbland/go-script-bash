@@ -140,6 +140,25 @@ teardown() {
   assert_failure ''
 }
 
+@test "$SUITE: change tab completion patter" {
+  @go.create_test_go_script \
+    'GO_TAB_COMPLETIONS_PATTERN="# New tab completions pattern"' \
+    '@go "$@"'
+
+  @go.create_test_command_script foo \
+    'if [[ "$1" == "--complete" ]]; then ' \
+    '  # New tab completions pattern' \
+    '  echo "bar" "baz" "quux"' \
+    'fi'
+
+  run "$TEST_GO_SCRIPT" complete 0 foo
+  assert_success 'foo '
+
+  local expected=('bar' 'baz' 'quux')
+  run "$TEST_GO_SCRIPT" complete 1 foo ''
+  assert_success "${expected[@]}"
+}
+
 @test "$SUITE: command script completion not detected without comment" {
   @go.create_test_command_script foo \
     'if [[ "$1" == "--complete" ]]; then ' \
