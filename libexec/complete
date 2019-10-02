@@ -36,6 +36,9 @@
 # scripts, your script must contain a `# Tab completions` comment and respond to
 # the `--complete` command line interface described above.
 #
+# - You can change the `# Tab completions` hint to a different pattern using the
+# GO_TAB_COMPLETIONS_PATTERN variable.
+#
 # - The argument list must/will always contain at least one element, even if
 # it is the empty string, which represents the user completing an argument
 # without typing anything first. Take this into account when implementing
@@ -51,7 +54,14 @@ _@go.complete_command() {
   local __go_complete_word_index
   local __go_cmd_path
   local __go_argv
-  local tab_completions_pattern='# [Tt]ab [Cc]ompletions['$'\n\r'']'
+  local tab_completions_pattern
+
+  local default_pattern='# [Tt]ab [Cc]ompletions['$'\n\r'']'
+  if [[ "${GO_TAB_COMPLETIONS_PATTERN-__undefined__}" == '__undefined__' ]]; then
+    tab_completions_pattern="$default_pattern"
+  else
+    tab_completions_pattern="$GO_TAB_COMPLETIONS_PATTERN"
+  fi
 
   . "$_GO_CORE_DIR/lib/internal/complete"
   exec 2>/dev/null
