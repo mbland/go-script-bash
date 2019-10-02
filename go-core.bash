@@ -344,8 +344,8 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 
   local script_dir
   for script_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
-    if [[ "${__go_cmd_path#$script_dir}" =~ /plugins/[^/]+/bin/ ]]; then
-      _@go.run_plugin_command_script "$__go_cmd_path" "${__go_argv[@]}"
+    if [[ "${__go_cmd_path[0]#$script_dir}" =~ /plugins/[^/]+/bin/ ]]; then
+      _@go.run_plugin_command_script "${__go_cmd_path[0]}" "${__go_argv[@]}"
       return
     fi
   done
@@ -360,13 +360,13 @@ _@go.source_builtin() {
 }
 
 _@go.run_plugin_command_script() {
-  local _GO_SCRIPTS_DIRS="${__go_cmd_path%/bin/*}/bin"
+  local _GO_SCRIPTS_DIRS="${__go_cmd_path[0]%/bin/*}/bin"
   local _GO_ROOTDIR="${_GO_SCRIPTS_DIRS%/*}"
   local _GO_PLUGINS_PATHS=()
   local _GO_SEARCH_PATHS=()
 
   _@go.set_search_paths
-  _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
+  _@go.run_command_script "${__go_cmd_path[0]}" "${__go_argv[@]}"
 }
 
 _@go.run_command_script() {
