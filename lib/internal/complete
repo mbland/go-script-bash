@@ -39,21 +39,23 @@ _@go.complete_command_path() {
   elif ! _@go.set_command_path_and_argv "$@"; then
     return 1
   fi
-  (( __go_complete_word_index -= ($# - ${#__go_argv[@]}) ))
+  ((__go_complete_word_index -= ($# - ${#__go_argv[@]})))
 
   if [[ "$__go_complete_word_index" -lt '0' ]]; then
     # This (sub)command itself is the completion target.
-    echo "${__go_cmd_path##*/}"
+    echo "${__go_cmd_path[*]##*/}"
     return 1
 
   elif [[ "$__go_complete_word_index" -eq '0' ]]; then
     # Complete subcommand scripts.
     local c
     local subcommands=()
-    for c in "${__go_cmd_path}.d"/*; do
-      if [[ -f "$c" && -x "$c" ]]; then
-        subcommands+=("${c##*/}")
-      fi
+    for path in "${__go_cmd_path[@]}"; do
+      for c in "$path.d"/*; do
+        if [[ -f "$c" && -x "$c" ]]; then
+          subcommands+=("${c##*/}")
+        fi
+      done
     done
     echo "${subcommands[@]}"
   fi

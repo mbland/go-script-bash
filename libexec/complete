@@ -56,8 +56,8 @@ _@go.complete_command() {
   . "$_GO_CORE_DIR/lib/internal/complete"
   exec 2>/dev/null
 
-  if _@go.complete_command_path "$@" &&
-    [[ "$(< "$__go_cmd_path")" =~ $tab_completions_pattern ]]; then
+  if _@go.complete_command_path "$@" \
+    && [[ "$(<"${__go_cmd_path[0]}")" =~ $tab_completions_pattern ]]; then
     _@go.run_command_script "$__go_cmd_path" --complete \
       "$__go_complete_word_index" "${__go_argv[@]}"
   fi

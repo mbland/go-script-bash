@@ -100,7 +100,7 @@ _@go.commands_parse_argv() {
     if ! _@go.set_command_path_and_argv "$@"; then
       return 1
     fi
-    __go_commands_search_paths=("${__go_cmd_path}.d")
+    __go_commands_search_paths=("${__go_cmd_path[@]/%/.d}")
   fi
 }
 

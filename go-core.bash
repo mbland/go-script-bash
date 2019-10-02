@@ -350,7 +350,7 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     fi
   done
 
-  _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
+  _@go.run_command_script "${__go_cmd_path[0]}" "${__go_argv[@]}"
 }
 
 _@go.source_builtin() {

@@ -73,7 +73,7 @@ teardown() {
   mkdir "$TEST_GO_SCRIPTS_DIR/foobar"
   run "$TEST_GO_SCRIPT" 'foobar'
   assert_failure
-  assert_line_equals 0 "$TEST_GO_SCRIPTS_DIR/foobar is not an executable script"
+  assert_line_equals 0 "Unknown command: foobar"
 }
 
 @test "$SUITE: error if top-level command script is not executable" {
@@ -81,7 +81,7 @@ teardown() {
   chmod 600 "$TEST_GO_SCRIPTS_DIR/foobar"
   run "$TEST_GO_SCRIPT" 'foobar'
   assert_failure
-  assert_line_equals 0 "$TEST_GO_SCRIPTS_DIR/foobar is not an executable script"
+  assert_line_equals 0 "Unknown command: foobar"
 }
 
 @test "$SUITE: find subcommand" {
@@ -101,27 +101,31 @@ teardown() {
   assert_line_equals 2 'ARGV: quux'
 }
 
-@test "$SUITE: error if subcommand name is a directory" {
-  local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
-  echo '#!' > "$cmd_path"
-  chmod 700 "$cmd_path"
-  mkdir -p "${cmd_path}.d/baz"
+@test "$SUITE: merge commands from different script dirs" {
+  create_bats_test_script scripts/foobar 'echo foobar'
+  create_bats_test_script scripts/foobar.d/baz 'echo baz'
+  create_bats_test_script scripts/foobar.d/quux 'echo quux'
+  create_bats_test_script scripts-2/foobar 'echo foobar'
+  create_bats_test_script scripts-2/foobar.d/baz 'echo baz2'
+  create_bats_test_script scripts-2/foobar.d/aaa 'echo aaa'
 
-  run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
-  assert_failure
-  assert_line_equals 0 "${cmd_path}.d/baz is not an executable script"
-}
+  create_bats_test_script 'go' \
+    ". '$_GO_CORE_DIR/go-core.bash' 'scripts' 'scripts-2'" \
+    '@go "$@"'
 
-@test "$SUITE: error if subcommand script is not executable" {
-  local cmd_path="$TEST_GO_SCRIPTS_DIR/foobar"
-  echo '#!' > "$cmd_path"
-  chmod 700 "$cmd_path"
+  run "$TEST_GO_SCRIPT" 'foobar'
+  assert_success
+  assert_output_matches foobar
 
-  mkdir "${cmd_path}.d"
-  touch "${cmd_path}.d/baz"
-  chmod 600 "${cmd_path}.d/baz"
+  run "$TEST_GO_SCRIPT" 'foobar' 'baz'
+  assert_success
+  assert_output_matches baz
 
-  run "$TEST_GO_SCRIPT" 'foobar' 'baz' 'quux'
-  assert_failure
-  assert_line_equals 0 "${cmd_path}.d/baz is not an executable script"
+  run "$TEST_GO_SCRIPT" 'foobar' 'quux'
+  assert_success
+  assert_output_matches quux
+
+  run "$TEST_GO_SCRIPT" 'foobar' 'aaa'
+  assert_success
+  assert_output_matches aaa
 }

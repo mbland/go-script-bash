@@ -5,6 +5,11 @@ _@go.set_search_paths_add_plugin_paths() {
   local plugin_path
 
   if [[ "${plugin_paths[0]}" != "$1/*/bin" ]]; then
+    # If more plugins are located under "$1" (ie there are folder under "$1"
+    # that have a 'bin' folder inside), then the star expansion will fail and
+    # `*/bin` will be treated as a string. If that does not happen then there
+    # are plugins under "$1".
+
     # Ensure a plugin's _GO_SCRIPTS_DIRS isn't duplicated in _GO_PLUGINS_PATHS.
     for plugin_path in "${plugin_paths[@]}"; do
       local included_path
