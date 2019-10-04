@@ -6,18 +6,24 @@ load "$_GO_CORE_DIR/lib/testing/stubbing"
 
 BUILTIN_MODULE_FILE="$_GO_CORE_DIR/lib/builtin-test"
 PLUGIN_MODULE_FILE="$TEST_GO_PLUGINS_DIR/test-plugin/lib/plugin-test"
+PLUGIN_MODULE_FILE_2="$TEST_GO_ROOTDIR/scripts-2/plugins/test-plugin-2/lib/plugin-test-2"
 EXPORT_MODULE_FILE="$TEST_GO_ROOTDIR/lib/export-test"
 INTERNAL_MODULE_FILE="$TEST_GO_SCRIPTS_DIR/lib/internal-test"
+INTERNAL_MODULE_FILE_2="$TEST_GO_ROOTDIR/scripts-2/lib/internal-test-2"
 
 TEST_MODULES=(
   "$BUILTIN_MODULE_FILE"
   "$PLUGIN_MODULE_FILE"
+  "$PLUGIN_MODULE_FILE_2"
   "$EXPORT_MODULE_FILE"
-  "$INTERNAL_MODULE_FILE")
+  "$INTERNAL_MODULE_FILE"
+  "$INTERNAL_MODULE_FILE_2")
 
 IMPORTS=(
   'test-plugin/plugin-test'
+  'test-plugin-2/plugin-test-2'
   'internal-test'
+  'internal-test-2'
   'builtin-test'
   'export-test')
 
@@ -25,14 +31,22 @@ CALLER="$TEST_GO_SCRIPT:3 main"
 
 EXPECTED=(
   'plugin-test loaded'
+  'plugin-test-2 loaded'
   'internal-test loaded'
+  'internal-test-2 loaded'
   'builtin-test loaded'
   'export-test loaded'
   'module: test-plugin/plugin-test'
   "source: $PLUGIN_MODULE_FILE"
   "caller: $CALLER"
+  'module: test-plugin-2/plugin-test-2'
+  "source: $PLUGIN_MODULE_FILE_2"
+  "caller: $CALLER"
   'module: internal-test'
   "source: $INTERNAL_MODULE_FILE"
+  "caller: $CALLER"
+  'module: internal-test-2'
+  "source: $INTERNAL_MODULE_FILE_2"
   "caller: $CALLER"
   'module: builtin-test'
   "source: $BUILTIN_MODULE_FILE"
@@ -164,13 +178,15 @@ do_setup() {
 
 @test "$SUITE: error if module contains errors" {
   # These correspond to the 'internal-test' module.
-  local module="${IMPORTS[1]}"
-  local module_file="${TEST_MODULES[3]}"
+  local module="${IMPORTS[2]}"
+  local module_file="${TEST_MODULES[4]}"
 
   echo "This is a totally broken module." > "$module_file"
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
 
-  local expected=("${IMPORTS[0]##*/} loaded"
+  local expected=(
+    "${IMPORTS[0]##*/} loaded"
+    "${IMPORTS[1]##*/} loaded"
     "$module_file: line 1: This: command not found"
     "ERROR: Failed to import $module module from $module_file at:"
     "$GO_USE_MODULES_STACK_ITEM"
@@ -180,15 +196,17 @@ do_setup() {
 
 @test "$SUITE: error if module returns an error" {
   # These correspond to the 'internal-test' module.
-  local module="${IMPORTS[1]}"
-  local module_file="${TEST_MODULES[3]}"
+  local module="${IMPORTS[2]}"
+  local module_file="${TEST_MODULES[4]}"
   local error_message='These violent delights have violent ends...'
 
   echo "echo '$error_message' >&2" > "$module_file"
   echo "return 1" >> "$module_file"
   run "$TEST_GO_SCRIPT" "${IMPORTS[@]}"
 
-  local expected=("${IMPORTS[0]##*/} loaded"
+  local expected=(
+    "${IMPORTS[0]##*/} loaded"
+    "${IMPORTS[1]##*/} loaded"
     "$error_message"
     "ERROR: Failed to import $module module from $module_file at:"
     "$GO_USE_MODULES_STACK_ITEM"

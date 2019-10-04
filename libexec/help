@@ -55,7 +55,7 @@
 # enforced.
 
 _@go.usage() {
-  local cmd_paths=("$_GO_SCRIPTS_DIR")
+  local cmd_paths=("${_GO_SCRIPTS_DIRS[@]}")
   local summaries
   local summaries_status=0
 
@@ -100,7 +100,9 @@ _@go.help_message_for_command() {
     return 1
   fi
 
-  local cmd_name="${__go_cmd_path//.d\// }"
+  __go_cmd_path="${__go_cmd_path[0]}"
+
+  local cmd_name="${__go_cmd_path[0]//.d\// }"
   cmd_name="${cmd_name##*/}"
 
   . "$_GO_CORE_DIR/lib/internal/command_descriptions"
@@ -116,14 +118,16 @@ _@go.help_message_for_command() {
 
   local filter_pattern='# [Hh]elp [Ff]ilter['$'\n\r'']'
 
-  if [[ "$(< "$__go_cmd_path")" =~ $filter_pattern ]]; then
+  if [[ "$(<"$__go_cmd_path")" =~ $filter_pattern ]]; then
     __go_cmd_desc="$(_@go.run_command_script "$__go_cmd_path" --help-filter \
       "$__go_cmd_desc")"
   fi
 
   if [[ -d "${__go_cmd_path}.d" ]]; then
-    __go_cmd_desc+="$(printf '\nSubcommands:\n\n'; \
-      _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d")"
+    __go_cmd_desc+="$(
+      printf '\nSubcommands:\n\n'
+      _@go.source_builtin 'commands' --summaries "${__go_cmd_path}.d"
+    )"
   fi
   @go.printf "$_GO_CMD $cmd_name - $__go_cmd_desc\n"
 }

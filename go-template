@@ -7,7 +7,7 @@
 #
 # This template automatically checks for the presence of the go-script-bash
 # sources and downloads the go-script-bash repository contents if necessary
-# before dispatching commands. (If you prefer, you can change the logic to 
+# before dispatching commands. (If you prefer, you can change the logic to
 # create a shallow or regular clone instead.) This allows users to set up the
 # framework without taking any extra steps when running the command for the
 # first time, without the need to commit the framework to your repository.
@@ -19,7 +19,7 @@
 # Make sure the variables within this script are configured as necessary for
 # your program. You can add any other initialization or configuration between:
 #
-#   . "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "$GO_SCRIPTS_DIR"`
+#   . "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "${GO_SCRIPTS_DIR[@]}"`
 #   `@go "$@"`
 
 # Set to 'true' if your script is a standalone program, i.e. not bound to
@@ -30,15 +30,15 @@ export _GO_STANDALONE=
 # The path where your command scripts reside
 #
 # For `_GO_STANDALONE` programs and plugins containing command scripts, you may
-# wish to set GO_SCRIPTS_DIR to `bin` and have a separate `./go` script to
+# wish to set GO_SCRIPTS_DIRS to `bin` and have a separate `./go` script to
 # manage project tasks that finds its command scripts in `scripts`.
-declare GO_SCRIPTS_DIR="${GO_SCRIPTS_DIR:-scripts}"
+declare GO_SCRIPTS_DIR=("${GO_SCRIPTS_DIRS[@]-scripts}")
 
 # The `GO_SCRIPT_BASH_REPO_URL` tag or branch you wish to use
 declare GO_SCRIPT_BASH_VERSION="${GO_SCRIPT_BASH_VERSION:-v1.7.0}"
 
 # The go-script-bash installation directory within your project
-declare GO_SCRIPT_BASH_CORE_DIR="${GO_SCRIPT_BASH_CORE_DIR:-${0%/*}/$GO_SCRIPTS_DIR/go-script-bash}"
+declare GO_SCRIPT_BASH_CORE_DIR="${GO_SCRIPT_BASH_CORE_DIR:-${0%/*}/${GO_SCRIPTS_DIR[0]}/go-script-bash}"
 
 # The URL of the go-script-bash framework sources
 declare GO_SCRIPT_BASH_REPO_URL="${GO_SCRIPT_BASH_REPO_URL:-https://github.com/mbland/go-script-bash.git}"
@@ -120,6 +120,6 @@ if [[ ! -e "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" ]]; then
   fi
 fi
 
-. "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "$GO_SCRIPTS_DIR"
+. "$GO_SCRIPT_BASH_CORE_DIR/go-core.bash" "${GO_SCRIPTS_DIR[@]}"
 # Add any other configuration or initialization steps here.
 @go "$@"

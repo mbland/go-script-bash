@@ -61,9 +61,9 @@ teardown() {
   touch "${files[@]/#/$TEST_GO_SCRIPTS_DIR/}"
 
   run "$TEST_GO_SCRIPT" complete 1 cd
-  assert_success 'scripts/'
+  assert_success 'scripts-2/' 'scripts/'
   run "$TEST_GO_SCRIPT" complete 1 pushd ''
-  assert_success 'scripts/'
+  assert_success 'scripts-2/' 'scripts/'
 
   local expected=()
   @go.test_compgen expected -d "$TEST_GO_SCRIPTS_DIR/"
@@ -183,6 +183,23 @@ teardown() {
   local expected=('plugh' 'xyzzy')
   run "$TEST_GO_SCRIPT" complete 2 foo bar ''
   assert_success "${expected[@]}"
+}
+
+@test "$SUITE: get completions only for the longest candidate command" {
+  create_bats_test_script scripts/foobar
+  create_bats_test_script scripts/foobar.d/baz 'echo ibaz'
+  create_bats_test_script scripts-2/foobar
+  create_bats_test_script scripts-2/foobar.d/baz
+  create_bats_test_script scripts-2/foobar.d/baz.d/aaa \
+    '# Tab completions' 'echo bazi'
+
+  create_bats_test_script 'go' \
+    ". '$_GO_CORE_DIR/go-core.bash' 'scripts' 'scripts-2'" \
+    '@go "$@"'
+
+  run "$TEST_GO_SCRIPT" complete 2 'foobar' 'baz' ''
+  assert_success
+  assert_output_matches aaa
 }
 
 @test "$SUITE: -h, -help, and --help invoke help command completion" {

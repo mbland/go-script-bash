@@ -8,7 +8,9 @@ EXPECTED_TEST_SCRIPT=
 setup() {
   test_filter
   EXPECTED_TEST_GO_SCRIPT=('#! /usr/bin/env bash'
-    ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'"
+    ". '$_GO_CORE_DIR/go-core.bash' \
+      '$TEST_GO_SCRIPTS_RELATIVE_DIR_2' \
+      '$TEST_GO_SCRIPTS_RELATIVE_DIR'"
     '# Comment'
     ''
     '# Moar comment'

@@ -11,9 +11,14 @@ teardown() {
   @go.run_log_script '@go.setup_project setup Hello, World!'
   assert_failure
 
-  local setup_script="$TEST_GO_SCRIPTS_DIR/setup"
+  local setup_script="setup"
+  local fatal_msg
+  fatal_msg+="Before invoking @go.setup_project, "
+  fatal_msg+="create '$setup_script' in $TEST_GO_SCRIPTS_DIR_2 or "
+  fatal_msg+="$TEST_GO_SCRIPTS_DIR."
+
   @go.assert_log_equals START "Project setup in $TEST_GO_ROOTDIR" \
-    FATAL "Create $setup_script before invoking @go.setup_project." \
+    FATAL "$fatal_msg" \
     "$(@go.stack_trace_item_from_offset "$TEST_GO_SCRIPT")"
 }
 

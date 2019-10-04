@@ -110,8 +110,8 @@ declare _GO_IMPORTED_MODULE_FILES=()
 # Used in the plugin module namespace collision warning message.
 declare _GO_IMPORTED_MODULE_CALLERS=()
 
-# Path to the project's script directory
-declare _GO_SCRIPTS_DIR=
+# Paths to the project's script directories
+declare _GO_SCRIPTS_DIRS=()
 
 # Directory containing Bats tests, relative to `_GO_ROOTDIR`
 declare -r -x _GO_TEST_DIR="${_GO_TEST_DIR:-tests}"
@@ -135,11 +135,11 @@ declare -x _GO_CMD_NAME=
 # string with the arguments delimited by the ASCII Unit Separator ($'\x1f').
 declare -x _GO_CMD_ARGV=
 
-# The top-level directory in which plugins are installed.
+# The top-level directories in which plugins are installed.
 #
 # If a command script is running as a plugin, this value will be the plugins
 # directory of the top-level `./go` script.
-declare _GO_PLUGINS_DIR=
+declare _GO_PLUGINS_DIRS=()
 
 # Directories containing executable plugin scripts.
 declare _GO_PLUGINS_PATHS=()
@@ -231,9 +231,9 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 
 # Searches through plugin directories using a helper function
 #
-# The search will begin in `_GO_SCRIPTS_DIR/plugins`. As long as `search_func`
+# The search will begin in `_GO_SCRIPTS_DIRS/plugins`. As long as `search_func`
 # returns nonzero, every parent `/plugins/` directory will be searched, up to
-# and including the top-level `_GO_PLUGINS_DIR`. The search will end either when
+# and including the top-level `_GO_PLUGINS_DIRS`. The search will end either when
 # `search_func` returns zero, or when all of the plugin paths are exhausted.
 #
 # The helper function, `search_func`, will receive the current plugin directory
@@ -265,16 +265,26 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
 # Returns:
 #   Zero if `search_func` ever returns zero, nonzero otherwise
 @go.search_plugins() {
-  local __gsp_plugins_dir="$_GO_SCRIPTS_DIR/plugins"
+  local __gsp_plugins_dir
+  local scripts_dir
+  local plugins_dir
 
-  while true; do
-    if "$1" "$__gsp_plugins_dir"; then
-      return
-    elif [[ "$__gsp_plugins_dir" == "$_GO_PLUGINS_DIR" ]]; then
-      return 1
-    fi
-    __gsp_plugins_dir="${__gsp_plugins_dir%/plugins/*}/plugins"
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]/%//plugins}"; do
+    __gsp_plugins_dir="$scripts_dir"
+    while true; do
+      if "$1" "$__gsp_plugins_dir"; then
+        return
+      else
+        for plugins_dir in "${_GO_PLUGINS_DIRS[@]}"; do
+          if [[ "$__gsp_plugins_dir" == "$plugins_dir" ]]; then
+            break 2
+          fi
+        done
+      fi
+      __gsp_plugins_dir="${__gsp_plugins_dir%/plugins/*}/plugins"
+    done
   done
+  return 1
 }
 
 # Main driver of ./go script functionality.
@@ -332,11 +342,15 @@ declare _GO_INJECT_MODULE_PATH="$_GO_INJECT_MODULE_PATH"
     return 1
   fi
 
-  if [[ "${__go_cmd_path#$_GO_SCRIPTS_DIR}" =~ /plugins/[^/]+/bin/ ]]; then
-    _@go.run_plugin_command_script "$__go_cmd_path" "${__go_argv[@]}"
-  else
-    _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
-  fi
+  local script_dir
+  for script_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
+    if [[ "${__go_cmd_path[0]#$script_dir}" =~ /plugins/[^/]+/bin/ ]]; then
+      _@go.run_plugin_command_script "${__go_cmd_path[0]}" "${__go_argv[@]}"
+      return
+    fi
+  done
+
+  _@go.run_command_script "${__go_cmd_path[0]}" "${__go_argv[@]}"
 }
 
 _@go.source_builtin() {
@@ -346,13 +360,13 @@ _@go.source_builtin() {
 }
 
 _@go.run_plugin_command_script() {
-  local _GO_SCRIPTS_DIR="${__go_cmd_path%/bin/*}/bin"
-  local _GO_ROOTDIR="${_GO_SCRIPTS_DIR%/*}"
+  local _GO_SCRIPTS_DIRS="${__go_cmd_path[0]%/bin/*}/bin"
+  local _GO_ROOTDIR="${_GO_SCRIPTS_DIRS%/*}"
   local _GO_PLUGINS_PATHS=()
   local _GO_SEARCH_PATHS=()
 
   _@go.set_search_paths
-  _@go.run_command_script "$__go_cmd_path" "${__go_argv[@]}"
+  _@go.run_command_script "${__go_cmd_path[0]}" "${__go_argv[@]}"
 }
 
 _@go.run_command_script() {
@@ -397,23 +411,28 @@ _@go.run_command_script() {
 }
 
 _@go.set_scripts_dir() {
-  local scripts_dir="$_GO_ROOTDIR/$1"
-
-  if [[ "$#" -ne '1' ]]; then
-    echo "ERROR: there should be exactly one command script dir specified" >&2
-    return 1
-  elif [[ ! -e "$scripts_dir" ]]; then
-    echo "ERROR: command script directory $scripts_dir does not exist" >&2
-    return 1
-  elif [[ ! -d "$scripts_dir" ]]; then
-    echo "ERROR: $scripts_dir is not a directory" >&2
-    return 1
-  elif [[ ! -r "$scripts_dir" || ! -x "$scripts_dir" ]]; then
-    echo "ERROR: you do not have permission to access the $scripts_dir" \
-      "directory" >&2
+  if [[ "$#" -eq '0' ]]; then
+    echo "ERROR: no command script dir specified" >&2
     return 1
   fi
-  _GO_SCRIPTS_DIR="$scripts_dir"
+
+  local scripts_dir
+  while [[ "$#" -gt 0 ]]; do
+    scripts_dir="$_GO_ROOTDIR/$1"
+    if [[ ! -e "$scripts_dir" ]]; then
+      echo "ERROR: command script directory $scripts_dir does not exist" >&2
+      return 1
+    elif [[ ! -d "$scripts_dir" ]]; then
+      echo "ERROR: $scripts_dir is not a directory" >&2
+      return 1
+    elif [[ ! -r "$scripts_dir" || ! -x "$scripts_dir" ]]; then
+      echo "ERROR: you do not have permission to access the $scripts_dir" \
+        "directory" >&2
+      return 1
+    fi
+    shift
+    _GO_SCRIPTS_DIRS+=("$scripts_dir")
+  done
 }
 
 if ! _@go.set_scripts_dir "$@"; then
@@ -428,4 +447,4 @@ elif [[ -z "$COLUMNS" ]]; then
   fi
   export COLUMNS="${COLUMNS:-80}"
 fi
-_GO_PLUGINS_DIR="$_GO_SCRIPTS_DIR/plugins"
+_GO_PLUGINS_DIRS=("${_GO_SCRIPTS_DIRS[@]/%//plugins}")

@@ -33,8 +33,13 @@ unset -v _GO_MAX_FILE_DESCRIPTORS "${!_GO_LOG@}" "${!__GO_LOG@}"
 readonly TEST_GO_ROOTDIR="$BATS_TEST_ROOTDIR"
 readonly TEST_GO_SCRIPT="$TEST_GO_ROOTDIR/go"
 readonly TEST_GO_SCRIPTS_RELATIVE_DIR="scripts"
+readonly TEST_GO_SCRIPTS_RELATIVE_DIR_2="scripts-2"
 readonly TEST_GO_SCRIPTS_DIR="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR"
+readonly TEST_GO_SCRIPTS_DIR_2="$TEST_GO_ROOTDIR/$TEST_GO_SCRIPTS_RELATIVE_DIR_2"
 readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
+readonly TEST_GO_PLUGINS_DIR_2="$TEST_GO_SCRIPTS_DIR_2/plugins"
+# Variables with the '_2' suffix are used to test that multiple
+# _GO_SCRIPTS_DIRS work as expected.
 
 # Recursively removes `TEST_GO_ROOTDIR`
 #
@@ -49,20 +54,30 @@ readonly TEST_GO_PLUGINS_DIR="$TEST_GO_SCRIPTS_DIR/plugins"
 # Creates an executable `./go` script as `TEST_GO_SCRIPT`
 #
 # The `. "$_GO_CORE_DIR/go-core.bash"` line is included, so callers need only
-# supply the remaining lines. Also automatically creates `TEST_GO_SCRIPTS_DIR`.
+# supply the remaining lines. Two _GO_SCRIPT_DIRS are specified. The first is
+# `TEST_GO_SCRIPTS_DIR_2` and the second `TEST_GO_SCRIPTS_DIR`. The latter is
+# used as the main command script destination in the tests, while the former is
+# specified to test if _GO_SCRIPTS_DIRS are looped properly during execution.
+# The function, also automatically creates `TEST_GO_SCRIPTS_DIR` and
+# `TEST_GO_SCRIPTS_DIR_2`.
 #
 # Arguments:
 #   ...:  Lines comprising the `./go` script
 @go.create_test_go_script() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
   create_bats_test_script 'go' \
-    ". '$_GO_CORE_DIR/go-core.bash' '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
+    ". '$_GO_CORE_DIR/go-core.bash' \
+      '$TEST_GO_SCRIPTS_RELATIVE_DIR_2' \
+      '$TEST_GO_SCRIPTS_RELATIVE_DIR'" \
     "$@"
 
   # Most tests should assume this directory is present. Those that don't should
   # remove it explicitly.
   if [[ ! -d "$TEST_GO_SCRIPTS_DIR" ]]; then
     mkdir "$TEST_GO_SCRIPTS_DIR"
+  fi
+  if [[ ! -d "$TEST_GO_SCRIPTS_DIR_2" ]]; then
+    mkdir "$TEST_GO_SCRIPTS_DIR_2"
   fi
   restore_bats_shell_options "$?"
 }

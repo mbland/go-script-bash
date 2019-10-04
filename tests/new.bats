@@ -23,7 +23,8 @@ export EDITOR='test_editor'
 assert_command_script_is_executable() {
   set "$DISABLE_BATS_SHELL_OPTIONS"
   local cmd_script_path="$1"
-  if [[ ! -x "$TEST_GO_SCRIPTS_DIR/$cmd_script_path" ]]; then
+  local scripts_dir="${2-$TEST_GO_SCRIPTS_DIR}"
+  if [[ ! -x "$scripts_dir/$cmd_script_path" ]]; then
     printf 'Failed to make command script executable: %s\n' \
       "$TEST_GO_SCRIPTS_DIR/$cmd_script_path" >&2
     restore_bats_shell_options '1'
@@ -288,6 +289,27 @@ assert_command_script_is_executable() {
 
 @test "$SUITE: new command script" {
   run "$TEST_GO_SCRIPT" new --command foo
+  assert_success "EDITING: $TEST_GO_SCRIPTS_DIR_2/foo"
+  assert_file_equals "$TEST_GO_SCRIPTS_DIR_2/foo" \
+    '#! /usr/bin/env bash' \
+    '#' \
+    '# Short description of the {{cmd}} command' \
+    '' \
+    '_foo() {' \
+    '  :' \
+    '}' \
+    '' \
+    '_foo "$@"'
+  assert_command_script_is_executable 'foo' "$TEST_GO_SCRIPTS_DIR_2"
+
+  rm "$TEST_GO_SCRIPTS_DIR_2/foo"
+  EDITOR= run "$TEST_GO_SCRIPT" new --command foo
+  assert_success ''
+  assert_file_matches "$TEST_GO_SCRIPTS_DIR_2/foo" $'\n_foo "\$@"'
+}
+
+@test "$SUITE: new command script in specified scripts dir" {
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo"
   assert_file_equals "$TEST_GO_SCRIPTS_DIR/foo" \
     '#! /usr/bin/env bash' \
@@ -302,18 +324,30 @@ assert_command_script_is_executable() {
   assert_command_script_is_executable 'foo'
 
   rm "$TEST_GO_SCRIPTS_DIR/foo"
-  EDITOR= run "$TEST_GO_SCRIPT" new --command foo
+  EDITOR= run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_success ''
   assert_file_matches "$TEST_GO_SCRIPTS_DIR/foo" $'\n_foo "\$@"'
 }
 
 @test "$SUITE: new subcommand script" {
   run "$TEST_GO_SCRIPT" new --command foo
+  assert_success "EDITING: $TEST_GO_SCRIPTS_DIR_2/foo"
+  assert_file_matches "$TEST_GO_SCRIPTS_DIR_2/foo" $'\n_foo\(\) \{\n'
+  assert_command_script_is_executable 'foo' "$TEST_GO_SCRIPTS_DIR_2"
+
+  run "$TEST_GO_SCRIPT" new --command foo bar
+  assert_success "EDITING: $TEST_GO_SCRIPTS_DIR_2/foo.d/bar"
+  assert_file_matches  "$TEST_GO_SCRIPTS_DIR_2/foo.d/bar" $'\n_bar\(\) \{\n'
+  assert_command_script_is_executable 'foo.d/bar' "$TEST_GO_SCRIPTS_DIR_2"
+}
+
+@test "$SUITE: new subcommand script in specified scripts dir" {
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo"
   assert_file_matches "$TEST_GO_SCRIPTS_DIR/foo" $'\n_foo\(\) \{\n'
   assert_command_script_is_executable 'foo'
 
-  run "$TEST_GO_SCRIPT" new --command foo bar
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR" bar
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo.d/bar"
   assert_file_matches  "$TEST_GO_SCRIPTS_DIR/foo.d/bar" $'\n_bar\(\) \{\n'
   assert_command_script_is_executable 'foo.d/bar'
@@ -321,6 +355,28 @@ assert_command_script_is_executable() {
 
 @test "$SUITE: new command and subcommand scripts" {
   run "$TEST_GO_SCRIPT" new --command foo bar baz
+  assert_success "EDITING: $TEST_GO_SCRIPTS_DIR_2/foo" \
+    "EDITING: $TEST_GO_SCRIPTS_DIR_2/foo.d/bar" \
+    "EDITING: $TEST_GO_SCRIPTS_DIR_2/foo.d/bar.d/baz"
+
+  assert_file_equals "$TEST_GO_SCRIPTS_DIR_2/foo" \
+    '#! /usr/bin/env bash' \
+    '#' \
+    '# Short description of the {{cmd}} command' \
+    '' \
+    ". \"\$_GO_USE_MODULES\" 'subcommands'" \
+    '' \
+    '@go.show_subcommands'
+  assert_file_matches "$TEST_GO_SCRIPTS_DIR_2/foo.d/bar" '@go.show_subcommands'
+  assert_file_matches "$TEST_GO_SCRIPTS_DIR_2/foo.d/bar.d/baz" $'\n_baz\(\) \{\n'
+
+  assert_command_script_is_executable 'foo' "$TEST_GO_SCRIPTS_DIR_2"
+  assert_command_script_is_executable 'foo.d/bar' "$TEST_GO_SCRIPTS_DIR_2"
+  assert_command_script_is_executable 'foo.d/bar.d/baz' "$TEST_GO_SCRIPTS_DIR_2"
+}
+
+@test "$SUITE: new command and subcommand scripts in specified scripts dir" {
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR" bar baz
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo" \
     "EDITING: $TEST_GO_SCRIPTS_DIR/foo.d/bar" \
     "EDITING: $TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz"
@@ -346,19 +402,30 @@ assert_command_script_is_executable() {
   assert_failure 'No command script name specified.'
 }
 
+@test "$SUITE: --command fails if no argument specified with '--parent'" {
+  run "$TEST_GO_SCRIPT" new --command foo --parent
+  assert_failure "'--parent' expects an argument."
+}
+
+@test "$SUITE: --command fails if invalid dir specified with '--parent'" {
+  path='does-not-exist'
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$path"
+  assert_failure "'$path' is not valid (not included in '_GO_SCRIPTS_DIRS')."
+}
+
 @test "$SUITE: --command fails if script already exists" {
-  run "$TEST_GO_SCRIPT" new --command foo bar baz
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR" bar baz
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/foo" \
     "EDITING: $TEST_GO_SCRIPTS_DIR/foo.d/bar" \
     "EDITING: $TEST_GO_SCRIPTS_DIR/foo.d/bar.d/baz"
-  run "$TEST_GO_SCRIPT" new --command foo bar baz
+  run "$TEST_GO_SCRIPT" new --command foo --parent "$TEST_GO_SCRIPTS_DIR" bar baz
 
   local failing_path="$TEST_GO_SCRIPTS_RELATIVE_DIR/foo.d/bar.d/baz"
   assert_failure "command script file already exists: $failing_path"
 }
 
 @test "$SUITE: --internal creates new internal module" {
-  run "$TEST_GO_SCRIPT" new --internal foo
+  run "$TEST_GO_SCRIPT" new --internal foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/lib/foo"
   assert_file_equals "$TEST_GO_SCRIPTS_DIR/lib/foo" \
     '#! /usr/bin/env bash' \
@@ -370,18 +437,40 @@ assert_command_script_is_executable() {
     '#     Short description of the func_name function'
 
   rm "$TEST_GO_SCRIPTS_DIR/lib/foo"
-  EDITOR= run "$TEST_GO_SCRIPT" new --internal foo
+  EDITOR= run "$TEST_GO_SCRIPT" new --internal foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_success ''
   assert_file_matches "$TEST_GO_SCRIPTS_DIR/lib/foo" \
     $'\n# Short description of the foo module\n'
 }
 
+@test "$SUITE: --internal fails if --parent specified with no argument" {
+  run "$TEST_GO_SCRIPT" new --internal foo --parent
+  assert_failure "'--parent' expects an argument."
+}
+
+@test "$SUITE: --internal fails if invalid dir specified with '--parent'" {
+  path='does-not-exist'
+  run "$TEST_GO_SCRIPT" new --internal foo --parent "$path"
+  assert_failure "'$path' is not valid (not included in '_GO_SCRIPTS_DIRS')."
+}
+
+@test "$SUITE: --internal fails if extraneous arguments are given" {
+  run "$TEST_GO_SCRIPT" new --internal foo bar
+  assert_failure 'Command expects exactly one path.'
+}
+
 @test "$SUITE: --internal fails if internal module already exists" {
-  run "$TEST_GO_SCRIPT" new --internal foo
+  run "$TEST_GO_SCRIPT" new --internal foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_success "EDITING: $TEST_GO_SCRIPTS_DIR/lib/foo"
-  run "$TEST_GO_SCRIPT" new --internal foo
+  run "$TEST_GO_SCRIPT" new --internal foo --parent "$TEST_GO_SCRIPTS_DIR"
   assert_failure \
     "internal module file already exists: $TEST_GO_SCRIPTS_RELATIVE_DIR/lib/foo"
+
+  run "$TEST_GO_SCRIPT" new --internal foo
+  assert_success "EDITING: $TEST_GO_SCRIPTS_DIR_2/lib/foo"
+  run "$TEST_GO_SCRIPT" new --internal foo
+  assert_failure \
+    "internal module file already exists: $TEST_GO_SCRIPTS_RELATIVE_DIR_2/lib/foo"
 }
 
 @test "$SUITE: --public creates new public module" {

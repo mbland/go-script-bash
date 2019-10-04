@@ -67,8 +67,10 @@ teardown() {
 @test "$SUITE: default to 80 columns if tput fails or use mode.com on Windows" {
   local expected_cols='80'
 
-  if [[ "$(mode.com con)" =~ Columns:\ +([0-9]+) ]]; then
-    expected_cols="${BASH_REMATCH[1]}"
+  if -v mode.com &>/dev/null; then
+    if [[ "$(mode.com con)" =~ Columns:\ +([0-9]+) ]]; then
+      expected_cols="${BASH_REMATCH[1]}"
+    fi
   fi
 
   # One way to cause tput to fail is to set `$TERM` to null. On Travis it's set

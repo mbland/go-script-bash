@@ -1,12 +1,12 @@
 #! /bin/bash
 #
-# Prints the path to the <command> script, [alias] or [builtin]
+# Prints the path(s) to the <command> script, [alias] or [builtin]
 #
 # Usage:
 #   {{go}} {{cmd}} <command>
 #
 # Will parse the command path out of a complete argument list and return the
-# path to the script relative to {{root}}. Aliases are identifed by a path of
+# path(s) to the script relative to {{root}}. Aliases are identifed by a path of
 # `[alias]`. Builtin command paths are prefixed with `[builtin] `.
 
 _@go.path() {
@@ -29,7 +29,7 @@ _@go.path() {
     local __go_cmd_path
 
     if _@go.set_command_path_and_argv "$@"; then
-      echo "${__go_cmd_path#$_GO_ROOTDIR/}"
+      printf '%s\n' "${__go_cmd_path[@]#$_GO_ROOTDIR/}"
     else
       return 1
     fi

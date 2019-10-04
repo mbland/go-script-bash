@@ -549,7 +549,7 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 #     @go "$@"
 #   fi
 #
-# And your `$_GO_SCRIPTS_DIR/setup` script may include (assuming your own `test`
+# And your `$_GO_SCRIPTS_DIRS/setup` script may include (assuming your own `test`
 # script as well):
 #
 #   @go.critical_section_begin QUIT
@@ -561,19 +561,33 @@ readonly __GO_LOG_COMMAND_EXIT_PATTERN='^@go.log_command (exit|fatal):([0-9]+)$'
 #   $1:   The path of setup script relative to the project scripts directory
 #   ...:  Any arguments to pass through to the 'setup' script
 @go.setup_project() {
-  local setup_script="$_GO_SCRIPTS_DIR/$1"
+  local setup_script
   local setup_status
-  shift
 
   @go.log START Project setup in "$_GO_ROOTDIR"
 
   ((++__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
-  if [[ ! -f "$setup_script" ]]; then
-    @go.log FATAL "Create $setup_script before invoking $FUNCNAME."
+  local scripts_dir
+  for scripts_dir in "${_GO_SCRIPTS_DIRS[@]}"; do
+    setup_script="$scripts_dir/$1"
+    if [[ -f "$setup_script" ]]; then
+      break
+    fi
+    setup_script=''
+  done
+
+  if [[ -z "$setup_script" ]]; then
+    local scripts_dirs
+    IFS=* eval 'scripts_dirs="${_GO_SCRIPTS_DIRS[*]}"'
+    scripts_dirs="${scripts_dirs//\*/ or }"
+
+    @go.log FATAL "Before invoking $FUNCNAME, create '$1' in $scripts_dirs."
   elif  [[ ! -x "$setup_script" ]]; then
     @go.log FATAL "$setup_script is not executable."
   fi
   ((--__GO_LOG_FATAL_STACK_TRACE_SKIP_CALLERS))
+
+  shift
 
   @go.log RUN "${setup_script#$_GO_ROOTDIR/}" "$@"
   _@go.run_command_script "$setup_script" "$@"

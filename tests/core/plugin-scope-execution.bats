@@ -233,6 +233,7 @@ teardown() {
   local test_rootdir="$TEST_GO_ROOTDIR/plugins/rootdir"
   mkdir -p "$test_rootdir"
   mv "$TEST_GO_SCRIPT" "$test_rootdir"
+  mkdir -p "$test_rootdir/scripts-2"
 
   # We can't use `@go.create_test_command_script` since we can't change the
   # readonly `TEST_GO_*` variables.

@@ -60,7 +60,7 @@ teardown() {
   assert_line_equals 0 "Usage: $TEST_GO_SCRIPT <command> [arguments...]"
 
   local expected_err="<No commands found in or error retrieving summaries "
-  expected_err+="from: $TEST_GO_SCRIPTS_DIR>"
+  expected_err+="from: $TEST_GO_SCRIPTS_DIR_2:$TEST_GO_SCRIPTS_DIR>"
   assert_output_matches "$expected_err"
 }
 

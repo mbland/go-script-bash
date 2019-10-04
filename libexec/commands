@@ -15,9 +15,9 @@
 #   - `_GO_INJECT_SEARCH_PATH` for command script stubs injected during testing;
 #     see `lib/testing/stubbing`
 #   - `_GO_CORE_DIR/libexec` for core library command scripts
-#   - `_GO_SCRIPTS_DIR` for project command scripts
-#   - `_GO_SCRIPTS_DIR/plugins/*/bin` for installed plugin command scripts
-#   - Parent plugin dirs up to `_GO_PLUGINS_DIR/*/bin` for plugin command
+#   - `_GO_SCRIPTS_DIRS` for project command scripts
+#   - `_GO_SCRIPTS_DIRS/plugins/*/bin` for installed plugin command scripts
+#   - Parent plugin dirs up to `_GO_PLUGINS_DIRS/*/bin` for plugin command
 #     scripts
 #
 # If no <command-name> or <script-path> is given, lists all top-level builtins,
@@ -33,7 +33,7 @@
 # NOTE: This command will not return the names of shell aliases; use `{{go}}
 # aliases` for those.
 #
-# While executing a plugin command script, `_GO_ROOTDIR` and `_GO_SCRIPTS_DIR`
+# While executing a plugin command script, `_GO_ROOTDIR` and `_GO_SCRIPTS_DIRS`
 # are scoped to the top-level directory of the plugin. See `{{go}} help plugins`
 # for more information on plugins and their operating constraints.
 
@@ -100,7 +100,7 @@ _@go.commands_parse_argv() {
     if ! _@go.set_command_path_and_argv "$@"; then
       return 1
     fi
-    __go_commands_search_paths=("${__go_cmd_path}.d")
+    __go_commands_search_paths=("${__go_cmd_path[@]/%/.d}")
   fi
 }
 

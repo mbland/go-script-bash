@@ -10,7 +10,8 @@ setup() {
 
   local print_scope_implementation=(
     'printf -- "_GO_ROOTDIR:\n%s\n" "$_GO_ROOTDIR"'
-    'printf -- "_GO_SCRIPTS_DIR:\n%s\n" "$_GO_SCRIPTS_DIR"'
+    'printf -- "_GO_SCRIPTS_DIRS:\n"'
+    'printf -- "%s\n" "${_GO_SCRIPTS_DIRS[@]}"'
     'printf -- "_GO_PLUGINS_PATHS:\n"'
     'printf -- "%s\n" "${_GO_PLUGINS_PATHS[@]}"'
     'printf -- "_GO_SEARCH_PATHS:\n"'
@@ -42,12 +43,14 @@ setup() {
 
   EXPECTED_ROOT_SCOPE_VALUES=('_GO_ROOTDIR:'
     "$TEST_GO_ROOTDIR"
-    '_GO_SCRIPTS_DIR:'
+    '_GO_SCRIPTS_DIRS:'
+    "$TEST_GO_SCRIPTS_DIR_2"
     "$TEST_GO_SCRIPTS_DIR"
     '_GO_PLUGINS_PATHS:'
     "${EXPECTED_ROOT_SCOPE_PLUGINS_PATHS[@]}"
     '_GO_SEARCH_PATHS:'
     "$_GO_CORE_DIR/libexec"
+    "$TEST_GO_SCRIPTS_DIR_2"
     "$TEST_GO_SCRIPTS_DIR"
     "${EXPECTED_ROOT_SCOPE_PLUGINS_PATHS[@]}")
 }
@@ -105,7 +108,7 @@ __assert_scope_values_equal_impl() {
   assert_scope_values_equal 'FIRST PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/first" \
-    '_GO_SCRIPTS_DIR:' \
+    '_GO_SCRIPTS_DIRS:' \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
@@ -131,7 +134,7 @@ __assert_scope_values_equal_impl() {
   assert_scope_values_equal 'THIRD PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third" \
-    '_GO_SCRIPTS_DIR:' \
+    '_GO_SCRIPTS_DIRS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
@@ -148,7 +151,7 @@ __assert_scope_values_equal_impl() {
   assert_scope_values_equal 'SECOND PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/second" \
-    '_GO_SCRIPTS_DIR:' \
+    '_GO_SCRIPTS_DIRS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
@@ -171,7 +174,7 @@ __assert_scope_values_equal_impl() {
   assert_scope_values_equal 'FIRST PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/first" \
-    '_GO_SCRIPTS_DIR:' \
+    '_GO_SCRIPTS_DIRS:' \
     "$TEST_GO_PLUGINS_DIR/first/bin" \
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
@@ -184,7 +187,7 @@ __assert_scope_values_equal_impl() {
   assert_scope_values_equal 'SECOND PLUGIN' \
     '_GO_ROOTDIR:' \
     "$TEST_GO_PLUGINS_DIR/second" \
-    '_GO_SCRIPTS_DIR:' \
+    '_GO_SCRIPTS_DIRS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin" \
     '_GO_PLUGINS_PATHS:' \
     "$TEST_GO_PLUGINS_DIR/second/bin/plugins/third/bin" \
