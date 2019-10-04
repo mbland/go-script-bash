@@ -185,6 +185,23 @@ teardown() {
   assert_success "${expected[@]}"
 }
 
+@test "$SUITE: get completions only for the longest candidate command" {
+  create_bats_test_script scripts/foobar
+  create_bats_test_script scripts/foobar.d/baz 'echo ibaz'
+  create_bats_test_script scripts-2/foobar
+  create_bats_test_script scripts-2/foobar.d/baz
+  create_bats_test_script scripts-2/foobar.d/baz.d/aaa \
+    '# Tab completions' 'echo bazi'
+
+  create_bats_test_script 'go' \
+    ". '$_GO_CORE_DIR/go-core.bash' 'scripts' 'scripts-2'" \
+    '@go "$@"'
+
+  run "$TEST_GO_SCRIPT" complete 2 'foobar' 'baz' ''
+  assert_success
+  assert_output_matches aaa
+}
+
 @test "$SUITE: -h, -help, and --help invoke help command completion" {
   run "$TEST_GO_SCRIPT" complete 1 -h 'complet'
   assert_success 'complete '

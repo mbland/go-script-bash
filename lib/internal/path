@@ -23,68 +23,40 @@ _@go.set_command_path_and_argv() {
     return 1
   fi
 
-  local cmd_args=("$@")
-  local cmd_name="${cmd_args[0]}"
-  local cmd_paths=()
+  local path_suffix
   local try_path
 
-  unset 'cmd_args[0]'
-
-  for try_path in "${_GO_SEARCH_PATHS[@]}"; do
-    try_path="$try_path/$cmd_name"
-
-    if [[ -f "$try_path" && -x "$try_path" ]]; then
-      cmd_paths+=("$try_path")
-    fi
-  done
-
-  if [[ "${#cmd_paths[*]}" -eq 0 ]]; then
-    printf "Unknown command: ${cmd_name}\n\n" >&2
-    _@go.list_available_commands "${_GO_SEARCH_PATHS[@]}" >&2
-    return 1
-  fi
-
-  local -i cmd_arg_index=1
-  cmd_name=("$cmd_name")
-
-  local -i i=0
-  local -i longest_path=()
   __go_cmd_name=()
-  for try_path in "${cmd_paths[@]}"; do
-    for arg in "${cmd_args[@]}"; do
-      # This is most likely to happen during argument completion.
-      if [[ -z "$arg" ]]; then
-        break
+  __go_argv=()
+  __go_cmd_path=()
+
+  for ((i = "$#"; i > 0; i--)); do
+    for try_path in "${_GO_SEARCH_PATHS[@]}"; do
+      path_suffix="$(printf '%s.d/' "${@:1:i}")"
+      path_suffix="${path_suffix%.d/}"
+      try_path="$try_path/$path_suffix"
+
+      if [[ -f "$try_path" && -x "$try_path" ]]; then
+        __go_cmd_path+=("$try_path")
+        if [[ "${#__go_argv[@]}" -eq 0 ]]; then
+          __go_cmd_name=("${@:1:i}")
+          __go_argv=("${@:i+1}")
+        fi
       fi
-
-      try_path="${cmd_paths[$i]}.d/$arg"
-
-      if [[ ! -e "$try_path" ]]; then
-        break
-      elif [[ ! (-f "$try_path" && -x "$try_path") ]]; then
-        break
-      fi
-
-      cmd_paths[$i]="$try_path"
-
-      cmd_name+=("$arg")
-      cmd_arg_index=cmd_arg_index+1
     done
 
-    if [[ "${#cmd_name[@]}" -gt "${#__go_cmd_name[@]}" ]]; then
-      longest_path="$i"
-      __go_cmd_name=("${cmd_name[@]}")
-      __go_argv=("${cmd_args[@]:cmd_arg_index}")
+    if [[ "${#__go_cmd_path[@]}" -ne 0 ]]; then
+      break
     fi
-
-    i=i+1
   done
 
   # The command that is the most nested one takes precedence. Eg
   # `scripts/foobar/aaa/bbb/ccc arg1 arg2` takes precedence over
   # `scripts/foobar/aaa bbb ccc arg1 arg2`.
-  __go_cmd_path=('' "${cmd_paths[@]}")
-  __go_cmd_path[0]="${cmd_paths[longest_path]}"
-  unset "__go_cmd_path[longest_path+1]"
-  __go_cmd_path=("${__go_cmd_path[@]}")
+
+  if [[ "${#__go_cmd_name[*]}" -eq 0 ]]; then
+    printf "Unknown command: $1\n\n" >&2
+    _@go.list_available_commands "${_GO_SEARCH_PATHS[@]}" >&2
+    return 1
+  fi
 }
